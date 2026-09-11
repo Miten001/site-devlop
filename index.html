@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlexFam — Grow Your Social Fam. Earn. Exchange. Flex.</title>
+<meta name="description" content="FlexFam is a free social exchange platform — grow YouTube, Instagram, Telegram, TikTok, X & more. Earn credits, promote your pages, build your fam." />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<!-- ================= HEADER ================= -->
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="#platforms">Platforms</a></li>
+      <li><a href="#how">How it Works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li data-user-only class="hidden"><a href="earn.html">Earn Points</a></li>
+      <li data-user-only class="hidden"><a href="add.html">Add Page</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm" data-guest-only>Login</a>
+      <a href="signup.html" class="btn btn-primary btn-sm always" data-guest-only>Join Free</a>
+      <a href="earn.html" class="credit-chip btn-sm hidden" data-user-only style="padding:9px 16px"><span data-coin></span><span data-credits>0</span></a>
+      <a href="dashboard.html" class="btn btn-primary btn-sm always hidden" data-user-only>Dashboard</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="index.html">Home</a>
+  <a href="index.html#platforms">Platforms</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="add.html">Add Page</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="login.html">Login</a>
+  <a href="signup.html">Join Free</a>
+</nav>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow"><span class="dot"></span> 100% Free Social Exchange · Now with Telegram</span>
+      <h1>Grow your <span class="grad-text">Fam</span>.<br />Exchange. Earn. <span class="grad-text-cool">Flex.</span></h1>
+      <p class="sub">FlexFam ek free social exchange hub hai — earn credits by joining Telegram channels, subscribing YouTube creators, following on Instagram &amp; more. Phir un credits se apni pages ko promote karo. Real engagement, real growth.</p>
+      <div class="hero-cta">
+        <a href="signup.html" class="btn btn-primary btn-lg">Start Earning — It's Free <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="#how" class="btn btn-ghost btn-lg">How it Works</a>
+      </div>
+      <div class="hero-proof">
+        <div class="avatars"><span style="background:#7c3aed;color:#fff">AS</span><span style="background:#e0489f;color:#fff">NV</span><span style="background:#22d3ee">UB</span><span style="background:#ff8a3d;color:#fff">KC</span></div>
+        <p><b>48,000+ creators</b> already flexing with FlexFam</p>
+      </div>
+      <div class="live-ticker"><span class="pulse"></span><span id="ticker-text"></span></div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="orbit">
+        <i style="color:#ff3355" data-icon="youtube"></i>
+        <i style="color:#2aabee" data-icon="telegram"></i>
+        <i style="color:#e1306c" data-icon="instagram"></i>
+        <i style="color:#25f4ee" data-icon="tiktok"></i>
+      </div>
+      <div class="float-chip fc-1">
+        <span class="ic" style="background:rgba(42,171,238,.15);color:#2aabee" data-icon="telegram"></span>
+        <span>Telegram join<small>+15 credits earned</small></span>
+      </div>
+      <div class="float-chip fc-2">
+        <span class="ic" style="background:rgba(255,51,85,.15);color:#ff3355" data-icon="youtube"></span>
+        <span>Campaign boosted<small>+320 new subscribers</small></span>
+      </div>
+
+      <div class="hero-card" data-tilt>
+        <div class="hc-top">
+          <div class="hc-user">
+            <span class="av">DS</span>
+            <div>
+              <h4>Demo Star</h4>
+              <p>@demostar · Level 7 Flexer</p>
+            </div>
+          </div>
+          <span class="credit-chip"><span data-coin></span>1,240</span>
+        </div>
+        <div class="mini-feed">
+          <div class="mf-row">
+            <span class="pf" style="background:rgba(42,171,238,.13);color:#2aabee" data-icon="telegram"></span>
+            <div class="grow"><h5>Join "UrbanBeatz" Telegram Channel</h5><p>Telegram · Join Channel</p></div>
+            <span class="pay">+15</span>
+          </div>
+          <div class="mf-row">
+            <span class="pf" style="background:rgba(255,51,85,.13);color:#ff3355" data-icon="youtube"></span>
+            <div class="grow"><h5>Subscribe "TechGuru Rohan"</h5><p>YouTube · Subscribe</p></div>
+            <span class="pay">+18</span>
+          </div>
+          <div class="mf-row">
+            <span class="pf" style="background:rgba(225,48,108,.13);color:#e1306c" data-icon="instagram"></span>
+            <div class="grow"><h5>Follow "@melodymaya"</h5><p>Instagram · Follow</p></div>
+            <span class="pay">+12</span>
+          </div>
+          <div class="mf-row">
+            <span class="pf" style="background:rgba(231,233,234,.1);color:#e7e9ea" data-icon="x"></span>
+            <div class="grow"><h5>Repost "CricketFever" post</h5><p>X · Repost</p></div>
+            <span class="pay">+10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- platform marquee -->
+  <div class="container">
+    <div class="marquee-wrap">
+      <div class="marquee" id="marquee">
+        <span class="m-item" style="color:#ff3355" data-icon="youtube"></span><span class="m-item">YouTube</span>
+        <span class="m-item" style="color:#2aabee" data-icon="telegram"></span><span class="m-item">Telegram</span>
+        <span class="m-item" style="color:#e1306c" data-icon="instagram"></span><span class="m-item">Instagram</span>
+        <span class="m-item" style="color:#25f4ee" data-icon="tiktok"></span><span class="m-item">TikTok</span>
+        <span class="m-item" style="color:#e7e9ea" data-icon="x"></span><span class="m-item">X / Twitter</span>
+        <span class="m-item" style="color:#1877f2" data-icon="facebook"></span><span class="m-item">Facebook</span>
+        <span class="m-item" style="color:#a970ff" data-icon="twitch"></span><span class="m-item">Twitch</span>
+        <span class="m-item" style="color:#ff4f6d" data-icon="pinterest"></span><span class="m-item">Pinterest</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STATS ================= -->
+<section class="stats-band">
+  <div class="container stats-grid">
+    <div class="stat-card reveal"><div class="num grad-text" data-count="48" data-suffix="K+">0</div><div class="lbl">Active FlexFam members</div></div>
+    <div class="stat-card reveal" data-delay="1"><div class="num grad-text" data-count="12.4" data-suffix="M">0</div><div class="lbl">Engagements exchanged</div></div>
+    <div class="stat-card reveal" data-delay="2"><div class="num grad-text" data-count="8">0</div><div class="lbl">Platforms supported</div></div>
+    <div class="stat-card reveal" data-delay="3"><div class="num grad-text" data-count="100" data-suffix="%">0</div><div class="lbl">Free to join, forever</div></div>
+  </div>
+</section>
+
+<!-- ================= PLATFORMS ================= -->
+<section class="platforms" id="platforms">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span> Supported Networks</span>
+      <h2>Every platform. <span class="grad-text">One Fam.</span></h2>
+      <p>YouTube se Telegram tak — FlexFam par aap sabhi major social networks ko grow kar sakte ho aur credits earn kar sakte ho.</p>
+    </div>
+    <div class="pf-grid">
+      <div class="pf-card reveal" style="--pf:#2aabee">
+        <span class="tag" style="background:rgba(42,171,238,.16);color:#6ec9f5;border-color:rgba(42,171,238,.3)">New</span>
+        <span class="ico" style="--pf:#2aabee" data-icon="telegram"></span>
+        <h3>Telegram</h3>
+        <p>Channel joins, group members aur post boosts. Apna Telegram fam seconds me badhao.</p>
+      </div>
+      <div class="pf-card reveal" style="--pf:#ff3355" data-delay="1">
+        <span class="ico" style="--pf:#ff3355" data-icon="youtube"></span>
+        <h3>YouTube</h3>
+        <p>Subscribers, views aur likes exchange karo. Apne channel ko next level par le jao.</p>
+      </div>
+      <div class="pf-card reveal" style="--pf:#e1306c" data-delay="2">
+        <span class="ico" style="--pf:#e1306c" data-icon="instagram"></span>
+        <h3>Instagram</h3>
+        <p>Followers, post likes aur reel views — sab kuch credits se. Aesthetic grid, real reach.</p>
+      </div>
+      <div class="pf-card reveal" style="--pf:#25f4ee" data-delay="3">
+        <span class="ico" style="--pf:#25f4ee" data-icon="tiktok"></span>
+        <h3>TikTok</h3>
+        <p>Viral hone ka shortcut nahi, par flex jaroor — followers aur video likes grow karo.</p>
+      </div>
+      <div class="pf-card reveal" style="--pf:#e7e9ea">
+        <span class="ico" style="--pf:#e7e9ea" data-icon="x"></span>
+        <h3>X (Twitter)</h3>
+        <p>Followers, reposts aur likes. Apni tweets ko timeline ka king banao.</p>
+      </div>
+      <div class="pf-card reveal" style="--pf:#1877f2" data-delay="1">
+        <span class="ico" style="--pf:#1877f2" data-icon="facebook"></span>
+        <h3>Facebook</h3>
+        <p>Page likes aur followers exchange karo. Business pages ke liye perfect boost.</p>
+      </div>
+      <div class="pf-card reveal" style="--pf:#a970ff" data-delay="2">
+        <span class="ico" style="--pf:#a970ff" data-icon="twitch"></span>
+        <h3>Twitch</h3>
+        <p>Stream ke followers badhao aur affiliate milestone jaldi unlock karo.</p>
+      </div>
+      <div class="pf-card reveal" style="--pf:#ff4f6d" data-delay="3">
+        <span class="ico" style="--pf:#ff4f6d" data-icon="pinterest"></span>
+        <h3>Pinterest</h3>
+        <p>Followers aur pin saves — apke boards ko organic reach ka naya engine.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span> Simple by design</span>
+      <h2>Teen steps. <span class="grad-text-cool">Infinite growth.</span></h2>
+      <p>Koi bots nahi, koi fake promise nahi — sirf real users ka real exchange.</p>
+    </div>
+    <div class="how-grid">
+      <div class="how-card reveal">
+        <div class="step-num">01</div>
+        <h3>Join &amp; earn credits</h3>
+        <p>Free signup karo aur dusre creators ke campaigns complete karke credits earn karo — Telegram joins, YouTube subs, IG follows aur bhi bohot kuch.</p>
+      </div>
+      <div class="how-card reveal" data-delay="1">
+        <div class="step-num">02</div>
+        <h3>Add your pages</h3>
+        <p>Apna Telegram channel, YouTube, Instagram ya koi bhi page add karo. Har engagement ka payout khud set karo — control bilkul aapke haath me.</p>
+      </div>
+      <div class="how-card reveal" data-delay="2">
+        <div class="step-num">03</div>
+        <h3>Watch the fam grow</h3>
+        <p>Community aapke campaigns complete karegi aur aapke numbers real-time me badhenge. Dashboard par sab track karo, flex karte raho.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SPLIT: EARN ================= -->
+<section class="split">
+  <div class="container split-grid">
+    <div class="reveal">
+      <span class="eyebrow"><span class="dot"></span> For Earners</span>
+      <h2>Credits kamao — <span class="grad-text">kabhi bhi, kahin bhi.</span></h2>
+      <p class="lead">Earn page par naye campaigns har minute aate hain. Jitna zyada engage karoge, utna zyada kamaoge — aur apni growth free me fund kar paoge.</p>
+      <ul class="tick-list">
+        <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>8 platforms ke tasks</b><span>Telegram, YouTube, Instagram, TikTok, X, Facebook, Twitch, Pinterest</span></div></li>
+        <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>Instant credit payouts</b><span>Task verify hote hi credits turant aapke wallet me</span></div></li>
+        <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>Referral bonuses</b><span>Dost lao, unke earnings ka life-time 10% extra kamao</span></div></li>
+      </ul>
+      <a href="signup.html" class="btn btn-primary">Start Earning Now</a>
+    </div>
+    <div class="split-media reveal" data-delay="1">
+      <div class="glow-behind"></div>
+      <div class="frame">
+        <div class="panel-head"><h3>Earnings this week</h3><span class="status-pill on">+38%</span></div>
+        <div class="mini-chart">
+          <div class="mcol"><div class="mbar" style="height:38%"></div><span>Mon</span></div>
+          <div class="mcol"><div class="mbar" style="height:55%"></div><span>Tue</span></div>
+          <div class="mcol"><div class="mbar" style="height:44%"></div><span>Wed</span></div>
+          <div class="mcol"><div class="mbar" style="height:72%"></div><span>Thu</span></div>
+          <div class="mcol"><div class="mbar" style="height:60%"></div><span>Fri</span></div>
+          <div class="mcol"><div class="mbar" style="height:92%"></div><span>Sat</span></div>
+          <div class="mcol"><div class="mbar" style="height:78%"></div><span>Sun</span></div>
+        </div>
+        <div class="mt-24 act-list">
+          <div class="act-row"><span class="a-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span><p>Joined Telegram channel "Crypto Charcha"<small>2 min ago</small></p><span class="a-amount plus">+20</span></div>
+          <div class="act-row"><span class="a-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span><p>Subscribed "GameLordYT" on YouTube<small>14 min ago</small></p><span class="a-amount plus">+18</span></div>
+          <div class="act-row"><span class="a-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span><p>Followed "@kwavya" on Instagram<small>32 min ago</small></p><span class="a-amount plus">+12</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SPLIT: GROW ================= -->
+<section class="split">
+  <div class="container split-grid flip">
+    <div class="reveal">
+      <span class="eyebrow"><span class="dot"></span> For Promoters</span>
+      <h2>Apni pages ko <span class="grad-text-cool">rocket fuel</span> do.</h2>
+      <p class="lead">Credits ko engagements me badlo. Har platform par apni campaigns launch karo — payout set karo, budget cap lagao, results real-time dekho.</p>
+      <ul class="tick-list">
+        <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>Har engagement ka price aap set karo</b><span>5 se 100 credits per action — higher payout, faster delivery</span></div></li>
+        <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>Telegram-first growth</b><span>Channel members, group joins aur post boosts — Telegram ke liye dedicated engine</span></div></li>
+        <li><span class="tk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>Pause / resume anytime</b><span>Budget control aur live stats ke saath full transparency</span></div></li>
+      </ul>
+      <a href="add.html" class="btn btn-ghost">Add Your First Page</a>
+    </div>
+    <div class="split-media reveal" data-delay="1">
+      <div class="glow-behind"></div>
+      <div class="frame">
+        <div class="panel-head"><h3>Your campaigns</h3><a href="add.html">+ New</a></div>
+        <div class="camp-rows">
+          <div class="camp-row" style="--pf:#2aabee">
+            <span class="cr-pf" data-icon="telegram"></span>
+            <div class="cr-info"><h5>TechGuru Official Channel</h5><p>t.me/techguru · 12 credits/join</p></div>
+            <div class="cr-meta"><b>+412</b>joins</div>
+            <span class="status-pill on">Live</span>
+          </div>
+          <div class="camp-row" style="--pf:#ff3355">
+            <span class="cr-pf" data-icon="youtube"></span>
+            <div class="cr-info"><h5>TechGuru Rohan</h5><p>youtube.com/@techguru · 15 credits/sub</p></div>
+            <div class="cr-meta"><b>+289</b>subs</div>
+            <span class="status-pill on">Live</span>
+          </div>
+          <div class="camp-row" style="--pf:#e1306c">
+            <span class="cr-pf" data-icon="instagram"></span>
+            <div class="cr-info"><h5>@techguru.reels</h5><p>instagram.com/techguru · 10 credits/follow</p></div>
+            <div class="cr-meta"><b>+534</b>follows</div>
+            <span class="status-pill off">Paused</span>
+          </div>
+        </div>
+        <div class="mt-24 est-box" style="grid-template-columns:repeat(3,1fr)">
+          <div class="est"><b class="grad-text">1,235</b><span>Total actions</span></div>
+          <div class="est"><b class="grad-text">7,430</b><span>Credits spent</span></div>
+          <div class="est"><b class="grad-text">3.2x</b><span>Avg. reach boost</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TESTIMONIALS ================= -->
+<section class="testi">
+  <div class="container section-head reveal">
+    <span class="eyebrow"><span class="dot"></span> Fam speaks</span>
+    <h2>Creators <span class="grad-text">love the flex.</span></h2>
+  </div>
+  <div class="testi-row" id="testi-row">
+    <div class="t-card"><p>"FlexFam se mera Telegram channel 200 se 4,000 members par aa gaya — aur maine ek rupaya spend nahi kiya. Credits earn karna honestly addictive hai."</p><div class="t-user"><span class="av" style="background:#2aabee;color:#04141c">RS</span><div><h5>Rohan Sharma</h5><span>@techguru · YouTuber</span></div></div></div>
+    <div class="t-card"><p>"YouLikeHits se switch kiya aur kabhi peeche mudkar nahi dekha. Interface ekdum premium hai aur Telegram support game-changer hai."</p><div class="t-user"><span class="av" style="background:#e0489f;color:#fff">NV</span><div><h5>Neha Verma</h5><span>@nehavlogs · Vlogger</span></div></div></div>
+    <div class="t-card"><p>"Payout rates fair hain, tasks endless hain. Free time me metro me travel karte hue hi credits kama leta hoon. 10/10 recommend."</p><div class="t-user"><span class="av" style="background:#7c3aed;color:#fff">AR</span><div><h5>Arjun Rathi</h5><span>@gamelordyt · Streamer</span></div></div></div>
+    <div class="t-card"><p>"Telegram community grow karna itna slow hota hai organically. FlexFam ne meri group ko 3 hafte me 1K+ members de diye. Fan ban gayi main."</p><div class="t-user"><span class="av" style="background:#34e5a5;color:#04140c">SI</span><div><h5>Simran Iyer</h5><span>@fitwithsimran · Coach</span></div></div></div>
+    <div class="t-card"><p>"Dashboard is so clean it feels like a SaaS product, not an exchange site. Referral system se mere 2,300 bonus credits aa chuke hain."</p><div class="t-user"><span class="av" style="background:#ff8a3d;color:#1a0d03">KC</span><div><h5>Kavya Chauhan</h5><span>@kavyacreates · Artist</span></div></div></div>
+    <div class="t-card"><p>"8 platforms ek jagah, real users, zero fake followers. Mera Instagram engagement rate actually improve hua. FlexFam is the real deal."</p><div class="t-user"><span class="av" style="background:#22d3ee;color:#04141c">DM</span><div><h5>Dev Mehta</h5><span>@melodymaya · Musician</span></div></div></div>
+  </div>
+</section>
+
+<!-- ================= PRICING ================= -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span> Simple pricing</span>
+      <h2>Free se start karo, <span class="grad-text">turbo se grow karo.</span></h2>
+      <p>Earning hamesha free rahegi. Turbo plans se extra perks aur bonus credits milti hain.</p>
+    </div>
+    <div class="price-grid">
+      <div class="price-card reveal">
+        <span class="plan">Starter</span>
+        <div class="amount">₹0<small>/forever</small></div>
+        <p class="desc">Sabhi core exchange features, unlimited earning.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Unlimited credit earning</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> All 8 platforms incl. Telegram</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> 3 active campaigns</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Community support</li>
+        </ul>
+        <a href="signup.html" class="btn btn-ghost btn-block">Join Free</a>
+      </div>
+      <div class="price-card featured reveal" data-delay="1">
+        <span class="popular-badge">Most Popular</span>
+        <span class="plan grad-text">Turbo</span>
+        <div class="amount">₹499<small>/month</small></div>
+        <p class="desc">Fast delivery, bonus credits aur priority queue.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Everything in Starter</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> 5,000 bonus credits / month</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Unlimited campaigns</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> 1.5x earning multiplier</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Priority campaign queue</li>
+        </ul>
+        <a href="signup.html" class="btn btn-primary btn-block">Go Turbo</a>
+      </div>
+      <div class="price-card reveal" data-delay="2">
+        <span class="plan">Flex God</span>
+        <div class="amount">₹1,499<small>/month</small></div>
+        <p class="desc">Agencies aur power creators ke liye full arsenal.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Everything in Turbo</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> 20,000 bonus credits / month</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> 2x earning multiplier</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Dedicated account manager</li>
+        </ul>
+        <a href="signup.html" class="btn btn-ghost btn-block">Become Flex God</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="cta">
+  <div class="container">
+    <div class="cta-box reveal">
+      <h2>Ready to <span class="grad-text">flex</span> your fam?</h2>
+      <p>Join 48,000+ creators jo FlexFam par apna social empire bana rahe hain. 2 minute me signup, 300 bonus credits instant.</p>
+      <a href="signup.html" class="btn btn-primary btn-lg">Claim 300 Free Credits</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+        <p class="about">The free social exchange platform — earn credits, grow your pages, flex on the algorithm. Telegram, YouTube, Instagram &amp; 5 more platforms, ek hi fam me.</p>
+      </div>
+      <div>
+        <h5>Platform</h5>
+        <ul>
+          <li><a href="earn.html">Earn Credits</a></li>
+          <li><a href="add.html">Add Page</a></li>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="index.html#pricing">Pricing</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Networks</h5>
+        <ul>
+          <li><a href="index.html#platforms">Telegram</a></li>
+          <li><a href="index.html#platforms">YouTube</a></li>
+          <li><a href="index.html#platforms">Instagram</a></li>
+          <li><a href="index.html#platforms">TikTok</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Company</h5>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Terms of Service</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© <span data-year>2026</span> FlexFam. Made with ❤️ for the fam.</span>
+      <div class="socials">
+        <a href="#" style="color:#2aabee" data-icon="telegram" aria-label="Telegram"></a>
+        <a href="#" style="color:#ff3355" data-icon="youtube" aria-label="YouTube"></a>
+        <a href="#" style="color:#e1306c" data-icon="instagram" aria-label="Instagram"></a>
+        <a href="#" style="color:#e7e9ea" data-icon="x" aria-label="X"></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+<script>
+  // duplicate marquee + testimonials content for seamless loop
+  document.addEventListener("DOMContentLoaded", () => {
+    const m = document.getElementById("marquee");
+    if (m) m.innerHTML += m.innerHTML;
+    const t = document.getElementById("testi-row");
+    if (t) t.innerHTML += t.innerHTML;
+  });
+</script>
+</body>
+</html>

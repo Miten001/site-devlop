@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="earn.html">Earn Credits</a></li>
+      <li><a href="add.html">Add Page</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="earn.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="earn.html">Earn Credits</a>
+  <a href="add.html">Add Page</a>
+  <a href="index.html" data-logout>Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+
+    <aside class="side-nav">
+      <a href="dashboard.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Credits</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Add Page</a>
+      <a href="index.html" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Overview</span>
+          <h1>Yo, <span class="grad-text" id="hello-name">Flexer</span> 👋</h1>
+          <p class="sub">Aapki fam ka hisaab-kitaab, ek nazar me.</p>
+        </div>
+        <a href="add.html" class="btn btn-primary btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New Campaign</a>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-stat reveal" style="--c:#34e5a5">
+          <span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.2c-.5-1-1.6-1.6-3-1.6-1.8 0-3 1-3 2.4 0 3.4 6 1.8 6 4.7 0 1.5-1.3 2.6-3.2 2.6-1.5 0-2.7-.7-3.2-1.8"/></svg></span>
+          <div class="ds-num" data-credits>0</div>
+          <div class="ds-lbl">Credit balance</div>
+        </div>
+        <div class="dash-stat reveal" style="--c:#a970ff" data-delay="1">
+          <span class="ds-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg></span>
+          <div class="ds-num" id="ds-earned">0</div>
+          <div class="ds-lbl">Lifetime earned</div>
+        </div>
+        <div class="dash-stat reveal" style="--c:#ff8a3d" data-delay="2">
+          <span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span>
+          <div class="ds-num" id="ds-spent">0</div>
+          <div class="ds-lbl">Credits spent</div>
+        </div>
+        <div class="dash-stat reveal" style="--c:#22d3ee" data-delay="3">
+          <span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <div class="ds-num" id="ds-actions">0</div>
+          <div class="ds-lbl">Engagements received</div>
+        </div>
+      </div>
+
+      <div class="dash-cols">
+        <div>
+          <div class="panel reveal">
+            <div class="panel-head"><h3>Your campaigns</h3><a href="add.html">+ Add new</a></div>
+            <div class="camp-rows" id="camp-list"></div>
+            <div class="empty-state hidden" id="camp-empty">
+              <span class="big-ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span>
+              <h3>Abhi koi campaign nahi</h3>
+              <p>Pehla page add karo — Telegram channel, YouTube, anything. Growth 5 minute me shuru.</p>
+              <a href="add.html" class="btn btn-primary btn-sm mt-16">Add Your First Page</a>
+            </div>
+          </div>
+
+          <div class="panel reveal mt-16">
+            <div class="panel-head"><h3>This week's earning</h3><span class="status-pill on" id="week-delta">Live</span></div>
+            <div class="mini-chart" id="mini-chart"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel reveal">
+            <div class="panel-head"><h3>Refer &amp; earn</h3></div>
+            <p class="text-mute" style="font-size:13.5px">Dost FlexFam join kare to aapko unki earning ka <b style="color:var(--green)">10% lifetime</b> — automatically.</p>
+            <div class="ref-box">
+              <code id="ref-link">flexfam.io/r/—</code>
+              <button class="btn btn-primary btn-sm" id="copy-ref">Copy</button>
+            </div>
+          </div>
+
+          <div class="panel reveal mt-16">
+            <div class="panel-head"><h3>Recent activity</h3><a href="earn.html">Earn more</a></div>
+            <div class="act-list" id="act-list"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/main.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  let user = FF.currentUser();
+  if (!user) return;
+
+  const first = user.name.split(" ")[0];
+  document.getElementById("hello-name").textContent = first;
+
+  /* stats */
+  function paintStats() {
+    user = FF.currentUser();
+    const camps = user.campaigns || [];
+    const totalActions = camps.reduce((s, c) => s + (c.actions || 0), 0);
+    document.getElementById("ds-earned").textContent = (user.earned || 0).toLocaleString("en-IN");
+    document.getElementById("ds-spent").textContent = (user.spent || 0).toLocaleString("en-IN");
+    document.getElementById("ds-actions").textContent = totalActions.toLocaleString("en-IN");
+    FF.syncCreditPills();
+  }
+
+  /* campaigns */
+  const campList = document.getElementById("camp-list");
+  const campEmpty = document.getElementById("camp-empty");
+
+  function renderCamps() {
+    const camps = user.campaigns || [];
+    campEmpty.classList.toggle("hidden", camps.length > 0);
+    campList.innerHTML = camps.map((c) => {
+      const p = FF.PLATFORMS[c.platform];
+      return `
+      <div class="camp-row" style="--pf:${p.color}">
+        <span class="cr-pf">${p.icon}</span>
+        <div class="cr-info">
+          <h5>${c.title}</h5>
+          <p>${p.name} · ${c.action || p.actions[0]} · ${c.payout} cr/action</p>
+        </div>
+        <div class="cr-meta"><b>${(c.actions || 0).toLocaleString("en-IN")}</b>engagements</div>
+        <span class="status-pill ${c.active ? "on" : "off"}">${c.active ? "Live" : "Paused"}</span>
+        <button class="icon-btn" data-toggle-camp="${c.id}" title="${c.active ? "Pause" : "Resume"}">
+          ${c.active
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M10 5v14M14 5v14"/></svg>'
+            : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7-11-7z"/></svg>'}
+        </button>
+        <button class="icon-btn danger" data-del-camp="${c.id}" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>`;
+    }).join("");
+  }
+
+  campList.addEventListener("click", (e) => {
+    const tBtn = e.target.closest("[data-toggle-camp]");
+    const dBtn = e.target.closest("[data-del-camp]");
+    const camps = (user.campaigns || []).slice();
+    if (tBtn) {
+      const c = camps.find((x) => x.id === tBtn.dataset.toggleCamp);
+      if (c) {
+        c.active = !c.active;
+        FF.updateUser(user.email, { campaigns: camps });
+        FF.toast(c.active ? '"' + c.title + '" resume ho gaya' : '"' + c.title + '" paused', "info");
+      }
+    }
+    if (dBtn) {
+      const c = camps.find((x) => x.id === dBtn.dataset.delCamp);
+      const rest = camps.filter((x) => x.id !== dBtn.dataset.delCamp);
+      FF.updateUser(user.email, { campaigns: rest });
+      FF.toast('"' + (c ? c.title : "Campaign") + '" delete ho gaya', "info");
+    }
+    if (tBtn || dBtn) { user = FF.currentUser(); renderCamps(); paintStats(); }
+  });
+
+  /* weekly chart */
+  const chart = document.getElementById("mini-chart");
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekly = user.weekly || [42, 68, 55, 90, 74, 110, 96];
+  const max = Math.max.apply(null, weekly);
+  chart.innerHTML = weekly.map((v, i) =>
+    '<div class="mcol"><div class="mbar" style="height:' + Math.round((v / max) * 100) + '%" title="' + v + ' credits"></div><span>' + days[i] + "</span></div>"
+  ).join("");
+  const sum = weekly.reduce((a, b) => a + b, 0);
+  document.getElementById("week-delta").textContent = sum.toLocaleString("en-IN") + " cr";
+
+  /* referral */
+  const refLink = document.getElementById("ref-link");
+  refLink.textContent = "flexfam.io/r/" + (user.refCode || "FLEXER");
+  document.getElementById("copy-ref").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText("https://flexfam.io/r/" + user.refCode);
+      FF.toast("Referral link copy ho gaya!", "ok");
+    } catch (err) {
+      FF.toast("Copy nahi hua — link manually select karo", "err");
+    }
+  });
+
+  /* activity */
+  const actList = document.getElementById("act-list");
+  function timeAgo(ts) {
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return "just now";
+    if (s < 3600) return Math.floor(s / 60) + " min ago";
+    if (s < 86400) return Math.floor(s / 3600) + " hr ago";
+    return Math.floor(s / 86400) + "d ago";
+  }
+  function renderActivity() {
+    const acts = user.activity || [];
+    if (!acts.length) {
+      actList.innerHTML = '<div class="empty-state" style="padding:34px 10px"><p>Abhi koi activity nahi — Earn page par pehle credits kamao!</p></div>';
+      return;
+    }
+    actList.innerHTML = acts.slice(0, 10).map((a) => {
+      const minus = a.amount < 0;
+      return `
+      <div class="act-row">
+        <span class="a-ico ${minus ? "a-minus" : ""}">
+          ${minus
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>'}
+        </span>
+        <p>${a.text}<small>${timeAgo(a.at)}</small></p>
+        <span class="a-amount ${minus ? "minus" : "plus"}">${minus ? "" : "+"}${a.amount}</span>
+      </div>`;
+    }).join("");
+  }
+
+  renderCamps();
+  renderActivity();
+  paintStats();
+});
+</script>
+</body>
+</html>

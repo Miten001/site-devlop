@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Earn Credits — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="earn.html" class="active">Earn Credits</a></li>
+      <li><a href="add.html">Add Page</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="dashboard.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="earn.html">Earn Credits</a>
+  <a href="add.html">Add Page</a>
+  <a href="index.html" data-logout>Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+
+    <aside class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="earn.html" class="active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Credits</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Add Page</a>
+      <a href="index.html" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Earn</span>
+          <h1>Earn <span class="grad-text">credits</span></h1>
+          <p class="sub">Complete tasks — credits turant aapke wallet me. Aaj bhi naye campaigns live hain.</p>
+        </div>
+        <div class="credit-chip" style="font-size:16px;padding:13px 22px"><span data-coin></span><span data-credits>0</span>&nbsp;credits</div>
+      </div>
+
+      <div class="panel">
+        <div class="chip-row" id="chip-row">
+          <button class="chip active" data-filter="all" style="--pf:#e0489f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> All Tasks</button>
+          <!-- platform chips injected -->
+        </div>
+        <div class="task-list" id="task-list"></div>
+        <div class="empty-state hidden" id="empty-state">
+          <span class="big-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M8.5 15a3.5 3.5 0 0 0 7 0"/></svg></span>
+          <h3>Sab tasks complete!</h3>
+          <p>Is filter me sab campaigns finish ho gaye. Naye campaigns har thodi der me aate rehte hain.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- VERIFY MODAL -->
+<div class="modal-veil" id="task-modal">
+  <div class="modal modal-pos" id="task-modal-card">
+    <button class="m-close" data-close-modal><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <span class="m-ico" id="m-ico"></span>
+    <h3 id="m-title">Complete the task</h3>
+    <p class="m-sub" id="m-sub"></p>
+    <div class="m-steps">
+      <div><span class="n">1</span> Neeche button se page kholo (naya tab)</div>
+      <div><span class="n">2</span> Action complete karo — join / follow / subscribe</div>
+      <div><span class="n">3</span> Wapas aao, "Verify &amp; Claim" dabao, credits lo</div>
+    </div>
+    <div class="progress-shell"><div class="progress-fill" id="m-progress"></div></div>
+    <div class="flex gap-12">
+      <a class="btn btn-primary btn-block" id="m-open" href="#" target="_blank" rel="noopener">Open &amp; Complete</a>
+      <button class="btn btn-ghost btn-block hidden" id="m-claim">Verify &amp; Claim</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  let user = FF.currentUser();
+  if (!user) return;
+
+  const chipRow = document.getElementById("chip-row");
+  const listEl = document.getElementById("task-list");
+  const emptyEl = document.getElementById("empty-state");
+  const modal = document.getElementById("task-modal");
+  const mCard = document.getElementById("task-modal-card");
+  const mIco = document.getElementById("m-ico");
+  const mTitle = document.getElementById("m-title");
+  const mSub = document.getElementById("m-sub");
+  const mOpen = document.getElementById("m-open");
+  const mClaim = document.getElementById("m-claim");
+  const mProgress = document.getElementById("m-progress");
+
+  let activeFilter = "all";
+  let pendingTask = null;
+  let timer = null;
+
+  // build platform chips
+  Object.values(FF.PLATFORMS).forEach((p) => {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.dataset.filter = p.key;
+    b.style.setProperty("--pf", p.color);
+    b.innerHTML = p.icon + " " + p.name;
+    chipRow.appendChild(b);
+  });
+
+  chipRow.addEventListener("click", (e) => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    activeFilter = btn.dataset.filter;
+    chipRow.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c === btn));
+    render();
+  });
+
+  function doneIds() {
+    return new Set(FF.DB.doneMap()[user.email] || []);
+  }
+
+  function render() {
+    const done = doneIds();
+    const items = FF.DB.campaigns().filter((c) => activeFilter === "all" || c.platform === activeFilter);
+    emptyEl.classList.toggle("hidden", items.some((c) => !done.has(c.id)));
+    listEl.innerHTML = items.map((c) => {
+      const p = FF.PLATFORMS[c.platform];
+      const isDone = done.has(c.id);
+      return `
+        <div class="task-card ${isDone ? "done" : ""}" style="--pf:${p.color}">
+          <div class="task-top">
+            <span class="pf-badge">${p.icon}</span>
+            <div>
+              <h4>${c.user}</h4>
+              <p>${p.name} · ${c.action}</p>
+            </div>
+            <div class="pay-bubble"><b>+${c.payout}</b><span>credits</span></div>
+          </div>
+          <div class="task-action">
+            <button class="btn ${isDone ? "btn-ghost" : "btn-primary"} btn-sm" data-task="${c.id}" ${isDone ? "disabled" : ""}>
+              ${isDone ? "Completed ✓" : "Start Task"}
+            </button>
+            <a class="btn btn-ghost btn-sm" href="${c.url}" target="_blank" rel="noopener" title="Open link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+            </a>
+          </div>
+          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${p.hint} par verify hoga</span>
+          ${isDone ? '<span class="done-tag">Done</span>' : ""}
+        </div>`;
+    }).join("");
+  }
+
+  listEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-task]");
+    if (!btn || btn.disabled) return;
+    const task = FF.DB.campaigns().find((c) => c.id === btn.dataset.task);
+    if (!task) return;
+    openModal(task);
+  });
+
+  function openModal(task) {
+    pendingTask = task;
+    const p = FF.PLATFORMS[task.platform];
+    mCard.style.setProperty("--pf", p.color);
+    mIco.innerHTML = p.icon;
+    mTitle.textContent = task.action + " · " + task.user;
+    mSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " credits</b>";
+    mOpen.textContent = "Open " + p.name + " Page";
+    mOpen.href = task.url;
+    mClaim.classList.add("hidden");
+    mClaim.disabled = true;
+    mOpen.classList.remove("hidden");
+    mProgress.style.width = "0%";
+    modal.classList.add("open");
+  }
+
+  function closeModal() {
+    modal.classList.remove("open");
+    clearInterval(timer);
+    pendingTask = null;
+  }
+
+  document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", closeModal));
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+  mOpen.addEventListener("click", () => {
+    // start verification countdown
+    mOpen.classList.add("hidden");
+    mClaim.classList.remove("hidden");
+    mClaim.disabled = true;
+    mClaim.textContent = "Verifying… 6s";
+    let t = 0;
+    clearInterval(timer);
+    timer = setInterval(() => {
+      t += 0.5;
+      mProgress.style.width = Math.min((t / 6) * 100, 100) + "%";
+      mClaim.textContent = t >= 6 ? 'Verify & Claim +' + pendingTask.payout : "Verifying… " + Math.max(1, Math.ceil(6 - t)) + "s";
+      if (t >= 6) { clearInterval(timer); mClaim.disabled = false; }
+    }, 500);
+  });
+
+  mClaim.addEventListener("click", () => {
+    if (!pendingTask) return;
+    const task = pendingTask;
+    const p = FF.PLATFORMS[task.platform];
+    FF.awardCredits(user.email, task.payout, p.name + " · " + task.action + ' "' + task.user + '"');
+    const dm = FF.DB.doneMap();
+    dm[user.email] = dm[user.email] || [];
+    if (!dm[user.email].includes(task.id)) dm[user.email].push(task.id);
+    FF.DB.saveDoneMap(dm);
+    user = FF.currentUser();
+    FF.toast("+" + task.payout + " credits earned! Keep flexing.", "ok");
+    closeModal();
+    render();
+  });
+
+  render();
+});
+</script>
+</body>
+</html>

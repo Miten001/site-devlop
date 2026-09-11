@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Login — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <div class="head-actions">
+      <a href="index.html" class="btn btn-ghost btn-sm always">← Home</a>
+    </div>
+  </div>
+</header>
+
+<div class="auth-wrap">
+  <div class="auth-card reveal in">
+    <h1>Wapas aagaye! 👋</h1>
+    <p class="sub">Fam miss kar rahi thi — credits kamao, pages grow karo.</p>
+    <form id="login-form">
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" placeholder="you@example.com" required autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg">Login to FlexFam</button>
+    </form>
+    <div class="divider">ya phir</div>
+    <button class="btn btn-ghost btn-block" id="demo-login">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg>
+      One-click demo account try karo
+    </button>
+    <p class="auth-alt">Naya ho yahan? <a href="signup.html">Free account banao</a> — 300 bonus credits waiting.</p>
+  </div>
+</div>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>
