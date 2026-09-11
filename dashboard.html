@@ -19,7 +19,7 @@
     <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
     <ul class="nav-links">
       <li><a href="dashboard.html" class="active">Dashboard</a></li>
-      <li><a href="earn.html">Earn Credits</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
       <li><a href="add.html">Add Page</a></li>
     </ul>
     <div class="head-actions">
@@ -32,7 +32,7 @@
 
 <nav class="mobile-nav">
   <a href="dashboard.html">Dashboard</a>
-  <a href="earn.html">Earn Credits</a>
+  <a href="earn.html">Earn Points</a>
   <a href="add.html">Add Page</a>
   <a href="index.html" data-logout>Logout</a>
 </nav>
@@ -42,7 +42,7 @@
 
     <aside class="side-nav">
       <a href="dashboard.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
-      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Credits</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
       <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Add Page</a>
       <a href="index.html" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
     </aside>
@@ -52,16 +52,16 @@
         <div>
           <span class="eyebrow"><span class="dot"></span> Overview</span>
           <h1>Yo, <span class="grad-text" id="hello-name">Flexer</span> 👋</h1>
-          <p class="sub">Aapki fam ka hisaab-kitaab, ek nazar me.</p>
+          <p class="sub">Your fam's numbers, at a glance.</p>
         </div>
         <a href="add.html" class="btn btn-primary btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New Campaign</a>
       </div>
 
       <div class="dash-grid">
-        <div class="dash-stat reveal" style="--c:#34e5a5">
+        <div class="dash-stat reveal" style="--c:#ffd166">
           <span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.2c-.5-1-1.6-1.6-3-1.6-1.8 0-3 1-3 2.4 0 3.4 6 1.8 6 4.7 0 1.5-1.3 2.6-3.2 2.6-1.5 0-2.7-.7-3.2-1.8"/></svg></span>
           <div class="ds-num" data-credits>0</div>
-          <div class="ds-lbl">Credit balance</div>
+          <div class="ds-lbl">Point balance</div>
         </div>
         <div class="dash-stat reveal" style="--c:#a970ff" data-delay="1">
           <span class="ds-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg></span>
@@ -71,7 +71,7 @@
         <div class="dash-stat reveal" style="--c:#ff8a3d" data-delay="2">
           <span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span>
           <div class="ds-num" id="ds-spent">0</div>
-          <div class="ds-lbl">Credits spent</div>
+          <div class="ds-lbl">Points spent</div>
         </div>
         <div class="dash-stat reveal" style="--c:#22d3ee" data-delay="3">
           <span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
@@ -87,8 +87,8 @@
             <div class="camp-rows" id="camp-list"></div>
             <div class="empty-state hidden" id="camp-empty">
               <span class="big-ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span>
-              <h3>Abhi koi campaign nahi</h3>
-              <p>Pehla page add karo — Telegram channel, YouTube, anything. Growth 5 minute me shuru.</p>
+              <h3>No campaigns yet</h3>
+              <p>Add your first page — Telegram channel, YouTube, anything. Growth starts in 5 minutes.</p>
               <a href="add.html" class="btn btn-primary btn-sm mt-16">Add Your First Page</a>
             </div>
           </div>
@@ -102,7 +102,7 @@
         <div>
           <div class="panel reveal">
             <div class="panel-head"><h3>Refer &amp; earn</h3></div>
-            <p class="text-mute" style="font-size:13.5px">Dost FlexFam join kare to aapko unki earning ka <b style="color:var(--green)">10% lifetime</b> — automatically.</p>
+            <p class="text-mute" style="font-size:13.5px">When a friend joins FlexFam, you get <b style="color:var(--green)">10% of their earnings for life</b> — automatically.</p>
             <div class="ref-box">
               <code id="ref-link">flexfam.io/r/—</code>
               <button class="btn btn-primary btn-sm" id="copy-ref">Copy</button>
@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="cr-pf">${p.icon}</span>
         <div class="cr-info">
           <h5>${c.title}</h5>
-          <p>${p.name} · ${c.action || p.actions[0]} · ${c.payout} cr/action</p>
+          <p>${p.name} · ${c.action || p.actions[0]} · ${c.payout} pts/action</p>
         </div>
         <div class="cr-meta"><b>${(c.actions || 0).toLocaleString("en-IN")}</b>engagements</div>
         <span class="status-pill ${c.active ? "on" : "off"}">${c.active ? "Live" : "Paused"}</span>
@@ -179,14 +179,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (c) {
         c.active = !c.active;
         FF.updateUser(user.email, { campaigns: camps });
-        FF.toast(c.active ? '"' + c.title + '" resume ho gaya' : '"' + c.title + '" paused', "info");
+        FF.toast(c.active ? '"' + c.title + '" resumed' : '"' + c.title + '" paused', "info");
       }
     }
     if (dBtn) {
       const c = camps.find((x) => x.id === dBtn.dataset.delCamp);
       const rest = camps.filter((x) => x.id !== dBtn.dataset.delCamp);
       FF.updateUser(user.email, { campaigns: rest });
-      FF.toast('"' + (c ? c.title : "Campaign") + '" delete ho gaya', "info");
+      FF.toast('"' + (c ? c.title : "Campaign") + '" deleted', "info");
     }
     if (tBtn || dBtn) { user = FF.currentUser(); renderCamps(); paintStats(); }
   });
@@ -197,10 +197,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const weekly = user.weekly || [42, 68, 55, 90, 74, 110, 96];
   const max = Math.max.apply(null, weekly);
   chart.innerHTML = weekly.map((v, i) =>
-    '<div class="mcol"><div class="mbar" style="height:' + Math.round((v / max) * 100) + '%" title="' + v + ' credits"></div><span>' + days[i] + "</span></div>"
+    '<div class="mcol"><div class="mbar" style="height:' + Math.round((v / max) * 100) + '%" title="' + v + ' points"></div><span>' + days[i] + "</span></div>"
   ).join("");
   const sum = weekly.reduce((a, b) => a + b, 0);
-  document.getElementById("week-delta").textContent = sum.toLocaleString("en-IN") + " cr";
+  document.getElementById("week-delta").textContent = sum.toLocaleString("en-IN") + " pts";
 
   /* referral */
   const refLink = document.getElementById("ref-link");
@@ -208,9 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("copy-ref").addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText("https://flexfam.io/r/" + user.refCode);
-      FF.toast("Referral link copy ho gaya!", "ok");
+      FF.toast("Referral link copied!", "ok");
     } catch (err) {
-      FF.toast("Copy nahi hua — link manually select karo", "err");
+      FF.toast("Couldn't copy — select the link manually", "err");
     }
   });
 
@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderActivity() {
     const acts = user.activity || [];
     if (!acts.length) {
-      actList.innerHTML = '<div class="empty-state" style="padding:34px 10px"><p>Abhi koi activity nahi — Earn page par pehle credits kamao!</p></div>';
+      actList.innerHTML = '<div class="empty-state" style="padding:34px 10px"><p>No activity yet — earn some points on the Earn page first!</p></div>';
       return;
     }
     actList.innerHTML = acts.slice(0, 10).map((a) => {
