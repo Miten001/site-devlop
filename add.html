@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Add Page — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="earn.html">Earn Credits</a></li>
+      <li><a href="add.html" class="active">Add Page</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="dashboard.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="earn.html">Earn Credits</a>
+  <a href="add.html">Add Page</a>
+  <a href="index.html" data-logout>Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container">
+    <div class="page-head" style="justify-content:center;text-align:center">
+      <div style="width:100%">
+        <span class="eyebrow"><span class="dot"></span> Promote</span>
+        <h1>Add your <span class="grad-text-cool">page</span></h1>
+        <p class="sub" style="max-width:560px;margin-left:auto;margin-right:auto">Telegram channel, YouTube, Instagram — jo bhi grow karna ho, yahan campaign banao. Community aapko engagements degi, aap sirf credits doge.</p>
+      </div>
+    </div>
+
+    <form class="form-card" id="add-form" novalidate>
+      <div class="field">
+        <label>1. Platform choose karo</label>
+        <div class="pf-picker" id="pf-picker"><!-- injected --></div>
+      </div>
+
+      <div class="field">
+        <label>2. Engagement type</label>
+        <div class="control">
+          <select id="action-select"></select>
+          <span class="pick-caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>3. Page URL</label>
+        <input type="url" id="camp-url" placeholder="https://t.me/yourchannel" required />
+      </div>
+
+      <div class="field">
+        <label>4. Display title</label>
+        <input type="text" id="camp-title" placeholder="e.g. TechGuru Official Channel" maxlength="60" required />
+      </div>
+
+      <div class="field">
+        <label>5. Har engagement ka payout</label>
+        <div class="range-row">
+          <input type="range" id="camp-payout" min="5" max="100" step="1" value="15" />
+          <output id="payout-out">15 cr</output>
+        </div>
+      </div>
+
+      <div class="est-box">
+        <div class="est"><b id="est-actions" class="grad-text">—</b><span>Est. engagements</span></div>
+        <div class="est"><b id="est-budget" class="grad-text">—</b><span>Your balance</span></div>
+        <div class="est"><b id="est-score" class="grad-text">—</b><span>Queue speed</span></div>
+      </div>
+
+      <div class="form-note mt-16">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
+        <span>Credits sirf tab katenge jab koi real user aapka engagement complete karega. Campaign ko kabhi bhi pause ya delete kar sakte ho — unused credits safe rehte hain.</span>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Launch Campaign 🚀</button>
+    </form>
+  </div>
+</main>
+
+<script src="assets/js/main.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const user = FF.currentUser();
+  if (!user) return;
+
+  const picker = document.getElementById("pf-picker");
+  const actionSelect = document.getElementById("action-select");
+  const urlInput = document.getElementById("camp-url");
+  const payoutSlider = document.getElementById("camp-payout");
+  const payoutOut = document.getElementById("payout-out");
+  const estActions = document.getElementById("est-actions");
+  const estBudget = document.getElementById("est-budget");
+  const estScore = document.getElementById("est-score");
+  const form = document.getElementById("add-form");
+
+  let selected = "telegram";
+
+  // render platform tiles
+  picker.innerHTML = Object.values(FF.PLATFORMS).map((p) => `
+    <button type="button" class="pf-pick ${p.key === selected ? "selected" : ""}" data-pf="${p.key}" style="--pf:${p.color}">
+      <span class="check-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+      ${p.icon}
+      ${p.name}
+    </button>`).join("");
+
+  function refreshActions() {
+    const p = FF.PLATFORMS[selected];
+    actionSelect.innerHTML = p.actions.map((a) => `<option value="${a}">${a}</option>`).join("");
+    urlInput.placeholder = { telegram: "https://t.me/yourchannel", youtube: "https://youtube.com/@yourchannel", instagram: "https://instagram.com/yourpage", x: "https://x.com/yourhandle", tiktok: "https://tiktok.com/@yourhandle", facebook: "https://facebook.com/yourpage", twitch: "https://twitch.tv/yourchannel", pinterest: "https://pinterest.com/yourboard" }[selected];
+    refreshEst();
+  }
+
+  function refreshEst() {
+    const payout = parseInt(payoutSlider.value, 10);
+    const credits = user ? (FF.currentUser().credits || 0) : 0;
+    payoutOut.textContent = payout + " cr";
+    estActions.textContent = Math.floor(credits / payout).toLocaleString("en-IN");
+    estBudget.textContent = credits.toLocaleString("en-IN");
+    estScore.textContent = payout >= 40 ? "Blazing ⚡" : payout >= 20 ? "Fast" : "Steady";
+  }
+
+  picker.addEventListener("click", (e) => {
+    const tile = e.target.closest(".pf-pick");
+    if (!tile) return;
+    selected = tile.dataset.pf;
+    picker.querySelectorAll(".pf-pick").forEach((t) => t.classList.toggle("selected", t === tile));
+    refreshActions();
+  });
+
+  payoutSlider.addEventListener("input", refreshEst);
+  refreshActions();
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const p = FF.PLATFORMS[selected];
+    const url = urlInput.value.trim();
+    const title = document.getElementById("camp-title").value.trim();
+    const payout = parseInt(payoutSlider.value, 10);
+    const action = actionSelect.value;
+
+    if (!/^https?:\/\/.+\..+/.test(url)) return FF.toast("Valid URL daaliye (https://...)", "err");
+    if (selected === "telegram" && !/t\.me\//i.test(url)) return FF.toast("Telegram link t.me/ format me hona chahiye", "err");
+    if (selected === "youtube" && !/(youtube\.com|youtu\.be)/i.test(url)) return FF.toast("Ye YouTube link nahi lag raha", "err");
+    if (selected === "instagram" && !/instagram\.com/i.test(url)) return FF.toast("Instagram URL check karo", "err");
+    if (title.length < 3) return FF.toast("Title kam se kam 3 characters ka ho", "err");
+    if ((FF.currentUser().credits || 0) < payout) return FF.toast("Credits kam hain — pehle Earn page par kuch kama lo!", "err");
+
+    const u = FF.currentUser();
+    const camp = {
+      id: "m" + Date.now(),
+      platform: selected,
+      action,
+      title,
+      url,
+      payout,
+      active: true,
+      actions: 0,
+      spent: 0,
+      created: Date.now(),
+    };
+    FF.updateUser(u.email, { campaigns: [camp].concat(u.campaigns || []) });
+    FF.toast(p.name + " campaign live ho gaya! 🚀", "ok");
+    setTimeout(() => (window.location.href = "dashboard.html"), 900);
+  });
+});
+</script>
+</body>
+</html>
