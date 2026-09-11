@@ -1,0 +1,42 @@
+name: Telegram Bot
+
+# FlexFam Sub4Sub bot — GitHub Actions pe free 24/7 deploy (public repo = unlimited minutes).
+# • schedule (har 5 min): running bot hai toh pending rehta hai, warna start hota hai → 24/7
+# • push (sirf bot code change hone par): naya code turant deploy
+# • BOT_TOKEN secret chahiye: Settings → Secrets and variables → Actions → BOT_TOKEN
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main, arena/01a092bd-site-devlop]
+    paths:
+      - "telegram-bot/**"
+      - ".github/workflows/telegram-bot.yml"
+
+# Ek hi waqt me ek hi bot run (DB sync conflicts se bachne ke liye)
+concurrency:
+  group: telegram-bot
+  cancel-in-progress: false
+
+permissions:
+  contents: write # bot-state branch pe encrypted DB push karne ke liye
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Bot chalao
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ADMIN_IDS: ${{ secrets.ADMIN_IDS }}
+          RUN_MINUTES: "330"
+        run: bash telegram-bot/deploy/run_bot.sh
