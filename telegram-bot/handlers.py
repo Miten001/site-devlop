@@ -931,8 +931,14 @@ async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 # ── app wiring ──────────────────────────────────────────────────────────
+async def _post_init(app: Application) -> None:
+    """Startup confirmation — deploy logs me clearly dikhe."""
+    me = await app.bot.get_me()
+    log.info("✅ Bot LIVE hai: @%s (id: %s)", me.username, me.id)
+
+
 def create_application(token: str) -> Application:
-    app = Application.builder().token(token).build()
+    app = Application.builder().token(token).post_init(_post_init).build()
     private = filters.ChatType.PRIVATE
 
     app.add_handler(ChatMemberHandler(on_my_chat_member, ChatMemberHandler.MY_CHAT_MEMBER))
