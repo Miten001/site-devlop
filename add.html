@@ -19,7 +19,7 @@
     <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
     <ul class="nav-links">
       <li><a href="dashboard.html">Dashboard</a></li>
-      <li><a href="earn.html">Earn Credits</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
       <li><a href="add.html" class="active">Add Page</a></li>
     </ul>
     <div class="head-actions">
@@ -32,7 +32,7 @@
 
 <nav class="mobile-nav">
   <a href="dashboard.html">Dashboard</a>
-  <a href="earn.html">Earn Credits</a>
+  <a href="earn.html">Earn Points</a>
   <a href="add.html">Add Page</a>
   <a href="index.html" data-logout>Logout</a>
 </nav>
@@ -43,13 +43,13 @@
       <div style="width:100%">
         <span class="eyebrow"><span class="dot"></span> Promote</span>
         <h1>Add your <span class="grad-text-cool">page</span></h1>
-        <p class="sub" style="max-width:560px;margin-left:auto;margin-right:auto">Telegram channel, YouTube, Instagram — jo bhi grow karna ho, yahan campaign banao. Community aapko engagements degi, aap sirf credits doge.</p>
+        <p class="sub" style="max-width:560px;margin-left:auto;margin-right:auto">Telegram channel, YouTube, Instagram — whatever you want to grow, build a campaign here. The community gives you engagements, you just pay points.</p>
       </div>
     </div>
 
     <form class="form-card" id="add-form" novalidate>
       <div class="field">
-        <label>1. Platform choose karo</label>
+        <label>1. Choose a platform</label>
         <div class="pf-picker" id="pf-picker"><!-- injected --></div>
       </div>
 
@@ -72,10 +72,10 @@
       </div>
 
       <div class="field">
-        <label>5. Har engagement ka payout</label>
+        <label>5. Payout per engagement</label>
         <div class="range-row">
-          <input type="range" id="camp-payout" min="5" max="100" step="1" value="15" />
-          <output id="payout-out">15 cr</output>
+          <input type="range" id="camp-payout" min="1" max="20" step="1" value="4" />
+          <output id="payout-out">4 pts</output>
         </div>
       </div>
 
@@ -87,7 +87,7 @@
 
       <div class="form-note mt-16">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
-        <span>Credits sirf tab katenge jab koi real user aapka engagement complete karega. Campaign ko kabhi bhi pause ya delete kar sakte ho — unused credits safe rehte hain.</span>
+        <span>Points are only deducted when a real user completes your engagement. You can pause or delete a campaign anytime — unused points stay safe.</span>
       </div>
 
       <button type="submit" class="btn btn-primary btn-lg btn-block">Launch Campaign 🚀</button>
@@ -131,10 +131,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function refreshEst() {
     const payout = parseInt(payoutSlider.value, 10);
     const credits = user ? (FF.currentUser().credits || 0) : 0;
-    payoutOut.textContent = payout + " cr";
+    payoutOut.textContent = payout + " pts";
     estActions.textContent = Math.floor(credits / payout).toLocaleString("en-IN");
     estBudget.textContent = credits.toLocaleString("en-IN");
-    estScore.textContent = payout >= 40 ? "Blazing ⚡" : payout >= 20 ? "Fast" : "Steady";
+    estScore.textContent = payout >= 12 ? "Blazing ⚡" : payout >= 6 ? "Fast" : "Steady";
   }
 
   picker.addEventListener("click", (e) => {
@@ -156,12 +156,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const payout = parseInt(payoutSlider.value, 10);
     const action = actionSelect.value;
 
-    if (!/^https?:\/\/.+\..+/.test(url)) return FF.toast("Valid URL daaliye (https://...)", "err");
-    if (selected === "telegram" && !/t\.me\//i.test(url)) return FF.toast("Telegram link t.me/ format me hona chahiye", "err");
-    if (selected === "youtube" && !/(youtube\.com|youtu\.be)/i.test(url)) return FF.toast("Ye YouTube link nahi lag raha", "err");
-    if (selected === "instagram" && !/instagram\.com/i.test(url)) return FF.toast("Instagram URL check karo", "err");
-    if (title.length < 3) return FF.toast("Title kam se kam 3 characters ka ho", "err");
-    if ((FF.currentUser().credits || 0) < payout) return FF.toast("Credits kam hain — pehle Earn page par kuch kama lo!", "err");
+    if (!/^https?:\/\/.+\..+/.test(url)) return FF.toast("Please enter a valid URL (https://...)", "err");
+    if (selected === "telegram" && !/t\.me\//i.test(url)) return FF.toast("Telegram link must be in the t.me/ format", "err");
+    if (selected === "youtube" && !/(youtube\.com|youtu\.be)/i.test(url)) return FF.toast("That doesn't look like a YouTube link", "err");
+    if (selected === "instagram" && !/instagram\.com/i.test(url)) return FF.toast("Please check the Instagram URL", "err");
+    if (title.length < 3) return FF.toast("Title must be at least 3 characters", "err");
+    if ((FF.currentUser().credits || 0) < payout) return FF.toast("Not enough points — earn some on the Earn page first!", "err");
 
     const u = FF.currentUser();
     const camp = {
@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
       created: Date.now(),
     };
     FF.updateUser(u.email, { campaigns: [camp].concat(u.campaigns || []) });
-    FF.toast(p.name + " campaign live ho gaya! 🚀", "ok");
+    FF.toast(p.name + " campaign is live! 🚀", "ok");
     setTimeout(() => (window.location.href = "dashboard.html"), 900);
   });
 });

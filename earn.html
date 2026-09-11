@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Earn Credits — FlexFam</title>
+<title>Earn Points — FlexFam</title>
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -19,7 +19,7 @@
     <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
     <ul class="nav-links">
       <li><a href="dashboard.html">Dashboard</a></li>
-      <li><a href="earn.html" class="active">Earn Credits</a></li>
+      <li><a href="earn.html" class="active">Earn Points</a></li>
       <li><a href="add.html">Add Page</a></li>
     </ul>
     <div class="head-actions">
@@ -32,7 +32,7 @@
 
 <nav class="mobile-nav">
   <a href="dashboard.html">Dashboard</a>
-  <a href="earn.html">Earn Credits</a>
+  <a href="earn.html">Earn Points</a>
   <a href="add.html">Add Page</a>
   <a href="index.html" data-logout>Logout</a>
 </nav>
@@ -42,7 +42,7 @@
 
     <aside class="side-nav">
       <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
-      <a href="earn.html" class="active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Credits</a>
+      <a href="earn.html" class="active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
       <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Add Page</a>
       <a href="index.html" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
     </aside>
@@ -51,10 +51,10 @@
       <div class="page-head">
         <div>
           <span class="eyebrow"><span class="dot"></span> Earn</span>
-          <h1>Earn <span class="grad-text">credits</span></h1>
-          <p class="sub">Complete tasks — credits turant aapke wallet me. Aaj bhi naye campaigns live hain.</p>
+          <h1>Earn <span class="grad-text">points</span></h1>
+          <p class="sub">Complete tasks — points land in your wallet instantly. New campaigns are live today too.</p>
         </div>
-        <div class="credit-chip" style="font-size:16px;padding:13px 22px"><span data-coin></span><span data-credits>0</span>&nbsp;credits</div>
+        <div class="credit-chip" style="font-size:16px;padding:13px 22px"><span data-coin></span><span data-credits>0</span>&nbsp;points</div>
       </div>
 
       <div class="panel">
@@ -65,8 +65,8 @@
         <div class="task-list" id="task-list"></div>
         <div class="empty-state hidden" id="empty-state">
           <span class="big-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M8.5 15a3.5 3.5 0 0 0 7 0"/></svg></span>
-          <h3>Sab tasks complete!</h3>
-          <p>Is filter me sab campaigns finish ho gaye. Naye campaigns har thodi der me aate rehte hain.</p>
+          <h3>All tasks complete!</h3>
+          <p>You've finished every campaign in this filter. New campaigns arrive regularly.</p>
         </div>
       </div>
     </section>
@@ -81,9 +81,9 @@
     <h3 id="m-title">Complete the task</h3>
     <p class="m-sub" id="m-sub"></p>
     <div class="m-steps">
-      <div><span class="n">1</span> Neeche button se page kholo (naya tab)</div>
-      <div><span class="n">2</span> Action complete karo — join / follow / subscribe</div>
-      <div><span class="n">3</span> Wapas aao, "Verify &amp; Claim" dabao, credits lo</div>
+      <div><span class="n">1</span> Open the page with the button below (new tab)</div>
+      <div><span class="n">2</span> Complete the action — join / follow / subscribe</div>
+      <div><span class="n">3</span> Come back, hit "Verify &amp; Claim" and grab your points</div>
     </div>
     <div class="progress-shell"><div class="progress-fill" id="m-progress"></div></div>
     <div class="flex gap-12">
@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <h4>${c.user}</h4>
               <p>${p.name} · ${c.action}</p>
             </div>
-            <div class="pay-bubble"><b>+${c.payout}</b><span>credits</span></div>
+            <div class="pay-bubble"><b>+${c.payout}</b><span>points</span></div>
           </div>
           <div class="task-action">
             <button class="btn ${isDone ? "btn-ghost" : "btn-primary"} btn-sm" data-task="${c.id}" ${isDone ? "disabled" : ""}>
@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
             </a>
           </div>
-          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${p.hint} par verify hoga</span>
+          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> Verified on ${p.hint}</span>
           ${isDone ? '<span class="done-tag">Done</span>' : ""}
         </div>`;
     }).join("");
@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
     mCard.style.setProperty("--pf", p.color);
     mIco.innerHTML = p.icon;
     mTitle.textContent = task.action + " · " + task.user;
-    mSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " credits</b>";
+    mSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " points</b>";
     mOpen.textContent = "Open " + p.name + " Page";
     mOpen.href = task.url;
     mClaim.classList.add("hidden");
@@ -227,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!dm[user.email].includes(task.id)) dm[user.email].push(task.id);
     FF.DB.saveDoneMap(dm);
     user = FF.currentUser();
-    FF.toast("+" + task.payout + " credits earned! Keep flexing.", "ok");
+    FF.toast("+" + task.payout + " points earned! Keep flexing.", "ok");
     closeModal();
     render();
   });

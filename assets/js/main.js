@@ -143,7 +143,7 @@
       for (let i = 0; i < per; i++) {
         const name = SEED_NAMES[Math.floor(rnd() * SEED_NAMES.length)];
         const action = p.actions[Math.floor(rnd() * p.actions.length)];
-        const payout = [8, 10, 12, 15, 18, 20, 25][Math.floor(rnd() * 7)];
+        const payout = [2, 3, 4, 5, 6][Math.floor(rnd() * 5)];
         const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
         const urls = {
           telegram: "https://t.me/" + slug,
@@ -321,14 +321,14 @@
     const el = document.getElementById("ticker-text");
     if (!el) return;
     const rows = [
-      '<b>@aaravshots</b> joined <b>UrbanBeatz</b> Telegram channel & earned <b>+15</b> credits',
-      '<b>@nehavlogs</b> subscribed <b>TechGuru Rohan</b> on YouTube & earned <b>+18</b> credits',
-      '<b>@melodymaya</b> followed <b>GameLordYT</b> on Instagram & earned <b>+12</b> credits',
-      '<b>@pixelninja</b> joined <b>Crypto Charcha</b> Telegram group & earned <b>+20</b> credits',
-      '<b>@desifoodies</b> reposted <b>CricketFever</b> on X & earned <b>+10</b> credits',
-      '<b>@kwavya</b> promoted her TikTok for <b>500</b> credits',
+      '<b>@aaravshots</b> joined <b>UrbanBeatz</b> Telegram channel & earned <b>+4</b> points',
+      '<b>@nehavlogs</b> subscribed <b>TechGuru Rohan</b> on YouTube & earned <b>+6</b> points',
+      '<b>@melodymaya</b> followed <b>GameLordYT</b> on Instagram & earned <b>+3</b> points',
+      '<b>@pixelninja</b> joined <b>Crypto Charcha</b> Telegram group & earned <b>+5</b> points',
+      '<b>@desifoodies</b> reposted <b>CricketFever</b> on X & earned <b>+2</b> points',
+      '<b>@kwavya</b> promoted her TikTok for <b>120</b> points',
       '<b>@coderkibaatein</b> added a new Telegram channel campaign',
-      '<b>@traveltales</b> liked a Facebook page & earned <b>+8</b> credits',
+      '<b>@traveltales</b> liked a Facebook page & earned <b>+3</b> points',
     ];
     let i = 0;
     const swap = () => {
@@ -367,23 +367,23 @@
         const name = signupForm.name.value.trim();
         const email = signupForm.email.value.trim().toLowerCase();
         const pass = signupForm.password.value;
-        if (name.length < 2) return toast("Apna naam likhiye (min 2 characters)", "err");
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast("Valid email daaliye", "err");
-        if (pass.length < 6) return toast("Password kam se kam 6 characters ka ho", "err");
+        if (name.length < 2) return toast("Please enter your name (min 2 characters)", "err");
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast("Please enter a valid email", "err");
+        if (pass.length < 6) return toast("Password must be at least 6 characters", "err");
         const users = DB.users();
-        if (users.some((u) => u.email === email)) return toast("Ye email pehle se registered hai — login karo", "err");
+        if (users.some((u) => u.email === email)) return toast("This email is already registered — please log in", "err");
         users.push({
           name, email, pass,
-          credits: 300, earned: 300, spent: 0,
+          credits: 25, earned: 25, spent: 0,
           refCode: "FF-" + name.replace(/\s+/g, "").slice(0, 4).toUpperCase() + "-" + Math.floor(1000 + Math.random() * 9000),
           joined: Date.now(),
-          activity: [{ type: "earn", text: "Welcome bonus — FlexFam me aapka swagat hai!", amount: 300, at: Date.now() }],
+          activity: [{ type: "earn", text: "Welcome bonus — glad to have you on FlexFam!", amount: 25, at: Date.now() }],
           campaigns: [],
           weekly: [42, 68, 55, 90, 74, 110, 96],
         });
         DB.saveUsers(users);
         DB.setSession(email);
-        toast("Account ban gaya! +300 welcome credits", "ok");
+        toast("Account created! +25 welcome points", "ok");
         setTimeout(() => (window.location.href = "dashboard.html"), 900);
       });
     }
@@ -395,9 +395,9 @@
         const email = loginForm.email.value.trim().toLowerCase();
         const pass = loginForm.password.value;
         const user = DB.users().find((u) => u.email === email && u.pass === pass);
-        if (!user) return toast("Email ya password galat hai", "err");
+        if (!user) return toast("Incorrect email or password", "err");
         DB.setSession(email);
-        toast("Wapas aagaye, " + user.name.split(" ")[0] + "!", "ok");
+        toast("Welcome back, " + user.name.split(" ")[0] + "!", "ok");
         const params = new URLSearchParams(location.search);
         setTimeout(() => (window.location.href = params.get("next") || "dashboard.html"), 800);
       });
@@ -415,10 +415,10 @@
             credits: 1240, earned: 3870, spent: 2630,
             refCode: "FF-DEMO-2025", joined: Date.now(),
             activity: [
-              { type: "earn", text: 'Joined "UrbanBeatz" Telegram channel', amount: 15, at: Date.now() - 1000 * 60 * 8 },
-              { type: "earn", text: 'Subscribed "TechGuru Rohan" on YouTube', amount: 18, at: Date.now() - 1000 * 60 * 26 },
-              { type: "spend", text: 'Promoted "Demo Star" Instagram page', amount: -120, at: Date.now() - 1000 * 60 * 70 },
-              { type: "earn", text: 'Followed "MelodyMaya" on Instagram', amount: 12, at: Date.now() - 1000 * 60 * 130 },
+              { type: "earn", text: 'Joined "UrbanBeatz" Telegram channel', amount: 4, at: Date.now() - 1000 * 60 * 8 },
+              { type: "earn", text: 'Subscribed "TechGuru Rohan" on YouTube', amount: 6, at: Date.now() - 1000 * 60 * 26 },
+              { type: "spend", text: 'Promoted "Demo Star" Instagram page', amount: -12, at: Date.now() - 1000 * 60 * 70 },
+              { type: "earn", text: 'Followed "MelodyMaya" on Instagram', amount: 3, at: Date.now() - 1000 * 60 * 130 },
             ],
             campaigns: [
               { id: "m1", platform: "telegram", title: "Demo Star Official", url: "https://t.me/demostar", payout: 12, active: true, actions: 48, spent: 576 },
@@ -430,7 +430,7 @@
           DB.saveUsers(users);
         }
         DB.setSession("demo@flexfam.io");
-        toast("Demo account me login ho gaya!", "ok");
+        toast("Logged into the demo account!", "ok");
         setTimeout(() => (window.location.href = "dashboard.html"), 700);
       });
     }
@@ -440,7 +440,7 @@
       a.addEventListener("click", (e) => {
         e.preventDefault();
         DB.setSession(null);
-        toast("Logout ho gaya. Phir milenge!", "info");
+        toast("Logged out. See you soon!", "info");
         setTimeout(() => (window.location.href = "index.html"), 700);
       })
     );
