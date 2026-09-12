@@ -46,8 +46,14 @@ log = logging.getLogger(__name__)
 # Add-task conversation states.
 ASK_TYPE, ASK_LINK, ASK_PAYOUT = range(3)
 
-TASK_TYPES = {"group", "channel", "view", "reaction"}
+TASK_TYPES = {"group", "channel", "view", "reaction", "bot"}
 CHAT_TYPES = {"group", "supergroup", "channel"}
+# A forwarded bot reply older than this cannot be used as a Bot Start proof.
+BOT_FORWARD_MAX_AGE = 10 * 60
+BOT_USERNAME_RE = re.compile(
+    r"(?:https?://)?(?:t\.me/|telegram\.me/)?@?"
+    r"([A-Za-z][A-Za-z0-9_]{2,30}[Bb][Oo][Tt])/?$"
+)
 USERNAME_RE = re.compile(
     r"(?:https?://)?(?:t\.me/|telegram\.me/)?@?"
     r"([A-Za-z][A-Za-z0-9_]{3,31})/?$", re.IGNORECASE
@@ -90,6 +96,7 @@ def task_kind(task_type: str) -> str:
         "channel": "Channel",
         "view": "View",
         "reaction": "Reaction",
+        "bot": "Bot Start",
     }.get(task_type, "Group")
 
 
@@ -229,6 +236,27 @@ async def serve_task(context: ContextTypes.DEFAULT_TYPE, user_id: int,
             )
             return
 
+        if task_type == "bot":
+            link = group_link(g) or f"https://t.me/{g['username']}"
+            text = texts.BOT_TASK(
+                title=esc(g["title"]), link=link, payout=g["payout"],
+            )
+            markup = kb.bot_task_keyboard(link)
+            if edit_query:
+                try:
+                    await edit_query.edit_message_text(
+                        text, parse_mode="HTML", reply_markup=markup,
+                        disable_web_page_preview=True,
+                    )
+                    return
+                except TelegramError:
+                    pass
+            await context.bot.send_message(
+                user_id, text, parse_mode="HTML", reply_markup=markup,
+                disable_web_page_preview=True,
+            )
+            return
+
         # Group + channel tasks use the real Telegram membership API.
         try:
             cm = await context.bot.get_chat_member(g["group_id"], user_id)
@@ -322,6 +350,10 @@ async def claim_task(update: Update, context: ContextTypes.DEFAULT_TYPE,
         return
 
     task_type = g["task_type"] or "group"
+    if task_type == "bot":
+        # Bot Start is only claimable by forwarding the bot's reply.
+        await q.answer(texts.BOT_CLAIM_HINT, show_alert=True)
+        return
     if task_type in {"view", "reaction"}:
         started = DB.timer_started_at(gid, user_id)
         if started is None:
@@ -470,7 +502,15 @@ async def add_type_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ASK_TYPE
     context.user_data["task_type"] = task_type
     await q.answer()
-    if task_type in {"view", "reaction"}:
+    if task_type == "bot":
+        label = task_kind(task_type)
+        instruction = (
+            "Apne bot ka @username bhejo, jaise <code>@example_bot</code>.\n"
+            "User us bot ko /start karega aur uska reply mujhe forward karega — "
+            "wahi real verification hai."
+        )
+        emoji = "🤖"
+    elif task_type in {"view", "reaction"}:
         label = task_kind(task_type)
         instruction = "Post ka public link bhejo, jaise <code>t.me/channel_name/123</code>."
         emoji = "👁" if task_type == "view" else "❤️"
@@ -505,6 +545,8 @@ async def _ask_payout(target, context, title: str, task_type: str):
         funding_note = (
             "💳 Selected payout ka cost add karte waqt owner balance se reserve hoga."
         )
+    elif task_type == "bot":
+        funding_note = "💳 Bot Start ka cost har verified /start par katega."
     else:
         funding_note = "💳 Group/channel ka cost har verified completion par katega."
     text = texts.ADD_ASK_PAYOUT(
@@ -610,6 +652,33 @@ async def _post_link_received(update: Update, context: ContextTypes.DEFAULT_TYPE
     return await _ask_payout(update, context, chat.title or f"@{username}", task_type)
 
 
+async def _bot_link_received(update: Update, context: ContextTypes.DEFAULT_TYPE,
+                             text: str):
+    """Bot Start task: owner sends the target bot's @username."""
+    match = BOT_USERNAME_RE.match(text)
+    if not match:
+        await update.effective_message.reply_text(texts.ADD_BOT_INVALID, parse_mode="HTML")
+        return ASK_LINK
+    username = match.group(1)
+    if context.bot.username and username.lower() == context.bot.username.lower():
+        await update.effective_message.reply_text(texts.ADD_BOT_SELF)
+        return ASK_LINK
+    canonical = f"https://t.me/{username}"
+    gid = _synthetic_task_id("bot", username.lower())
+    if DB.get_group(gid) or DB.bot_task_by_username(username):
+        await update.effective_message.reply_text(texts.ADD_ALREADY)
+        return ConversationHandler.END
+    context.user_data["candidate"] = {
+        "group_id": gid,
+        "title": f"@{username}",
+        "username": username,
+        "invite_link": canonical,
+        "task_type": "bot",
+        "post_link": canonical,
+    }
+    return await _ask_payout(update, context, f"@{username}", "bot")
+
+
 async def add_link_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     text = (update.effective_message.text or "").strip()
@@ -617,6 +686,8 @@ async def add_link_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await cmd_cancel(update, context)
         return ConversationHandler.END
     task_type = context.user_data.get("task_type", "group")
+    if task_type == "bot":
+        return await _bot_link_received(update, context, text)
     if task_type in {"view", "reaction"}:
         return await _post_link_received(update, context, text)
     if PRIVATE_LINK_RE.search(text):
@@ -753,7 +824,7 @@ def add_group_conversation() -> ConversationHandler:
     return ConversationHandler(
         entry_points=[MessageHandler(add_entry_filter, add_start), CommandHandler("add", add_start)],
         states={
-            ASK_TYPE: [CallbackQueryHandler(add_type_button, pattern=r"^addtype:(group|channel|view|reaction)$")],
+            ASK_TYPE: [CallbackQueryHandler(add_type_button, pattern=r"^addtype:(group|channel|view|reaction|bot)$")],
             ASK_LINK: [
                 CallbackQueryHandler(add_verify_admin, pattern=r"^addgrp:verify$"),
                 MessageHandler(filters.TEXT & ~filters.COMMAND & filters.ChatType.PRIVATE, add_link_received),
@@ -954,6 +1025,69 @@ async def cmd_setpoints(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     )
 
 
+# ── Bot Start: forwarded-message verification ──────────────────────────
+def _forward_origin_bot(msg):
+    """(username, origin_date) of the bot a message was forwarded from."""
+    origin = getattr(msg, "forward_origin", None)
+    sender = getattr(origin, "sender_user", None) if origin else None
+    if sender is None:
+        # PTB < v20.8 compatibility (and simpler test doubles).
+        sender = getattr(msg, "forward_from", None)
+        date = getattr(msg, "forward_date", None)
+    else:
+        date = getattr(origin, "date", None)
+    if not sender or not getattr(sender, "is_bot", False):
+        return None, None
+    return getattr(sender, "username", None), date
+
+
+async def on_forwarded(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Verify a Bot Start task from a message the user forwarded from that bot."""
+    user = update.effective_user
+    msg = update.effective_message
+    if DB.is_banned(user.id):
+        return await msg.reply_text(texts.BANNED)
+
+    username, fwd_date = _forward_origin_bot(msg)
+    if not username:
+        return await msg.reply_text(texts.FORWARD_NOT_BOT, parse_mode="HTML")
+
+    g = DB.bot_task_by_username(username)
+    if not g or not g["active"]:
+        return await msg.reply_text(
+            texts.FORWARD_NO_TASK(username=esc(username)), parse_mode="HTML"
+        )
+    if g["owner_id"] == user.id:
+        return await msg.reply_text(texts.FORWARD_OWN_TASK)
+
+    if fwd_date is not None:
+        try:
+            fwd_ts = fwd_date.timestamp()
+        except AttributeError:
+            fwd_ts = float(fwd_date)
+        if time.time() - fwd_ts > BOT_FORWARD_MAX_AGE:
+            return await msg.reply_text(texts.FORWARD_TOO_OLD, parse_mode="HTML")
+
+    ok, info = DB.award_join(g["group_id"], user.id)
+    if not ok:
+        return await msg.reply_text(texts.TASK_EXPIRED)
+
+    await msg.reply_text(
+        texts.BOT_CLAIM_OK(payout=info["payout"], balance=info["joiner_balance"]),
+        parse_mode="HTML", reply_markup=kb.after_join_keyboard(),
+    )
+    await safe_send(
+        context,
+        info["owner_id"],
+        texts.OWNER_NEW_MEMBER(
+            name=esc(user.first_name or user.username or "Someone"),
+            title=esc(info["title"]), cost=info["cost"],
+            balance=DB.balance(info["owner_id"]),
+        ),
+        parse_mode="HTML",
+    )
+
+
 # ── text dispatcher ─────────────────────────────────────────────────────
 async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
@@ -1049,9 +1183,9 @@ async def on_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 async def leave_check_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     since = time.time() - LEAVE_CHECK_HOURS * 3600
     for row in DB.recent_joins(since):
-        # View/reaction tasks have no membership promise.  The featured join
-        # is permanent once awarded, so it is also never reversed.
-        if row["task_type"] in {"view", "reaction"} or row["owner_id"] == 0:
+        # View/reaction/bot-start tasks have no membership promise.  The
+        # featured join is permanent once awarded, so it is never reversed.
+        if row["task_type"] in {"view", "reaction", "bot"} or row["owner_id"] == 0:
             continue
         try:
             cm = await context.bot.get_chat_member(row["group_id"], row["user_id"])
@@ -1108,7 +1242,11 @@ def create_application(token: str) -> Application:
     app.add_handler(CallbackQueryHandler(cb_group, pattern=r"^grp:\-?\d+:\w+$"))
     app.add_handler(CallbackQueryHandler(cb_admin, pattern=r"^adm:\w+$"))
     app.add_handler(CallbackQueryHandler(cb_menu, pattern=r"^menu:home$"))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & private, on_text))
+    # Bot Start verification: any private forwarded message is checked first.
+    app.add_handler(MessageHandler(filters.FORWARDED & private, on_forwarded))
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND & ~filters.FORWARDED & private, on_text
+    ))
     app.add_error_handler(on_error)
     if app.job_queue:
         app.job_queue.run_repeating(leave_check_job, interval=30 * 60, first=10 * 60)

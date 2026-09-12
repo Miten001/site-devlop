@@ -250,9 +250,10 @@ class Database:
 
         Group/channel tasks are funded per successful member.  View/reaction
         tasks reserve their one reward when the task is added, as required by
-        the product flow.
+        the product flow.  Bot-start tasks are funded per verified start,
+        exactly like group/channel tasks.
         """
-        if task_type not in {"group", "channel", "view", "reaction"}:
+        if task_type not in {"group", "channel", "view", "reaction", "bot"}:
             return False
         with self.lock:
             self.conn.execute("BEGIN IMMEDIATE")
@@ -295,6 +296,16 @@ class Database:
         with self.lock:
             return self.conn.execute(
                 "SELECT * FROM groups WHERE group_id=?", (group_id,)
+            ).fetchone()
+
+    def bot_task_by_username(self, username: str) -> sqlite3.Row | None:
+        """Active bot-start task whose bot @username matches (case-insensitive)."""
+        if not username:
+            return None
+        with self.lock:
+            return self.conn.execute(
+                "SELECT * FROM groups WHERE task_type='bot' "
+                "AND LOWER(username)=LOWER(?)", (username.lstrip("@"),)
             ).fetchone()
 
     def groups_of(self, owner_id: int) -> list[sqlite3.Row]:
@@ -543,9 +554,10 @@ class Database:
                     self.conn.execute("DELETE FROM joins WHERE id=?", (join_id,))
                     self.conn.commit()
                     return None
-                # Featured is intentionally permanent once joined, and view /
-                # reaction joins are explicitly untouched by leave checking.
-                if task_type in {"view", "reaction"} or g["owner_id"] == SYSTEM_USER_ID:
+                # Featured is intentionally permanent once joined; view /
+                # reaction / bot-start joins are explicitly never reversed
+                # (there is no membership that can be left).
+                if task_type in {"view", "reaction", "bot"} or g["owner_id"] == SYSTEM_USER_ID:
                     self.conn.execute("ROLLBACK")
                     return None
                 payout = int(j["payout"])

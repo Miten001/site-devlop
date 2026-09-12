@@ -43,6 +43,35 @@ POST_TASK = (
     "⏱ Link open karke <b>Start Timer</b> dabao. Timer ke baad claim karna!"
 ).format
 
+BOT_TASK = (
+    "🤖 <b>Bot Start task</b>\n\n"
+    "<b>{title}</b>\n"
+    "🔗 {link}\n\n"
+    "💰 Reward: <b>+{payout} points</b>\n\n"
+    "1️⃣ Upar ke link se bot kholo aur <b>/start</b> dabao\n"
+    "2️⃣ Bot jo message bheje, usse <b>yahan forward</b> karo\n"
+    "3️⃣ Main forwarded message se verify karke points dunga! ✅"
+).format
+
+FORWARD_NOT_BOT = (
+    "❌ Yeh message kisi bot se forward nahi hua.\n\n"
+    "Task wale bot ko /start karo, phir uska reply <b>yahan forward</b> karo."
+)
+FORWARD_NO_TASK = (
+    "😕 Is bot (@{username}) ka koi active task nahi mila.\n\n"
+    "💰 Earn Points se task lo, phir usi bot ka message forward karo."
+).format
+FORWARD_OWN_TASK = "⚠️ Apna hi task complete nahi kar sakte!"
+FORWARD_TOO_OLD = (
+    "⌛️ Yeh forwarded message purana hai. Bot ko abhi /start karke "
+    "uska naya reply forward karo."
+)
+BOT_CLAIM_OK = (
+    "🤖 <b>Bot Start verified!</b>\n\n"
+    "🎉 +{payout} points added!\n💎 Balance: <b>{balance}</b>"
+).format
+BOT_CLAIM_HINT = "🤖 Bot ko /start karke uska reply yahan forward karo — wahi verification hai."
+
 TIMER_STARTED = "⏱ Timer start ho gaya! {seconds} seconds baad claim kar sakte ho."
 TIMER_CLAIM_READY = (
     "✅ Timer complete! Ab <b>Claim Points</b> dabao.\n\n"
@@ -86,7 +115,8 @@ ADD_INTRO = (
     "➕ <b>Add Task</b>\n\n"
     "Task type choose karo:\n"
     "👥 Group / 📣 Channel — real Telegram membership verify hoga\n"
-    "👁 View / ❤️ Reaction — post open karke {timer}s timer complete karo\n\n"
+    "👁 View / ❤️ Reaction — post open karke {timer}s timer complete karo\n"
+    "🤖 Bot Start — user bot ko /start karke uska reply forward karega\n\n"
     "⚠️ Limit: max {max_groups} tasks per user\n"
     "💎 Aapka balance: <b>{balance}</b>"
 ).format
@@ -107,6 +137,11 @@ ADD_POST_INVALID = (
     "(channel name aur message ID zaroori hai; double slash nahi.)"
 ).format
 
+ADD_BOT_INVALID = (
+    "❌ Valid bot username bhejo, jaise <code>@example_bot</code>.\n"
+    "(Bot ka username hamesha <b>bot</b> par khatam hota hai.)"
+)
+ADD_BOT_SELF = "❌ Is bot ko hi task nahi bana sakte! 😅"
 ADD_TYPE_MISMATCH = "❌ Chosen task type aur Telegram chat type match nahi karte. Dobara link bhejo."
 ADD_NOT_FOUND = "❌ Group/channel nahi mila! Link check karo aur bot ko zaroori access do."
 ADD_NOT_ADMIN = (
@@ -183,9 +218,10 @@ HELP = (
     "• Earn Points → join/view task complete karo → points pao\n"
     "• Referral → har dost par +{ref_bonus} points\n\n"
     "📣 <b>TASK ADD KARO</b>\n"
-    "• Add Task → Group/Channel ya View/Reaction chuno\n"
+    "• Add Task → Group/Channel, View/Reaction ya Bot Start chuno\n"
     "• Group/Channel membership Telegram API se verify hoti hai\n"
-    "• View/Reaction me post kholo → 30 second timer → claim\n\n"
+    "• View/Reaction me post kholo → 30 second timer → claim\n"
+    "• Bot Start me bot ko /start karo → uska reply forward karo → verify\n\n"
     "⚠️ Group/channel chhodne par 72h me points wapas liye ja sakte hain.\n"
     "View/reaction completions par leave reversal nahi hota."
 ).format
