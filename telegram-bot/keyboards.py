@@ -46,7 +46,7 @@ def task_keyboard(join_url: str, group_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🔗 Join Group / Channel", url=join_url)],
         [InlineKeyboardButton("✅ Joined", callback_data=f"earn:claim:{group_id}"),
-         InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
+         InlineKeyboardButton("⏭ Skip", callback_data=f"earn:skip:{group_id}")],
     ])
 
 
@@ -54,21 +54,22 @@ def post_task_keyboard(post_url: str, group_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🔗 Open Post", url=post_url)],
         [InlineKeyboardButton("▶️ Start Timer", callback_data=f"earn:start:{group_id}")],
-        [InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
+        [InlineKeyboardButton("⏭ Skip", callback_data=f"earn:skip:{group_id}")],
     ])
 
 
-def bot_task_keyboard(bot_url: str) -> InlineKeyboardMarkup:
+def bot_task_keyboard(bot_url: str, group_id: int | None = None) -> InlineKeyboardMarkup:
+    skip_data = "earn:skip" if group_id is None else f"earn:skip:{group_id}"
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🤖 Open Bot & /start", url=bot_url)],
-        [InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
+        [InlineKeyboardButton("⏭ Skip", callback_data=skip_data)],
     ])
 
 
 def view_claim_keyboard(group_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("✅ Claim Points", callback_data=f"earn:claim:{group_id}")],
-        [InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
+        [InlineKeyboardButton("⏭ Skip", callback_data=f"earn:skip:{group_id}")],
     ])
 
 
@@ -88,7 +89,7 @@ def after_join_keyboard() -> InlineKeyboardMarkup:
 
 def add_group_verify_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([[
-        InlineKeyboardButton("✅ Bot admin hai — Verify karo", callback_data="addgrp:verify"),
+        InlineKeyboardButton("✅ Bot is admin — Verify", callback_data="addgrp:verify"),
     ]])
 
 
@@ -115,8 +116,8 @@ def group_manage_kb(group_id: int, active: bool) -> InlineKeyboardMarkup:
 
 def confirm_delete_kb(group_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([[
-        InlineKeyboardButton("🗑 Haan, delete", callback_data=f"grp:{group_id}:delyes"),
-        InlineKeyboardButton("❌ Nahi", callback_data=f"grp:{group_id}:delno"),
+        InlineKeyboardButton("🗑 Yes, delete", callback_data=f"grp:{group_id}:delyes"),
+        InlineKeyboardButton("❌ No", callback_data=f"grp:{group_id}:delno"),
     ]])
 
 

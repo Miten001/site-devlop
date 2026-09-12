@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FlexFam Sub4Sub Bot — entry point.
 
-Chalane se pehle BOT_TOKEN env var (ya .env file) set karo:
+Set the BOT_TOKEN environment variable (or a .env file) before running:
     export BOT_TOKEN="123456:ABC..."
     export ADMIN_IDS="123456789"
     python bot.py
@@ -22,16 +22,16 @@ log = logging.getLogger("flexfam")
 
 def main() -> None:
     if not BOT_TOKEN:
-        log.error("BOT_TOKEN set nahi hai! .env file banao ya env var do. "
-                  "Token @BotFather se milta hai.")
+        log.error("BOT_TOKEN is not set! Create a .env file or export the "
+                  "environment variable. Get a token from @BotFather.")
         sys.exit(1)
     if not ADMIN_IDS:
-        log.warning("ADMIN_IDS set nahi hai — admin commands kaam nahi karenge.")
+        log.warning("ADMIN_IDS is not set — admin commands will not work.")
 
     from handlers import create_application
 
     app = create_application(BOT_TOKEN)
-    log.info("🚀 FlexFam Sub4Sub bot chalu ho raha hai…")
+    log.info("🚀 Starting the FlexFam Sub4Sub bot…")
     app.run_polling(allowed_updates=["message", "callback_query", "my_chat_member"],
                     drop_pending_updates=True)
 

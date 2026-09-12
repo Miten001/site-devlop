@@ -25,6 +25,8 @@ import texts
 from config import (
     ADMIN_IDS,
     DAILY_BONUS,
+    DEAD_TASK_MAX_STRIKES,
+    DEAD_TASK_SKIP_LIMIT,
     FEATURED_LINK,
     FEATURED_PAYOUT,
     FEATURED_RESHOW_DAYS,
@@ -38,6 +40,7 @@ from config import (
     SIGNUP_BONUS,
     VIEW_TIMER_SECONDS,
     cost_for,
+    task_limit_reached,
 )
 from db import DB
 
@@ -190,7 +193,11 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.effective_message.reply_text(
-        texts.HELP(ref_bonus=REFERRAL_BONUS),
+        texts.HELP(
+            ref_bonus=REFERRAL_BONUS,
+            skip_limit=DEAD_TASK_SKIP_LIMIT,
+            max_strikes=DEAD_TASK_MAX_STRIKES,
+        ),
         parse_mode="HTML",
         reply_markup=main_menu(update.effective_user.id),
         disable_web_page_preview=True,
@@ -241,7 +248,7 @@ async def serve_task(context: ContextTypes.DEFAULT_TYPE, user_id: int,
             text = texts.BOT_TASK(
                 title=esc(g["title"]), link=link, payout=g["payout"],
             )
-            markup = kb.bot_task_keyboard(link)
+            markup = kb.bot_task_keyboard(link, g["group_id"])
             if edit_query:
                 try:
                     await edit_query.edit_message_text(
@@ -393,7 +400,7 @@ async def claim_task(update: Update, context: ContextTypes.DEFAULT_TYPE,
         await q.answer(texts.TASK_EXPIRED, show_alert=True)
         return
 
-    await q.answer(f"🎉 +{info['payout']} points!")
+    await q.answer(texts.CLAIM_TOAST(payout=info["payout"]))
     try:
         await q.edit_message_text(
             texts.CLAIM_OK(payout=info["payout"], balance=info["joiner_balance"]),
@@ -414,6 +421,55 @@ async def claim_task(update: Update, context: ContextTypes.DEFAULT_TYPE,
     )
 
 
+async def handle_skip(context: ContextTypes.DEFAULT_TYPE, group_id: int | None) -> None:
+    """Count a skip and act on the dead-task rules if the task just died."""
+    if group_id is None:
+        return
+    try:
+        event = DB.register_skip(group_id, DEAD_TASK_SKIP_LIMIT, DEAD_TASK_MAX_STRIKES)
+    except Exception:  # never let bookkeeping break the user's flow
+        log.exception("register_skip failed for task %s", group_id)
+        return
+    if not event:
+        return
+    if not event["dead"]:
+        log.debug("task %s skip streak %s/%s", group_id, event["streak"],
+                  event["limit"])
+        return
+
+    log.info("dead task %s auto-paused after %s skips (owner %s, strike %s)",
+             group_id, event["streak"], event["owner_id"], event["strikes"])
+    await safe_send(
+        context, event["owner_id"],
+        texts.DEAD_TASK_PAUSED(
+            title=esc(event["title"]), skips=event["streak"],
+            strikes=event["strikes"], max_strikes=event["max_strikes"],
+        ),
+        parse_mode="HTML",
+    )
+    if not event["owner_blocked"]:
+        return
+
+    await safe_send(
+        context, event["owner_id"],
+        texts.DEAD_TASK_BLOCKED(
+            strikes=event["strikes"], max_strikes=event["max_strikes"],
+            paused=event["paused_count"],
+        ),
+        parse_mode="HTML",
+    )
+    owner = DB.get_user(event["owner_id"])
+    owner_name = (owner["first_name"] or owner["username"] or "Unknown") if owner else "Unknown"
+    alert = texts.DEAD_TASK_ADMIN_ALERT(
+        owner=esc(owner_name), owner_id=event["owner_id"],
+        strikes=event["strikes"], max_strikes=event["max_strikes"],
+        title=esc(event["title"]), skips=event["streak"],
+        paused=event["paused_count"],
+    )
+    for admin_id in ADMIN_IDS:
+        await safe_send(context, admin_id, alert, parse_mode="HTML")
+
+
 async def cb_earn(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     q = update.callback_query
     user_id = q.from_user.id
@@ -425,8 +481,10 @@ async def cb_earn(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if data == "earn:get":
             await q.answer()
             return await serve_task(context, user_id)
-        if data == "earn:skip":
-            await q.answer("⏭ Skipping…")
+        if data == "earn:skip" or data.startswith("earn:skip:"):
+            await q.answer(texts.SKIPPING)
+            skipped_gid = int(data.rsplit(":", 1)[1]) if data != "earn:skip" else None
+            await handle_skip(context, skipped_gid)
             return await serve_task(context, user_id, edit_query=q)
         if data.startswith("earn:start:"):
             return await start_view_timer(update, context, int(data.rsplit(":", 1)[1]))
@@ -456,7 +514,7 @@ async def cb_featured(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     ok, info = DB.award_join(g["group_id"], user_id)
     if not ok:
         return await q.answer(texts.TASK_EXPIRED, show_alert=True)
-    await q.answer(f"🌟 +{info['payout']} points!")
+    await q.answer(texts.FEATURED_TOAST(payout=info["payout"]))
     try:
         await q.edit_message_text(
             texts.FEATURED_CLAIM_OK(
@@ -474,9 +532,10 @@ async def add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if DB.is_banned(user_id):
         await update.effective_message.reply_text(texts.BANNED)
         return ConversationHandler.END
-    if DB.count_groups_of(user_id) >= MAX_GROUPS_PER_USER:
+    task_count = DB.count_groups_of(user_id)
+    if task_limit_reached(task_count):
         await update.effective_message.reply_text(
-            texts.ADD_LIMIT(count=DB.count_groups_of(user_id), max_groups=MAX_GROUPS_PER_USER),
+            texts.ADD_LIMIT(count=task_count, max_groups=MAX_GROUPS_PER_USER),
             parse_mode="HTML", reply_markup=main_menu(user_id),
         )
         return ConversationHandler.END
@@ -484,7 +543,10 @@ async def add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.pop(key, None)
     await update.effective_message.reply_text(
         texts.ADD_INTRO(
-            max_groups=MAX_GROUPS_PER_USER,
+            limit_note=(
+                texts.ADD_LIMIT_NOTE(max_groups=MAX_GROUPS_PER_USER)
+                if MAX_GROUPS_PER_USER > 0 else texts.ADD_UNLIMITED_NOTE
+            ),
             balance=DB.balance(user_id),
             timer=VIEW_TIMER_SECONDS,
         ),
@@ -502,24 +564,15 @@ async def add_type_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ASK_TYPE
     context.user_data["task_type"] = task_type
     await q.answer()
+    label = task_kind(task_type)
     if task_type == "bot":
-        label = task_kind(task_type)
-        instruction = (
-            "Apne bot ka @username bhejo, jaise <code>@example_bot</code>.\n"
-            "User us bot ko /start karega aur uska reply mujhe forward karega — "
-            "wahi real verification hai."
-        )
+        instruction = texts.ADD_BOT_INSTRUCTION
         emoji = "🤖"
     elif task_type in {"view", "reaction"}:
-        label = task_kind(task_type)
-        instruction = "Post ka public link bhejo, jaise <code>t.me/channel_name/123</code>."
+        instruction = texts.ADD_POST_INSTRUCTION
         emoji = "👁" if task_type == "view" else "❤️"
     else:
-        label = task_kind(task_type)
-        instruction = (
-            "Public link ya @username bhejo. Bot us chat me admin hona chahiye; "
-            "phir real getChatMember verification hogi."
-        )
+        instruction = texts.ADD_CHAT_INSTRUCTION
         emoji = "👥" if task_type == "group" else "📣"
     prompt_kwargs = {
         "parse_mode": "HTML",
@@ -542,13 +595,11 @@ async def _reply_target(target, text: str, **kwargs):
 
 async def _ask_payout(target, context, title: str, task_type: str):
     if task_type in {"view", "reaction"}:
-        funding_note = (
-            "💳 Selected payout ka cost add karte waqt owner balance se reserve hoga."
-        )
+        funding_note = texts.FUNDING_UPFRONT
     elif task_type == "bot":
-        funding_note = "💳 Bot Start ka cost har verified /start par katega."
+        funding_note = texts.FUNDING_BOT
     else:
-        funding_note = "💳 Group/channel ka cost har verified completion par katega."
+        funding_note = texts.FUNDING_PER_JOIN
     text = texts.ADD_ASK_PAYOUT(
         title=esc(title), kind=task_kind(task_type), fee_percent=FEE_PERCENT,
         min_payout=MIN_PAYOUT, max_payout=MAX_PAYOUT, funding_note=funding_note,
@@ -580,10 +631,11 @@ async def _finish_link(update_or_query, context, chat_info, user_id) -> int | No
     if DB.get_group(gid):
         await _reply_target(update_or_query, texts.ADD_ALREADY)
         return ConversationHandler.END
-    if DB.count_groups_of(user_id) >= MAX_GROUPS_PER_USER:
+    task_count = DB.count_groups_of(user_id)
+    if task_limit_reached(task_count):
         await _reply_target(
             update_or_query,
-            texts.ADD_LIMIT(count=DB.count_groups_of(user_id), max_groups=MAX_GROUPS_PER_USER),
+            texts.ADD_LIMIT(count=task_count, max_groups=MAX_GROUPS_PER_USER),
             parse_mode="HTML",
         )
         return ConversationHandler.END
@@ -596,9 +648,7 @@ async def _finish_link(update_or_query, context, chat_info, user_id) -> int | No
             invite_link = None
         if not invite_link:
             await _reply_target(
-                update_or_query,
-                "❌ Invite link nahi bana pa raha. Bot ko invite permission do.",
-                parse_mode="HTML",
+                update_or_query, texts.ADD_NO_INVITE_LINK, parse_mode="HTML",
             )
             return ASK_LINK
 
@@ -692,8 +742,7 @@ async def add_link_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return await _post_link_received(update, context, text)
     if PRIVATE_LINK_RE.search(text):
         await update.effective_message.reply_text(
-            "🔒 Private link se verify nahi hota. Bot ko group me admin banao, phir public link bhejo.",
-            parse_mode="HTML",
+            texts.ADD_PRIVATE_LINK, parse_mode="HTML",
         )
         return ASK_LINK
     match = USERNAME_RE.match(text)
@@ -723,7 +772,7 @@ async def add_link_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def add_verify_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     user_id = q.from_user.id
-    await q.answer("🔍 Checking…")
+    await q.answer(texts.CHECKING)
     claims = context.bot_data.get("admin_claims", {})
     claim = next(
         (c for c in claims.values()
@@ -731,9 +780,7 @@ async def add_verify_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         None,
     )
     if not claim:
-        await q.message.reply_text(
-            "❌ Mujhe abhi tak kisi group me admin nahi banaya gaya. Pehle bot ko admin banao."
-        )
+        await q.message.reply_text(texts.ADD_NOT_ADMIN_YET)
         return ASK_LINK
     return await _finish_link(q, context, claim, user_id)
 
@@ -842,9 +889,17 @@ def add_group_conversation() -> ConversationHandler:
 # ── My tasks ────────────────────────────────────────────────────────────
 def _task_balance_note(g) -> str:
     if g["task_type"] in {"view", "reaction"}:
-        return "💳 Reward add karte waqt reserve hua"
+        return texts.GRP_UPFRONT_NOTE
     bal = DB.balance(g["owner_id"])
     return texts.GRP_LOW_BAL(balance=bal) if bal < cost_for(g["payout"]) else texts.GRP_OK_BAL(balance=bal)
+
+
+def _task_status(g) -> str:
+    if g["active"]:
+        return texts.GRP_ACTIVE()
+    if g["auto_paused"]:
+        return texts.GRP_AUTO_PAUSED_NOTE(skips=g["skip_streak"])
+    return texts.GRP_PAUSED()
 
 
 def _group_card(g) -> tuple[str, InlineKeyboardMarkup]:
@@ -853,7 +908,7 @@ def _group_card(g) -> tuple[str, InlineKeyboardMarkup]:
             title=esc(g["title"]), link=group_link(g) or "—",
             task_type=task_kind(g["task_type"]), payout=g["payout"],
             cost=cost_for(g["payout"]), received=g["total_received"],
-            status=texts.GRP_ACTIVE() if g["active"] else texts.GRP_PAUSED(),
+            status=_task_status(g),
             balance_note=_task_balance_note(g),
         ),
         kb.group_manage_kb(g["group_id"], bool(g["active"])),
@@ -887,9 +942,12 @@ async def cb_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await q.answer(texts.NOT_YOUR_GROUP, show_alert=True)
         return
     if action == "toggle":
-        DB.set_group_active(gid, not g["active"])
+        resumed = not g["active"]
+        # Resuming a task clears its dead-task skip streak (handled in the
+        # data layer) so the owner gets a genuine fresh start.
+        DB.set_group_active(gid, resumed)
         g = DB.get_group(gid)
-        await q.answer(texts.GROUP_TOGGLE_DONE)
+        await q.answer(texts.GROUP_RESUMED if resumed else texts.GROUP_TOGGLE_DONE)
         try:
             await q.edit_message_text(*_group_card(g), parse_mode="HTML", disable_web_page_preview=True)
         except TelegramError:
@@ -907,7 +965,7 @@ async def cb_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             pass
     elif action == "delyes":
         DB.delete_group(gid)
-        await q.answer("🗑 Deleted")
+        await q.answer(texts.DELETED_TOAST)
         try:
             await q.edit_message_text(texts.GROUP_DELETED)
         except TelegramError:
@@ -1017,12 +1075,26 @@ async def cmd_setpoints(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     try:
         uid, amount = int(context.args[0]), int(context.args[1])
     except (IndexError, ValueError):
-        return await update.effective_message.reply_text("Usage: /setpoints <user_id> <amount>")
+        return await update.effective_message.reply_text(texts.ADMIN_SETPOINTS_USAGE)
     if not DB.set_points(uid, amount):
         return await update.effective_message.reply_text(texts.ADMIN_USER_NOT_FOUND)
     await update.effective_message.reply_text(
-        f"✅ User {uid} ka balance ab <b>{amount}</b> points.", parse_mode="HTML"
+        texts.ADMIN_SETPOINTS_DONE(uid=uid, amount=amount), parse_mode="HTML"
     )
+
+
+async def cmd_clearstrikes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin escape hatch: forgive an owner's dead-task warning strikes."""
+    if not is_admin(update.effective_user.id):
+        return await update.effective_message.reply_text(texts.ADMIN_ONLY)
+    try:
+        uid = int(context.args[0])
+    except (IndexError, ValueError):
+        return await update.effective_message.reply_text(texts.ADMIN_STRIKES_USAGE)
+    if not DB.get_user(uid):
+        return await update.effective_message.reply_text(texts.ADMIN_USER_NOT_FOUND)
+    DB.reset_strikes(uid)
+    await update.effective_message.reply_text(texts.STRIKES_CLEARED(uid=uid))
 
 
 # ── Bot Start: forwarded-message verification ──────────────────────────
@@ -1097,7 +1169,7 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     awaiting = context.user_data.get("await")
     if awaiting == "broadcast" and is_admin(user.id):
         context.user_data.pop("await", None)
-        note = await msg.reply_text("📣 Broadcasting…")
+        note = await msg.reply_text(texts.ADMIN_BROADCASTING)
         ok = await do_broadcast(context, msg)
         await note.edit_text(texts.ADMIN_BROADCAST_DONE(ok=ok, total=DB.stats()["users"]))
         return
@@ -1106,7 +1178,7 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
             uid = int((msg.text or "").strip())
         except ValueError:
-            return await msg.reply_text("❌ Sirf numeric user ID bhejo.")
+            return await msg.reply_text(texts.ADMIN_NUMERIC_ID_ONLY)
         if not DB.set_banned(uid, awaiting == "ban"):
             return await msg.reply_text(texts.ADMIN_USER_NOT_FOUND)
         await msg.reply_text(
@@ -1151,7 +1223,7 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def cb_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     q = update.callback_query
     await q.answer()
-    await q.message.reply_text("🏠 Main Menu 👇", reply_markup=main_menu(q.from_user.id))
+    await q.message.reply_text(texts.MAIN_MENU, reply_markup=main_menu(q.from_user.id))
 
 
 # ── bot membership updates ──────────────────────────────────────────────
@@ -1213,7 +1285,7 @@ async def leave_check_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
-    log.error("Update me error aaya:", exc_info=context.error)
+    log.error("An error occurred while handling an update:", exc_info=context.error)
     if isinstance(update, Update) and update.effective_message:
         try:
             await update.effective_message.reply_text(texts.ERROR)
@@ -1224,7 +1296,7 @@ async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
 # ── app wiring ──────────────────────────────────────────────────────────
 async def _post_init(app: Application) -> None:
     me = await app.bot.get_me()
-    log.info("✅ Bot LIVE hai: @%s (id: %s)", me.username, me.id)
+    log.info("✅ Bot is LIVE: @%s (id: %s)", me.username, me.id)
 
 
 def create_application(token: str) -> Application:
@@ -1236,6 +1308,7 @@ def create_application(token: str) -> Application:
     app.add_handler(CommandHandler("help", cmd_help, filters=private))
     app.add_handler(CommandHandler("cancel", cmd_cancel, filters=private))
     app.add_handler(CommandHandler("setpoints", cmd_setpoints, filters=private))
+    app.add_handler(CommandHandler("clearstrikes", cmd_clearstrikes, filters=private))
     app.add_handler(CommandHandler("admin", admin_panel, filters=private))
     app.add_handler(CallbackQueryHandler(cb_featured, pattern=r"^featured:claim$"))
     app.add_handler(CallbackQueryHandler(cb_earn, pattern=r"^earn:(?:get|skip|start|claim)(?::\-?\d+)?$"))

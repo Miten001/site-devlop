@@ -18,7 +18,9 @@ Telegram bot jisme users **ek dusre ke groups join karke points kamate hain**, a
 | 🔁 **Anti-leave protection** | Background job group/channel joins re-check karta hai — chhodne par points wapas aur owner ko refund |
 | 🔗 **Referral system** | Har referral par +25 points (deep-link `?start=ref_`) |
 | 💸 **Auto-pause** | Owner ka balance khatam ya bot ka access gaya → group automatically pause, owner ko notification |
-| 🛠 **Admin panel** | Stats, broadcast, ban/unban, `/setpoints` |
+| ⏭ **Dead-task warning** | Jo task 15 baar lagataar skip ho aur ek bhi completion na ho → auto-pause + owner ko warning strike (1/3, 2/3…). 3 strikes par owner ke **saare** tasks pause + admins ko alert |
+| ♾ **No task limit** | `MAX_GROUPS_PER_USER=0` (default) — user jitne chahe tasks add kar sakta hai |
+| 🛠 **Admin panel** | Stats, broadcast, ban/unban, `/setpoints`, `/clearstrikes` |
 | 🗄 **SQLite** | Koi extra DB server nahi chahiye — `data/bot.db` sab store karta hai |
 
 ### 💎 Points Economy
@@ -32,6 +34,20 @@ Referral        → +25 per dost
 Group/channel chhodna → payout wapas (72h window me checking)
 View/reaction chhodna → reversal nahi
 ```
+
+### ⏭ Dead-task protection
+
+```
+Task skip hua             → skip streak +1
+Task complete hua         → skip streak reset (task hamesha ke liye "alive")
+Streak == 15 (0 comp.)    → task auto-pause + owner ko strike (1/3)
+Owner ki 3 strikes        → owner ke saare tasks pause + admins ko alert
+Owner ne task resume kiya → skip streak reset, auto-pause flag clear
+/clearstrikes <user_id>   → admin owner ki strikes maaf kar sakta hai
+```
+
+Tuning: `DEAD_TASK_SKIP_LIMIT` (default 15), `DEAD_TASK_MAX_STRIKES` (default 3).
+`DEAD_TASK_SKIP_LIMIT=0` se ye poora system off ho jata hai.
 
 Production fee `FEE_PERCENT=0` hai: owner se sirf payout katega. Limits aur
 featured settings `.env` se override ki ja sakti hain.
@@ -129,7 +145,7 @@ telegram-bot/
 ├── handlers.py     # saare commands/callbacks/conversation/job
 ├── db.py           # SQLite layer (users, groups, joins)
 ├── keyboards.py    # reply + inline keyboards
-├── texts.py        # saare messages (Hinglish)
+├── texts.py        # saare messages (English)
 ├── config.py       # .env se settings
 └── data/bot.db     # database (auto-create)
 ```

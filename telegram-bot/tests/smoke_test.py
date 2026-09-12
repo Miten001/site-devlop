@@ -23,15 +23,24 @@ assert config.DAILY_BONUS == 0
 assert config.REFERRAL_BONUS == 25
 assert config.FEE_PERCENT == 0
 assert config.MIN_PAYOUT == 5 and config.MAX_PAYOUT == 50
-assert config.MAX_GROUPS_PER_USER == 10
+assert config.MAX_GROUPS_PER_USER == 0  # 0 == unlimited tasks per user
+assert not config.task_limit_reached(0)
+assert not config.task_limit_reached(10_000)
+assert config.DEAD_TASK_SKIP_LIMIT == 15
+assert config.DEAD_TASK_MAX_STRIKES == 3
 assert config.VIEW_TIMER_SECONDS == 30
 assert config.fee_for(5) == 0
 assert config.fee_for(50) == 0
 assert config.cost_for(10) == 10
+# An explicit positive limit still applies.
+config.MAX_GROUPS_PER_USER = 2
+assert not config.task_limit_reached(1)
+assert config.task_limit_reached(2)
+config.MAX_GROUPS_PER_USER = 0
 assert config.POST_LINK_RE.fullmatch("t.me/channel_name/123")
 assert config.POST_LINK_RE.fullmatch("https://telegram.me/channel_name/123/")
 assert not config.POST_LINK_RE.fullmatch("t.me//channel_name/123")
-print("✅ config: zero-fee economy + strict post regex")
+print("✅ config: zero-fee economy, unlimited tasks, strict post regex")
 
 import db  # noqa: E402
 
@@ -117,6 +126,71 @@ assert not DB.featured_should_show(2, config.FEATURED_RESHOW_DAYS, now=time.time
 assert DB.reverse_join(DB.recent_joins(0)[-1]["id"]) is None
 print("✅ featured: system payout and never reshow after join")
 
+print("== dead-task detection: skips, auto-pause and owner strikes ==")
+assert DB.upsert_user(8, "deadowner", "DeadOwner")
+DB.add_points(8, 500)
+assert DB.add_group(-801, 8, "Dead One", "dead_one", None, 5)
+assert DB.strikes_of(8) == 0
+
+# 14 skips only build the streak; the task stays active.
+for i in range(1, config.DEAD_TASK_SKIP_LIMIT):
+    event = DB.register_skip(-801)
+    assert event and not event["dead"] and event["streak"] == i
+assert DB.get_group(-801)["active"] == 1
+assert DB.skip_streak(-801) == config.DEAD_TASK_SKIP_LIMIT - 1
+
+# The 15th skip kills the task and hands out strike 1/3.
+event = DB.register_skip(-801)
+assert event["dead"] and event["streak"] == config.DEAD_TASK_SKIP_LIMIT
+assert event["strikes"] == 1 and event["max_strikes"] == 3
+assert not event["owner_blocked"]
+assert DB.get_group(-801)["active"] == 0
+assert DB.get_group(-801)["auto_paused"] == 1
+assert DB.strikes_of(8) == 1
+assert all(row["group_id"] != -801 for row in DB.task_candidates(2))
+print("✅ dead task: 15 skips → auto-pause + strike 1/3")
+
+# Resuming resets the streak and the auto-paused flag.
+DB.set_group_active(-801, True)
+assert DB.skip_streak(-801) == 0 and DB.get_group(-801)["auto_paused"] == 0
+for _ in range(config.DEAD_TASK_SKIP_LIMIT - 1):
+    DB.register_skip(-801)
+assert DB.get_group(-801)["active"] == 1  # streak restarted from zero
+print("✅ resume: skip streak reset")
+
+# A completion also resets the streak: a task with completions never dies.
+ok, _ = DB.award_join(-801, 2)
+assert ok and DB.skip_streak(-801) == 0
+for _ in range(config.DEAD_TASK_SKIP_LIMIT + 3):
+    assert DB.register_skip(-801) is None  # total_received > 0 → immune
+assert DB.get_group(-801)["active"] == 1
+print("✅ completion: streak reset and task immune")
+
+# Strikes 2 and 3: at 3 strikes every task of the owner is paused.
+assert DB.add_group(-802, 8, "Dead Two", "dead_two", None, 5)
+assert DB.add_group(-803, 8, "Dead Three", "dead_three", None, 5)
+assert DB.add_group(-804, 8, "Still Alive", "still_alive", None, 5)
+for _ in range(config.DEAD_TASK_SKIP_LIMIT):
+    event = DB.register_skip(-802)
+assert event["dead"] and event["strikes"] == 2 and not event["owner_blocked"]
+assert DB.get_group(-804)["active"] == 1  # other tasks untouched at 2/3
+for _ in range(config.DEAD_TASK_SKIP_LIMIT):
+    event = DB.register_skip(-803)
+assert event["dead"] and event["strikes"] == 3 and event["owner_blocked"]
+assert event["paused_count"] >= 2  # the dead task + the remaining active ones
+assert DB.get_group(-804)["active"] == 0 and DB.get_group(-804)["auto_paused"] == 1
+assert DB.get_group(-801)["active"] == 0  # the completed task is paused too
+assert len(DB.dead_task_snapshot(8)) >= 3
+print("✅ strikes: 3/3 pauses every task of the owner")
+
+# Admins can forgive strikes; the featured/system task never goes dead.
+DB.reset_strikes(8)
+assert DB.strikes_of(8) == 0
+for _ in range(config.DEAD_TASK_SKIP_LIMIT + 1):
+    assert DB.register_skip(0) is None
+assert DB.get_group(0)["active"] == 1
+print("✅ strikes cleared; system task immune to the dead-task rule")
+
 DB.close()
 
 print("== safe migration of old schema ==")
@@ -140,12 +214,14 @@ conn.commit()
 conn.close()
 old_db = db.Database(old_path)
 cols = lambda t: {r[1] for r in old_db.conn.execute(f"PRAGMA table_info({t})")}
-assert {"featured_shown_at"}.issubset(cols("users"))
-assert {"post_link", "task_type"}.issubset(cols("groups"))
+assert {"featured_shown_at", "warn_strikes"}.issubset(cols("users"))
+assert {"post_link", "task_type", "skip_streak", "auto_paused"}.issubset(cols("groups"))
 assert {"task_type"}.issubset(cols("joins"))
 assert old_db.balance(7) == 42
 assert old_db.get_group(-7)["title"] == "Old Group"
 assert old_db.recent_joins(0)[0]["task_type"] == "group"
+assert old_db.get_group(-7)["skip_streak"] == 0
+assert old_db.strikes_of(7) == 0
 old_db.close()
 print("✅ migration: old rows preserved and new columns added")
 
@@ -159,10 +235,75 @@ from telegram.ext import ConversationHandler  # noqa: E402
 
 app = handlers.create_application(config.BOT_TOKEN)
 registered = sum(len(v) for v in app.handlers.values())
-assert registered >= 13
+assert registered >= 14
 assert kb.BTN_BONUS not in kb.main_menu().keyboard[2]
 assert handlers.ASK_TYPE < handlers.ASK_LINK < handlers.ASK_PAYOUT
 _ = ConversationHandler.TIMEOUT
+assert any(
+    "clearstrikes" in getattr(h, "commands", set())
+    for handlers_list in app.handlers.values() for h in handlers_list
+)
+# Skip buttons carry their task id so a skip can be attributed to that task.
+skip_buttons = [
+    b.callback_data
+    for row in kb.task_keyboard("https://t.me/x", -55).inline_keyboard for b in row
+    if b.callback_data and b.callback_data.startswith("earn:skip")
+]
+assert skip_buttons == ["earn:skip:-55"]
 print(f"✅ wiring: {registered} handler groups, task chooser, no Daily Bonus button")
+
+print("== English-only user-facing copy ==")
+import texts  # noqa: E402
+
+HINGLISH = (
+    " karo", " karna", " nahi ", " hai ", " hain", "bhejo", "dabao", " jaise",
+    " wapas", " aapka", " aapke", " apna", " apne", " chuno", " gaya", " hoga",
+    " katega", "banao", " pehle", " dusr", " saare", " sirf ", " yeh ", " kuch ",
+    " koi ", " milega", " thodi", "purana", "zaroori", " naya ", " shuru",
+)
+
+
+def rendered(value):
+    """Render a text template with dummy values so .format helpers are checked."""
+    if isinstance(value, str):
+        return value
+    try:
+        import inspect
+
+        params = inspect.signature(value).parameters
+        return value(**{k: 0 for k in params})
+    except Exception:
+        try:
+            return value(**{
+                k: 0 for k in
+                ("name", "balance", "payout", "count", "bonus", "title", "link",
+                 "cost", "kind", "seconds", "max_groups", "min_payout",
+                 "max_payout", "fee_percent", "funding_note", "timer", "uid",
+                 "ok", "total", "amount", "users", "groups", "joins", "banned",
+                 "active_groups", "points", "refs", "ref_bonus", "username",
+                 "task_type", "received", "status", "balance_note", "min", "max",
+                 "skips", "strikes", "max_strikes", "paused", "owner",
+                 "owner_id", "skip_limit", "limit_note")
+            })
+        except Exception:
+            return ""
+
+
+bad = []
+for name in dir(texts):
+    if name.startswith("_"):
+        continue
+    text = rendered(getattr(texts, name))
+    low = f" {text.lower()} "
+    for token in HINGLISH:
+        if token in low:
+            bad.append((name, token))
+assert not bad, f"Hinglish left in texts.py: {bad}"
+
+for module_file in ("handlers.py", "keyboards.py", "bot.py"):
+    source = (Path(__file__).parent.parent / module_file).read_text().lower()
+    for token in (" karo", " bhejo", " dabao", " nahi hai", " chalu ", " aapka"):
+        assert token not in source, f"{module_file} still contains {token!r}"
+print("✅ language: texts/handlers/keyboards/bot are English")
 
 print("\n🎉 SMOKE TESTS PASS")
