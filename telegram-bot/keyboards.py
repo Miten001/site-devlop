@@ -1,13 +1,14 @@
-"""Reply + inline keyboards."""
+"""Reply and inline keyboards for the Telegram bot."""
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 
-# Main menu labels (handlers me Regex inhi se match karta hai)
 BTN_EARN = "💰 Earn Points"
-BTN_ADD = "➕ Add Group"
+BTN_ADD = "➕ Add Task"
+# Kept as an input alias so an old open conversation can still be cancelled.
+LEGACY_BTN_ADD = "➕ Add Group"
 BTN_MY_GROUPS = "📣 My Groups"
 BTN_BALANCE = "💎 Balance"
-BTN_BONUS = "🎁 Daily Bonus"
+BTN_BONUS = "🎁 Daily Bonus"  # legacy constant; deliberately not in the menu
 BTN_REFERRAL = "🔗 Referral"
 BTN_HELP = "ℹ️ Help"
 BTN_ADMIN = "🛠 Admin Panel"
@@ -17,7 +18,7 @@ def main_menu(is_admin: bool = False) -> ReplyKeyboardMarkup:
     rows = [
         [BTN_EARN, BTN_ADD],
         [BTN_MY_GROUPS, BTN_BALANCE],
-        [BTN_BONUS, BTN_REFERRAL],
+        [BTN_REFERRAL],
         [BTN_HELP],
     ]
     if is_admin:
@@ -31,12 +32,43 @@ def earn_menu(task_count: int) -> InlineKeyboardMarkup:
     ]])
 
 
+def task_type_chooser() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("👥 Group", callback_data="addtype:group"),
+         InlineKeyboardButton("📣 Channel", callback_data="addtype:channel")],
+        [InlineKeyboardButton("👁 View", callback_data="addtype:view"),
+         InlineKeyboardButton("❤️ Reaction", callback_data="addtype:reaction")],
+    ])
+
+
 def task_keyboard(join_url: str, group_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔗 Join Group", url=join_url)],
+        [InlineKeyboardButton("🔗 Join Group / Channel", url=join_url)],
         [InlineKeyboardButton("✅ Joined", callback_data=f"earn:claim:{group_id}"),
          InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
     ])
+
+
+def post_task_keyboard(post_url: str, group_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔗 Open Post", url=post_url)],
+        [InlineKeyboardButton("▶️ Start Timer", callback_data=f"earn:start:{group_id}")],
+        [InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
+    ])
+
+
+def view_claim_keyboard(group_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("✅ Claim Points", callback_data=f"earn:claim:{group_id}")],
+        [InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
+    ])
+
+
+def featured_keyboard(featured_link: str = "https://t.me/flex_fam") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton("🌟 Join Featured Group", url=featured_link),
+        InlineKeyboardButton("✅ Joined", callback_data="featured:claim"),
+    ]])
 
 
 def after_join_keyboard() -> InlineKeyboardMarkup:
