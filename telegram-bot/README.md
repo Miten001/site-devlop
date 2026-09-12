@@ -70,7 +70,22 @@ Bas! Bot live hai 🎉 — ab test karo:
 
 ## ☁️ Deploy
 
-### Railway / Render (easiest)
+### GitHub Actions pe FREE 24/7 (recommended — repo public hai)
+
+Repo me `.github/workflows/telegram-bot.yml` already set hai! Bas:
+
+1. **[Settings → Secrets and variables → Actions](https://github.com/Miten001/site-devlop/settings/secrets/actions)** kholo
+2. **New repository secret** → Name: `BOT_TOKEN` → Value: apna bot token → Add
+3. *(Optional, admin panel ke liye)* Ek aur secret: `ADMIN_IDS` = aapka Telegram user ID
+4. Bas! Har 5 min cron khud check karta hai — 5 min ke andar bot live ho jata hai
+
+**Kaise kaam karta hai:**
+- Har run bot ko ~5.5 ghante chalata hai, phir agla scheduled run turant utha leta hai (24/7 chain)
+- DB (users/points) har 10 min **encrypt** hokar `bot-state` branch pe sync hoti hai — key `BOT_TOKEN` se banti hai, isliye public repo me data safe
+- Naya run start hone par DB restore hoti hai → points kabhi lost nahi hote
+- ⚠️ Token change kiya toh purani DB decrypt nahi hogi (naye token ke saath fresh start)
+
+### Railway / Render
 1. Repo connect karo, **root directory**: `telegram-bot/`
 2. Start command: `python bot.py` (ya Procfile `worker` type)
 3. Env vars: `BOT_TOKEN`, `ADMIN_IDS`
