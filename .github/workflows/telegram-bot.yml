@@ -15,10 +15,11 @@ on:
       - "telegram-bot/**"
       - ".github/workflows/telegram-bot.yml"
 
-# Ek hi waqt me ek hi bot run (DB sync conflicts se bachne ke liye)
+# Ek hi waqt me ek hi bot run. Naya merged deploy purane worker ko replace
+# karta hai, warna 330-minute worker ki wajah se updated code queue me atak sakta hai.
 concurrency:
   group: telegram-bot
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: write # bot-state branch pe encrypted DB push karne ke liye
