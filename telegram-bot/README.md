@@ -11,10 +11,11 @@ Telegram bot jisme users **ek dusre ke groups join karke points kamate hain**, a
 | | |
 |---|---|
 | 💰 **Earn Points** | Task dikhao → group join karo → `✅ Joined` dabao → bot **khud verify** karta hai (Telegram API se) → points! |
-| 📣 **Add Group** | Apna group promote karo — payout (5–50 pts/join) set karo, dusre users join karte rahenge |
-| ✅ **Auto verification** | Bot group me **admin** rehta hai, isliye har join asli hai (fake claim fail ho jata hai) |
-| 🔁 **Anti-leave protection** | Background job har 30 min joins re-check karta hai — group chhoda to **points wapas kat** jate hain aur owner ko **refund** milta hai |
-| 🎁 **Daily bonus** | Roz +10 points |
+| ➕ **Add Task** | Group, Channel, View ya Reaction task chuno; payout 5–50 set karo |
+| ✅ **Auto verification** | Group/channel joins `getChatMember` se verify hote hain (member, administrator, creator) |
+| ⏱ **View / Reaction** | `t.me/channel/123` post task → Start Timer → 30 seconds → claim |
+| 🌟 **Featured onboarding** | Har naya user ko `https://t.me/flex_fam` pe ek baar +10 points; 2 din baad unclaimed task re-show |
+| 🔁 **Anti-leave protection** | Background job group/channel joins re-check karta hai — chhodne par points wapas aur owner ko refund |
 | 🔗 **Referral system** | Har referral par +25 points (deep-link `?start=ref_`) |
 | 💸 **Auto-pause** | Owner ka balance khatam ya bot ka access gaya → group automatically pause, owner ko notification |
 | 🛠 **Admin panel** | Stats, broadcast, ban/unban, `/setpoints` |
@@ -23,15 +24,17 @@ Telegram bot jisme users **ek dusre ke groups join karke points kamate hain**, a
 ### 💎 Points Economy
 
 ```
-Naya user       → +50 signup bonus
-Group join      → joiner ko +payout points
-                → owner se katate hain payout + 20% fee points
-Daily bonus     → +10 (24h cooldown)
+Naya user       → +0 signup bonus
+Group/channel   → joiner ko +payout points, owner se sirf payout
+View/reaction   → add karte waqt owner se payout reserve, timer ke baad +payout
+Featured group  → system user (id 0) se +10 points, ek baar per user
 Referral        → +25 per dost
-Group chhodna   → payout wapas kat jata hai (72h window me checking)
+Group/channel chhodna → payout wapas (72h window me checking)
+View/reaction chhodna → reversal nahi
 ```
 
-Fee `.env` se badal sakte ho (`FEE_PERCENT`).
+Production fee `FEE_PERCENT=0` hai: owner se sirf payout katega. Limits aur
+featured settings `.env` se override ki ja sakti hain.
 
 ---
 
@@ -60,9 +63,9 @@ python bot.py
 Bas! Bot live hai 🎉 — ab test karo:
 
 1. Apne **test group** me bot ko **admin** banao
-2. Bot me `➕ Add Group` → `t.me/your_test_group` link bhejo → payout chuno
-3. Dusre account se `💰 Earn Points` → task aayega → join karke `✅ Joined` dabao
-4. Points add ho gaye + owner ko member notification 🎊
+2. Bot me `➕ Add Task` → Group/Channel/View/Reaction chuno → link/post link bhejo → payout chuno
+3. Dusre account se `💰 Earn Points` → task aayega → join/complete karke claim karo
+4. Group/channel membership Telegram API se verify hoti hai; View/Reaction me 30s timer ke baad reward milta hai 🎊
 
 > ⚠️ **Zaroori:** Bot ko us group me **ADMIN** hona chahiye jise promote karna hai — warna join verify nahi hoga. Private groups bhi support hain (bot admin banao → `✅ Verify` dabao).
 
@@ -137,9 +140,9 @@ telegram-bot/
 /start → +50 pts → 💰 Earn Points → 🎯 Get Task
   → 🔗 Join Group → ✅ Joined → bot verify → +points 💰
 
-➕ Add Group → bot ko group me admin banao → link/verify
-  → payout chuno (5–50) → aapka group sabko task me dikhega
-  → har naye member par points katenge, balance khatam = auto-pause
+➕ Add Task → Group/Channel/View/Reaction chuno
+  → payout chuno (5–50) → task sabko dikhega
+  → group/channel completion par payout katega; View/Reaction reward add par reserve hota hai
 ```
 
 ## ⚠️ Notes

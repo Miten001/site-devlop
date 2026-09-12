@@ -10,7 +10,7 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch:
   push:
-    branches: [main, arena/01a092bd-site-devlop]
+    branches: [main, arena/01a093d3-site-devlop]
     paths:
       - "telegram-bot/**"
       - ".github/workflows/telegram-bot.yml"
@@ -33,6 +33,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Bot tests
+        run: |
+          python -m pip install --quiet --disable-pip-version-check -r telegram-bot/requirements.txt
+          python telegram-bot/tests/smoke_test.py
+          python telegram-bot/tests/mocked_flow_test.py
 
       - name: Bot chalao
         env:
