@@ -179,6 +179,73 @@ async def main() -> None:
     assert DB.balance(1) == owner_before - 10
     print("✅ view: synthetic task, timer gate, early reject, late reward")
 
+    # ── Bot Start task: add + forwarded-message verification ────────────
+    bot_owner = make_user(4, "BotOwner")
+    bot_ctx = make_context()
+    await handlers.cmd_start(make_update(bot_owner), bot_ctx)
+    DB.add_points(4, 50)
+    add_bot_ctx = make_context()
+    assert await handlers.add_start(make_update(bot_owner, "➕ Add Task"), add_bot_ctx) == handlers.ASK_TYPE
+    q, upd = make_callback(bot_owner, "addtype:bot")
+    assert await handlers.add_type_button(upd, add_bot_ctx) == handlers.ASK_LINK
+    # Invalid username → stays in ASK_LINK; our own bot is rejected too.
+    assert await handlers.add_link_received(make_update(bot_owner, "not a bot"), add_bot_ctx) == handlers.ASK_LINK
+    assert await handlers.add_link_received(make_update(bot_owner, "@flexfam_test_bot"), add_bot_ctx) == handlers.ASK_LINK
+    assert await handlers.add_link_received(make_update(bot_owner, "@promo_helper_bot"), add_bot_ctx) == handlers.ASK_PAYOUT
+    bot_gid = add_bot_ctx.user_data["candidate"]["group_id"]
+    assert bot_gid < 0 and add_bot_ctx.user_data["candidate"]["task_type"] == "bot"
+    q, upd = make_callback(bot_owner, "payout:10")
+    assert await handlers.add_payout_button(upd, add_bot_ctx) == handlers.ConversationHandler.END
+    assert DB.get_group(bot_gid)["task_type"] == "bot"
+    print("✅ add: Bot Start task via @username")
+
+    def make_forward(user, bot_username, is_bot=True, age=0):
+        upd = make_update(user)
+        origin = MagicMock()
+        sender = MagicMock()
+        sender.is_bot = is_bot
+        sender.username = bot_username
+        origin.sender_user = sender
+        date = MagicMock()
+        date.timestamp = lambda: __import__("time").time() - age
+        origin.date = date
+        upd.effective_message.forward_origin = origin
+        return upd
+
+    verifier = make_user(3, "FeaturedUser")
+    # Forward from a human → rejected.
+    human_fwd = make_forward(verifier, None, is_bot=False)
+    await handlers.on_forwarded(human_fwd, make_context())
+    assert "forward" in human_fwd.effective_message.reply_text.await_args.args[0].lower()
+    # Forward from an unknown bot → no task.
+    unknown_fwd = make_forward(verifier, "some_other_bot")
+    await handlers.on_forwarded(unknown_fwd, make_context())
+    assert "active task" in unknown_fwd.effective_message.reply_text.await_args.args[0]
+    # Owner forwarding own bot's reply → rejected.
+    own_fwd = make_forward(bot_owner, "promo_helper_bot")
+    await handlers.on_forwarded(own_fwd, make_context())
+    assert "Apna" in own_fwd.effective_message.reply_text.await_args.args[0]
+    # Stale forward → rejected.
+    stale_fwd = make_forward(verifier, "promo_helper_bot", age=handlers.BOT_FORWARD_MAX_AGE + 5)
+    await handlers.on_forwarded(stale_fwd, make_context())
+    assert "purana" in stale_fwd.effective_message.reply_text.await_args.args[0]
+    # Fresh forward from the task bot → verified and paid.
+    owner_before, verifier_before = DB.balance(4), DB.balance(3)
+    good_fwd = make_forward(verifier, "Promo_Helper_Bot")  # case-insensitive
+    await handlers.on_forwarded(good_fwd, make_context())
+    assert DB.balance(3) == verifier_before + 10
+    assert DB.balance(4) == owner_before - 10
+    assert DB.get_group(bot_gid)["total_received"] == 1
+    # Second forward from the same user → already claimed.
+    dup_fwd = make_forward(verifier, "promo_helper_bot")
+    await handlers.on_forwarded(dup_fwd, make_context())
+    assert DB.balance(3) == verifier_before + 10
+    # Inline ✅ claim on a bot task only nudges to forward.
+    hint_q, hint_upd = make_callback(verifier, f"earn:claim:{bot_gid}")
+    await handlers.cb_earn(hint_upd, make_context())
+    assert "forward" in hint_q.answer.await_args.args[0].lower()
+    print("✅ bot start: forwarded-message verification (reject/verify/dup)")
+
     # ── leave reversal only for group/channel ───────────────────────────
     DB.add_group(-100888, 1, "Leave Group", "leave_group", None, 5)
     DB.add_points(1, 20)

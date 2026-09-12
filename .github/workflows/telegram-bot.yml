@@ -10,7 +10,7 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch:
   push:
-    branches: [main, arena/01a093d3-site-devlop]
+    branches: [main, arena/01a0940e-site-devlop]
     paths:
       - "telegram-bot/**"
       - ".github/workflows/telegram-bot.yml"

@@ -38,6 +38,7 @@ def task_type_chooser() -> InlineKeyboardMarkup:
          InlineKeyboardButton("📣 Channel", callback_data="addtype:channel")],
         [InlineKeyboardButton("👁 View", callback_data="addtype:view"),
          InlineKeyboardButton("❤️ Reaction", callback_data="addtype:reaction")],
+        [InlineKeyboardButton("🤖 Bot Start", callback_data="addtype:bot")],
     ])
 
 
@@ -53,6 +54,13 @@ def post_task_keyboard(post_url: str, group_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("🔗 Open Post", url=post_url)],
         [InlineKeyboardButton("▶️ Start Timer", callback_data=f"earn:start:{group_id}")],
+        [InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
+    ])
+
+
+def bot_task_keyboard(bot_url: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🤖 Open Bot & /start", url=bot_url)],
         [InlineKeyboardButton("⏭ Skip", callback_data="earn:skip")],
     ])
 

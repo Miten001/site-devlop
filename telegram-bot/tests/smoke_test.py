@@ -91,6 +91,23 @@ assert view_join["task_type"] == "view"
 assert DB.reverse_join(view_join["id"]) is None
 print("✅ view: upfront cost, no owner claim charge, no leave reversal")
 
+print("== bot-start task: per-completion funding, lookup, no reversal ==")
+assert DB.upsert_user(5, "botowner", "BotOwner")
+DB.add_points(5, 50)
+assert DB.add_group(-333, 5, "@promo_bot", "promo_bot",
+                    "https://t.me/promo_bot", 10, task_type="bot",
+                    post_link="https://t.me/promo_bot")
+assert DB.bot_task_by_username("promo_bot")["group_id"] == -333
+assert DB.bot_task_by_username("@PROMO_BOT")["group_id"] == -333
+assert DB.bot_task_by_username("other_bot") is None
+ok, info = DB.award_join(-333, 2)
+assert ok and info["cost"] == 10 and info["task_type"] == "bot"
+assert DB.balance(5) == 40  # charged per verified start, not upfront
+bot_join = DB.recent_joins(0)[-1]
+assert bot_join["task_type"] == "bot"
+assert DB.reverse_join(bot_join["id"]) is None  # never reversed
+print("✅ bot: username lookup, per-start cost, irreversible join")
+
 print("== featured claim is permanent ==")
 featured_before = DB.balance(2)
 ok, info = DB.award_join(0, 2)
