@@ -481,9 +481,15 @@ async def add_type_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "phir real getChatMember verification hogi."
         )
         emoji = "👥" if task_type == "group" else "📣"
+    prompt_kwargs = {
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
+    if task_type in {"group", "channel"}:
+        prompt_kwargs["reply_markup"] = kb.add_group_verify_kb()
     await q.message.reply_text(
         texts.ADD_LINK_PROMPT(emoji=emoji, label=label, instruction=instruction),
-        parse_mode="HTML", disable_web_page_preview=True,
+        **prompt_kwargs,
     )
     return ASK_LINK
 
