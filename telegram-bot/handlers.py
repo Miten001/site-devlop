@@ -299,7 +299,9 @@ async def start_view_timer(update: Update, context: ContextTypes.DEFAULT_TYPE,
     if not g or not g["active"] or g["task_type"] not in {"view", "reaction"}:
         await q.answer(texts.TASK_EXPIRED, show_alert=True)
         return
-    DB.start_timer(gid, user_id)
+    # Pass the handler clock explicitly so a callback/test can use the same
+    # monotonic wall-clock value for start and claim checks.
+    DB.start_timer(gid, user_id, started_at=time.time())
     await q.answer(texts.TIMER_STARTED.format(seconds=VIEW_TIMER_SECONDS))
     try:
         await q.edit_message_text(
