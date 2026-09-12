@@ -13,6 +13,8 @@ from pathlib import Path
 
 from config import (
     DATABASE_PATH,
+    DEAD_TASK_MAX_STRIKES,
+    DEAD_TASK_SKIP_LIMIT,
     FEATURED_GROUP_ID,
     FEATURED_LINK,
     FEATURED_PAYOUT,
@@ -33,7 +35,8 @@ CREATE TABLE IF NOT EXISTS users (
     last_bonus        REAL NOT NULL DEFAULT 0,
     banned            INTEGER NOT NULL DEFAULT 0,
     joined_at         REAL NOT NULL,
-    featured_shown_at REAL NOT NULL DEFAULT 0
+    featured_shown_at REAL NOT NULL DEFAULT 0,
+    warn_strikes      INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS groups (
@@ -47,7 +50,9 @@ CREATE TABLE IF NOT EXISTS groups (
     total_received INTEGER NOT NULL DEFAULT 0,
     created_at     REAL NOT NULL,
     post_link      TEXT,
-    task_type      TEXT NOT NULL DEFAULT 'group'
+    task_type      TEXT NOT NULL DEFAULT 'group',
+    skip_streak    INTEGER NOT NULL DEFAULT 0,
+    auto_paused    INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS joins (
@@ -97,10 +102,15 @@ class Database:
     def _migrate(self) -> None:
         """Add new columns to pre-feature databases without losing rows."""
         migrations = {
-            "users": [("featured_shown_at", "REAL NOT NULL DEFAULT 0")],
+            "users": [
+                ("featured_shown_at", "REAL NOT NULL DEFAULT 0"),
+                ("warn_strikes", "INTEGER NOT NULL DEFAULT 0"),
+            ],
             "groups": [
                 ("post_link", "TEXT"),
                 ("task_type", "TEXT NOT NULL DEFAULT 'group'"),
+                ("skip_streak", "INTEGER NOT NULL DEFAULT 0"),
+                ("auto_paused", "INTEGER NOT NULL DEFAULT 0"),
             ],
             "joins": [("task_type", "TEXT NOT NULL DEFAULT 'group'")],
         }
@@ -322,12 +332,148 @@ class Database:
             ).fetchone()["c"]
 
     def set_group_active(self, group_id: int, active: bool) -> None:
+        """Pause or resume a task.
+
+        Resuming always clears the dead-task state: the skip streak starts
+        from zero again and the task is no longer flagged as auto-paused.
+        """
+        with self.lock:
+            if active:
+                self.conn.execute(
+                    "UPDATE groups SET active=1, skip_streak=0, auto_paused=0 "
+                    "WHERE group_id=?", (group_id,)
+                )
+            else:
+                self.conn.execute(
+                    "UPDATE groups SET active=0 WHERE group_id=?", (group_id,)
+                )
+            self.conn.commit()
+
+    # ── dead-task protection ────────────────────────────────────────────
+    def reset_skip_streak(self, group_id: int) -> None:
+        """Zero the consecutive-skip counter (completion or manual resume)."""
         with self.lock:
             self.conn.execute(
-                "UPDATE groups SET active=? WHERE group_id=?",
-                (1 if active else 0, group_id),
+                "UPDATE groups SET skip_streak=0 WHERE group_id=?", (group_id,)
             )
             self.conn.commit()
+
+    def skip_streak(self, group_id: int) -> int:
+        row = self.get_group(group_id)
+        return int(row["skip_streak"]) if row else 0
+
+    def strikes_of(self, user_id: int) -> int:
+        row = self.get_user(user_id)
+        return int(row["warn_strikes"]) if row else 0
+
+    def reset_strikes(self, user_id: int) -> None:
+        with self.lock:
+            self.conn.execute(
+                "UPDATE users SET warn_strikes=0 WHERE user_id=?", (user_id,)
+            )
+            self.conn.commit()
+
+    def pause_all_tasks_of(self, owner_id: int) -> int:
+        """Pause every active task of an owner.  Returns how many were paused."""
+        with self.lock:
+            cur = self.conn.execute(
+                "UPDATE groups SET active=0, auto_paused=1 "
+                "WHERE owner_id=? AND active=1", (owner_id,)
+            )
+            self.conn.commit()
+            return cur.rowcount
+
+    def register_skip(self, group_id: int,
+                      skip_limit: int = DEAD_TASK_SKIP_LIMIT,
+                      max_strikes: int = DEAD_TASK_MAX_STRIKES) -> dict | None:
+        """Count one skip for a task and apply the dead-task rules.
+
+        A task that has been skipped ``skip_limit`` times in a row *without a
+        single completion* is considered dead: it is auto-paused and its owner
+        receives a warning strike.  When the owner reaches ``max_strikes`` all
+        of their tasks are paused as well.
+
+        Returns ``None`` while nothing special happened, otherwise a dict
+        describing the event so the caller can notify the owner/admins.
+        """
+        if skip_limit <= 0:
+            return None
+        with self.lock:
+            self.conn.execute("BEGIN IMMEDIATE")
+            try:
+                g = self.conn.execute(
+                    "SELECT * FROM groups WHERE group_id=?", (group_id,)
+                ).fetchone()
+                # The featured/system task can never go dead.
+                if not g or g["owner_id"] == SYSTEM_USER_ID:
+                    self.conn.execute("ROLLBACK")
+                    return None
+                streak = int(g["skip_streak"]) + 1
+                # A task that has ever been completed is alive by definition.
+                if g["total_received"] > 0 or not g["active"]:
+                    self.conn.execute(
+                        "UPDATE groups SET skip_streak=? WHERE group_id=?",
+                        (0 if g["total_received"] > 0 else streak, group_id),
+                    )
+                    self.conn.commit()
+                    return None
+                self.conn.execute(
+                    "UPDATE groups SET skip_streak=? WHERE group_id=?",
+                    (streak, group_id),
+                )
+                if streak < skip_limit:
+                    self.conn.commit()
+                    return {
+                        "dead": False, "streak": streak, "limit": skip_limit,
+                        "group_id": group_id, "owner_id": g["owner_id"],
+                        "title": g["title"], "task_type": g["task_type"],
+                    }
+
+                # Dead task: pause it and give the owner a strike.
+                self.conn.execute(
+                    "UPDATE groups SET active=0, auto_paused=1, skip_streak=? "
+                    "WHERE group_id=?", (streak, group_id),
+                )
+                self.conn.execute(
+                    "UPDATE users SET warn_strikes=warn_strikes+1 WHERE user_id=?",
+                    (g["owner_id"],),
+                )
+                owner = self.conn.execute(
+                    "SELECT * FROM users WHERE user_id=?", (g["owner_id"],)
+                ).fetchone()
+                strikes = int(owner["warn_strikes"]) if owner else 1
+                all_paused = 0
+                if max_strikes > 0 and strikes >= max_strikes:
+                    cur = self.conn.execute(
+                        "UPDATE groups SET active=0, auto_paused=1 "
+                        "WHERE owner_id=? AND active=1", (g["owner_id"],)
+                    )
+                    all_paused = cur.rowcount
+                self.conn.commit()
+                return {
+                    "dead": True,
+                    "streak": streak,
+                    "limit": skip_limit,
+                    "group_id": group_id,
+                    "owner_id": g["owner_id"],
+                    "title": g["title"],
+                    "task_type": g["task_type"],
+                    "strikes": strikes,
+                    "max_strikes": max_strikes,
+                    "owner_blocked": max_strikes > 0 and strikes >= max_strikes,
+                    "paused_count": all_paused + 1,
+                }
+            except Exception:
+                self.conn.execute("ROLLBACK")
+                raise
+
+    def dead_task_snapshot(self, owner_id: int) -> list[sqlite3.Row]:
+        """Owner's tasks that are currently auto-paused by the dead-task rule."""
+        with self.lock:
+            return self.conn.execute(
+                "SELECT * FROM groups WHERE owner_id=? AND auto_paused=1 "
+                "ORDER BY created_at DESC", (owner_id,)
+            ).fetchall()
 
     def set_group_payout(self, group_id: int, payout: int) -> None:
         with self.lock:
@@ -487,8 +633,11 @@ class Database:
                     "VALUES (?,?,?,?,?)",
                     (group_id, joiner_id, payout, time.time(), task_type),
                 )
+                # A completion proves the task is alive: reset the dead-task
+                # skip streak.
                 self.conn.execute(
-                    "UPDATE groups SET total_received=total_received+1 WHERE group_id=?",
+                    "UPDATE groups SET total_received=total_received+1, "
+                    "skip_streak=0 WHERE group_id=?",
                     (group_id,),
                 )
                 self.conn.execute(

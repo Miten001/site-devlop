@@ -11,10 +11,10 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
 
-    # telegram-bot/.env aur repo root .env dono try karo
+    # Try both telegram-bot/.env and the repository root .env
     load_dotenv(Path(__file__).parent / ".env")
     load_dotenv(Path(__file__).parent.parent / ".env")
-except ImportError:  # python-dotenv optional hai
+except ImportError:  # python-dotenv is optional
     pass
 
 
@@ -43,11 +43,22 @@ DAILY_BONUS: int = int(os.getenv("DAILY_BONUS", "0"))
 FEE_PERCENT: int = int(os.getenv("FEE_PERCENT", "0"))
 MIN_PAYOUT: int = int(os.getenv("MIN_PAYOUT", "5"))
 MAX_PAYOUT: int = int(os.getenv("MAX_PAYOUT", "50"))
-MAX_GROUPS_PER_USER: int = int(os.getenv("MAX_GROUPS_PER_USER", "10"))
+# 0 means unlimited: a user may add as many tasks as they like.
+MAX_GROUPS_PER_USER: int = int(os.getenv("MAX_GROUPS_PER_USER", "0"))
 VIEW_TIMER_SECONDS: int = int(os.getenv("VIEW_TIMER_SECONDS", "30"))
 
-# Kitne ghante tak join re-verify honge (group/channel chhoda to points wapas)
+# How many hours joins are re-verified for (leaving a group/channel reverses
+# the points that were awarded for it).
 LEAVE_CHECK_HOURS: int = int(os.getenv("LEAVE_CHECK_HOURS", "72"))
+
+# ── Dead-task protection ────────────────────────────────────────────────
+# A task that keeps being skipped and never completed is "dead": nobody wants
+# it.  After DEAD_TASK_SKIP_LIMIT consecutive skips with zero completions the
+# task is auto-paused and its owner collects a warning strike.  At
+# DEAD_TASK_MAX_STRIKES strikes every task of that owner is paused and the
+# admins are alerted.
+DEAD_TASK_SKIP_LIMIT: int = int(os.getenv("DEAD_TASK_SKIP_LIMIT", "15"))
+DEAD_TASK_MAX_STRIKES: int = int(os.getenv("DEAD_TASK_MAX_STRIKES", "3"))
 
 # A post task always has the strict, single-slash Telegram post format.
 POST_LINK_RE = re.compile(
@@ -75,5 +86,13 @@ def fee_for(payout: int) -> int:
 
 
 def cost_for(payout: int) -> int:
-    """Owner ka total cost per rewarded join."""
+    """The owner's total cost per rewarded join."""
     return payout + fee_for(payout)
+
+
+def task_limit_reached(count: int) -> bool:
+    """Whether a user who already owns ``count`` tasks may not add another.
+
+    ``MAX_GROUPS_PER_USER <= 0`` disables the limit entirely (the default).
+    """
+    return MAX_GROUPS_PER_USER > 0 and count >= MAX_GROUPS_PER_USER

@@ -19,7 +19,14 @@ from telegram import Update  # noqa: E402
 
 import db  # noqa: E402
 import handlers  # noqa: E402
-from config import REFERRAL_BONUS, SIGNUP_BONUS, VIEW_TIMER_SECONDS  # noqa: E402
+from config import (  # noqa: E402
+    DEAD_TASK_MAX_STRIKES,
+    DEAD_TASK_SKIP_LIMIT,
+    MAX_GROUPS_PER_USER,
+    REFERRAL_BONUS,
+    SIGNUP_BONUS,
+    VIEW_TIMER_SECONDS,
+)
 
 DB = db.DB
 
@@ -224,11 +231,11 @@ async def main() -> None:
     # Owner forwarding own bot's reply → rejected.
     own_fwd = make_forward(bot_owner, "promo_helper_bot")
     await handlers.on_forwarded(own_fwd, make_context())
-    assert "Apna" in own_fwd.effective_message.reply_text.await_args.args[0]
+    assert "your own task" in own_fwd.effective_message.reply_text.await_args.args[0]
     # Stale forward → rejected.
     stale_fwd = make_forward(verifier, "promo_helper_bot", age=handlers.BOT_FORWARD_MAX_AGE + 5)
     await handlers.on_forwarded(stale_fwd, make_context())
-    assert "purana" in stale_fwd.effective_message.reply_text.await_args.args[0]
+    assert "too old" in stale_fwd.effective_message.reply_text.await_args.args[0]
     # Fresh forward from the task bot → verified and paid.
     owner_before, verifier_before = DB.balance(4), DB.balance(3)
     good_fwd = make_forward(verifier, "Promo_Helper_Bot")  # case-insensitive
@@ -245,6 +252,121 @@ async def main() -> None:
     await handlers.cb_earn(hint_upd, make_context())
     assert "forward" in hint_q.answer.await_args.args[0].lower()
     print("✅ bot start: forwarded-message verification (reject/verify/dup)")
+
+    # ── no task limit: an owner may add many tasks ──────────────────────
+    assert MAX_GROUPS_PER_USER == 0
+    DB.add_points(1, 500)
+    for i in range(12):
+        assert DB.add_group(-9000 - i, 1, f"Bulk {i}", f"bulk_{i}", None, 5)
+    assert DB.count_groups_of(1) > 10
+    # The Add Task conversation must still open well past the old limit of 10.
+    add_intro_update = make_update(admin, "➕ Add Task")
+    assert await handlers.add_start(add_intro_update, make_context()) == handlers.ASK_TYPE
+    intro_text = add_intro_update.effective_message.reply_text.await_args.args[0]
+    assert "No task limit" in intro_text
+    assert "max" not in intro_text.lower()
+    print("✅ limit: unlimited tasks per user, intro shows the no-limit note")
+
+    # ── dead-task warning system through the skip button ────────────────
+    dead_owner = make_user(5, "DeadOwner")
+    await handlers.cmd_start(make_update(dead_owner), make_context())
+    DB.add_points(5, 300)
+    assert DB.add_group(-7001, 5, "Dead Task One", "dead_one", None, 5)
+
+    async def skip_task(gid, user=joiner):
+        """Press ⏭ Skip on a specific task.
+
+        The membership mock answers "left" so that serving the *next* task
+        does not silently record a pre-existing membership for the skipper.
+        """
+        q, upd = make_callback(user, f"earn:skip:{gid}")
+        ctx = make_context()
+        ctx.bot.get_chat_member = AsyncMock(return_value=chat_member("left"))
+        await handlers.cb_earn(upd, ctx)
+        return ctx
+
+    for _ in range(DEAD_TASK_SKIP_LIMIT - 1):
+        await skip_task(-7001)
+    assert DB.get_group(-7001)["active"] == 1
+    assert DB.skip_streak(-7001) == DEAD_TASK_SKIP_LIMIT - 1
+    assert DB.strikes_of(5) == 0
+
+    warn_ctx = await skip_task(-7001)
+    assert DB.get_group(-7001)["active"] == 0
+    assert DB.strikes_of(5) == 1
+    owner_calls = [c for c in warn_ctx.bot.send_message.await_args_list
+                   if c.args and c.args[0] == 5]
+    assert owner_calls and "auto-paused" in owner_calls[0].args[1]
+    assert "1/3" in owner_calls[0].args[1]
+    # The warning itself offers Resume / Change Payout / Delete.
+    warn_markup = owner_calls[0].kwargs["reply_markup"]
+    warn_actions = [b.callback_data
+                    for row in warn_markup.inline_keyboard for b in row]
+    assert warn_actions == ["grp:-7001:toggle", "grp:-7001:payout", "grp:-7001:del"]
+    print("✅ dead task: auto-paused, strike 1/3, warning has action buttons")
+
+    # Tapping ▶️ Resume Task straight from the warning clears the streak.
+    resume_q, resume_upd = make_callback(dead_owner, warn_actions[0])
+    await handlers.cb_group(resume_upd, make_context())
+    assert DB.get_group(-7001)["active"] == 1 and DB.skip_streak(-7001) == 0
+    assert DB.get_group(-7001)["auto_paused"] == 0
+    assert "resumed" in resume_q.answer.await_args.args[0].lower()
+    # The refreshed card must pass its markup by keyword, never positionally.
+    edit_call = resume_q.edit_message_text.await_args
+    assert len(edit_call.args) == 1, "task card markup must not be positional"
+    assert edit_call.kwargs["parse_mode"] == "HTML"
+    assert edit_call.kwargs["reply_markup"] is not None
+    print("✅ resume: streak reset from the warning button, card re-rendered")
+
+    # Someone else cannot act on the warning's buttons.
+    intruder_q, intruder_upd = make_callback(joiner, "grp:-7001:toggle")
+    await handlers.cb_group(intruder_upd, make_context())
+    assert intruder_q.answer.await_args.kwargs.get("show_alert") is True
+    assert DB.get_group(-7001)["active"] == 1  # unchanged
+    print("✅ dead-task buttons: ownership enforced")
+
+    # A completion also resets the streak.
+    for _ in range(3):
+        await skip_task(-7001)
+    assert DB.skip_streak(-7001) == 3
+    claim_q, claim_upd = make_callback(joiner, "earn:claim:-7001")
+    done_ctx = make_context()
+    done_ctx.bot.get_chat_member = AsyncMock(return_value=chat_member("member"))
+    await handlers.cb_earn(claim_upd, done_ctx)
+    assert DB.get_group(-7001)["total_received"] == 1
+    assert DB.skip_streak(-7001) == 0
+    print("✅ completion: skip streak reset")
+
+    # Strikes 2 and 3 → every task of the owner is paused and admins alerted.
+    third = make_user(6, "ThirdParty")
+    assert DB.add_group(-7002, 5, "Dead Task Two", "dead_two", None, 5)
+    assert DB.add_group(-7003, 5, "Dead Task Three", "dead_three", None, 5)
+    assert DB.add_group(-7004, 5, "Untouched Task", "untouched", None, 5)
+    for _ in range(DEAD_TASK_SKIP_LIMIT):
+        await skip_task(-7002, third)
+    assert DB.strikes_of(5) == 2 and DB.get_group(-7004)["active"] == 1
+    for _ in range(DEAD_TASK_SKIP_LIMIT - 1):
+        final_ctx = await skip_task(-7003, third)
+    final_ctx = await skip_task(-7003, third)
+    assert DB.strikes_of(5) == DEAD_TASK_MAX_STRIKES
+    assert DB.get_group(-7004)["active"] == 0  # all tasks paused
+    assert DB.get_group(-7001)["active"] == 0
+    sent = [(c.args[0], c.args[1]) for c in final_ctx.bot.send_message.await_args_list]
+    owner_texts = [t for uid, t in sent if uid == 5]
+    admin_texts = [t for uid, t in sent if uid == 1]
+    assert any("All of your tasks have been paused" in t for t in owner_texts)
+    assert admin_texts and "Dead-task alert" in admin_texts[0]
+    assert "3/3" in admin_texts[0]
+    print("✅ strikes: 3/3 pauses all tasks + admin alert")
+
+    # /clearstrikes forgives the owner.
+    clear_upd = make_update(admin, "/clearstrikes 5")
+    clear_ctx = make_context()
+    clear_ctx.args = ["5"]
+    await handlers.cmd_clearstrikes(clear_upd, clear_ctx)
+    assert DB.strikes_of(5) == 0
+    assert "cleared" in clear_upd.effective_message.reply_text.await_args.args[0]
+    print("✅ admin: /clearstrikes resets warning strikes")
 
     # ── leave reversal only for group/channel ───────────────────────────
     DB.add_group(-100888, 1, "Leave Group", "leave_group", None, 5)
@@ -275,7 +397,7 @@ async def main() -> None:
     assert DB.is_banned(2)
     blocked = make_update(joiner, "💰 Earn Points")
     await handlers.on_text(blocked, make_context())
-    assert "ban" in blocked.effective_message.reply_text.await_args.args[0].lower()
+    assert "banned" in blocked.effective_message.reply_text.await_args.args[0].lower()
     print("✅ admin: broadcast + ban block")
 
     DB.close()
