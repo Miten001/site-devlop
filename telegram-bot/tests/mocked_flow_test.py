@@ -294,18 +294,36 @@ async def main() -> None:
     warn_ctx = await skip_task(-7001)
     assert DB.get_group(-7001)["active"] == 0
     assert DB.strikes_of(5) == 1
-    owner_msgs = [c.args[1] for c in warn_ctx.bot.send_message.await_args_list
-                  if c.args and c.args[0] == 5]
-    assert owner_msgs and "auto-paused" in owner_msgs[0]
-    assert "1/3" in owner_msgs[0]
-    print("✅ dead task: auto-paused with warning strike 1/3")
+    owner_calls = [c for c in warn_ctx.bot.send_message.await_args_list
+                   if c.args and c.args[0] == 5]
+    assert owner_calls and "auto-paused" in owner_calls[0].args[1]
+    assert "1/3" in owner_calls[0].args[1]
+    # The warning itself offers Resume / Change Payout / Delete.
+    warn_markup = owner_calls[0].kwargs["reply_markup"]
+    warn_actions = [b.callback_data
+                    for row in warn_markup.inline_keyboard for b in row]
+    assert warn_actions == ["grp:-7001:toggle", "grp:-7001:payout", "grp:-7001:del"]
+    print("✅ dead task: auto-paused, strike 1/3, warning has action buttons")
 
-    # Resuming from My Groups clears the streak.
-    resume_q, resume_upd = make_callback(dead_owner, "grp:-7001:toggle")
+    # Tapping ▶️ Resume Task straight from the warning clears the streak.
+    resume_q, resume_upd = make_callback(dead_owner, warn_actions[0])
     await handlers.cb_group(resume_upd, make_context())
     assert DB.get_group(-7001)["active"] == 1 and DB.skip_streak(-7001) == 0
+    assert DB.get_group(-7001)["auto_paused"] == 0
     assert "resumed" in resume_q.answer.await_args.args[0].lower()
-    print("✅ resume: skip streak reset from My Groups")
+    # The refreshed card must pass its markup by keyword, never positionally.
+    edit_call = resume_q.edit_message_text.await_args
+    assert len(edit_call.args) == 1, "task card markup must not be positional"
+    assert edit_call.kwargs["parse_mode"] == "HTML"
+    assert edit_call.kwargs["reply_markup"] is not None
+    print("✅ resume: streak reset from the warning button, card re-rendered")
+
+    # Someone else cannot act on the warning's buttons.
+    intruder_q, intruder_upd = make_callback(joiner, "grp:-7001:toggle")
+    await handlers.cb_group(intruder_upd, make_context())
+    assert intruder_q.answer.await_args.kwargs.get("show_alert") is True
+    assert DB.get_group(-7001)["active"] == 1  # unchanged
+    print("✅ dead-task buttons: ownership enforced")
 
     # A completion also resets the streak.
     for _ in range(3):

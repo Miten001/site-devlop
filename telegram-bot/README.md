@@ -43,6 +43,7 @@ Task complete hua         → skip streak reset (task hamesha ke liye "alive")
 Streak == 15 (0 comp.)    → task auto-pause + owner ko strike (1/3)
 Owner ki 3 strikes        → owner ke saare tasks pause + admins ko alert
 Owner ne task resume kiya → skip streak reset, auto-pause flag clear
+Warning DM par buttons    → ▶️ Resume Task / 💸 Change Payout / 🗑 Delete
 /clearstrikes <user_id>   → admin owner ki strikes maaf kar sakta hai
 ```
 

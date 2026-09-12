@@ -243,6 +243,38 @@ assert any(
     "clearstrikes" in getattr(h, "commands", set())
     for handlers_list in app.handlers.values() for h in handlers_list
 )
+# The dead-task warning keyboard drives the same grp: callbacks as the My
+# Groups card, so cb_group re-checks ownership for every action.
+import re as _re  # noqa: E402
+
+GRP_PATTERN = _re.compile(r"^grp:\-?\d+:\w+$")
+dead_kb = kb.dead_task_kb(-4242)
+dead_actions = [b.callback_data for row in dead_kb.inline_keyboard for b in row]
+assert dead_actions == ["grp:-4242:toggle", "grp:-4242:payout", "grp:-4242:del"]
+assert all(GRP_PATTERN.match(cb) for cb in dead_actions)
+print("✅ dead-task keyboard: resume / payout / delete wired to grp: callbacks")
+
+# Regression guard: a task card must be sent as (text, parse_mode=..,
+# reply_markup=..).  Passing the (text, markup) tuple positionally silently
+# binds the markup to PTB's `parse_mode` parameter.
+import inspect  # noqa: E402
+
+from telegram import CallbackQuery, InlineKeyboardMarkup  # noqa: E402
+
+_markup = InlineKeyboardMarkup([[]])
+try:
+    inspect.signature(CallbackQuery.edit_message_text).bind(
+        None, "text", _markup, parse_mode="HTML")
+    raise AssertionError("positional (text, markup) unexpectedly bound")
+except TypeError:
+    pass
+inspect.signature(CallbackQuery.edit_message_text).bind(
+    None, "text", parse_mode="HTML", reply_markup=_markup,
+    disable_web_page_preview=True)
+assert "*_group_card(" not in (Path(__file__).parent.parent / "handlers.py").read_text(), \
+    "handlers.py still unpacks a task card positionally into edit_message_text"
+print("✅ task card: keyword reply_markup (no positional tuple unpacking)")
+
 # Skip buttons carry their task id so a skip can be attributed to that task.
 skip_buttons = [
     b.callback_data

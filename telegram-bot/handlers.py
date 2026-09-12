@@ -446,6 +446,7 @@ async def handle_skip(context: ContextTypes.DEFAULT_TYPE, group_id: int | None) 
             strikes=event["strikes"], max_strikes=event["max_strikes"],
         ),
         parse_mode="HTML",
+        reply_markup=kb.dead_task_kb(event["group_id"]),
     )
     if not event["owner_blocked"]:
         return
@@ -949,7 +950,11 @@ async def cb_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         g = DB.get_group(gid)
         await q.answer(texts.GROUP_RESUMED if resumed else texts.GROUP_TOGGLE_DONE)
         try:
-            await q.edit_message_text(*_group_card(g), parse_mode="HTML", disable_web_page_preview=True)
+            card_text, card_markup = _group_card(g)
+            await q.edit_message_text(
+                card_text, parse_mode="HTML", reply_markup=card_markup,
+                disable_web_page_preview=True,
+            )
         except TelegramError:
             pass
     elif action == "payout":
@@ -973,7 +978,11 @@ async def cb_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     elif action == "delno":
         await q.answer()
         try:
-            await q.edit_message_text(*_group_card(g), parse_mode="HTML", disable_web_page_preview=True)
+            card_text, card_markup = _group_card(g)
+            await q.edit_message_text(
+                card_text, parse_mode="HTML", reply_markup=card_markup,
+                disable_web_page_preview=True,
+            )
         except TelegramError:
             pass
 

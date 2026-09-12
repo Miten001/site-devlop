@@ -93,6 +93,20 @@ def add_group_verify_kb() -> InlineKeyboardMarkup:
     ]])
 
 
+def dead_task_kb(group_id: int) -> InlineKeyboardMarkup:
+    """Actions offered on the auto-pause warning of a dead task.
+
+    The callbacks are the same ones the My Groups card uses, so ownership is
+    re-checked by cb_group and the owner can fix the task straight from the
+    warning without opening the menu.
+    """
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("▶️ Resume Task", callback_data=f"grp:{group_id}:toggle")],
+        [InlineKeyboardButton("💸 Change Payout", callback_data=f"grp:{group_id}:payout"),
+         InlineKeyboardButton("🗑 Delete", callback_data=f"grp:{group_id}:del")],
+    ])
+
+
 def payout_chooser(presets: list[int]) -> InlineKeyboardMarkup:
     rows, row = [], []
     for p in presets:
