@@ -1,3 +1,4 @@
+/* Supabase public browser configuration. */
 window.FF_SUPABASE_CONFIG = {
   url: "https://ekrqtlbwaotgdtrpqhrc.supabase.co",
   anonKey: "sb_publishable_Q1b_FF9Htl4j30dHashaQQ_8ydq1MU8",
