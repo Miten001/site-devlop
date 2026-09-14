@@ -55,13 +55,13 @@
 <!-- CONFIG MISSING -->
 <div class="auth-wrap hidden" id="view-nocfg">
   <div class="auth-card reveal in" style="max-width:560px">
-    <h1>Firebase config missing ⚙️</h1>
-    <p class="sub">Admin panel needs a Firebase project to read analytics.</p>
+    <h1>Supabase config missing ⚙️</h1>
+    <p class="sub">Admin panel needs a Supabase project to read analytics.</p>
     <div class="cfg-warn">
       <b style="color:var(--ink)">Setup:</b><br />
-      1. Copy <code>assets/js/firebase-config.example.js</code> → <code>assets/js/firebase-config.js</code><br />
-      2. Paste your Firebase web config + admin email(s) in it<br />
-      3. Deploy <code>firestore.rules</code> in Firebase Console<br />
+      1. Copy <code>assets/js/supabase-config.example.js</code> → <code>assets/js/supabase-config.js</code><br />
+      2. Paste your Supabase web config + admin email(s) in it<br />
+      3. Run <code>supabase.sql</code> in Supabase SQL editor<br />
       4. Reload this page — full steps in the README.
     </div>
   </div>
@@ -71,7 +71,7 @@
 <div class="auth-wrap hidden" id="view-login">
   <div class="auth-card reveal in">
     <h1>Admin login 🔐</h1>
-    <p class="sub">Sign in with your Firebase admin account to view live analytics.</p>
+    <p class="sub">Sign in with your Supabase admin account to view live analytics.</p>
     <form id="admin-login-form">
       <div class="field">
         <label for="a-email">Admin email</label>
@@ -142,163 +142,27 @@
   </div>
 </main>
 
-<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/supabase-config.js"></script>
 <script type="module">
-/* FlexFam admin — Firebase Auth + Firestore analytics reader */
-const SDK = "https://www.gstatic.com/firebasejs/10.12.5/";
-const cfg = window.FF_FIREBASE_CONFIG || null;
-const ADMIN_EMAILS = (window.FF_ADMIN_EMAILS || []).map((e) => String(e).toLowerCase());
-const MAX_EVENTS = 2500;
-
-const $ = (id) => document.getElementById(id);
-const views = { nocfg: $("view-nocfg"), login: $("view-login"), dash: $("view-dash") };
-function show(name) {
-  Object.keys(views).forEach((k) => views[k].classList.toggle("hidden", k !== name));
-  $("btn-logout").classList.toggle("hidden", name !== "dash");
+/* FlexFam admin — Supabase Auth + Postgres analytics */
+const cfg=window.FF_SUPABASE_CONFIG||null, emails=(window.FF_ADMIN_EMAILS||[]).map(e=>String(e).toLowerCase());
+const views={nocfg:document.getElementById("view-nocfg"),login:document.getElementById("view-login"),dash:document.getElementById("view-dash")};
+const $=id=>document.getElementById(id); const show=n=>{Object.keys(views).forEach(k=>views[k].classList.toggle("hidden",k!==n));$("btn-logout").classList.toggle("hidden",n!=="dash")};
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const configured=cfg&&cfg.url&&cfg.anonKey&&!cfg.url.includes("your-project")&&!cfg.anonKey.includes("your-anon");
+if(!configured) show("nocfg"); else {
+ const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"), sb=createClient(cfg.url,cfg.anonKey); let last=[];
+ const toast=(m,err)=>{let r=document.querySelector('.toast-root')||document.body.appendChild(Object.assign(document.createElement('div'),{className:'toast-root'}));let x=document.createElement('div');x.className='toast '+(err?'err':'ok');x.textContent=m;r.appendChild(x);setTimeout(()=>x.remove(),3200)};
+ async function load(){try{let {data,error}=await sb.from('events').select('*').order('ts_client',{ascending:false}).limit(2500);if(error)throw error;last=data||[];render(last)}catch(e){toast('Could not read events — check Supabase RLS and setup.',true)}}
+ function render(es){let views=es.filter(e=>e.type==='page_view'), count=t=>es.filter(e=>e.type===t).length, uniq=new Set(es.map(e=>e.vid).filter(Boolean));$('who-count').textContent=es.length.toLocaleString('en-IN');$('k-views').textContent=views.length.toLocaleString('en-IN');$('k-today').textContent=views.filter(e=>e.day===new Date().toISOString().slice(0,10)).length.toLocaleString('en-IN');$('k-uniq').textContent=uniq.size.toLocaleString('en-IN');$('k-bot').textContent=count('telegram_bot_click');$('k-claims').textContent=count('task_claim');$('k-camps').textContent=count('campaign_created'); let maps=[{}, {}, {}];views.forEach(e=>{maps[0][e.page]=(maps[0][e.page]||0)+1});es.forEach(e=>{maps[2][e.type]=(maps[2][e.type]||0)+1});[['t-pages','pages'],['t-types','events']].forEach((x,i)=>$(x[0]).innerHTML=Object.entries(maps[i?2:0]).sort((a,b)=>b[1]-a[1]).slice(0,12).map(v=>`<tr><td class="k">${esc(v[0])}</td><td class="num">${v[1]}</td></tr>`).join('')||'<tr><td colspan="2">No data yet</td></tr>');$('t-refs').innerHTML='<tr><td colspan="2">Referrers are available in exported data</td></tr>';$('recent-count').textContent=Math.min(es.length,80)+' shown';$('t-recent').innerHTML=es.slice(0,80).map(e=>`<tr><td>${e.ts_client?new Date(e.ts_client).toLocaleString('en-IN'):''}</td><td><span class="ev-pill">${esc(e.type)}</span></td><td class="k">${esc(e.label||e.url||e.page||'')}</td></tr>`).join('')}
+ sb.auth.onAuthStateChange((_,u)=>{if(u&&(!emails.length||emails.includes((u.email||'').toLowerCase()))){$('who-email').textContent=u.email;show('dash');load()}else show('login')});
+ $('admin-login-form').addEventListener('submit',async e=>{e.preventDefault();let {error}=await sb.auth.signInWithPassword({email:$('a-email').value.trim(),password:$('a-pass').value});if(error)toast('Login failed: '+error.message,true)});$('btn-logout').onclick=()=>sb.auth.signOut();$('btn-refresh').onclick=load;$('btn-export').onclick=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({exportedAt:new Date(),events:last},null,2)],{type:'application/json'}));a.download='flexfam-analytics.json';a.click()};
 }
-function esc(s) {
-  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-function toastMini(msg, err) {
-  let root = document.querySelector(".toast-root");
-  if (!root) { root = document.createElement("div"); root.className = "toast-root"; document.body.appendChild(root); }
-  const el = document.createElement("div");
-  el.className = "toast " + (err ? "err" : "ok");
-  el.innerHTML = "<span>" + esc(msg) + "</span>";
-  root.appendChild(el);
-  setTimeout(() => { el.classList.add("leaving"); setTimeout(() => el.remove(), 350); }, 3200);
-}
-
-const configured = !!(cfg && cfg.apiKey && cfg.projectId && !cfg.apiKey.startsWith("PASTE_") && !cfg.projectId.startsWith("your-project"));
-if (!configured) {
-  show("nocfg");
-} else {
-  const [{ initializeApp, getApps, getApp }, authMod, fsMod] = await Promise.all([
-    import(SDK + "firebase-app.js"),
-    import(SDK + "firebase-auth.js"),
-    import(SDK + "firebase-firestore.js"),
-  ]);
-  const app = getApps().length ? getApp() : initializeApp(cfg);
-  const auth = authMod.getAuth(app);
-  const db = fsMod.getFirestore(app);
-  let lastEvents = [];
-
-  authMod.onAuthStateChanged(auth, (user) => {
-    if (user && (!ADMIN_EMAILS.length || ADMIN_EMAILS.includes((user.email || "").toLowerCase()))) {
-      $("who-email").textContent = user.email || "admin";
-      show("dash");
-      loadStats();
-    } else {
-      if (user) { authMod.signOut(auth); toastMini("This account is not on the admin allowlist.", true); }
-      show("login");
-    }
-  });
-
-  $("admin-login-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const btn = $("btn-login");
-    btn.disabled = true; btn.textContent = "Signing in…";
-    try {
-      await authMod.signInWithEmailAndPassword(auth, $("a-email").value.trim(), $("a-pass").value);
-    } catch (err) {
-      toastMini("Login failed: " + (err && err.code ? err.code.replace("auth/", "") : "error"), true);
-    } finally {
-      btn.disabled = false; btn.textContent = "Login to Admin";
-    }
-  });
-
-  $("btn-logout").addEventListener("click", () => authMod.signOut(auth));
-  $("btn-refresh").addEventListener("click", () => loadStats());
-  $("btn-export").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), count: lastEvents.length, events: lastEvents }, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "flexfam-analytics-" + new Date().toISOString().slice(0, 10) + ".json";
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toastMini("Exported " + lastEvents.length + " events");
-  });
-
-  async function loadStats() {
-    $("btn-refresh").textContent = "Loading…";
-    try {
-      const q = fsMod.query(fsMod.collection(db, "events"), fsMod.orderBy("tsClient", "desc"), fsMod.limit(MAX_EVENTS));
-      const snap = await fsMod.getDocs(q);
-      const events = [];
-      snap.forEach((d) => {
-        const v = d.data();
-        if (v.ts && v.ts.toDate) v.ts = v.ts.toDate().toISOString();
-        events.push(Object.assign({ _id: d.id }, v));
-      });
-      lastEvents = events;
-      render(events);
-    } catch (err) {
-      console.error(err);
-      toastMini("Could not read events — check Firestore rules + admin email. (" + (err && err.code ? err.code : "error") + ")", true);
-    } finally {
-      $("btn-refresh").textContent = "↻ Refresh";
-    }
-  }
-
-  function counterTable(tbody, map, keyLabel) {
-    const rows = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 12);
-    tbody.innerHTML = rows.length
-      ? rows.map(([k, n]) => `<tr><td class="k" title="${esc(k)}">${esc(k)}</td><td class="num">${n.toLocaleString("en-IN")}</td></tr>`).join("")
-      : `<tr><td colspan="2" style="color:var(--ink-mute)">No ${keyLabel} yet</td></tr>`;
-  }
-
-  function render(events) {
-    const today = new Date().toISOString().slice(0, 10);
-    const views_ = events.filter((e) => e.type === "page_view");
-    const uniq = new Set(events.map((e) => e.vid).filter(Boolean));
-    const count = (t) => events.filter((e) => e.type === t).length;
-
-    $("who-count").textContent = events.length.toLocaleString("en-IN");
-    $("k-views").textContent = views_.length.toLocaleString("en-IN");
-    $("k-today").textContent = views_.filter((e) => e.day === today).length.toLocaleString("en-IN");
-    $("k-uniq").textContent = uniq.size.toLocaleString("en-IN");
-    $("k-bot").textContent = count("telegram_bot_click").toLocaleString("en-IN");
-    $("k-claims").textContent = count("task_claim").toLocaleString("en-IN");
-    $("k-camps").textContent = count("campaign_created").toLocaleString("en-IN");
-
-    const pages = {}, refs = {}, types = {};
-    views_.forEach((e) => { const p = e.page || "(unknown)"; pages[p] = (pages[p] || 0) + 1; });
-    views_.forEach((e) => {
-      let r = "(direct)";
-      if (e.ref) { try { r = new URL(e.ref).hostname || e.ref; } catch (_) { r = e.ref; } }
-      if (r.includes(location.hostname) && location.hostname) r = "(internal)";
-      refs[r] = (refs[r] || 0) + 1;
-    });
-    events.forEach((e) => { const t = e.type || "(unknown)"; types[t] = (types[t] || 0) + 1; });
-
-    counterTable($("t-pages"), pages, "page views");
-    counterTable($("t-refs"), refs, "referrers");
-    counterTable($("t-types"), types, "events");
-
-    const recent = events.slice(0, 80);
-    $("recent-count").textContent = recent.length + " shown";
-    $("t-recent").innerHTML = recent.length
-      ? recent.map((e) => {
-          const when = e.tsClient ? new Date(e.tsClient).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" }) : "—";
-          const detail = e.type === "page_view" ? (e.page || "") :
-            e.type === "task_open" || e.type === "task_claim" ? (e.taskTitle || e.taskId || "") + (e.payout ? " · +" + e.payout : "") :
-            e.type === "campaign_created" ? (e.taskTitle || "") + " · " + (e.platform || "") :
-            (e.label || e.url || e.page || "");
-          return `<tr><td style="white-space:nowrap">${esc(when)}</td><td><span class="ev-pill ${esc(e.type)}">${esc(e.type)}</span></td><td class="k" title="${esc(detail)}">${esc(detail)}</td></tr>`;
-        }).join("")
-      : `<tr><td colspan="3" style="color:var(--ink-mute)">No events yet — open the site with firebase-config.js in place and browse around.</td></tr>`;
-  }
-}
-
-/* brand svg (main.js not loaded here on purpose — admin stays standalone) */
-document.querySelectorAll("[data-brand-admin]").forEach((el) => {
-  el.innerHTML = '<svg viewBox="0 0 48 48" fill="none"><defs><linearGradient id="fflga" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#7c3aed"/><stop offset="0.55" stop-color="#e0489f"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#fflga)"/><path d="M15 34V14h15.5v4.6h-10v4.2h8.4v4.6h-8.4V34H15z" fill="#fff"/><circle cx="33" cy="31.5" r="4.6" fill="#fff" opacity="0.92"/></svg>';
-});
 </script>
 <script>
-/* graceful fallback if firebase-config.js file itself is absent (404 on GitHub Pages) */
+/* graceful fallback if supabase-config.js file itself is absent (404 on GitHub Pages) */
 window.addEventListener("DOMContentLoaded", function () {
-  if (!window.FF_FIREBASE_CONFIG) {
+  if (!window.FF_SUPABASE_CONFIG) {
     document.getElementById("view-nocfg").classList.remove("hidden");
     document.getElementById("view-login").classList.add("hidden");
     document.getElementById("view-dash").classList.add("hidden");
