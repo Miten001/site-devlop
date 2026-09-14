@@ -143,107 +143,183 @@
 </main>
 
 <script src="assets/js/supabase-config.js"></script>
-<script type="module">
-/* FlexFam admin — Supabase Auth + Postgres analytics */
-const cfg=window.FF_SUPABASE_CONFIG||null, emails=(window.FF_ADMIN_EMAILS||[]).map(e=>String(e).toLowerCase());
-const views={nocfg:document.getElementById("view-nocfg"),login:document.getElementById("view-login"),dash:document.getElementById("view-dash")};
-const $=id=>document.getElementById(id); const show=n=>{Object.keys(views).forEach(k=>views[k].classList.toggle("hidden",k!==n));$("btn-logout").classList.toggle("hidden",n!=="dash")};
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const configured=cfg&&cfg.url&&cfg.anonKey&&!cfg.url.includes("your-project")&&!cfg.anonKey.includes("your-anon");
-/* Show a usable screen FIRST. Everything below is async and can fail
-   (CDN blocked, offline, adblocker) — if we leave every view hidden until
-   then, a failure leaves the user staring at a blank page. */
-if(!configured){ show("nocfg"); }
-else {
- show("login");
- const boot=async()=>{
- let createClient;
- try{
-   ({createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"));
- }catch(err){
-   const b=$('btn-login');
-   if(b){ b.disabled=true; b.textContent='Supabase library failed to load'; }
-   toast('Could not load the Supabase library — check your connection or any ad blocker, then reload.',true);
-   return;
- }
- const sb=createClient(cfg.url,cfg.anonKey); let last=[];
- const toast=(m,err)=>{let r=document.querySelector('.toast-root')||document.body.appendChild(Object.assign(document.createElement('div'),{className:'toast-root'}));let x=document.createElement('div');x.className='toast '+(err?'err':'ok');x.textContent=m;r.appendChild(x);setTimeout(()=>x.remove(),3200)};
- async function load(){
-   try{
-     const {data,error}=await sb.from('events').select('*').order('ts_client',{ascending:false}).limit(2500);
-     if(error) throw error;
-     last=data||[];
-     render(last);
-     if(!last.length) toast('Connected — no events recorded yet.');
-   }catch(e){
-     const msg=(e&&e.message)||'';
-     /* RLS returns an empty set rather than an error for a missing SELECT
-        policy, but a missing table or a bad grant does surface here. */
-     if(/permission|policy|denied/i.test(msg)) toast('Read denied — run supabase.sql so your email is in the admins table.',true);
-     else if(/does not exist|relation/i.test(msg)) toast('Table missing — run supabase.sql in the Supabase SQL editor.',true);
-     else toast('Could not read events: '+(msg||'unknown error'),true);
-   }
- }
- function render(es){let views=es.filter(e=>e.type==='page_view'), count=t=>es.filter(e=>e.type===t).length, uniq=new Set(es.map(e=>e.vid).filter(Boolean));$('who-count').textContent=es.length.toLocaleString('en-IN');$('k-views').textContent=views.length.toLocaleString('en-IN');$('k-today').textContent=views.filter(e=>e.day===new Date().toISOString().slice(0,10)).length.toLocaleString('en-IN');$('k-uniq').textContent=uniq.size.toLocaleString('en-IN');$('k-bot').textContent=count('telegram_bot_click');$('k-claims').textContent=count('task_claim');$('k-camps').textContent=count('campaign_created'); let maps=[{}, {}, {}];views.forEach(e=>{maps[0][e.page]=(maps[0][e.page]||0)+1});es.forEach(e=>{maps[2][e.type]=(maps[2][e.type]||0)+1});[['t-pages','pages'],['t-types','events']].forEach((x,i)=>$(x[0]).innerHTML=Object.entries(maps[i?2:0]).sort((a,b)=>b[1]-a[1]).slice(0,12).map(v=>`<tr><td class="k">${esc(v[0])}</td><td class="num">${v[1]}</td></tr>`).join('')||'<tr><td colspan="2">No data yet</td></tr>');$('t-refs').innerHTML='<tr><td colspan="2">Referrers are available in exported data</td></tr>';$('recent-count').textContent=Math.min(es.length,80)+' shown';$('t-recent').innerHTML=es.slice(0,80).map(e=>`<tr><td>${e.ts_client?new Date(e.ts_client).toLocaleString('en-IN'):''}</td><td><span class="ev-pill">${esc(e.type)}</span></td><td class="k">${esc(e.label||e.url||e.page||'')}</td></tr>`).join('')}
- /* NOTE: onAuthStateChange gives (event, session) — the user lives on session.user */
- function applySession(session){
-   const user = session && session.user ? session.user : null;
-   if(!user){ show('login'); return; }
-   const email = (user.email||'').toLowerCase();
-   if(emails.length && !emails.includes(email)){
-     toast('This account is not an admin: '+(user.email||'unknown'), true);
-     sb.auth.signOut();
-     show('login');
-     return;
-   }
-   $('who-email').textContent = user.email || '—';
-   show('dash');
-   load();
- }
- sb.auth.onAuthStateChange((_evt, session)=>applySession(session));
- sb.auth.getSession().then(({data})=>applySession(data && data.session)).catch(()=>show('login'));
- $('admin-login-form').addEventListener('submit',async e=>{
-   e.preventDefault();
-   const btn=$('btn-login'), old=btn.textContent;
-   btn.disabled=true; btn.textContent='Signing in…';
-   try{
-     const {data,error}=await sb.auth.signInWithPassword({email:$('a-email').value.trim().toLowerCase(),password:$('a-pass').value});
-     if(error) throw error;
-     applySession(data.session);
-   }catch(err){
-     toast('Login failed: '+(err&&err.message?err.message:'unknown error'), true);
-   }finally{
-     btn.disabled=false; btn.textContent=old;
-   }
- });$('btn-logout').onclick=()=>sb.auth.signOut();$('btn-refresh').onclick=load;$('btn-export').onclick=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({exportedAt:new Date(),events:last},null,2)],{type:'application/json'}));a.download='flexfam-analytics.json';a.click()};
- };
- boot();
-}
-</script>
+<!-- Supabase UMD build via classic script tag. A `type="module"` script
+     plus a CDN `import()` does not run at all when the page is opened as a
+     file:// URL (Chrome blocks module loading over that scheme), which left
+     the login button dead. A classic script works from file:// and http://. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-/* Safety net. The module above is the only thing that ever reveals a view,
-   so if it dies early (missing config file, blocked CDN, a browser that
-   cannot run modules) the page would sit completely blank. Make sure the
-   user always ends up looking at something. */
-window.addEventListener("DOMContentLoaded", function () {
-  var nocfg = document.getElementById("view-nocfg");
-  var login = document.getElementById("view-login");
-  var dash  = document.getElementById("view-dash");
+/* FlexFam admin — Supabase Auth + Postgres analytics */
+(function () {
+  "use strict";
+  var cfg = window.FF_SUPABASE_CONFIG || null;
+  var emails = (window.FF_ADMIN_EMAILS || []).map(function (e) { return String(e).toLowerCase(); });
+  var $ = function (id) { return document.getElementById(id); };
+  var views = {};
+  var last = [];
+  var sb = null;
 
-  if (!window.FF_SUPABASE_CONFIG) {
-    nocfg.classList.remove("hidden");
-    login.classList.add("hidden");
-    dash.classList.add("hidden");
-    return;
+  function show(n) {
+    Object.keys(views).forEach(function (k) { views[k].classList.toggle("hidden", k !== n); });
+    $("btn-logout").classList.toggle("hidden", n !== "dash");
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function toast(m, err) {
+    var r = document.querySelector(".toast-root");
+    if (!r) { r = document.createElement("div"); r.className = "toast-root"; document.body.appendChild(r); }
+    var x = document.createElement("div");
+    x.className = "toast " + (err ? "err" : "ok");
+    x.textContent = m;
+    r.appendChild(x);
+    setTimeout(function () { x.remove(); }, 4200);
   }
 
-  /* Config is present, so the module should have shown the login form.
-     Give it a moment; if all three panes are still hidden, it never ran. */
+  function load() {
+    sb.from("events").select("*").order("ts_client", { ascending: false }).limit(2500)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        last = res.data || [];
+        render(last);
+        if (!last.length) toast("Connected — no events recorded yet.");
+      })
+      .catch(function (e) {
+        var msg = (e && e.message) || "";
+        if (/permission|policy|denied/i.test(msg)) toast("Read denied — run supabase.sql so your email is in the admins table.", true);
+        else if (/does not exist|relation/i.test(msg)) toast("Table missing — run supabase.sql in the Supabase SQL editor.", true);
+        else toast("Could not read events: " + (msg || "unknown error"), true);
+      });
+  }
+
+  function render(es) {
+    var pv = es.filter(function (e) { return e.type === "page_view"; });
+    var count = function (t) { return es.filter(function (e) { return e.type === t; }).length; };
+    var uniq = {};
+    es.forEach(function (e) { if (e.vid) uniq[e.vid] = 1; });
+    var today = new Date().toISOString().slice(0, 10);
+
+    $("who-count").textContent = es.length.toLocaleString("en-IN");
+    $("k-views").textContent = pv.length.toLocaleString("en-IN");
+    $("k-today").textContent = pv.filter(function (e) { return e.day === today; }).length.toLocaleString("en-IN");
+    $("k-uniq").textContent = Object.keys(uniq).length.toLocaleString("en-IN");
+    $("k-bot").textContent = count("telegram_bot_click");
+    $("k-claims").textContent = count("task_claim");
+    $("k-camps").textContent = count("campaign_created");
+
+    var pages = {}, types = {};
+    pv.forEach(function (e) { pages[e.page] = (pages[e.page] || 0) + 1; });
+    es.forEach(function (e) { types[e.type] = (types[e.type] || 0) + 1; });
+
+    function table(id, map) {
+      $(id).innerHTML = Object.keys(map)
+        .map(function (k) { return [k, map[k]]; })
+        .sort(function (a, b) { return b[1] - a[1]; })
+        .slice(0, 12)
+        .map(function (v) { return '<tr><td class="k">' + esc(v[0]) + '</td><td class="num">' + v[1] + "</td></tr>"; })
+        .join("") || '<tr><td colspan="2">No data yet</td></tr>';
+    }
+    table("t-pages", pages);
+    table("t-types", types);
+
+    $("t-refs").innerHTML = '<tr><td colspan="2">Referrers are available in exported data</td></tr>';
+    $("recent-count").textContent = Math.min(es.length, 80) + " shown";
+    $("t-recent").innerHTML = es.slice(0, 80).map(function (e) {
+      return "<tr><td>" + (e.ts_client ? new Date(e.ts_client).toLocaleString("en-IN") : "") +
+        '</td><td><span class="ev-pill ' + esc(e.type) + '">' + esc(e.type) +
+        '</span></td><td class="k">' + esc(e.label || e.url || e.page || "") + "</td></tr>";
+    }).join("");
+  }
+
+  /* onAuthStateChange hands back (event, session) — the user is session.user */
+  function applySession(session) {
+    var user = session && session.user ? session.user : null;
+    if (!user) { show("login"); return; }
+    var email = (user.email || "").toLowerCase();
+    if (emails.length && emails.indexOf(email) === -1) {
+      toast("This account is not an admin: " + (user.email || "unknown"), true);
+      sb.auth.signOut();
+      show("login");
+      return;
+    }
+    $("who-email").textContent = user.email || "—";
+    show("dash");
+    load();
+  }
+
+  function start() {
+    views = { nocfg: $("view-nocfg"), login: $("view-login"), dash: $("view-dash") };
+
+    var configured = cfg && cfg.url && cfg.anonKey &&
+      cfg.url.indexOf("your-project") === -1 && cfg.anonKey.indexOf("your-anon") === -1;
+    if (!configured) { show("nocfg"); return; }
+
+    /* Always give the user a usable screen before any network work. */
+    show("login");
+
+    if (!window.supabase || !window.supabase.createClient) {
+      var b = $("btn-login");
+      if (b) { b.disabled = true; b.textContent = "Supabase library failed to load"; }
+      toast("Could not load the Supabase library — check your connection or ad blocker, then reload.", true);
+      return;
+    }
+
+    sb = window.supabase.createClient(cfg.url, cfg.anonKey);
+
+    sb.auth.onAuthStateChange(function (_evt, session) { applySession(session); });
+    sb.auth.getSession()
+      .then(function (r) { applySession(r && r.data && r.data.session); })
+      .catch(function () { show("login"); });
+
+    $("admin-login-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var btn = $("btn-login"), label = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Signing in…";
+      sb.auth.signInWithPassword({
+        email: $("a-email").value.trim().toLowerCase(),
+        password: $("a-pass").value
+      }).then(function (res) {
+        if (res.error) throw res.error;
+        applySession(res.data.session);
+      }).catch(function (err) {
+        toast("Login failed: " + ((err && err.message) || "unknown error"), true);
+      }).then(function () {
+        btn.disabled = false;
+        btn.textContent = label;
+      });
+    });
+
+    $("btn-logout").onclick = function () { sb.auth.signOut(); };
+    $("btn-refresh").onclick = load;
+    $("btn-export").onclick = function () {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob(
+        [JSON.stringify({ exportedAt: new Date(), events: last }, null, 2)],
+        { type: "application/json" }
+      ));
+      a.download = "flexfam-analytics.json";
+      a.click();
+    };
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>
+<script>
+/* Last-resort net: if the admin script above never ran at all (very old
+   browser, JS error), make sure the page is not left completely blank. */
+window.addEventListener("DOMContentLoaded", function () {
   setTimeout(function () {
-    var allHidden = nocfg.classList.contains("hidden") &&
-                    login.classList.contains("hidden") &&
-                    dash.classList.contains("hidden");
-    if (allHidden) login.classList.remove("hidden");
+    var n = document.getElementById("view-nocfg"),
+        l = document.getElementById("view-login"),
+        d = document.getElementById("view-dash");
+    if (n.classList.contains("hidden") && l.classList.contains("hidden") && d.classList.contains("hidden")) {
+      (window.FF_SUPABASE_CONFIG ? l : n).classList.remove("hidden");
+    }
   }, 2500);
 });
 </script>
