@@ -332,9 +332,19 @@
   function initHeader() {
     const head = document.querySelector(".site-head");
     if (!head) return;
-    const onScroll = () => head.classList.toggle("scrolled", window.scrollY > 24);
+    /* rAF-throttled: the raw scroll handler was toggling a class (and the
+       blurred header) on every scroll event, which janked Chrome badly */
+    let ticking = false, scrolled = null;
+    const apply = () => {
+      ticking = false;
+      const next = window.scrollY > 24;
+      if (next === scrolled) return;
+      scrolled = next;
+      head.classList.toggle("scrolled", next);
+    };
+    const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } };
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    apply();
 
     const burger = document.querySelector(".burger");
     const mnav = document.querySelector(".mobile-nav");
@@ -394,12 +404,20 @@
     const card = document.querySelector("[data-tilt]");
     if (!card || window.matchMedia("(pointer: coarse)").matches) return;
     const wrap = card.parentElement;
+    /* mousemove fires far more often than the display refreshes — batch it */
+    let rafId = 0, mx = 0, my = 0, rect = null;
+    const paint = () => {
+      rafId = 0;
+      card.style.transform = "rotateY(" + mx * 10 + "deg) rotateX(" + -my * 10 + "deg)";
+    };
     wrap.addEventListener("mousemove", (e) => {
-      const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width - 0.5;
-      const y = (e.clientY - r.top) / r.height - 0.5;
-      card.style.transform = "rotateY(" + x * 10 + "deg) rotateX(" + -y * 10 + "deg)";
-    });
+      if (!rect) rect = card.getBoundingClientRect();
+      mx = (e.clientX - rect.left) / rect.width - 0.5;
+      my = (e.clientY - rect.top) / rect.height - 0.5;
+      if (!rafId) rafId = requestAnimationFrame(paint);
+    }, { passive: true });
+    wrap.addEventListener("mouseenter", () => { rect = card.getBoundingClientRect(); });
+    window.addEventListener("scroll", () => { rect = null; }, { passive: true });
     wrap.addEventListener("mouseleave", () => { card.style.transform = "rotateY(0) rotateX(0)"; });
   }
 
@@ -431,7 +449,12 @@
     };
     el.innerHTML = rows[0];
     i = 1;
-    setInterval(swap, 3400);
+    /* don't keep a timer + repaints running in a background tab */
+    let timer = setInterval(swap, 3400);
+    document.addEventListener("visibilitychange", () => {
+      clearInterval(timer);
+      timer = document.hidden ? 0 : setInterval(swap, 3400);
+    });
   }
 
   /* ---------- auth guard ---------- */
@@ -555,6 +578,25 @@
     }
   }
 
+  /* ---------- pause offscreen / hidden-tab animations ---------- */
+  function initAnimPause() {
+    const targets = document.querySelectorAll(".marquee-wrap, .testi-row, .orbit, .aurora");
+    if (!targets.length) return;
+
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.target.classList.toggle("anim-paused", !e.isIntersecting)),
+      { rootMargin: "120px" }
+    );
+    targets.forEach((el) => io.observe(el));
+
+    /* a hidden tab should cost zero frames */
+    document.addEventListener("visibilitychange", () => {
+      targets.forEach((el) => {
+        if (document.hidden) el.classList.add("anim-paused");
+      });
+    });
+  }
+
   /* ---------- boot ---------- */
   document.addEventListener("DOMContentLoaded", () => {
     seedCampaigns();
@@ -566,6 +608,7 @@
     initCounters();
     initTilt();
     initTicker();
+    initAnimPause();
     document.querySelectorAll("[data-year]").forEach((el) => (el.textContent = new Date().getFullYear()));
 
     /* inject shared SVGs */
