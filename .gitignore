@@ -1,0 +1,6 @@
+# Real Firebase web config (copy from assets/js/firebase-config.example.js)
+assets/js/firebase-config.js
+
+# OS / editor noise
+.DS_Store
+Thumbs.db

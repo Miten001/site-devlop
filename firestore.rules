@@ -1,0 +1,57 @@
+rules_version = '2';
+
+// ============================================================
+// FLEXFAM — Firestore security rules
+//
+// • Public visitors: CREATE-ONLY analytics events (no read/update/delete)
+// • Admin (allowlisted email, Firebase Auth email/password): read everything
+// • Change admin@example.com below to your real admin email —
+//   keep it in sync with FF_ADMIN_EMAILS in assets/js/firebase-config.js
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email in ['admin@example.com'];
+    }
+
+    // ---------- analytics events (public write, admin read) ----------
+    match /events/{eventId} {
+      allow create: if request.resource.data.type is string
+        && request.resource.data.type in [
+          'page_view', 'link_click', 'telegram_bot_click',
+          'task_open', 'task_claim', 'campaign_created'
+        ]
+        && request.resource.data.keys().size() < 25
+        && (!('url' in request.resource.data) || (request.resource.data.url is string && request.resource.data.url.size() < 500))
+        && (!('ref' in request.resource.data) || (request.resource.data.ref is string && request.resource.data.ref.size() < 500))
+        && (!('ua' in request.resource.data) || (request.resource.data.ua is string && request.resource.data.ua.size() < 300));
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ---------- campaigns mirror (public create, admin read/manage) ----------
+    match /campaigns/{campaignId} {
+      allow create: if request.resource.data.keys().size() < 20
+        && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() < 200))
+        && (!('url' in request.resource.data) || (request.resource.data.url is string && request.resource.data.url.size() < 500));
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ---------- migration-ready: future users/points data (admin only) ----------
+    match /users/{userId} {
+      allow read, write: if isAdmin();
+    }
+    match /points/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ---------- default deny ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
