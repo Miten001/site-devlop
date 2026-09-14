@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  /* admin-only extras, same FlexFam dark language */
+  .admin-shell { max-width: 1120px; margin: 0 auto; }
+  .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .admin-cols { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .admin-cols { grid-template-columns: 1fr; } }
+  .ff-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .ff-table th { text-align: left; color: var(--ink-mute); font-weight: 600; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  .ff-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); color: var(--ink-dim); vertical-align: top; }
+  .ff-table tr:last-child td { border-bottom: none; }
+  .ff-table td.num { text-align: right; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .ff-table td.k { color: var(--ink); font-weight: 600; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ev-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: .02em; background: var(--glass-2); border: 1px solid var(--line); color: var(--ink-dim); }
+  .ev-pill.page_view { color: var(--cyan); border-color: rgba(34,211,238,.35); }
+  .ev-pill.link_click { color: var(--amber); border-color: rgba(255,209,102,.35); }
+  .ev-pill.telegram_bot_click { color: #2aabee; border-color: rgba(42,171,238,.4); }
+  .ev-pill.task_open { color: var(--pink); border-color: rgba(255,78,205,.35); }
+  .ev-pill.task_claim { color: var(--green); border-color: rgba(52,229,165,.35); }
+  .ev-pill.campaign_created { color: #a970ff; border-color: rgba(169,112,255,.4); }
+  .admin-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .admin-bar .who { font-size: 13px; color: var(--ink-mute); }
+  .admin-bar .who b { color: var(--green); }
+  .cfg-warn { background: rgba(255,93,110,.08); border: 1px solid rgba(255,93,110,.3); color: var(--ink-dim); border-radius: var(--radius); padding: 18px 20px; font-size: 14px; line-height: 1.6; }
+  .cfg-warn code { color: var(--amber); background: var(--glass-2); padding: 2px 7px; border-radius: 7px; font-size: 12.5px; }
+  .scroll-box { max-height: 430px; overflow: auto; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body class="app-body">
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand-admin></span>Flex<b>Fam</b> <span style="font-size:12px;color:var(--ink-mute);font-weight:600;margin-left:6px">/ admin</span></a>
+    <div class="head-actions">
+      <a href="index.html" class="btn btn-ghost btn-sm always">← Site</a>
+      <button class="btn btn-ghost btn-sm hidden" id="btn-logout">Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- CONFIG MISSING -->
+<div class="auth-wrap hidden" id="view-nocfg">
+  <div class="auth-card reveal in" style="max-width:560px">
+    <h1>Firebase config missing ⚙️</h1>
+    <p class="sub">Admin panel needs a Firebase project to read analytics.</p>
+    <div class="cfg-warn">
+      <b style="color:var(--ink)">Setup:</b><br />
+      1. Copy <code>assets/js/firebase-config.example.js</code> → <code>assets/js/firebase-config.js</code><br />
+      2. Paste your Firebase web config + admin email(s) in it<br />
+      3. Deploy <code>firestore.rules</code> in Firebase Console<br />
+      4. Reload this page — full steps in the README.
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="auth-wrap hidden" id="view-login">
+  <div class="auth-card reveal in">
+    <h1>Admin login 🔐</h1>
+    <p class="sub">Sign in with your Firebase admin account to view live analytics.</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label for="a-email">Admin email</label>
+        <input type="email" id="a-email" placeholder="admin@example.com" required autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="a-pass">Password</label>
+        <input type="password" id="a-pass" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg" id="btn-login">Login to Admin</button>
+    </form>
+    <p class="auth-alt" style="margin-top:16px">Only allowlisted admin emails can read stats — enforced by Firestore security rules.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<main class="app-main hidden" id="view-dash">
+  <div class="container admin-shell">
+    <div class="page-head">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> Live analytics</span>
+        <h1>Admin <span class="grad-text">dashboard</span></h1>
+        <p class="sub">Real visitor events from Firestore — global &amp; permanent, not localStorage.</p>
+      </div>
+    </div>
+
+    <div class="admin-bar">
+      <span class="who">Signed in as <b id="who-email">—</b> · analysing <b id="who-count" style="color:var(--cyan)">0</b> recent events</span>
+      <div class="flex" style="display:flex;gap:10px">
+        <button class="btn btn-ghost btn-sm" id="btn-refresh">↻ Refresh</button>
+        <button class="btn btn-primary btn-sm" id="btn-export">⬇ Export JSON</button>
+      </div>
+    </div>
+
+    <div class="admin-grid">
+      <div class="dash-stat" style="--c:#22d3ee"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span><div class="ds-num" id="k-views">—</div><div class="ds-lbl">Total views</div></div>
+      <div class="dash-stat" style="--c:#ffd166"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><div class="ds-num" id="k-today">—</div><div class="ds-lbl">Today's views</div></div>
+      <div class="dash-stat" style="--c:#a970ff"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><div class="ds-num" id="k-uniq">—</div><div class="ds-lbl">Unique visitors ≈</div></div>
+      <div class="dash-stat" style="--c:#2aabee"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.04 15.31l-.38 5.32c.54 0 .77-.23 1.05-.5l2.52-2.41 5.22 3.83c.96.53 1.64.25 1.9-.88L21.9 4.6c.34-1.4-.5-1.94-1.44-1.6L2.2 9.92c-1.36.53-1.34 1.28-.23 1.62l4.62 1.44L17.3 6.1c.5-.33.96-.15.58.18L9.04 15.3z"/></svg></span><div class="ds-num" id="k-bot">—</div><div class="ds-lbl">Telegram bot clicks</div></div>
+      <div class="dash-stat" style="--c:#34e5a5"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><div class="ds-num" id="k-claims">—</div><div class="ds-lbl">Task claims</div></div>
+      <div class="dash-stat" style="--c:#ff8a3d"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><div class="ds-num" id="k-camps">—</div><div class="ds-lbl">Campaigns created</div></div>
+    </div>
+
+    <div class="admin-cols">
+      <div>
+        <div class="panel">
+          <div class="panel-head"><h3>Top pages</h3><span class="status-pill on">Live</span></div>
+          <table class="ff-table"><thead><tr><th>Page</th><th style="text-align:right">Views</th></tr></thead><tbody id="t-pages"></tbody></table>
+        </div>
+        <div class="panel mt-16">
+          <div class="panel-head"><h3>Referrers</h3></div>
+          <table class="ff-table"><thead><tr><th>Source</th><th style="text-align:right">Visits</th></tr></thead><tbody id="t-refs"></tbody></table>
+        </div>
+        <div class="panel mt-16">
+          <div class="panel-head"><h3>Events by type</h3></div>
+          <table class="ff-table"><thead><tr><th>Event</th><th style="text-align:right">Count</th></tr></thead><tbody id="t-types"></tbody></table>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-head"><h3>Recent events</h3><span class="status-pill on" id="recent-count">0</span></div>
+          <div class="scroll-box">
+            <table class="ff-table"><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="t-recent"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="assets/js/firebase-config.js"></script>
+<script type="module">
+/* FlexFam admin — Firebase Auth + Firestore analytics reader */
+const SDK = "https://www.gstatic.com/firebasejs/10.12.5/";
+const cfg = window.FF_FIREBASE_CONFIG || null;
+const ADMIN_EMAILS = (window.FF_ADMIN_EMAILS || []).map((e) => String(e).toLowerCase());
+const MAX_EVENTS = 2500;
+
+const $ = (id) => document.getElementById(id);
+const views = { nocfg: $("view-nocfg"), login: $("view-login"), dash: $("view-dash") };
+function show(name) {
+  Object.keys(views).forEach((k) => views[k].classList.toggle("hidden", k !== name));
+  $("btn-logout").classList.toggle("hidden", name !== "dash");
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function toastMini(msg, err) {
+  let root = document.querySelector(".toast-root");
+  if (!root) { root = document.createElement("div"); root.className = "toast-root"; document.body.appendChild(root); }
+  const el = document.createElement("div");
+  el.className = "toast " + (err ? "err" : "ok");
+  el.innerHTML = "<span>" + esc(msg) + "</span>";
+  root.appendChild(el);
+  setTimeout(() => { el.classList.add("leaving"); setTimeout(() => el.remove(), 350); }, 3200);
+}
+
+const configured = !!(cfg && cfg.apiKey && cfg.projectId && !cfg.apiKey.startsWith("PASTE_") && !cfg.projectId.startsWith("your-project"));
+if (!configured) {
+  show("nocfg");
+} else {
+  const [{ initializeApp, getApps, getApp }, authMod, fsMod] = await Promise.all([
+    import(SDK + "firebase-app.js"),
+    import(SDK + "firebase-auth.js"),
+    import(SDK + "firebase-firestore.js"),
+  ]);
+  const app = getApps().length ? getApp() : initializeApp(cfg);
+  const auth = authMod.getAuth(app);
+  const db = fsMod.getFirestore(app);
+  let lastEvents = [];
+
+  authMod.onAuthStateChanged(auth, (user) => {
+    if (user && (!ADMIN_EMAILS.length || ADMIN_EMAILS.includes((user.email || "").toLowerCase()))) {
+      $("who-email").textContent = user.email || "admin";
+      show("dash");
+      loadStats();
+    } else {
+      if (user) { authMod.signOut(auth); toastMini("This account is not on the admin allowlist.", true); }
+      show("login");
+    }
+  });
+
+  $("admin-login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("btn-login");
+    btn.disabled = true; btn.textContent = "Signing in…";
+    try {
+      await authMod.signInWithEmailAndPassword(auth, $("a-email").value.trim(), $("a-pass").value);
+    } catch (err) {
+      toastMini("Login failed: " + (err && err.code ? err.code.replace("auth/", "") : "error"), true);
+    } finally {
+      btn.disabled = false; btn.textContent = "Login to Admin";
+    }
+  });
+
+  $("btn-logout").addEventListener("click", () => authMod.signOut(auth));
+  $("btn-refresh").addEventListener("click", () => loadStats());
+  $("btn-export").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), count: lastEvents.length, events: lastEvents }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "flexfam-analytics-" + new Date().toISOString().slice(0, 10) + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toastMini("Exported " + lastEvents.length + " events");
+  });
+
+  async function loadStats() {
+    $("btn-refresh").textContent = "Loading…";
+    try {
+      const q = fsMod.query(fsMod.collection(db, "events"), fsMod.orderBy("tsClient", "desc"), fsMod.limit(MAX_EVENTS));
+      const snap = await fsMod.getDocs(q);
+      const events = [];
+      snap.forEach((d) => {
+        const v = d.data();
+        if (v.ts && v.ts.toDate) v.ts = v.ts.toDate().toISOString();
+        events.push(Object.assign({ _id: d.id }, v));
+      });
+      lastEvents = events;
+      render(events);
+    } catch (err) {
+      console.error(err);
+      toastMini("Could not read events — check Firestore rules + admin email. (" + (err && err.code ? err.code : "error") + ")", true);
+    } finally {
+      $("btn-refresh").textContent = "↻ Refresh";
+    }
+  }
+
+  function counterTable(tbody, map, keyLabel) {
+    const rows = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 12);
+    tbody.innerHTML = rows.length
+      ? rows.map(([k, n]) => `<tr><td class="k" title="${esc(k)}">${esc(k)}</td><td class="num">${n.toLocaleString("en-IN")}</td></tr>`).join("")
+      : `<tr><td colspan="2" style="color:var(--ink-mute)">No ${keyLabel} yet</td></tr>`;
+  }
+
+  function render(events) {
+    const today = new Date().toISOString().slice(0, 10);
+    const views_ = events.filter((e) => e.type === "page_view");
+    const uniq = new Set(events.map((e) => e.vid).filter(Boolean));
+    const count = (t) => events.filter((e) => e.type === t).length;
+
+    $("who-count").textContent = events.length.toLocaleString("en-IN");
+    $("k-views").textContent = views_.length.toLocaleString("en-IN");
+    $("k-today").textContent = views_.filter((e) => e.day === today).length.toLocaleString("en-IN");
+    $("k-uniq").textContent = uniq.size.toLocaleString("en-IN");
+    $("k-bot").textContent = count("telegram_bot_click").toLocaleString("en-IN");
+    $("k-claims").textContent = count("task_claim").toLocaleString("en-IN");
+    $("k-camps").textContent = count("campaign_created").toLocaleString("en-IN");
+
+    const pages = {}, refs = {}, types = {};
+    views_.forEach((e) => { const p = e.page || "(unknown)"; pages[p] = (pages[p] || 0) + 1; });
+    views_.forEach((e) => {
+      let r = "(direct)";
+      if (e.ref) { try { r = new URL(e.ref).hostname || e.ref; } catch (_) { r = e.ref; } }
+      if (r.includes(location.hostname) && location.hostname) r = "(internal)";
+      refs[r] = (refs[r] || 0) + 1;
+    });
+    events.forEach((e) => { const t = e.type || "(unknown)"; types[t] = (types[t] || 0) + 1; });
+
+    counterTable($("t-pages"), pages, "page views");
+    counterTable($("t-refs"), refs, "referrers");
+    counterTable($("t-types"), types, "events");
+
+    const recent = events.slice(0, 80);
+    $("recent-count").textContent = recent.length + " shown";
+    $("t-recent").innerHTML = recent.length
+      ? recent.map((e) => {
+          const when = e.tsClient ? new Date(e.tsClient).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" }) : "—";
+          const detail = e.type === "page_view" ? (e.page || "") :
+            e.type === "task_open" || e.type === "task_claim" ? (e.taskTitle || e.taskId || "") + (e.payout ? " · +" + e.payout : "") :
+            e.type === "campaign_created" ? (e.taskTitle || "") + " · " + (e.platform || "") :
+            (e.label || e.url || e.page || "");
+          return `<tr><td style="white-space:nowrap">${esc(when)}</td><td><span class="ev-pill ${esc(e.type)}">${esc(e.type)}</span></td><td class="k" title="${esc(detail)}">${esc(detail)}</td></tr>`;
+        }).join("")
+      : `<tr><td colspan="3" style="color:var(--ink-mute)">No events yet — open the site with firebase-config.js in place and browse around.</td></tr>`;
+  }
+}
+
+/* brand svg (main.js not loaded here on purpose — admin stays standalone) */
+document.querySelectorAll("[data-brand-admin]").forEach((el) => {
+  el.innerHTML = '<svg viewBox="0 0 48 48" fill="none"><defs><linearGradient id="fflga" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#7c3aed"/><stop offset="0.55" stop-color="#e0489f"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#fflga)"/><path d="M15 34V14h15.5v4.6h-10v4.2h8.4v4.6h-8.4V34H15z" fill="#fff"/><circle cx="33" cy="31.5" r="4.6" fill="#fff" opacity="0.92"/></svg>';
+});
+</script>
+<script>
+/* graceful fallback if firebase-config.js file itself is absent (404 on GitHub Pages) */
+window.addEventListener("DOMContentLoaded", function () {
+  if (!window.FF_FIREBASE_CONFIG) {
+    document.getElementById("view-nocfg").classList.remove("hidden");
+    document.getElementById("view-login").classList.add("hidden");
+    document.getElementById("view-dash").classList.add("hidden");
+  }
+});
+</script>
+</body>
+</html>
