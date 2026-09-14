@@ -10,8 +10,8 @@ Telegram bot jisme users **ek dusre ke groups join karke points kamate hain**, a
 
 | | |
 |---|---|
-| 💰 **Earn Points** | Task dikhao → group join karo → `✅ Joined` dabao → bot **khud verify** karta hai (Telegram API se) → points! |
-| ➕ **Add Task** | Group, Channel, View ya Reaction task chuno; payout 5–50 set karo |
+| 💰 **Earn Points** | Task dikhao → group/channel join, post view/reaction ya **Bot Start** karo → verify → points! |
+| ➕ **Add Task** | Group, Channel, View, Reaction ya **Bot Start** task chuno; payout 5–50 set karo |
 | ✅ **Auto verification** | Group/channel joins `getChatMember` se verify hote hain (member, administrator, creator) |
 | ⏱ **View / Reaction** | `t.me/channel/123` post task → Start Timer → 30 seconds → claim |
 | 🌟 **Featured onboarding** | Har naya user ko `https://t.me/flex_fam` pe ek baar +10 points; 2 din baad unclaimed task re-show |
@@ -28,11 +28,12 @@ Telegram bot jisme users **ek dusre ke groups join karke points kamate hain**, a
 ```
 Naya user       → +0 signup bonus
 Group/channel   → joiner ko +payout points, owner se sirf payout
+Bot Start       → starter ko +payout points, owner se payout (fresh forwarded bot reply se verify)
 View/reaction   → add karte waqt owner se payout reserve, timer ke baad +payout
 Featured group  → system user (id 0) se +10 points, ek baar per user
 Referral        → +25 per dost
 Group/channel chhodna → payout wapas (72h window me checking)
-View/reaction chhodna → reversal nahi
+View/reaction/bot-start → reversal nahi
 ```
 
 ### ⏭ Dead-task protection
@@ -80,7 +81,7 @@ python bot.py
 Bas! Bot live hai 🎉 — ab test karo:
 
 1. Apne **test group** me bot ko **admin** banao
-2. Bot me `➕ Add Task` → Group/Channel/View/Reaction chuno → link/post link bhejo → payout chuno
+2. Bot me `➕ Add Task` → Group/Channel/View/Reaction/Bot Start chuno → link/post link/bot username bhejo → payout chuno
 3. Dusre account se `💰 Earn Points` → task aayega → join/complete karke claim karo
 4. Group/channel membership Telegram API se verify hoti hai; View/Reaction me 30s timer ke baad reward milta hai 🎊
 
