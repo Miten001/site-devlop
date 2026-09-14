@@ -150,8 +150,23 @@ const views={nocfg:document.getElementById("view-nocfg"),login:document.getEleme
 const $=id=>document.getElementById(id); const show=n=>{Object.keys(views).forEach(k=>views[k].classList.toggle("hidden",k!==n));$("btn-logout").classList.toggle("hidden",n!=="dash")};
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const configured=cfg&&cfg.url&&cfg.anonKey&&!cfg.url.includes("your-project")&&!cfg.anonKey.includes("your-anon");
-if(!configured) show("nocfg"); else {
- const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"), sb=createClient(cfg.url,cfg.anonKey); let last=[];
+/* Show a usable screen FIRST. Everything below is async and can fail
+   (CDN blocked, offline, adblocker) — if we leave every view hidden until
+   then, a failure leaves the user staring at a blank page. */
+if(!configured){ show("nocfg"); }
+else {
+ show("login");
+ const boot=async()=>{
+ let createClient;
+ try{
+   ({createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"));
+ }catch(err){
+   const b=$('btn-login');
+   if(b){ b.disabled=true; b.textContent='Supabase library failed to load'; }
+   toast('Could not load the Supabase library — check your connection or any ad blocker, then reload.',true);
+   return;
+ }
+ const sb=createClient(cfg.url,cfg.anonKey); let last=[];
  const toast=(m,err)=>{let r=document.querySelector('.toast-root')||document.body.appendChild(Object.assign(document.createElement('div'),{className:'toast-root'}));let x=document.createElement('div');x.className='toast '+(err?'err':'ok');x.textContent=m;r.appendChild(x);setTimeout(()=>x.remove(),3200)};
  async function load(){
    try{
@@ -201,16 +216,35 @@ if(!configured) show("nocfg"); else {
      btn.disabled=false; btn.textContent=old;
    }
  });$('btn-logout').onclick=()=>sb.auth.signOut();$('btn-refresh').onclick=load;$('btn-export').onclick=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({exportedAt:new Date(),events:last},null,2)],{type:'application/json'}));a.download='flexfam-analytics.json';a.click()};
+ };
+ boot();
 }
 </script>
 <script>
-/* graceful fallback if supabase-config.js file itself is absent (404 on GitHub Pages) */
+/* Safety net. The module above is the only thing that ever reveals a view,
+   so if it dies early (missing config file, blocked CDN, a browser that
+   cannot run modules) the page would sit completely blank. Make sure the
+   user always ends up looking at something. */
 window.addEventListener("DOMContentLoaded", function () {
+  var nocfg = document.getElementById("view-nocfg");
+  var login = document.getElementById("view-login");
+  var dash  = document.getElementById("view-dash");
+
   if (!window.FF_SUPABASE_CONFIG) {
-    document.getElementById("view-nocfg").classList.remove("hidden");
-    document.getElementById("view-login").classList.add("hidden");
-    document.getElementById("view-dash").classList.add("hidden");
+    nocfg.classList.remove("hidden");
+    login.classList.add("hidden");
+    dash.classList.add("hidden");
+    return;
   }
+
+  /* Config is present, so the module should have shown the login form.
+     Give it a moment; if all three panes are still hidden, it never ran. */
+  setTimeout(function () {
+    var allHidden = nocfg.classList.contains("hidden") &&
+                    login.classList.contains("hidden") &&
+                    dash.classList.contains("hidden");
+    if (allHidden) login.classList.remove("hidden");
+  }, 2500);
 });
 </script>
 </body>
