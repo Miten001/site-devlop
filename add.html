@@ -43,7 +43,7 @@
       <div style="width:100%">
         <span class="eyebrow"><span class="dot"></span> Promote</span>
         <h1>Add your <span class="grad-text-cool">page</span></h1>
-        <p class="sub" style="max-width:560px;margin-left:auto;margin-right:auto">Telegram channel, YouTube, Instagram — whatever you want to grow, build a campaign here. The community gives you engagements, you just pay points.</p>
+        <p class="sub" style="max-width:560px;margin-left:auto;margin-right:auto">Telegram channel/bot, YouTube, Instagram, website visits — whatever you want to grow, build a campaign here. The community gives you engagements, you just pay points.</p>
       </div>
     </div>
 
@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function refreshActions() {
     const p = FF.PLATFORMS[selected];
     actionSelect.innerHTML = p.actions.map((a) => `<option value="${a}">${a}</option>`).join("");
-    urlInput.placeholder = { telegram: "https://t.me/yourchannel", youtube: "https://youtube.com/@yourchannel", instagram: "https://instagram.com/yourpage", x: "https://x.com/yourhandle", tiktok: "https://tiktok.com/@yourhandle", facebook: "https://facebook.com/yourpage", twitch: "https://twitch.tv/yourchannel", pinterest: "https://pinterest.com/yourboard" }[selected];
+    urlInput.placeholder = { telegram: "https://t.me/yourchannel-or-bot", youtube: "https://youtube.com/@yourchannel", instagram: "https://instagram.com/yourpage", x: "https://x.com/yourhandle", tiktok: "https://tiktok.com/@yourhandle", facebook: "https://facebook.com/yourpage", twitch: "https://twitch.tv/yourchannel", pinterest: "https://pinterest.com/yourboard", website: "https://yourwebsite.com/landing-page" }[selected];
     refreshEst();
   }
 

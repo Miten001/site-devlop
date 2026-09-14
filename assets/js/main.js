@@ -12,7 +12,7 @@
       key: "telegram",
       name: "Telegram",
       color: "#2aabee",
-      actions: ["Join Channel", "Join Group", "Boost Post"],
+      actions: ["Join Channel", "Join Group", "Start Bot", "Boost Post"],
       hint: "t.me/",
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.04 15.31l-.38 5.32c.54 0 .77-.23 1.05-.5l2.52-2.41 5.22 3.83c.96.53 1.64.25 1.9-.88L21.9 4.6c.34-1.4-.5-1.94-1.44-1.6L2.2 9.92c-1.36.53-1.34 1.28-.23 1.62l4.62 1.44L17.3 6.1c.5-.33.96-.15.58.18L9.04 15.3z"/></svg>',
     },
@@ -71,6 +71,14 @@
       actions: ["Follow", "Save Pin"],
       hint: "pinterest.com",
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.08 2.46 7.58 5.98 9.12-.08-.78-.16-1.97.03-2.82.17-.74 1.1-4.68 1.1-4.68s-.28-.56-.28-1.39c0-1.3.76-2.27 1.7-2.27.8 0 1.19.6 1.19 1.32 0 .8-.51 2.01-.78 3.13-.22.94.47 1.7 1.4 1.7 1.67 0 2.96-1.77 2.96-4.32 0-2.26-1.62-3.84-3.94-3.84-2.68 0-4.26 2.01-4.26 4.09 0 .81.31 1.68.7 2.15.08.1.09.19.07.29-.07.32-.24 1-.27 1.14-.04.18-.14.22-.33.13-1.25-.58-2.03-2.4-2.03-3.87 0-3.15 2.29-6.04 6.6-6.04 3.46 0 6.16 2.47 6.16 5.77 0 3.44-2.17 6.22-5.19 6.22-1.01 0-1.97-.53-2.29-1.15l-.62 2.37c-.23.87-.84 1.95-1.25 2.61.94.29 1.94.45 2.97.45 5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg>',
+    },
+    website: {
+      key: "website",
+      name: "Website Visit",
+      color: "#34e5a5",
+      actions: ["Visit Website", "Read Article", "Explore Page", "Sign Up"],
+      hint: "website URL",
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg>',
     },
   };
 
@@ -131,22 +139,23 @@
     return function () { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967295; };
   }
 
-  function seedCampaigns() {
-    if (store.get("ff_seeded", false)) return;
+  const SEED_VERSION = 2;
+
+  function buildSeedCampaigns() {
     const keys = Object.keys(PLATFORMS);
     const list = [];
-    const rnd = seededRand("flexfam-genesis");
+    const rnd = seededRand("flexfam-genesis-v2");
     let id = 1;
     keys.forEach((pk) => {
       const p = PLATFORMS[pk];
-      const per = pk === "telegram" ? 4 : 3;
+      const per = pk === "telegram" ? 5 : pk === "website" ? 5 : 3;
       for (let i = 0; i < per; i++) {
         const name = SEED_NAMES[Math.floor(rnd() * SEED_NAMES.length)];
         const action = p.actions[Math.floor(rnd() * p.actions.length)];
         const payout = [2, 3, 4, 5, 6][Math.floor(rnd() * 5)];
         const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
         const urls = {
-          telegram: "https://t.me/" + slug,
+          telegram: action === "Start Bot" ? "https://t.me/" + slug + "bot?start=flexfam" : "https://t.me/" + slug,
           youtube: "https://youtube.com/@" + slug,
           instagram: "https://instagram.com/" + slug,
           x: "https://x.com/" + slug,
@@ -154,6 +163,7 @@
           facebook: "https://facebook.com/" + slug,
           twitch: "https://twitch.tv/" + slug,
           pinterest: "https://pinterest.com/" + slug,
+          website: "https://example.com/?ref=" + slug,
         };
         list.push({
           id: "c" + id++,
@@ -167,8 +177,84 @@
         });
       }
     });
+    return list;
+  }
+
+  const EXTRA_SEED_CAMPAIGNS = [
+    {
+      id: "seed-bot-start-flexfam",
+      platform: "telegram",
+      action: "Start Bot",
+      user: "FlexFam Rewards Bot",
+      title: "FlexFam Rewards Bot · Start Bot",
+      url: "https://t.me/flex_fam_bot?start=web_bonus",
+      payout: 15,
+      mine: false,
+    },
+    {
+      id: "seed-bot-start-deals",
+      platform: "telegram",
+      action: "Start Bot",
+      user: "Deals Radar Bot",
+      title: "Deals Radar Bot · Start Bot",
+      url: "https://t.me/dealsradarbot?start=flexfam",
+      payout: 10,
+      mine: false,
+    },
+    {
+      id: "seed-web-visit-home",
+      platform: "website",
+      action: "Visit Website",
+      user: "FlexFam Home",
+      title: "FlexFam Home · Visit Website",
+      url: "index.html#platforms",
+      payout: 6,
+      mine: false,
+    },
+    {
+      id: "seed-web-read-guide",
+      platform: "website",
+      action: "Read Article",
+      user: "Creator Growth Guide",
+      title: "Creator Growth Guide · Read Article",
+      url: "index.html#how",
+      payout: 5,
+      mine: false,
+    },
+    {
+      id: "seed-web-explore-offer",
+      platform: "website",
+      action: "Explore Page",
+      user: "Turbo Perks Page",
+      title: "Turbo Perks Page · Explore Page",
+      url: "index.html#pricing",
+      payout: 4,
+      mine: false,
+    },
+  ];
+
+  function seedCampaigns() {
+    const version = store.get("ff_seed_version", 0);
+    let list = DB.campaigns();
+    const needsFreshSeed = !store.get("ff_seeded", false) || !Array.isArray(list) || !list.length;
+
+    if (needsFreshSeed) {
+      list = buildSeedCampaigns();
+    }
+
+    if (version < SEED_VERSION) {
+      const existingIds = new Set(list.map((c) => c.id));
+      EXTRA_SEED_CAMPAIGNS.slice().reverse().forEach((c) => {
+        if (!existingIds.has(c.id)) {
+          list.unshift(c);
+          existingIds.add(c.id);
+        }
+      });
+    }
+
     DB.saveCampaigns(list);
     store.set("ff_seeded", true);
+    store.set("ff_seed_version", SEED_VERSION);
   }
 
   /* ---------- credits engine ---------- */
@@ -321,10 +407,10 @@
     const el = document.getElementById("ticker-text");
     if (!el) return;
     const rows = [
-      '<b>@aaravshots</b> joined <b>UrbanBeatz</b> Telegram channel & earned <b>+4</b> points',
+      '<b>@aaravshots</b> started <b>FlexFam Rewards Bot</b> on Telegram & earned <b>+15</b> points',
       '<b>@nehavlogs</b> subscribed <b>TechGuru Rohan</b> on YouTube & earned <b>+6</b> points',
       '<b>@melodymaya</b> followed <b>GameLordYT</b> on Instagram & earned <b>+3</b> points',
-      '<b>@pixelninja</b> joined <b>Crypto Charcha</b> Telegram group & earned <b>+5</b> points',
+      '<b>@pixelninja</b> visited <b>Creator Growth Guide</b> website & earned <b>+6</b> points',
       '<b>@desifoodies</b> reposted <b>CricketFever</b> on X & earned <b>+2</b> points',
       '<b>@kwavya</b> promoted her TikTok for <b>120</b> points',
       '<b>@coderkibaatein</b> added a new Telegram channel campaign',
@@ -415,7 +501,8 @@
             credits: 1240, earned: 3870, spent: 2630,
             refCode: "FF-DEMO-2025", joined: Date.now(),
             activity: [
-              { type: "earn", text: 'Joined "UrbanBeatz" Telegram channel', amount: 4, at: Date.now() - 1000 * 60 * 8 },
+              { type: "earn", text: 'Started "FlexFam Rewards Bot" on Telegram', amount: 15, at: Date.now() - 1000 * 60 * 8 },
+              { type: "earn", text: 'Visited "Creator Growth Guide" website', amount: 6, at: Date.now() - 1000 * 60 * 18 },
               { type: "earn", text: 'Subscribed "TechGuru Rohan" on YouTube', amount: 6, at: Date.now() - 1000 * 60 * 26 },
               { type: "spend", text: 'Promoted "Demo Star" Instagram page', amount: -12, at: Date.now() - 1000 * 60 * 70 },
               { type: "earn", text: 'Followed "MelodyMaya" on Instagram', amount: 3, at: Date.now() - 1000 * 60 * 130 },
@@ -423,6 +510,7 @@
             campaigns: [
               { id: "m1", platform: "telegram", title: "Demo Star Official", url: "https://t.me/demostar", payout: 12, active: true, actions: 48, spent: 576 },
               { id: "m2", platform: "instagram", title: "@demostar", url: "https://instagram.com/demostar", payout: 10, active: true, actions: 63, spent: 630 },
+              { id: "m3", platform: "website", title: "Demo Star Landing Page", url: "https://example.com/demostar", payout: 6, active: true, actions: 29, spent: 174 },
             ],
             weekly: [42, 68, 55, 90, 74, 110, 96],
           };

@@ -52,9 +52,20 @@
         <div>
           <span class="eyebrow"><span class="dot"></span> Earn</span>
           <h1>Earn <span class="grad-text">points</span></h1>
-          <p class="sub">Complete tasks — points land in your wallet instantly. New campaigns are live today too.</p>
+          <p class="sub">Complete tasks — points land in your wallet instantly. Telegram bot start, website visits and new campaigns are live today too.</p>
         </div>
         <div class="credit-chip" style="font-size:16px;padding:13px 22px"><span data-coin></span><span data-credits>0</span>&nbsp;points</div>
+      </div>
+
+      <div class="panel quick-earn reveal">
+        <div class="panel-head bonus-head">
+          <div>
+            <h3>Quick bonus missions</h3>
+            <p class="panel-sub">Telegram bot start, website visit aur daily check-in se instant earning lo.</p>
+          </div>
+          <span class="status-pill on">New</span>
+        </div>
+        <div class="bonus-grid" id="bonus-list"></div>
       </div>
 
       <div class="panel">
@@ -80,7 +91,7 @@
     <span class="m-ico" id="m-ico"></span>
     <h3 id="m-title">Complete the task</h3>
     <p class="m-sub" id="m-sub"></p>
-    <div class="m-steps">
+    <div class="m-steps" id="m-steps">
       <div><span class="n">1</span> Open the page with the button below (new tab)</div>
       <div><span class="n">2</span> Complete the action — join / follow / subscribe</div>
       <div><span class="n">3</span> Come back, hit "Verify &amp; Claim" and grab your points</div>
@@ -101,12 +112,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const chipRow = document.getElementById("chip-row");
   const listEl = document.getElementById("task-list");
+  const bonusEl = document.getElementById("bonus-list");
   const emptyEl = document.getElementById("empty-state");
   const modal = document.getElementById("task-modal");
   const mCard = document.getElementById("task-modal-card");
   const mIco = document.getElementById("m-ico");
   const mTitle = document.getElementById("m-title");
   const mSub = document.getElementById("m-sub");
+  const mSteps = document.getElementById("m-steps");
   const mOpen = document.getElementById("m-open");
   const mClaim = document.getElementById("m-claim");
   const mProgress = document.getElementById("m-progress");
@@ -114,6 +127,119 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeFilter = "all";
   let pendingTask = null;
   let timer = null;
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  const BONUS_TASKS = [
+    {
+      id: "daily-checkin",
+      platform: "website",
+      action: "Daily Check-in",
+      user: "FlexFam Daily Bonus",
+      title: "FlexFam Daily Bonus",
+      payout: 8,
+      url: "dashboard.html",
+      cooldown: "daily",
+      verifySeconds: 3,
+      openText: "Open Dashboard",
+      hint: "Resets daily",
+      steps: ["Open your FlexFam dashboard once today", "Wait for the quick 3 second check", "Come back and claim your daily bonus"],
+      activityText: "Daily check-in bonus",
+    },
+    {
+      id: "telegram-bot-start",
+      platform: "telegram",
+      action: "Start Bot",
+      user: "FlexFam Rewards Bot",
+      title: "FlexFam Rewards Bot",
+      payout: 15,
+      url: "https://t.me/flex_fam_bot?start=web_bonus",
+      once: true,
+      verifySeconds: 6,
+      openText: "Start Telegram Bot",
+      hint: "One-time bonus",
+      steps: ["Open the Telegram bot from the button", "Press Start in Telegram", "Return here and claim your bot-start points"],
+      activityText: "Started FlexFam Telegram Rewards Bot",
+    },
+    {
+      id: "website-visit",
+      platform: "website",
+      action: "Visit Website",
+      user: "FlexFam Features Page",
+      title: "FlexFam Features Page",
+      payout: 6,
+      url: "index.html#platforms",
+      cooldown: "daily",
+      verifySeconds: 5,
+      openText: "Visit Website",
+      hint: "Daily visit",
+      steps: ["Open the website page in a new tab", "Stay for a few seconds and explore", "Come back and verify the visit"],
+      activityText: "Visited FlexFam website",
+    },
+    {
+      id: "read-growth-guide",
+      platform: "website",
+      action: "Read Article",
+      user: "Creator Growth Guide",
+      title: "Creator Growth Guide",
+      payout: 5,
+      url: "index.html#how",
+      cooldown: "daily",
+      verifySeconds: 5,
+      openText: "Read Guide",
+      hint: "Daily read",
+      steps: ["Open the creator growth guide", "Read the quick steps", "Return here and claim the reading reward"],
+      activityText: "Read Creator Growth Guide",
+    },
+  ];
+
+  function bonusMap() {
+    return FF.store.get("ff_bonus_done", {});
+  }
+
+  function bonusState() {
+    return bonusMap()[user.email] || {};
+  }
+
+  function isBonusDone(task) {
+    const state = bonusState();
+    if (task.cooldown === "daily") return state[task.id] === todayKey;
+    return Boolean(state[task.id]);
+  }
+
+  function markBonusDone(task) {
+    const map = bonusMap();
+    map[user.email] = map[user.email] || {};
+    map[user.email][task.id] = task.cooldown === "daily" ? todayKey : Date.now();
+    FF.store.set("ff_bonus_done", map);
+  }
+
+  function renderBonuses() {
+    if (!bonusEl) return;
+    bonusEl.innerHTML = BONUS_TASKS.map((b) => {
+      const p = FF.PLATFORMS[b.platform];
+      const done = isBonusDone(b);
+      return `
+        <div class="bonus-card ${done ? "done" : ""}" style="--pf:${p.color}">
+          <span class="bonus-ico">${p.icon}</span>
+          <div>
+            <h4>${b.title}</h4>
+            <p>${p.name} · ${b.action}</p>
+          </div>
+          <div class="bonus-meta"><b>+${b.payout}</b><span>${b.hint}</span></div>
+          <button class="btn ${done ? "btn-ghost" : "btn-primary"} btn-sm" data-bonus="${b.id}" ${done ? "disabled" : ""}>
+            ${done ? (b.cooldown === "daily" ? "Done today ✓" : "Claimed ✓") : "Start & Earn"}
+          </button>
+        </div>`;
+    }).join("");
+  }
+
+  bonusEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-bonus]");
+    if (!btn || btn.disabled) return;
+    const task = BONUS_TASKS.find((b) => b.id === btn.dataset.bonus);
+    if (!task) return;
+    openModal(Object.assign({ bonus: true }, task));
+  });
 
   // build platform chips
   Object.values(FF.PLATFORMS).forEach((p) => {
@@ -176,14 +302,25 @@ document.addEventListener("DOMContentLoaded", () => {
     openModal(task);
   });
 
+  function stepRows(task) {
+    const steps = task.steps || [
+      "Open the page with the button below (new tab)",
+      "Complete the action — join / follow / subscribe / visit",
+      "Come back, hit Verify & Claim and grab your points",
+    ];
+    return steps.map((txt, i) => '<div><span class="n">' + (i + 1) + "</span> " + txt + "</div>").join("");
+  }
+
   function openModal(task) {
     pendingTask = task;
     const p = FF.PLATFORMS[task.platform];
+    const name = task.user || task.title || "FlexFam Task";
     mCard.style.setProperty("--pf", p.color);
     mIco.innerHTML = p.icon;
-    mTitle.textContent = task.action + " · " + task.user;
-    mSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " points</b>";
-    mOpen.textContent = "Open " + p.name + " Page";
+    mTitle.textContent = task.action + " · " + name;
+    mSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " points</b>" + (task.bonus ? " · Bonus mission" : "");
+    mSteps.innerHTML = stepRows(task);
+    mOpen.textContent = task.openText || "Open " + p.name + " Page";
     mOpen.href = task.url;
     mClaim.classList.add("hidden");
     mClaim.disabled = true;
@@ -202,18 +339,20 @@ document.addEventListener("DOMContentLoaded", () => {
   modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
   mOpen.addEventListener("click", () => {
+    if (!pendingTask) return;
+    const waitSeconds = pendingTask.verifySeconds || 6;
     // start verification countdown
     mOpen.classList.add("hidden");
     mClaim.classList.remove("hidden");
     mClaim.disabled = true;
-    mClaim.textContent = "Verifying… 6s";
+    mClaim.textContent = "Verifying… " + waitSeconds + "s";
     let t = 0;
     clearInterval(timer);
     timer = setInterval(() => {
       t += 0.5;
-      mProgress.style.width = Math.min((t / 6) * 100, 100) + "%";
-      mClaim.textContent = t >= 6 ? 'Verify & Claim +' + pendingTask.payout : "Verifying… " + Math.max(1, Math.ceil(6 - t)) + "s";
-      if (t >= 6) { clearInterval(timer); mClaim.disabled = false; }
+      mProgress.style.width = Math.min((t / waitSeconds) * 100, 100) + "%";
+      mClaim.textContent = t >= waitSeconds ? "Verify & Claim +" + pendingTask.payout : "Verifying… " + Math.max(1, Math.ceil(waitSeconds - t)) + "s";
+      if (t >= waitSeconds) { clearInterval(timer); mClaim.disabled = false; }
     }, 500);
   });
 
@@ -221,6 +360,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!pendingTask) return;
     const task = pendingTask;
     const p = FF.PLATFORMS[task.platform];
+
+    if (task.bonus) {
+      if (isBonusDone(task)) {
+        FF.toast("This bonus is already claimed.", "info");
+        closeModal();
+        renderBonuses();
+        return;
+      }
+      FF.awardCredits(user.email, task.payout, task.activityText || (p.name + " · " + task.action + ' "' + task.user + '"'));
+      markBonusDone(task);
+      user = FF.currentUser();
+      FF.toast("+" + task.payout + " bonus points earned!", "ok");
+      closeModal();
+      renderBonuses();
+      return;
+    }
+
     FF.awardCredits(user.email, task.payout, p.name + " · " + task.action + ' "' + task.user + '"');
     const dm = FF.DB.doneMap();
     dm[user.email] = dm[user.email] || [];
@@ -229,11 +385,14 @@ document.addEventListener("DOMContentLoaded", () => {
     user = FF.currentUser();
     FF.toast("+" + task.payout + " points earned! Keep flexing.", "ok");
     closeModal();
+    renderBonuses();
     render();
   });
 
+  renderBonuses();
   render();
 });
+
 </script>
 </body>
 </html>
