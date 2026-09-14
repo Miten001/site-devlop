@@ -35,6 +35,23 @@
   .cfg-warn { background: rgba(255,93,110,.08); border: 1px solid rgba(255,93,110,.3); color: var(--ink-dim); border-radius: var(--radius); padding: 18px 20px; font-size: 14px; line-height: 1.6; }
   .cfg-warn code { color: var(--amber); background: var(--glass-2); padding: 2px 7px; border-radius: 7px; font-size: 12.5px; }
   .scroll-box { max-height: 430px; overflow: auto; }
+  .member-panel { margin-top: 16px; }
+  .member-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 14px; }
+  .member-table { min-width: 760px; }
+  .member-id { color: var(--cyan); font-size: 12px; font-weight: 800; white-space: nowrap; }
+  .member-email { color: var(--ink) !important; white-space: nowrap; }
+  .member-date { white-space: nowrap; }
+  .password-protected { color: #a7f6d6; background: rgba(52,229,165,.08); border: 1px solid rgba(52,229,165,.25); padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .member-note { color: var(--ink-mute); font-size: 12.5px; line-height: 1.45; margin: -7px 0 14px; }
+  .member-note b { color: #a7f6d6; }
+  @media (max-width: 680px) {
+    .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .admin-bar > div { width: 100%; }
+    .admin-bar .btn { flex: 1; }
+    .ff-table th, .ff-table td { padding: 8px; }
+    .scroll-box { max-height: 360px; }
+  }
+  @media (max-width: 420px) { .admin-grid { grid-template-columns: 1fr; } }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -94,7 +111,7 @@
       <div>
         <span class="eyebrow"><span class="dot"></span> Live analytics</span>
         <h1>Admin <span class="grad-text">dashboard</span></h1>
-        <p class="sub">Real visitor events from Supabase — global &amp; permanent, not localStorage.</p>
+        <p class="sub">Live analytics and registered member identities — protected by Supabase row-level security.</p>
       </div>
     </div>
 
@@ -113,6 +130,7 @@
       <div class="dash-stat" style="--c:#2aabee"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.04 15.31l-.38 5.32c.54 0 .77-.23 1.05-.5l2.52-2.41 5.22 3.83c.96.53 1.64.25 1.9-.88L21.9 4.6c.34-1.4-.5-1.94-1.44-1.6L2.2 9.92c-1.36.53-1.34 1.28-.23 1.62l4.62 1.44L17.3 6.1c.5-.33.96-.15.58.18L9.04 15.3z"/></svg></span><div class="ds-num" id="k-bot">—</div><div class="ds-lbl">Telegram bot clicks</div></div>
       <div class="dash-stat" style="--c:#34e5a5"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><div class="ds-num" id="k-claims">—</div><div class="ds-lbl">Task claims</div></div>
       <div class="dash-stat" style="--c:#ff8a3d"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><div class="ds-num" id="k-camps">—</div><div class="ds-lbl">Campaigns created</div></div>
+      <div class="dash-stat" style="--c:#e0489f"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg></span><div class="ds-num" id="k-members">—</div><div class="ds-lbl">Registered members</div></div>
     </div>
 
     <div class="admin-cols">
@@ -139,6 +157,17 @@
         </div>
       </div>
     </div>
+
+    <section class="panel member-panel" aria-labelledby="members-title">
+      <div class="panel-head"><h3 id="members-title">Registered accounts</h3><span class="status-pill on" id="member-count">0 members</span></div>
+      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
+      <div class="member-table-wrap">
+        <table class="ff-table member-table">
+          <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Password</th></tr></thead>
+          <tbody id="t-members"><tr><td colspan="5">Loading registered accounts…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </main>
 
@@ -156,6 +185,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var views = {};
   var last = [];
+  var members = [];
   var session = null;
   var SKEY = "ff_admin_session";
 
@@ -211,27 +241,46 @@
     });
   }
 
+  function reportLoadError(error, area) {
+    var message = (error && error.message) || "";
+    if ((error && (error.status === 401 || error.status === 403)) || /permission|policy|denied|JWT/i.test(message)) {
+      toast("Read denied — make sure this email is in the admins table.", true);
+    } else if (/profiles|does not exist|relation|42P01/i.test(message) && area === "members") {
+      toast("Registered accounts need the updated supabase.sql migration.", true);
+    } else if (/does not exist|relation|42P01/i.test(message)) {
+      toast("Analytics table missing — run supabase.sql in the Supabase SQL editor.", true);
+    } else if (/failed to fetch|networkerror/i.test(message)) {
+      toast("Network error reaching Supabase — check your connection.", true);
+    } else {
+      toast("Could not read " + area + ": " + (message || "unknown error"), true);
+    }
+  }
+
   function load() {
-    api("/rest/v1/events?select=*&order=ts_client.desc&limit=2500")
-      .then(function (rows) {
-        last = rows || [];
+    var eventsError = null;
+    var membersError = null;
+    var eventsRequest = api("/rest/v1/events?select=*&order=ts_client.desc&limit=2500")
+      .catch(function (error) { eventsError = error; return null; });
+    var membersRequest = api("/rest/v1/profiles?select=id,email,display_name,created_at&order=created_at.desc&limit=500")
+      .catch(function (error) { membersError = error; return null; });
+
+    Promise.all([eventsRequest, membersRequest]).then(function (results) {
+      var eventRows = results[0];
+      var memberRows = results[1];
+      if (eventRows) {
+        last = eventRows;
         render(last);
-        if (!last.length) {
-          toast("Connected, but no events are readable yet. If you expect data, run supabase.sql so the admin SELECT policy exists.");
-        }
-      })
-      .catch(function (e) {
-        var msg = e.message || "";
-        if (e.status === 401 || e.status === 403 || /permission|policy|denied|JWT/i.test(msg)) {
-          toast("Read denied — run supabase.sql so your email is in the admins table.", true);
-        } else if (/does not exist|relation|42P01/i.test(msg)) {
-          toast("Table missing — run supabase.sql in the Supabase SQL editor.", true);
-        } else if (/failed to fetch|networkerror/i.test(msg)) {
-          toast("Network error reaching Supabase — check your connection.", true);
-        } else {
-          toast("Could not read events: " + msg, true);
-        }
-      });
+        if (!last.length) toast("Connected, but no events are readable yet.");
+      } else {
+        reportLoadError(eventsError, "analytics");
+      }
+      if (memberRows) {
+        renderMembers(memberRows);
+      } else {
+        renderMembers([], membersError);
+        reportLoadError(membersError, "members");
+      }
+    });
   }
 
   function render(es) {
@@ -270,6 +319,34 @@
       return "<tr><td>" + (e.ts_client ? new Date(e.ts_client).toLocaleString("en-IN") : "") +
         '</td><td><span class="ev-pill ' + esc(e.type) + '">' + esc(e.type) +
         '</span></td><td class="k">' + esc(e.label || e.url || e.page || "") + "</td></tr>";
+    }).join("");
+  }
+
+  function renderMembers(rows, error) {
+    var body = $("t-members");
+    if (error) {
+      members = [];
+      $("k-members").textContent = "—";
+      $("member-count").textContent = "Setup needed";
+      body.innerHTML = '<tr><td colspan="5">Run the updated <code>supabase.sql</code> once, then refresh to load registered accounts.</td></tr>';
+      return;
+    }
+    members = rows || [];
+    $("k-members").textContent = members.length.toLocaleString("en-IN");
+    $("member-count").textContent = members.length.toLocaleString("en-IN") + (members.length === 1 ? " member" : " members");
+    if (!members.length) {
+      body.innerHTML = '<tr><td colspan="5">No registered accounts yet.</td></tr>';
+      return;
+    }
+    body.innerHTML = members.map(function (member) {
+      var rawId = String(member.id || "");
+      var accountId = rawId ? "FF-" + rawId.replace(/-/g, "").slice(0, 8).toUpperCase() : "—";
+      var joined = member.created_at ? new Date(member.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
+      return '<tr><td><code class="member-id" title="' + esc(rawId) + '">' + esc(accountId) + '</code></td>' +
+        '<td class="k">' + esc(member.display_name || "Member") + '</td>' +
+        '<td class="member-email">' + esc(member.email || "—") + '</td>' +
+        '<td class="member-date">' + esc(joined) + '</td>' +
+        '<td><span class="password-protected">Protected</span></td></tr>';
     }).join("");
   }
 
@@ -324,10 +401,10 @@
     $("btn-export").onclick = function () {
       var a = document.createElement("a");
       a.href = URL.createObjectURL(new Blob(
-        [JSON.stringify({ exportedAt: new Date(), events: last }, null, 2)],
+        [JSON.stringify({ exportedAt: new Date(), events: last, members: members }, null, 2)],
         { type: "application/json" }
       ));
-      a.download = "flexfam-analytics.json";
+      a.download = "flexfam-admin-export.json";
       a.click();
     };
 

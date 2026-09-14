@@ -1,6 +1,7 @@
 /* ============================================================
    FLEXFAM — shared engine
-   localStorage mock backend: users, session, campaigns, credits
+   Browser campaign cache + Supabase Auth for member sign-in when configured.
+   Raw passwords are never saved in browser storage or exposed in the admin area.
    ============================================================ */
 
 (function () {
@@ -123,6 +124,182 @@
       DB.saveUsers(users);
     }
     return users[i];
+  }
+
+
+  /* ---------- member auth ---------- */
+  function memberConfig() {
+    const cfg = window.FF_SUPABASE_CONFIG || null;
+    const valid = cfg && cfg.url && cfg.anonKey &&
+      !String(cfg.url).includes("your-project") && !String(cfg.anonKey).includes("your-anon");
+    return valid ? cfg : null;
+  }
+
+  function makeLocalMemberId() {
+    const bytes = new Uint32Array(2);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+    else { bytes[0] = Date.now(); bytes[1] = Math.floor(Math.random() * 0xffffffff); }
+    return "FF-" + Array.from(bytes).map((n) => n.toString(36)).join("").toUpperCase().slice(0, 12);
+  }
+
+  function defaultMember(name, email, memberId) {
+    return {
+      name,
+      email,
+      memberId: memberId || makeLocalMemberId(),
+      credits: 25,
+      earned: 25,
+      spent: 0,
+      refCode: "FF-" + name.replace(/\s+/g, "").slice(0, 4).toUpperCase() + "-" + Math.floor(1000 + Math.random() * 9000),
+      joined: Date.now(),
+      activity: [{ type: "earn", text: "Welcome bonus — glad to have you on FlexFam!", amount: 25, at: Date.now() }],
+      campaigns: [],
+      weekly: [42, 68, 55, 90, 74, 110, 96],
+    };
+  }
+
+  function rememberMember(name, email, memberId) {
+    const users = DB.users();
+    const i = users.findIndex((u) => u.email === email);
+    if (i === -1) {
+      const member = defaultMember(name || email.split("@")[0], email, memberId);
+      users.push(member);
+      DB.saveUsers(users);
+      return member;
+    }
+    const user = users[i];
+    const patch = {};
+    if (name) patch.name = name;
+    if (memberId) patch.memberId = memberId;
+    if (Object.keys(patch).length || Object.prototype.hasOwnProperty.call(user, "pass")) {
+      users[i] = Object.assign({}, user, patch);
+      /* A verified Supabase account replaces the legacy browser password. */
+      delete users[i].pass;
+      DB.saveUsers(users);
+    }
+    return users[i];
+  }
+
+  function authRequest(path, options) {
+    const cfg = memberConfig();
+    if (!cfg) return Promise.reject(new Error("Secure sign-up is not configured yet"));
+    options = options || {};
+    return fetch(String(cfg.url).replace(/\/+$/, "") + path, {
+      method: options.method || "POST",
+      headers: Object.assign({
+        apikey: cfg.anonKey,
+        Authorization: "Bearer " + cfg.anonKey,
+        "Content-Type": "application/json",
+      }, options.headers || {}),
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    }).then((res) => res.text().then((text) => {
+      let json = null;
+      try { json = text ? JSON.parse(text) : null; } catch (e) {}
+      if (!res.ok) throw new Error((json && (json.msg || json.message || json.error_description || json.error)) || "Request failed (" + res.status + ")");
+      return json || {};
+    }));
+  }
+
+  function passwordDigest(password, salt) {
+    if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
+      return Promise.reject(new Error("This browser needs HTTPS to store a local password safely"));
+    }
+    const encoder = new TextEncoder();
+    /* The fallback is only used without Supabase, but it still uses a slow,
+       salted PBKDF2 derivation instead of writing a password in plain text. */
+    return window.crypto.subtle.importKey("raw", encoder.encode(password), { name: "PBKDF2" }, false, ["deriveBits"])
+      .then((key) => window.crypto.subtle.deriveBits({
+        name: "PBKDF2",
+        salt: encoder.encode(salt),
+        iterations: 100000,
+        hash: "SHA-256",
+      }, key, 256))
+      .then((buffer) => Array.from(new Uint8Array(buffer)).map((b) => b.toString(16).padStart(2, "0")).join(""));
+  }
+
+  function localPasswordRecord(password) {
+    if (!window.crypto || !window.crypto.getRandomValues) {
+      return Promise.reject(new Error("This browser needs HTTPS to store a local password safely"));
+    }
+    const bytes = new Uint32Array(2);
+    window.crypto.getRandomValues(bytes);
+    const salt = Array.from(bytes).map((n) => n.toString(36)).join("-");
+    return passwordDigest(password, salt).then((digest) => ({ passwordSalt: salt, passwordDigest: digest }));
+  }
+
+  function replaceLegacyPassword(email, record) {
+    const users = DB.users();
+    const i = users.findIndex((u) => u.email === email);
+    if (i < 0) return;
+    const clean = Object.assign({}, users[i], record);
+    delete clean.pass;
+    users[i] = clean;
+    DB.saveUsers(users);
+  }
+
+  function localSignup(name, email, password) {
+    return localPasswordRecord(password).then((record) => {
+      const users = DB.users();
+      if (users.some((u) => u.email === email)) throw new Error("This email is already registered — please log in");
+      const member = Object.assign(defaultMember(name, email), record);
+      users.push(member);
+      DB.saveUsers(users);
+      DB.setSession(email);
+      return { member, confirmationRequired: false, localOnly: true };
+    });
+  }
+
+  function localLogin(email, password) {
+    const user = DB.users().find((u) => u.email === email);
+    if (!user) return Promise.reject(new Error("No account found on this browser yet — please sign up first"));
+    if (user.passwordDigest && user.passwordSalt) {
+      return passwordDigest(password, user.passwordSalt).then((digest) => {
+        if (digest !== user.passwordDigest) throw new Error("Incorrect email or password");
+        DB.setSession(email);
+        return user;
+      });
+    }
+    /* Upgrade old browser-only accounts after their next successful login. */
+    if (typeof user.pass === "string" && user.pass === password) {
+      return localPasswordRecord(password).then((record) => {
+        replaceLegacyPassword(email, record);
+        DB.setSession(email);
+        return currentUser();
+      });
+    }
+    return Promise.reject(new Error("Incorrect email or password"));
+  }
+
+  function signupMember(name, email, password) {
+    const cfg = memberConfig();
+    if (!cfg) return localSignup(name, email, password);
+    return authRequest("/auth/v1/signup", {
+      body: { email, password, data: { display_name: name } },
+    }).then((result) => {
+      if (!result.user || !result.user.id) throw new Error("The account could not be created. Please try again.");
+      const member = rememberMember(name, email, result.user.id);
+      if (result.session) DB.setSession(email);
+      return { member, confirmationRequired: !result.session, localOnly: false };
+    });
+  }
+
+  function loginMember(email, password) {
+    const cfg = memberConfig();
+    if (!cfg) return localLogin(email, password);
+    return authRequest("/auth/v1/token?grant_type=password", {
+      body: { email, password },
+    }).then((result) => {
+      if (!result.user) throw new Error("Incorrect email or password");
+      const profileName = result.user.user_metadata && result.user.user_metadata.display_name;
+      const member = rememberMember(profileName || email.split("@")[0], email, result.user.id);
+      DB.setSession(email);
+      return member;
+    }).catch((error) => {
+      /* Existing demo/local accounts remain usable after this secure upgrade. */
+      const cached = DB.users().find((u) => u.email === email);
+      if (cached && (cached.passwordDigest || cached.pass)) return localLogin(email, password);
+      throw error;
+    });
   }
 
   /* ---------- seed demo data ---------- */
@@ -421,40 +598,12 @@
     wrap.addEventListener("mouseleave", () => { card.style.transform = "rotateY(0) rotateX(0)"; });
   }
 
-  /* ---------- live activity ticker ---------- */
+  /* ---------- activity ticker ---------- */
   function initTicker() {
     const el = document.getElementById("ticker-text");
     if (!el) return;
-    const rows = [
-      '<b>@aaravshots</b> started <b>FlexFam Rewards Bot (@sub_for_sub_bot)</b> on Telegram & earned <b>+15</b> points',
-      '<b>@nehavlogs</b> subscribed <b>TechGuru Rohan</b> on YouTube & earned <b>+6</b> points',
-      '<b>@melodymaya</b> followed <b>GameLordYT</b> on Instagram & earned <b>+3</b> points',
-      '<b>@pixelninja</b> visited <b>Creator Growth Guide</b> website & earned <b>+6</b> points',
-      '<b>@desifoodies</b> reposted <b>CricketFever</b> on X & earned <b>+2</b> points',
-      '<b>@kwavya</b> promoted her TikTok for <b>120</b> points',
-      '<b>@coderkibaatein</b> added a new Telegram channel campaign',
-      '<b>@traveltales</b> liked a Facebook page & earned <b>+3</b> points',
-    ];
-    let i = 0;
-    const swap = () => {
-      el.style.transition = "opacity .35s, transform .35s";
-      el.style.opacity = "0";
-      el.style.transform = "translateY(8px)";
-      setTimeout(() => {
-        el.innerHTML = rows[i % rows.length];
-        i++;
-        el.style.opacity = "1";
-        el.style.transform = "translateY(0)";
-      }, 380);
-    };
-    el.innerHTML = rows[0];
-    i = 1;
-    /* don't keep a timer + repaints running in a background tab */
-    let timer = setInterval(swap, 3400);
-    document.addEventListener("visibilitychange", () => {
-      clearInterval(timer);
-      timer = document.hidden ? 0 : setInterval(swap, 3400);
-    });
+    /* Static text intentionally replaces a permanent interval + repaint loop. */
+    el.innerHTML = '<b>@aaravshots</b> started <b>FlexFam Rewards Bot (@sub_for_sub_bot)</b> on Telegram &amp; earned <b>+15</b> points';
   }
 
   /* ---------- auth guard ---------- */
@@ -477,28 +626,29 @@
         const nameEl = signupForm.querySelector("#name, [name='name']");
         const emailEl = signupForm.querySelector("#email, [name='email']");
         const passEl = signupForm.querySelector("#password, [name='password']");
+        const submit = signupForm.querySelector("button[type='submit']");
         if (!nameEl || !emailEl || !passEl) return toast("Signup form is broken — please reload the page", "err");
         const name = nameEl.value.trim();
         const email = emailEl.value.trim().toLowerCase();
         const pass = passEl.value;
         if (name.length < 2) return toast("Please enter your name (min 2 characters)", "err");
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast("Please enter a valid email", "err");
-        if (pass.length < 6) return toast("Password must be at least 6 characters", "err");
-        const users = DB.users();
-        if (users.some((u) => u.email === email)) return toast("This email is already registered — please log in", "err");
-        users.push({
-          name, email, pass,
-          credits: 25, earned: 25, spent: 0,
-          refCode: "FF-" + name.replace(/\s+/g, "").slice(0, 4).toUpperCase() + "-" + Math.floor(1000 + Math.random() * 9000),
-          joined: Date.now(),
-          activity: [{ type: "earn", text: "Welcome bonus — glad to have you on FlexFam!", amount: 25, at: Date.now() }],
-          campaigns: [],
-          weekly: [42, 68, 55, 90, 74, 110, 96],
+        if (pass.length < 8) return toast("Use at least 8 characters for your password", "err");
+        if (submit) { submit.disabled = true; submit.dataset.label = submit.textContent; submit.textContent = "Creating secure account…"; }
+        signupMember(name, email, pass).then((result) => {
+          passEl.value = "";
+          if (result.confirmationRequired) {
+            toast("Account created — check your email to confirm it, then log in.", "ok");
+            setTimeout(() => (window.location.href = "login.html"), 1800);
+            return;
+          }
+          toast(result.localOnly ? "Account created in this browser. Configure Supabase for admin-visible members." : "Account created! +25 welcome points", "ok");
+          setTimeout(() => (window.location.href = "dashboard.html"), 900);
+        }).catch((error) => {
+          toast(error.message || "Could not create the account", "err");
+        }).finally(() => {
+          if (submit) { submit.disabled = false; submit.textContent = submit.dataset.label || "Create Account"; }
         });
-        DB.saveUsers(users);
-        DB.setSession(email);
-        toast("Account created! +25 welcome points", "ok");
-        setTimeout(() => (window.location.href = "dashboard.html"), 900);
       });
     }
 
@@ -506,25 +656,28 @@
     if (loginForm) {
       loginForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        /* explicit lookups — form.name shorthand breaks if an input is
-           renamed and silently throws before any toast can be shown */
         const emailEl = loginForm.querySelector("#email, [name='email']");
         const passEl = loginForm.querySelector("#password, [name='password']");
+        const submit = loginForm.querySelector("button[type='submit']");
         if (!emailEl || !passEl) return toast("Login form is broken — please reload the page", "err");
         const email = emailEl.value.trim().toLowerCase();
         const pass = passEl.value;
-        const users = DB.users();
-        if (!users.length) return toast("No account found on this browser yet — please sign up first", "err");
-        const user = users.find((u) => u.email === email && u.pass === pass);
-        if (!user) return toast("Incorrect email or password", "err");
-        DB.setSession(email);
-        toast("Welcome back, " + user.name.split(" ")[0] + "!", "ok");
-        const params = new URLSearchParams(location.search);
-        setTimeout(() => (window.location.href = params.get("next") || "dashboard.html"), 800);
+        if (!email || !pass) return toast("Enter your email and password", "err");
+        if (submit) { submit.disabled = true; submit.dataset.label = submit.textContent; submit.textContent = "Logging in…"; }
+        loginMember(email, pass).then((user) => {
+          passEl.value = "";
+          toast("Welcome back, " + user.name.split(" ")[0] + "!", "ok");
+          const params = new URLSearchParams(location.search);
+          setTimeout(() => (window.location.href = params.get("next") || "dashboard.html"), 800);
+        }).catch((error) => {
+          toast(error.message || "Incorrect email or password", "err");
+        }).finally(() => {
+          if (submit) { submit.disabled = false; submit.textContent = submit.dataset.label || "Login"; }
+        });
       });
     }
 
-    /* demo one-click login */
+    /* demo one-click login stays local and has no production password. */
     const demoBtn = document.getElementById("demo-login");
     if (demoBtn) {
       demoBtn.addEventListener("click", () => {
@@ -532,7 +685,7 @@
         let demo = users.find((u) => u.email === "demo@flexfam.io");
         if (!demo) {
           demo = {
-            name: "Demo Star", email: "demo@flexfam.io", pass: "demo",
+            name: "Demo Star", email: "demo@flexfam.io", memberId: "FF-DEMO-2025",
             credits: 1240, earned: 3870, spent: 2630,
             refCode: "FF-DEMO-2025", joined: Date.now(),
             activity: [
@@ -551,6 +704,10 @@
           };
           users.push(demo);
           DB.saveUsers(users);
+        } else if (Object.prototype.hasOwnProperty.call(demo, "pass")) {
+          /* The demo button does not need a password; scrub the legacy value. */
+          delete demo.pass;
+          DB.saveUsers(users);
         }
         DB.setSession("demo@flexfam.io");
         toast("Logged into the demo account!", "ok");
@@ -558,7 +715,6 @@
       });
     }
 
-    /* logout links */
     document.querySelectorAll("[data-logout]").forEach((a) =>
       a.addEventListener("click", (e) => {
         e.preventDefault();
@@ -589,24 +745,9 @@
     }
   }
 
-  /* ---------- pause offscreen / hidden-tab animations ---------- */
-  function initAnimPause() {
-    const targets = document.querySelectorAll(".marquee-wrap, .testi-row, .orbit, .aurora");
-    if (!targets.length) return;
-
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.target.classList.toggle("anim-paused", !e.isIntersecting)),
-      { rootMargin: "120px" }
-    );
-    targets.forEach((el) => io.observe(el));
-
-    /* a hidden tab should cost zero frames */
-    document.addEventListener("visibilitychange", () => {
-      targets.forEach((el) => {
-        if (document.hidden) el.classList.add("anim-paused");
-      });
-    });
-  }
+  /* Continuous decoration was removed for Chrome performance, so there is
+     no offscreen animation work left to observe or pause. */
+  function initAnimPause() {}
 
   /* ---------- boot ---------- */
   document.addEventListener("DOMContentLoaded", () => {
@@ -634,7 +775,7 @@
   /* expose */
   window.FF = {
     PLATFORMS, BRAND_SVG, COIN_SVG, SPARK_SVG, CHECK_SVG,
-    store, DB, currentUser, updateUser,
+    store, DB, currentUser, updateUser, memberConfig,
     awardCredits, spendCredits, syncCreditPills,
     toast, avatarColor, initials,
   };

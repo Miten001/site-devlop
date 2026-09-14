@@ -1,16 +1,132 @@
-/* FlexFam analytics — Supabase-backed, graceful when unconfigured. */
+/* FlexFam analytics — Supabase-backed and intentionally dependency-free.
+   Using the REST endpoint directly avoids downloading/parsing the Supabase
+   SDK on every visitor page, which keeps Chrome scrolling responsive. */
 (function () {
   "use strict";
+
   var cfg = window.FF_SUPABASE_CONFIG || null;
-  var enabled = !!(cfg && cfg.url && cfg.anonKey && !cfg.url.includes("your-project") && !cfg.anonKey.includes("your-anon"));
-  var client = null, queue = [], loading = false;
-  function visitorId() { try { var v=localStorage.getItem("ff_vid"); if(!v){v="v-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,10);localStorage.setItem("ff_vid",v);} return v; } catch(e){return "v-anon";} }
-  function ensure() { if(client||loading||!enabled)return; loading=true; import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm").then(function(m){client=m.createClient(cfg.url,cfg.anonKey);flush();}).catch(function(){enabled=false;queue=[];}); }
-  function event(type,data){var e={type:type,page:location.pathname.split("/").pop()||"index.html",path:location.pathname,title:(document.title||"").slice(0,140),ref:(document.referrer||"").slice(0,400),vid:visitorId(),lang:(navigator.language||"").slice(0,20),ua:(navigator.userAgent||"").slice(0,220),day:new Date().toISOString().slice(0,10),ts_client:new Date().toISOString()}; Object.assign(e,data||{}); return e;}
-  function flush(){if(!client)return; while(queue.length){var x=queue.shift(); client.from(x.table).insert(x.row).then(function(){});}}
-  function track(type,data){if(!enabled)return;queue.push({table:"events",row:event(type,data)});client?flush():ensure();}
-  function saveCampaign(c){if(!enabled)return;queue.push({table:"campaigns",row:{campaign_id:String(c.id||""),platform:String(c.platform||""),action:String(c.action||""),title:String(c.title||"").slice(0,120),url:String(c.url||"").slice(0,400),payout:Number(c.payout||0),owner:visitorId(),source:"web",day:new Date().toISOString().slice(0,10),ts_client:new Date().toISOString()}});client?flush():ensure();}
-  document.addEventListener("DOMContentLoaded",function(){track("page_view");});
-  document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;if(!a)return;var h=a.getAttribute("href")||"";if(!/^https?:\/\//i.test(h))return;var d={url:h.slice(0,400),label:(a.textContent||"").trim().slice(0,80)};track(h.indexOf("t.me/sub_for_sub_bot")!==-1?"telegram_bot_click":"link_click",d);},true);
-  window.FFA={track:track,saveCampaign:saveCampaign,visitorId:visitorId,get enabled(){return enabled;}};
+  var enabled = !!(cfg && cfg.url && cfg.anonKey &&
+    !String(cfg.url).includes("your-project") && !String(cfg.anonKey).includes("your-anon"));
+  var queue = [];
+  var flushing = false;
+  var baseUrl = enabled ? String(cfg.url).replace(/\/+$/, "") + "/rest/v1/" : "";
+
+  function visitorId() {
+    try {
+      var value = localStorage.getItem("ff_vid");
+      if (!value) {
+        value = "v-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem("ff_vid", value);
+      }
+      return value;
+    } catch (e) {
+      return "v-anon";
+    }
+  }
+
+  function event(type, data) {
+    data = data || {};
+    /* Keep the payload in sync with supabase.sql. Do not spread arbitrary
+       browser data into a PostgREST insert: unknown columns reject a batch. */
+    return {
+      type: String(type || "event").slice(0, 80),
+      page: (location.pathname.split("/").pop() || "index.html").slice(0, 160),
+      path: String(location.pathname || "").slice(0, 400),
+      title: String(document.title || "").slice(0, 140),
+      ref: String(document.referrer || "").slice(0, 400),
+      vid: visitorId(),
+      lang: String(navigator.language || "").slice(0, 20),
+      ua: String(navigator.userAgent || "").slice(0, 220),
+      day: new Date().toISOString().slice(0, 10),
+      ts_client: new Date().toISOString(),
+      url: data.url ? String(data.url).slice(0, 400) : null,
+      label: data.label ? String(data.label).slice(0, 120) : null,
+      task_title: (data.taskTitle || data.task_title) ? String(data.taskTitle || data.task_title).slice(0, 120) : null,
+      task_id: (data.taskId || data.task_id) ? String(data.taskId || data.task_id).slice(0, 120) : null,
+      payout: Number.isFinite(Number(data.payout)) ? Number(data.payout) : null,
+    };
+  }
+
+  function request(table, rows, keepalive) {
+    return fetch(baseUrl + table, {
+      method: "POST",
+      headers: {
+        apikey: cfg.anonKey,
+        Authorization: "Bearer " + cfg.anonKey,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify(rows),
+      keepalive: !!keepalive,
+    }).then(function (response) {
+      if (!response.ok) throw new Error("Analytics request failed: " + response.status);
+    });
+  }
+
+  function flush(keepalive) {
+    if (!enabled || flushing || !queue.length) return;
+    flushing = true;
+    var pending = queue.splice(0, queue.length);
+    var groups = {};
+    pending.forEach(function (entry) {
+      (groups[entry.table] = groups[entry.table] || []).push(entry.row);
+    });
+    Promise.all(Object.keys(groups).map(function (table) {
+      return request(table, groups[table], keepalive).catch(function () {
+        /* Analytics must never slow down or interrupt a member action. */
+      });
+    })).finally(function () {
+      flushing = false;
+      if (queue.length) flush(false);
+    });
+  }
+
+  function enqueue(table, row) {
+    if (!enabled) return;
+    queue.push({ table: table, row: row });
+    /* Batch same-tick events without blocking page interaction or rendering. */
+    if (queue.length === 1) setTimeout(function () { flush(false); }, 0);
+  }
+
+  function track(type, data) {
+    enqueue("events", event(type, data));
+  }
+
+  function saveCampaign(campaign) {
+    campaign = campaign || {};
+    enqueue("campaigns", {
+      campaign_id: String(campaign.id || "").slice(0, 120),
+      platform: String(campaign.platform || "").slice(0, 50),
+      action: String(campaign.action || "").slice(0, 80),
+      title: String(campaign.title || "").slice(0, 120),
+      url: String(campaign.url || "").slice(0, 400),
+      payout: Number(campaign.payout || 0),
+      owner: visitorId(),
+      source: "web",
+      day: new Date().toISOString().slice(0, 10),
+      ts_client: new Date().toISOString(),
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    track("page_view");
+  });
+  document.addEventListener("click", function (e) {
+    var link = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if (!link) return;
+    var href = link.getAttribute("href") || "";
+    if (!/^https?:\/\//i.test(href)) return;
+    track(href.indexOf("t.me/sub_for_sub_bot") !== -1 ? "telegram_bot_click" : "link_click", {
+      url: href,
+      label: (link.textContent || "").trim(),
+    });
+  }, true);
+  window.addEventListener("pagehide", function () { flush(true); }, { passive: true });
+
+  window.FFA = {
+    track: track,
+    saveCampaign: saveCampaign,
+    visitorId: visitorId,
+    get enabled() { return enabled; },
+  };
 })();
