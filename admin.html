@@ -83,7 +83,7 @@
       </div>
       <button type="submit" class="btn btn-primary btn-block btn-lg" id="btn-login">Login to Admin</button>
     </form>
-    <p class="auth-alt" style="margin-top:16px">Only allowlisted admin emails can read stats — enforced by Firestore security rules.</p>
+    <p class="auth-alt" style="margin-top:16px">Only allowlisted admin emails can read stats — enforced by Supabase row level security.</p>
   </div>
 </div>
 
@@ -94,7 +94,7 @@
       <div>
         <span class="eyebrow"><span class="dot"></span> Live analytics</span>
         <h1>Admin <span class="grad-text">dashboard</span></h1>
-        <p class="sub">Real visitor events from Firestore — global &amp; permanent, not localStorage.</p>
+        <p class="sub">Real visitor events from Supabase — global &amp; permanent, not localStorage.</p>
       </div>
     </div>
 
@@ -143,32 +143,216 @@
 </main>
 
 <script src="assets/js/supabase-config.js"></script>
-<script type="module">
-/* FlexFam admin — Supabase Auth + Postgres analytics */
-const cfg=window.FF_SUPABASE_CONFIG||null, emails=(window.FF_ADMIN_EMAILS||[]).map(e=>String(e).toLowerCase());
-const views={nocfg:document.getElementById("view-nocfg"),login:document.getElementById("view-login"),dash:document.getElementById("view-dash")};
-const $=id=>document.getElementById(id); const show=n=>{Object.keys(views).forEach(k=>views[k].classList.toggle("hidden",k!==n));$("btn-logout").classList.toggle("hidden",n!=="dash")};
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const configured=cfg&&cfg.url&&cfg.anonKey&&!cfg.url.includes("your-project")&&!cfg.anonKey.includes("your-anon");
-if(!configured) show("nocfg"); else {
- const {createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"), sb=createClient(cfg.url,cfg.anonKey); let last=[];
- const toast=(m,err)=>{let r=document.querySelector('.toast-root')||document.body.appendChild(Object.assign(document.createElement('div'),{className:'toast-root'}));let x=document.createElement('div');x.className='toast '+(err?'err':'ok');x.textContent=m;r.appendChild(x);setTimeout(()=>x.remove(),3200)};
- async function load(){try{let {data,error}=await sb.from('events').select('*').order('ts_client',{ascending:false}).limit(2500);if(error)throw error;last=data||[];render(last)}catch(e){toast('Could not read events — check Supabase RLS and setup.',true)}}
- function render(es){let views=es.filter(e=>e.type==='page_view'), count=t=>es.filter(e=>e.type===t).length, uniq=new Set(es.map(e=>e.vid).filter(Boolean));$('who-count').textContent=es.length.toLocaleString('en-IN');$('k-views').textContent=views.length.toLocaleString('en-IN');$('k-today').textContent=views.filter(e=>e.day===new Date().toISOString().slice(0,10)).length.toLocaleString('en-IN');$('k-uniq').textContent=uniq.size.toLocaleString('en-IN');$('k-bot').textContent=count('telegram_bot_click');$('k-claims').textContent=count('task_claim');$('k-camps').textContent=count('campaign_created'); let maps=[{}, {}, {}];views.forEach(e=>{maps[0][e.page]=(maps[0][e.page]||0)+1});es.forEach(e=>{maps[2][e.type]=(maps[2][e.type]||0)+1});[['t-pages','pages'],['t-types','events']].forEach((x,i)=>$(x[0]).innerHTML=Object.entries(maps[i?2:0]).sort((a,b)=>b[1]-a[1]).slice(0,12).map(v=>`<tr><td class="k">${esc(v[0])}</td><td class="num">${v[1]}</td></tr>`).join('')||'<tr><td colspan="2">No data yet</td></tr>');$('t-refs').innerHTML='<tr><td colspan="2">Referrers are available in exported data</td></tr>';$('recent-count').textContent=Math.min(es.length,80)+' shown';$('t-recent').innerHTML=es.slice(0,80).map(e=>`<tr><td>${e.ts_client?new Date(e.ts_client).toLocaleString('en-IN'):''}</td><td><span class="ev-pill">${esc(e.type)}</span></td><td class="k">${esc(e.label||e.url||e.page||'')}</td></tr>`).join('')}
- sb.auth.onAuthStateChange((_,u)=>{if(u&&(!emails.length||emails.includes((u.email||'').toLowerCase()))){$('who-email').textContent=u.email;show('dash');load()}else show('login')});
- $('admin-login-form').addEventListener('submit',async e=>{e.preventDefault();let {error}=await sb.auth.signInWithPassword({email:$('a-email').value.trim(),password:$('a-pass').value});if(error)toast('Login failed: '+error.message,true)});$('btn-logout').onclick=()=>sb.auth.signOut();$('btn-refresh').onclick=load;$('btn-export').onclick=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({exportedAt:new Date(),events:last},null,2)],{type:'application/json'}));a.download='flexfam-analytics.json';a.click()};
-}
+<script>
+/* FlexFam admin — Supabase Auth + analytics over plain REST (fetch).
+   No CDN library and no ES modules on purpose: a `type="module"` script
+   never executes from a file:// URL, and a CDN <script> can be blocked by
+   ad blockers or a flaky network. fetch() always works. */
+(function () {
+  "use strict";
+
+  var cfg = window.FF_SUPABASE_CONFIG || null;
+  var emails = (window.FF_ADMIN_EMAILS || []).map(function (e) { return String(e).toLowerCase(); });
+  var $ = function (id) { return document.getElementById(id); };
+  var views = {};
+  var last = [];
+  var session = null;
+  var SKEY = "ff_admin_session";
+
+  function show(n) {
+    Object.keys(views).forEach(function (k) { views[k].classList.toggle("hidden", k !== n); });
+    $("btn-logout").classList.toggle("hidden", n !== "dash");
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function toast(m, err) {
+    var r = document.querySelector(".toast-root");
+    if (!r) { r = document.createElement("div"); r.className = "toast-root"; document.body.appendChild(r); }
+    var x = document.createElement("div");
+    x.className = "toast " + (err ? "err" : "ok");
+    x.textContent = m;
+    r.appendChild(x);
+    setTimeout(function () { x.remove(); }, 5000);
+  }
+
+  function saveSession(s) {
+    session = s;
+    try { s ? localStorage.setItem(SKEY, JSON.stringify(s)) : localStorage.removeItem(SKEY); } catch (e) {}
+  }
+  function loadSession() {
+    try { return JSON.parse(localStorage.getItem(SKEY) || "null"); } catch (e) { return null; }
+  }
+
+  function api(path, opts) {
+    opts = opts || {};
+    var headers = { apikey: cfg.anonKey, "Content-Type": "application/json" };
+    headers.Authorization = "Bearer " + ((session && session.access_token) || cfg.anonKey);
+    Object.keys(opts.headers || {}).forEach(function (k) { headers[k] = opts.headers[k]; });
+    return fetch(cfg.url.replace(/\/+$/, "") + path, {
+      method: opts.method || "GET",
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(function (res) {
+      return res.text().then(function (t) {
+        var json = null;
+        try { json = t ? JSON.parse(t) : null; } catch (e) {}
+        if (!res.ok) {
+          var msg = (json && (json.error_description || json.msg || json.message || json.error)) ||
+                    ("HTTP " + res.status);
+          var err = new Error(msg);
+          err.status = res.status;
+          throw err;
+        }
+        return json;
+      });
+    });
+  }
+
+  function load() {
+    api("/rest/v1/events?select=*&order=ts_client.desc&limit=2500")
+      .then(function (rows) {
+        last = rows || [];
+        render(last);
+        if (!last.length) {
+          toast("Connected, but no events are readable yet. If you expect data, run supabase.sql so the admin SELECT policy exists.");
+        }
+      })
+      .catch(function (e) {
+        var msg = e.message || "";
+        if (e.status === 401 || e.status === 403 || /permission|policy|denied|JWT/i.test(msg)) {
+          toast("Read denied — run supabase.sql so your email is in the admins table.", true);
+        } else if (/does not exist|relation|42P01/i.test(msg)) {
+          toast("Table missing — run supabase.sql in the Supabase SQL editor.", true);
+        } else if (/failed to fetch|networkerror/i.test(msg)) {
+          toast("Network error reaching Supabase — check your connection.", true);
+        } else {
+          toast("Could not read events: " + msg, true);
+        }
+      });
+  }
+
+  function render(es) {
+    var pv = es.filter(function (e) { return e.type === "page_view"; });
+    var count = function (t) { return es.filter(function (e) { return e.type === t; }).length; };
+    var uniq = {};
+    es.forEach(function (e) { if (e.vid) uniq[e.vid] = 1; });
+    var today = new Date().toISOString().slice(0, 10);
+
+    $("who-count").textContent = es.length.toLocaleString("en-IN");
+    $("k-views").textContent = pv.length.toLocaleString("en-IN");
+    $("k-today").textContent = pv.filter(function (e) { return e.day === today; }).length.toLocaleString("en-IN");
+    $("k-uniq").textContent = Object.keys(uniq).length.toLocaleString("en-IN");
+    $("k-bot").textContent = count("telegram_bot_click");
+    $("k-claims").textContent = count("task_claim");
+    $("k-camps").textContent = count("campaign_created");
+
+    var pages = {}, types = {};
+    pv.forEach(function (e) { pages[e.page] = (pages[e.page] || 0) + 1; });
+    es.forEach(function (e) { types[e.type] = (types[e.type] || 0) + 1; });
+
+    function table(id, map) {
+      $(id).innerHTML = Object.keys(map)
+        .map(function (k) { return [k, map[k]]; })
+        .sort(function (a, b) { return b[1] - a[1]; })
+        .slice(0, 12)
+        .map(function (v) { return '<tr><td class="k">' + esc(v[0]) + '</td><td class="num">' + v[1] + "</td></tr>"; })
+        .join("") || '<tr><td colspan="2">No data yet</td></tr>';
+    }
+    table("t-pages", pages);
+    table("t-types", types);
+
+    $("t-refs").innerHTML = '<tr><td colspan="2">Referrers are available in exported data</td></tr>';
+    $("recent-count").textContent = Math.min(es.length, 80) + " shown";
+    $("t-recent").innerHTML = es.slice(0, 80).map(function (e) {
+      return "<tr><td>" + (e.ts_client ? new Date(e.ts_client).toLocaleString("en-IN") : "") +
+        '</td><td><span class="ev-pill ' + esc(e.type) + '">' + esc(e.type) +
+        '</span></td><td class="k">' + esc(e.label || e.url || e.page || "") + "</td></tr>";
+    }).join("");
+  }
+
+  function applySession(s) {
+    var user = s && s.user ? s.user : null;
+    if (!user) { saveSession(null); show("login"); return; }
+    var email = (user.email || "").toLowerCase();
+    if (emails.length && emails.indexOf(email) === -1) {
+      toast("This account is not an admin: " + (user.email || "unknown"), true);
+      saveSession(null);
+      show("login");
+      return;
+    }
+    saveSession(s);
+    $("who-email").textContent = user.email || "—";
+    show("dash");
+    load();
+  }
+
+  function start() {
+    views = { nocfg: $("view-nocfg"), login: $("view-login"), dash: $("view-dash") };
+
+    var configured = cfg && cfg.url && cfg.anonKey &&
+      cfg.url.indexOf("your-project") === -1 && cfg.anonKey.indexOf("your-anon") === -1;
+    if (!configured) { show("nocfg"); return; }
+
+    /* Always paint a usable screen before touching the network. */
+    show("login");
+
+    $("admin-login-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var btn = $("btn-login"), label = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Signing in…";
+      api("/auth/v1/token?grant_type=password", {
+        method: "POST",
+        body: { email: $("a-email").value.trim().toLowerCase(), password: $("a-pass").value }
+      }).then(function (s) {
+        applySession(s);
+      }).catch(function (err) {
+        var m = err.message || "unknown error";
+        if (/failed to fetch|networkerror/i.test(m)) m = "cannot reach Supabase — check your connection";
+        toast("Login failed: " + m, true);
+      }).then(function () {
+        btn.disabled = false;
+        btn.textContent = label;
+      });
+    });
+
+    $("btn-logout").onclick = function () { saveSession(null); show("login"); };
+    $("btn-refresh").onclick = load;
+    $("btn-export").onclick = function () {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob(
+        [JSON.stringify({ exportedAt: new Date(), events: last }, null, 2)],
+        { type: "application/json" }
+      ));
+      a.download = "flexfam-analytics.json";
+      a.click();
+    };
+
+    /* Resume a previous sign-in if one is stored. */
+    var stored = loadSession();
+    if (stored && stored.access_token) applySession(stored);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
 </script>
 <script>
-/* graceful fallback if supabase-config.js file itself is absent (404 on GitHub Pages) */
+/* Last-resort net: if the admin script above never ran at all (very old
+   browser, JS error), make sure the page is not left completely blank. */
 window.addEventListener("DOMContentLoaded", function () {
-  if (!window.FF_SUPABASE_CONFIG) {
-    document.getElementById("view-nocfg").classList.remove("hidden");
-    document.getElementById("view-login").classList.add("hidden");
-    document.getElementById("view-dash").classList.add("hidden");
-  }
+  setTimeout(function () {
+    var n = document.getElementById("view-nocfg"),
+        l = document.getElementById("view-login"),
+        d = document.getElementById("view-dash");
+    if (n.classList.contains("hidden") && l.classList.contains("hidden") && d.classList.contains("hidden")) {
+      (window.FF_SUPABASE_CONFIG ? l : n).classList.remove("hidden");
+    }
+  }, 2500);
 });
 </script>
-<a href="admin.html">Admin</a>
 </body>
 </html>
