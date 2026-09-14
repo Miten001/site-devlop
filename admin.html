@@ -59,7 +59,7 @@
     <p class="sub">Admin panel needs a Supabase project to read analytics.</p>
     <div class="cfg-warn">
       <b style="color:var(--ink)">Setup:</b><br />
-      1. Copy <code>assets/js/Supabase-config.example.js</code> → <code>assets/js/supabase-config.js</code><br />
+      1. Copy <code>assets/js/supabase-config.example.js</code> → <code>assets/js/supabase-config.js</code><br />
       2. Paste your Supabase web config + admin email(s) in it<br />
       3. Run <code>supabase.sql</code> in Supabase SQL editor<br />
       4. Reload this page — full steps in the README.
@@ -162,7 +162,7 @@ if(!configured) show("nocfg"); else {
 <script>
 /* graceful fallback if supabase-config.js file itself is absent (404 on GitHub Pages) */
 window.addEventListener("DOMContentLoaded", function () {
-  if (!window.FF_FIREBASE_CONFIG) {
+  if (!window.FF_SUPABASE_CONFIG) {
     document.getElementById("view-nocfg").classList.remove("hidden");
     document.getElementById("view-login").classList.add("hidden");
     document.getElementById("view-dash").classList.add("hidden");
