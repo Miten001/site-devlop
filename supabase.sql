@@ -1,5 +1,11 @@
 -- FlexFam — Supabase schema + row level security
--- Run this whole file in the Supabase SQL editor. It is safe to re-run.
+--
+-- HOW TO RUN: select this ENTIRE file (Ctrl+A), paste it into the Supabase
+-- SQL editor, and hit Run once. Do not run individual lines on their own —
+-- the INSERT in section 2 needs the table created in section 1, so running
+-- it alone fails with: relation "public.admins" does not exist.
+--
+-- Safe to re-run as many times as you like.
 
 -- ============================================================
 -- 1. Tables
