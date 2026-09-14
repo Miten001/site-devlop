@@ -474,9 +474,13 @@
     if (signupForm) {
       signupForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const name = signupForm.name.value.trim();
-        const email = signupForm.email.value.trim().toLowerCase();
-        const pass = signupForm.password.value;
+        const nameEl = signupForm.querySelector("#name, [name='name']");
+        const emailEl = signupForm.querySelector("#email, [name='email']");
+        const passEl = signupForm.querySelector("#password, [name='password']");
+        if (!nameEl || !emailEl || !passEl) return toast("Signup form is broken — please reload the page", "err");
+        const name = nameEl.value.trim();
+        const email = emailEl.value.trim().toLowerCase();
+        const pass = passEl.value;
         if (name.length < 2) return toast("Please enter your name (min 2 characters)", "err");
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast("Please enter a valid email", "err");
         if (pass.length < 6) return toast("Password must be at least 6 characters", "err");
@@ -502,9 +506,16 @@
     if (loginForm) {
       loginForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const email = loginForm.email.value.trim().toLowerCase();
-        const pass = loginForm.password.value;
-        const user = DB.users().find((u) => u.email === email && u.pass === pass);
+        /* explicit lookups — form.name shorthand breaks if an input is
+           renamed and silently throws before any toast can be shown */
+        const emailEl = loginForm.querySelector("#email, [name='email']");
+        const passEl = loginForm.querySelector("#password, [name='password']");
+        if (!emailEl || !passEl) return toast("Login form is broken — please reload the page", "err");
+        const email = emailEl.value.trim().toLowerCase();
+        const pass = passEl.value;
+        const users = DB.users();
+        if (!users.length) return toast("No account found on this browser yet — please sign up first", "err");
+        const user = users.find((u) => u.email === email && u.pass === pass);
         if (!user) return toast("Incorrect email or password", "err");
         DB.setSession(email);
         toast("Welcome back, " + user.name.split(" ")[0] + "!", "ok");
