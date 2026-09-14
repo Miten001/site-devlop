@@ -139,7 +139,7 @@
     return function () { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967295; };
   }
 
-  const SEED_VERSION = 2;
+  const SEED_VERSION = 3;
 
   function buildSeedCampaigns() {
     const keys = Object.keys(PLATFORMS);
@@ -184,10 +184,10 @@
     {
       id: "seed-bot-start-flexfam",
       platform: "telegram",
-      action: "Start Bot",
-      user: "FlexFam Rewards Bot",
-      title: "FlexFam Rewards Bot · Start Bot",
-      url: "https://t.me/flex_fam_bot?start=web_bonus",
+      action: "Start @sub_for_sub_bot",
+      user: "FlexFam Rewards Bot (@sub_for_sub_bot)",
+      title: "FlexFam Rewards Bot (@sub_for_sub_bot) · Start @sub_for_sub_bot",
+      url: "https://t.me/sub_for_sub_bot?start=web_bonus",
       payout: 15,
       mine: false,
     },
@@ -243,11 +243,12 @@
     }
 
     if (version < SEED_VERSION) {
-      const existingIds = new Set(list.map((c) => c.id));
       EXTRA_SEED_CAMPAIGNS.slice().reverse().forEach((c) => {
-        if (!existingIds.has(c.id)) {
+        const existingIndex = list.findIndex((item) => item.id === c.id);
+        if (existingIndex > -1) {
+          list[existingIndex] = Object.assign({}, list[existingIndex], c);
+        } else {
           list.unshift(c);
-          existingIds.add(c.id);
         }
       });
     }
@@ -407,7 +408,7 @@
     const el = document.getElementById("ticker-text");
     if (!el) return;
     const rows = [
-      '<b>@aaravshots</b> started <b>FlexFam Rewards Bot</b> on Telegram & earned <b>+15</b> points',
+      '<b>@aaravshots</b> started <b>FlexFam Rewards Bot (@sub_for_sub_bot)</b> on Telegram & earned <b>+15</b> points',
       '<b>@nehavlogs</b> subscribed <b>TechGuru Rohan</b> on YouTube & earned <b>+6</b> points',
       '<b>@melodymaya</b> followed <b>GameLordYT</b> on Instagram & earned <b>+3</b> points',
       '<b>@pixelninja</b> visited <b>Creator Growth Guide</b> website & earned <b>+6</b> points',
@@ -501,7 +502,7 @@
             credits: 1240, earned: 3870, spent: 2630,
             refCode: "FF-DEMO-2025", joined: Date.now(),
             activity: [
-              { type: "earn", text: 'Started "FlexFam Rewards Bot" on Telegram', amount: 15, at: Date.now() - 1000 * 60 * 8 },
+              { type: "earn", text: 'Started "FlexFam Rewards Bot (@sub_for_sub_bot)" on Telegram', amount: 15, at: Date.now() - 1000 * 60 * 8 },
               { type: "earn", text: 'Visited "Creator Growth Guide" website', amount: 6, at: Date.now() - 1000 * 60 * 18 },
               { type: "earn", text: 'Subscribed "TechGuru Rohan" on YouTube', amount: 6, at: Date.now() - 1000 * 60 * 26 },
               { type: "spend", text: 'Promoted "Demo Star" Instagram page', amount: -12, at: Date.now() - 1000 * 60 * 70 },
