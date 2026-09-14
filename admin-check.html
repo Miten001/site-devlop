@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Admin setup check — FlexFam</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: #0b0814; color: #e8e6f0; margin: 0; padding: 28px 20px; line-height: 1.6; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { color: #9b93b5; margin: 0 0 22px; font-size: 14px; }
+  .row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  input { flex: 1; min-width: 220px; padding: 12px 14px; border-radius: 10px;
+          border: 1px solid #2a2440; background: #13102099; color: #e8e6f0; font-size: 14px; }
+  button { padding: 12px 22px; border-radius: 10px; border: 0; cursor: pointer;
+           background: #7c3aed; color: #fff; font-weight: 700; font-size: 14px; }
+  button:disabled { opacity: .5; cursor: default; }
+  #out { margin-top: 22px; }
+  .step { border: 1px solid #2a2440; border-left-width: 4px; border-radius: 10px;
+          padding: 13px 16px; margin-bottom: 10px; background: #120f1e; font-size: 14px; }
+  .step.pass { border-left-color: #34e5a5; }
+  .step.fail { border-left-color: #ff5d6e; }
+  .step.warn { border-left-color: #ffd166; }
+  .step.run  { border-left-color: #6b6486; color: #9b93b5; }
+  .step b { display: block; margin-bottom: 2px; }
+  .step .fix { color: #ffd166; font-size: 13px; margin-top: 7px; display: block; }
+  code { background: #1d1830; padding: 2px 7px; border-radius: 6px; font-size: 12.5px; color: #ffd166; }
+  .verdict { margin-top: 20px; padding: 16px 18px; border-radius: 12px; font-size: 14.5px; }
+  .verdict.ok  { background: rgba(52,229,165,.1);  border: 1px solid rgba(52,229,165,.4); }
+  .verdict.bad { background: rgba(255,93,110,.08); border: 1px solid rgba(255,93,110,.35); }
+  a { color: #c4a8ff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Admin setup check 🔎</h1>
+  <p class="sub">This tests every step of the admin login separately so we can see exactly which one fails.</p>
+
+  <div class="row">
+    <input type="email" id="email" placeholder="admin email" autocomplete="username" />
+    <input type="password" id="pass" placeholder="password" autocomplete="current-password" />
+    <button id="go">Run check</button>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<script src="assets/js/supabase-config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var cfg = window.FF_SUPABASE_CONFIG || null;
+  var allow = (window.FF_ADMIN_EMAILS || []).map(function (e) { return String(e).toLowerCase(); });
+  var out = document.getElementById("out");
+
+  function step(cls, title, detail, fix) {
+    var d = document.createElement("div");
+    d.className = "step " + cls;
+    d.innerHTML = "<b>" + title + "</b>" + (detail || "") + (fix ? '<span class="fix">→ ' + fix + "</span>" : "");
+    out.appendChild(d);
+    return d;
+  }
+  function verdict(cls, html) {
+    var d = document.createElement("div");
+    d.className = "verdict " + cls;
+    d.innerHTML = html;
+    out.appendChild(d);
+  }
+
+  function req(path, opts) {
+    opts = opts || {};
+    var h = { apikey: cfg.anonKey, "Content-Type": "application/json" };
+    h.Authorization = "Bearer " + (opts.token || cfg.anonKey);
+    return fetch(cfg.url.replace(/\/+$/, "") + path, {
+      method: opts.method || "GET", headers: h,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(function (res) {
+      return res.text().then(function (t) {
+        var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+        return { ok: res.ok, status: res.status, json: j, text: t };
+      });
+    });
+  }
+
+  document.getElementById("go").onclick = function () {
+    out.innerHTML = "";
+    var btn = this; btn.disabled = true;
+    var email = document.getElementById("email").value.trim().toLowerCase();
+    var pass = document.getElementById("pass").value;
+
+    if (!cfg || !cfg.url || !cfg.anonKey) {
+      step("fail", "1. Config file", "supabase-config.js did not load.",
+           "Make sure assets/js/supabase-config.js sits next to this page.");
+      btn.disabled = false; return;
+    }
+    step("pass", "1. Config file loaded", "Project: <code>" + cfg.url + "</code>");
+
+    if (!email || !pass) {
+      step("warn", "Enter your admin email and password above, then run the check again.");
+      btn.disabled = false; return;
+    }
+
+    var running = step("run", "2. Reaching Supabase…");
+
+    req("/auth/v1/token?grant_type=password", { method: "POST", body: { email: email, password: pass } })
+      .then(function (r) {
+        running.remove();
+
+        if (!r.ok) {
+          var m = (r.json && (r.json.error_description || r.json.msg || r.json.message)) || ("HTTP " + r.status);
+          step("pass", "2. Supabase is reachable", "The server answered.");
+          if (/invalid login credentials/i.test(m)) {
+            step("fail", "3. Sign in failed", "Supabase says: <code>" + m + "</code>",
+                 "Either the password is wrong, or no Auth user exists for this email. In Supabase go to <b>Authentication → Users</b> and confirm <code>" + email + "</code> is listed. If not: Add user → Create new user, and tick <b>Auto Confirm User</b>.");
+          } else if (/not confirmed|confirm/i.test(m)) {
+            step("fail", "3. Sign in failed — email not confirmed", "Supabase says: <code>" + m + "</code>",
+                 "In Authentication → Users, open the user and confirm the email (or recreate with Auto Confirm User ticked).");
+          } else {
+            step("fail", "3. Sign in failed", "Supabase says: <code>" + m + "</code>");
+          }
+          verdict("bad", "Login itself is failing, so the admin page can never get past the login screen. Fix the step marked in red above.");
+          btn.disabled = false;
+          return;
+        }
+
+        step("pass", "2. Supabase is reachable");
+        step("pass", "3. Password is correct", "Signed in as <code>" + ((r.json.user && r.json.user.email) || email) + "</code>");
+
+        var token = r.json.access_token;
+        var realEmail = ((r.json.user && r.json.user.email) || email).toLowerCase();
+
+        if (allow.length && allow.indexOf(realEmail) === -1) {
+          step("fail", "4. Not in the browser allowlist",
+               "<code>" + realEmail + "</code> is not in FF_ADMIN_EMAILS.",
+               "Add it to <code>window.FF_ADMIN_EMAILS</code> in assets/js/supabase-config.js.");
+          verdict("bad", "You can sign in, but the page rejects the account before loading data.");
+          btn.disabled = false;
+          return;
+        }
+        step("pass", "4. Email is in the browser allowlist");
+
+        return req("/rest/v1/admins?select=email", { token: token }).then(function (a) {
+          if (a.status === 404 || /does not exist|42P01/i.test(a.text || "")) {
+            step("fail", "5. The admins table does not exist", "Supabase returned: <code>" + (a.text || "").slice(0, 120) + "</code>",
+                 "You have not run supabase.sql yet. Open the Supabase SQL editor, paste the whole file, and press Run once.");
+            verdict("bad", "Run <code>supabase.sql</code> in full, then check again.");
+            btn.disabled = false;
+            return;
+          }
+          if (!a.ok) {
+            step("warn", "5. Could not read the admins table", "HTTP " + a.status + " — this is usually fine, the table protects itself.");
+          } else {
+            var list = (a.json || []).map(function (x) { return String(x.email).toLowerCase(); });
+            if (list.length && list.indexOf(realEmail) === -1) {
+              step("fail", "5. Your email is not in the admins table", "Found: <code>" + (list.join(", ") || "none") + "</code>",
+                   "Run in the SQL editor: <code>insert into public.admins (email) values ('" + realEmail + "');</code>");
+            } else if (!list.length) {
+              step("warn", "5. The admins table returned no rows", "Either it is empty, or RLS is hiding it from you.",
+                   "If the next step also fails, run supabase.sql again.");
+            } else {
+              step("pass", "5. Your email is in the admins table");
+            }
+          }
+
+          return req("/rest/v1/events?select=*&limit=5", { token: token }).then(function (ev) {
+            if (ev.status === 404 || /does not exist|42P01/i.test(ev.text || "")) {
+              step("fail", "6. The events table does not exist", null,
+                   "Run supabase.sql in full — it creates the tables.");
+              verdict("bad", "Run <code>supabase.sql</code>, then check again.");
+            } else if (ev.status === 401 || ev.status === 403) {
+              step("fail", "6. Reading events was denied", "HTTP " + ev.status,
+                   "The admin SELECT policy is missing. Run supabase.sql in full.");
+              verdict("bad", "Login works, but row level security blocks the data. Run <code>supabase.sql</code>.");
+            } else if (!ev.ok) {
+              step("fail", "6. Reading events failed", "HTTP " + ev.status + " <code>" + (ev.text || "").slice(0, 140) + "</code>");
+              verdict("bad", "Unexpected error — send me this message.");
+            } else {
+              var n = (ev.json || []).length;
+              step("pass", "6. Analytics are readable", n ? "Read " + n + " sample row(s)." : "Readable, but no events recorded yet.");
+              verdict("ok", "<b>Everything passed.</b> Admin login will work with this email and password. " +
+                (n ? "" : "There is simply no analytics data yet — browse the site a bit, then hit Refresh on the admin page."));
+            }
+            btn.disabled = false;
+          });
+        });
+      })
+      .catch(function (e) {
+        running.remove();
+        var m = (e && e.message) || String(e);
+        step("fail", "2. Cannot reach Supabase", "<code>" + m + "</code>",
+             "Usually one of: no internet, an ad blocker or privacy extension blocking the request, or the Supabase project is paused. Check <b>Settings → General</b> in Supabase — free projects pause after inactivity and must be resumed.");
+        verdict("bad", "The browser never reached Supabase, so nothing else can be tested.");
+        btn.disabled = false;
+      });
+  };
+
+  if (allow.length) document.getElementById("email").value = allow[0];
+})();
+</script>
+</body>
+</html>
