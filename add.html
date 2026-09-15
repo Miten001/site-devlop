@@ -134,6 +134,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const payout = parseInt(payoutSlider.value, 10);
     const credits = user ? (FF.currentUser().credits || 0) : 0;
     payoutOut.textContent = payout + " pts";
+    const min = parseInt(payoutSlider.min, 10);
+    const max = parseInt(payoutSlider.max, 10);
+    const progress = ((payout - min) / (max - min)) * 100;
+    payoutSlider.style.setProperty("--range-progress", progress + "%");
     estActions.textContent = Math.floor(credits / payout).toLocaleString("en-IN");
     estBudget.textContent = credits.toLocaleString("en-IN");
     estScore.textContent = payout >= 12 ? "Blazing ⚡" : payout >= 6 ? "Fast" : "Steady";

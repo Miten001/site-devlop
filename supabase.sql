@@ -44,6 +44,16 @@ create table if not exists public.campaigns (
   ts_client   timestamptz default now()
 );
 
+-- One public profile is created by a server-side Auth trigger per signup.
+-- It contains only the identity information that an allowlisted admin needs;
+-- passwords stay inside Supabase Auth and are never copied into this table.
+create table if not exists public.profiles (
+  id           uuid primary key references auth.users(id) on delete cascade,
+  email        text not null,
+  display_name text not null default 'Member',
+  created_at   timestamptz not null default now()
+);
+
 -- Admin allowlist. This is the single source of truth for who may read
 -- analytics. The email list in assets/js/supabase-config.js is only a UI
 -- hint — it is public and trivially editable, so it must never be trusted.
@@ -57,6 +67,7 @@ create index if not exists events_ts_client_idx on public.events (ts_client desc
 create index if not exists events_type_idx      on public.events (type);
 create index if not exists events_day_idx       on public.events (day);
 create index if not exists campaigns_ts_idx     on public.campaigns (ts_client desc);
+create index if not exists profiles_created_at_idx on public.profiles (created_at desc);
 
 -- ============================================================
 -- 2. Seed your admin account(s)
@@ -68,8 +79,48 @@ insert into public.admins (email) values
 on conflict (email) do nothing;
 
 -- ============================================================
--- 3. Helper: is the current request an allowlisted admin?
+-- 3. Signup profile trigger + admin helper
 -- ============================================================
+-- This trigger runs inside the database, so browsers can never submit a
+-- profile for another Auth user or write any password-like value to it.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, display_name)
+  values (
+    new.id,
+    lower(coalesce(new.email, '')),
+    left(coalesce(nullif(trim(new.raw_user_meta_data ->> 'display_name'), ''), split_part(coalesce(new.email, ''), '@', 1), 'Member'), 80)
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    display_name = excluded.display_name;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- Create safe profiles for any Auth users that existed before this migration.
+insert into public.profiles (id, email, display_name, created_at)
+select
+  u.id,
+  lower(coalesce(u.email, '')),
+  left(coalesce(nullif(trim(u.raw_user_meta_data ->> 'display_name'), ''), split_part(coalesce(u.email, ''), '@', 1), 'Member'), 80),
+  coalesce(u.created_at, now())
+from auth.users u
+on conflict (id) do update set
+  email = excluded.email,
+  display_name = excluded.display_name;
+
+-- Only this helper may decide whether a logged-in request is an admin.
 -- security definer so the function can read public.admins even though
 -- that table's own RLS blocks anon. search_path is pinned to avoid
 -- search_path hijacking, which is a real risk with security definer.
@@ -96,13 +147,19 @@ grant execute on function public.is_admin() to authenticated;
 
 alter table public.events    enable row level security;
 alter table public.campaigns enable row level security;
+alter table public.profiles  enable row level security;
 alter table public.admins    enable row level security;
+
+-- Profiles are database-triggered: browsers cannot read or alter them.
+revoke all on table public.profiles from anon, authenticated;
+grant select on table public.profiles to authenticated;
 
 -- Re-runnable: drop before create.
 drop policy if exists "public can insert events"     on public.events;
 drop policy if exists "public can insert campaigns"  on public.campaigns;
 drop policy if exists "admins can read events"       on public.events;
 drop policy if exists "admins can read campaigns"    on public.campaigns;
+drop policy if exists "admins can read profiles"     on public.profiles;
 drop policy if exists "admins can read admins"       on public.admins;
 
 -- Anonymous visitors may only APPEND analytics. They cannot read, update
@@ -128,6 +185,13 @@ create policy "admins can read campaigns"
   to authenticated
   using (public.is_admin());
 
+-- The registered-accounts panel can only show identity details to admins.
+-- There is deliberately no policy for browser insert, update or delete.
+create policy "admins can read profiles"
+  on public.profiles for select
+  to authenticated
+  using (public.is_admin());
+
 -- An admin may see the allowlist; nobody can modify it from the browser.
 -- Add or remove admins from the Supabase SQL editor / dashboard only.
 create policy "admins can read admins"
@@ -136,4 +200,6 @@ create policy "admins can read admins"
   using (public.is_admin());
 
 -- Note: no update or delete policy exists on any table by design, so
--- analytics rows are append-only from every browser client.
+-- analytics rows are append-only from every browser client. Profiles are
+-- created only by the Auth trigger; password hashes and raw passwords are
+-- never readable through PostgREST or the admin dashboard.
