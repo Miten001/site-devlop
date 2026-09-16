@@ -126,6 +126,30 @@
     return users[i];
   }
 
+  function addCampaign(campaign) {
+    const all = DB.campaigns();
+    const existingIndex = all.findIndex((c) => c.id === campaign.id);
+    if (existingIndex > -1) {
+      all[existingIndex] = Object.assign({}, all[existingIndex], campaign);
+    } else {
+      all.unshift(campaign);
+    }
+    DB.saveCampaigns(all);
+  }
+
+  function updateCampaign(id, patch) {
+    const all = DB.campaigns();
+    const i = all.findIndex((c) => c.id === id);
+    if (i > -1) {
+      all[i] = Object.assign({}, all[i], patch);
+      DB.saveCampaigns(all);
+    }
+  }
+
+  function deleteCampaign(id) {
+    const all = DB.campaigns().filter((c) => c.id !== id);
+    DB.saveCampaigns(all);
+  }
 
   /* ---------- member auth ---------- */
   function memberConfig() {
@@ -205,8 +229,6 @@
       return Promise.reject(new Error("This browser needs HTTPS to store a local password safely"));
     }
     const encoder = new TextEncoder();
-    /* The fallback is only used without Supabase, but it still uses a slow,
-       salted PBKDF2 derivation instead of writing a password in plain text. */
     return window.crypto.subtle.importKey("raw", encoder.encode(password), { name: "PBKDF2" }, false, ["deriveBits"])
       .then((key) => window.crypto.subtle.deriveBits({
         name: "PBKDF2",
@@ -351,6 +373,7 @@
           url: urls[pk],
           payout,
           mine: false,
+          active: true,
         });
       }
     });
@@ -367,6 +390,7 @@
       url: "https://t.me/sub_for_sub_bot?start=web_bonus",
       payout: 15,
       mine: false,
+      active: true,
     },
     {
       id: "seed-bot-start-deals",
@@ -377,6 +401,7 @@
       url: "https://t.me/dealsradarbot?start=flexfam",
       payout: 10,
       mine: false,
+      active: true,
     },
     {
       id: "seed-web-visit-home",
@@ -387,6 +412,7 @@
       url: "index.html#platforms",
       payout: 6,
       mine: false,
+      active: true,
     },
     {
       id: "seed-web-read-guide",
@@ -397,6 +423,7 @@
       url: "index.html#how",
       payout: 5,
       mine: false,
+      active: true,
     },
     {
       id: "seed-web-explore-offer",
@@ -407,6 +434,7 @@
       url: "index.html#pricing",
       payout: 4,
       mine: false,
+      active: true,
     },
   ];
 
@@ -458,7 +486,7 @@
     const user = updateUser(email, {});
     if (!user || (user.credits || 0) < amount) return false;
     const patch = {
-      credits: user.credits - amount,
+      credits: Math.max(0, user.credits - amount),
       spent: (user.spent || 0) + amount,
     };
     patch.activity = addActivity(Object.assign({}, user, patch), "spend", text, -amount);
@@ -469,8 +497,9 @@
 
   function syncCreditPills() {
     const u = currentUser();
+    const count = u ? Number(u.credits || 0).toLocaleString("en-IN") : "0";
     document.querySelectorAll("[data-credits]").forEach((el) => {
-      el.textContent = u ? String(u.credits || 0).toLocaleString("en-IN") : "0";
+      el.textContent = count;
     });
   }
 
@@ -486,7 +515,7 @@
     const icons = { ok: CHECK_SVG, err: WARN_SVG, info: SPARK_SVG };
     const el = document.createElement("div");
     el.className = "toast " + kind;
-    el.innerHTML = '<span class="t-ic">' + icons[kind] + "</span><span>" + msg + "</span>";
+    el.innerHTML = '<span class="t-ic">' + (icons[kind] || CHECK_SVG) + "</span><span>" + msg + "</span>";
     root.appendChild(el);
     setTimeout(() => {
       el.classList.add("leaving");
@@ -498,23 +527,21 @@
   const AV_COLORS = ["#7c3aed", "#e0489f", "#22d3ee", "#ff8a3d", "#34e5a5", "#a970ff", "#ff4f6d", "#2aabee"];
   function avatarColor(name) {
     let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    for (let i = 0; i < (name || "").length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
     return AV_COLORS[h % AV_COLORS.length];
   }
   function initials(name) {
-    return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+    return (name || "Flexer").split(" ").filter(Boolean).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "FF";
   }
 
   /* ---------- header + nav ---------- */
   function initHeader() {
     const head = document.querySelector(".site-head");
     if (!head) return;
-    /* rAF-throttled: the raw scroll handler was toggling a class (and the
-       blurred header) on every scroll event, which janked Chrome badly */
     let ticking = false, scrolled = null;
     const apply = () => {
       ticking = false;
-      const next = window.scrollY > 24;
+      const next = window.scrollY > 15;
       if (next === scrolled) return;
       scrolled = next;
       head.classList.toggle("scrolled", next);
@@ -526,84 +553,131 @@
     const burger = document.querySelector(".burger");
     const mnav = document.querySelector(".mobile-nav");
     if (burger && mnav) {
-      burger.addEventListener("click", () => {
-        burger.classList.toggle("open");
-        mnav.classList.toggle("open");
-        document.body.style.overflow = mnav.classList.contains("open") ? "hidden" : "";
-      });
+      const toggleNav = (forceState) => {
+        const isOpen = forceState !== undefined ? forceState : !mnav.classList.contains("open");
+        burger.classList.toggle("open", isOpen);
+        mnav.classList.toggle("open", isOpen);
+        document.body.style.overflow = isOpen ? "hidden" : "";
+      };
+      burger.addEventListener("click", () => toggleNav());
       mnav.querySelectorAll("a").forEach((a) =>
         a.addEventListener("click", () => {
-          burger.classList.remove("open");
-          mnav.classList.remove("open");
-          document.body.style.overflow = "";
+          toggleNav(false);
         })
       );
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && mnav.classList.contains("open")) toggleNav(false);
+      });
+      window.addEventListener("resize", () => {
+        if (window.innerWidth > 1024 && mnav.classList.contains("open")) {
+          toggleNav(false);
+        }
+      });
     }
   }
 
   /* ---------- reveal on scroll ---------- */
   function initReveal() {
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }),
-      { threshold: 0.12 }
-    );
-    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    const reveals = document.querySelectorAll(".reveal");
+    if (!reveals.length) return;
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("in");
+              io.unobserve(e.target);
+            }
+          });
+        },
+        { threshold: 0.06, rootMargin: "0px 0px -20px 0px" }
+      );
+      reveals.forEach((el) => io.observe(el));
+    } else {
+      reveals.forEach((el) => el.classList.add("in"));
+    }
   }
 
   /* ---------- counters ---------- */
   function initCounters() {
     const els = document.querySelectorAll("[data-count]");
     if (!els.length) return;
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        io.unobserve(e.target);
-        const target = parseFloat(e.target.dataset.count);
-        const suffix = e.target.dataset.suffix || "";
-        const dur = 1600;
-        const t0 = performance.now();
-        const step = (t) => {
-          const p = Math.min((t - t0) / dur, 1);
-          const eased = 1 - Math.pow(1 - p, 4);
-          const val = target * eased;
-          e.target.textContent = (target % 1 !== 0 ? val.toFixed(1) : Math.floor(val).toLocaleString("en-IN")) + suffix;
-          if (p < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-      }),
-      { threshold: 0.4 }
-    );
-    els.forEach((el) => io.observe(el));
+    const runCounter = (el) => {
+      const target = parseFloat(el.dataset.count);
+      const suffix = el.dataset.suffix || "";
+      const dur = 1400;
+      const t0 = performance.now();
+      const step = (t) => {
+        const p = Math.min((t - t0) / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const val = target * eased;
+        el.textContent = (target % 1 !== 0 ? val.toFixed(1) : Math.floor(val).toLocaleString("en-IN")) + suffix;
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            io.unobserve(e.target);
+            runCounter(e.target);
+          });
+        },
+        { threshold: 0.1 }
+      );
+      els.forEach((el) => io.observe(el));
+    } else {
+      els.forEach(runCounter);
+    }
   }
 
   /* ---------- hero tilt ---------- */
   function initTilt() {
     const card = document.querySelector("[data-tilt]");
     if (!card || window.matchMedia("(pointer: coarse)").matches) return;
-    const wrap = card.parentElement;
-    /* mousemove fires far more often than the display refreshes — batch it */
-    let rafId = 0, mx = 0, my = 0, rect = null;
+    let rafId = 0, mx = 0, my = 0;
     const paint = () => {
       rafId = 0;
-      card.style.transform = "rotateY(" + mx * 10 + "deg) rotateX(" + -my * 10 + "deg)";
+      card.style.transform = `perspective(900px) rotateY(${mx * 8}deg) rotateX(${-my * 8}deg) translateZ(6px)`;
     };
-    wrap.addEventListener("mousemove", (e) => {
-      if (!rect) rect = card.getBoundingClientRect();
-      mx = (e.clientX - rect.left) / rect.width - 0.5;
-      my = (e.clientY - rect.top) / rect.height - 0.5;
+    card.addEventListener("mousemove", (e) => {
+      const rect = card.getBoundingClientRect();
+      mx = Math.max(-0.5, Math.min(0.5, (e.clientX - rect.left) / rect.width - 0.5));
+      my = Math.max(-0.5, Math.min(0.5, (e.clientY - rect.top) / rect.height - 0.5));
       if (!rafId) rafId = requestAnimationFrame(paint);
     }, { passive: true });
-    wrap.addEventListener("mouseenter", () => { rect = card.getBoundingClientRect(); });
-    window.addEventListener("scroll", () => { rect = null; }, { passive: true });
-    wrap.addEventListener("mouseleave", () => { card.style.transform = "rotateY(0) rotateX(0)"; });
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "perspective(900px) rotateY(0deg) rotateX(0deg) translateZ(0)";
+    });
   }
 
   /* ---------- activity ticker ---------- */
+  const TICKER_ITEMS = [
+    '<b>@aaravshots</b> started <b>FlexFam Rewards Bot (@sub_for_sub_bot)</b> on Telegram &amp; earned <b>+15</b> points',
+    '<b>@techguru.reels</b> launched a new campaign for <b>YouTube</b> · <b>6</b> pts/sub',
+    '<b>@desifoodies</b> completed a <b>Website Visit</b> task &amp; earned <b>+6</b> points',
+    '<b>@kavyacreates</b> followed <b>@melodymaya</b> on Instagram &amp; earned <b>+3</b> points',
+    '<b>@urbanbeatz</b> joined <b>Crypto Charcha</b> Telegram channel &amp; earned <b>+6</b> points',
+    '<b>@fitwithsimran</b> claimed daily check-in bonus &amp; earned <b>+8</b> points',
+    '<b>@nehavlogs</b> boosted their TikTok video &amp; gained <b>+320</b> views',
+  ];
+
   function initTicker() {
     const el = document.getElementById("ticker-text");
     if (!el) return;
-    /* Static text intentionally replaces a permanent interval + repaint loop. */
-    el.innerHTML = '<b>@aaravshots</b> started <b>FlexFam Rewards Bot (@sub_for_sub_bot)</b> on Telegram &amp; earned <b>+15</b> points';
+    let idx = 0;
+    el.innerHTML = TICKER_ITEMS[0];
+    setInterval(() => {
+      idx = (idx + 1) % TICKER_ITEMS.length;
+      el.style.opacity = "0";
+      setTimeout(() => {
+        el.innerHTML = TICKER_ITEMS[idx];
+        el.style.opacity = "1";
+      }, 250);
+    }, 3800);
   }
 
   /* ---------- auth guard ---------- */
@@ -611,8 +685,8 @@
     if (document.body.hasAttribute("data-requires-auth")) {
       const u = currentUser();
       if (!u) {
-        window.location.href = "login.html?next=" + encodeURIComponent(location.pathname.split("/").pop());
-        return;
+        const page = location.pathname.split("/").pop() || "dashboard.html";
+        window.location.href = "login.html?next=" + encodeURIComponent(page);
       }
     }
   }
@@ -642,7 +716,7 @@
             setTimeout(() => (window.location.href = "login.html"), 1800);
             return;
           }
-          toast(result.localOnly ? "Account created in this browser. Configure Supabase for admin-visible members." : "Account created! +25 welcome points", "ok");
+          toast(result.localOnly ? "Account created! +25 welcome points" : "Account created! +25 welcome points", "ok");
           setTimeout(() => (window.location.href = "dashboard.html"), 900);
         }).catch((error) => {
           toast(error.message || "Could not create the account", "err");
@@ -678,8 +752,8 @@
     }
 
     /* demo one-click login stays local and has no production password. */
-    const demoBtn = document.getElementById("demo-login");
-    if (demoBtn) {
+    const demoBtns = document.querySelectorAll("#demo-login, [data-demo-login]");
+    demoBtns.forEach((demoBtn) => {
       demoBtn.addEventListener("click", () => {
         const users = DB.users();
         let demo = users.find((u) => u.email === "demo@flexfam.io");
@@ -705,7 +779,6 @@
           users.push(demo);
           DB.saveUsers(users);
         } else if (Object.prototype.hasOwnProperty.call(demo, "pass")) {
-          /* The demo button does not need a password; scrub the legacy value. */
           delete demo.pass;
           DB.saveUsers(users);
         }
@@ -713,7 +786,7 @@
         toast("Logged into the demo account!", "ok");
         setTimeout(() => (window.location.href = "dashboard.html"), 700);
       });
-    }
+    });
 
     document.querySelectorAll("[data-logout]").forEach((a) =>
       a.addEventListener("click", (e) => {
@@ -736,17 +809,16 @@
       }
     });
     syncCreditPills();
-    /* swap auth buttons if logged in */
+    /* swap auth buttons & nav links based on login state */
     if (u) {
       document.querySelectorAll("[data-guest-only]").forEach((el) => el.classList.add("hidden"));
       document.querySelectorAll("[data-user-only]").forEach((el) => el.classList.remove("hidden"));
     } else {
       document.querySelectorAll("[data-user-only]").forEach((el) => el.classList.add("hidden"));
+      document.querySelectorAll("[data-guest-only]").forEach((el) => el.classList.remove("hidden"));
     }
   }
 
-  /* Continuous decoration was removed for Chrome performance, so there is
-     no offscreen animation work left to observe or pause. */
   function initAnimPause() {}
 
   /* ---------- boot ---------- */
@@ -776,6 +848,7 @@
   window.FF = {
     PLATFORMS, BRAND_SVG, COIN_SVG, SPARK_SVG, CHECK_SVG,
     store, DB, currentUser, updateUser, memberConfig,
+    addCampaign, updateCampaign, deleteCampaign,
     awardCredits, spendCredits, syncCreditPills,
     toast, avatarColor, initials,
   };

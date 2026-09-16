@@ -12,10 +12,11 @@
 <link rel="stylesheet" href="assets/css/style.css" />
 <style>
   /* admin-only extras, same FlexFam dark language */
-  .admin-shell { max-width: 1120px; margin: 0 auto; }
-  .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .admin-shell { max-width: 1140px; margin: 0 auto; }
+  .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 18px; }
   .admin-cols { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; align-items: start; }
   @media (max-width: 900px) { .admin-cols { grid-template-columns: 1fr; } }
+  .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .ff-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .ff-table th { text-align: left; color: var(--ink-mute); font-weight: 600; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; padding: 8px 10px; border-bottom: 1px solid var(--line); }
   .ff-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); color: var(--ink-dim); vertical-align: top; }
@@ -34,7 +35,7 @@
   .admin-bar .who b { color: var(--green); }
   .cfg-warn { background: rgba(255,93,110,.08); border: 1px solid rgba(255,93,110,.3); color: var(--ink-dim); border-radius: var(--radius); padding: 18px 20px; font-size: 14px; line-height: 1.6; }
   .cfg-warn code { color: var(--amber); background: var(--glass-2); padding: 2px 7px; border-radius: 7px; font-size: 12.5px; }
-  .scroll-box { max-height: 430px; overflow: auto; }
+  .scroll-box { max-height: 430px; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .member-panel { margin-top: 16px; }
   .member-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 14px; }
   .member-table { min-width: 760px; }
@@ -46,7 +47,7 @@
   .member-note b { color: #a7f6d6; }
   @media (max-width: 680px) {
     .admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .admin-bar > div { width: 100%; }
+    .admin-bar > div { width: 100%; display: flex; gap: 8px; }
     .admin-bar .btn { flex: 1; }
     .ff-table th, .ff-table td { padding: 8px; }
     .scroll-box { max-height: 360px; }
@@ -61,7 +62,10 @@
 
 <header class="site-head">
   <div class="container bar">
-    <a class="logo" href="index.html"><span data-brand-admin></span>Flex<b>Fam</b> <span style="font-size:12px;color:var(--ink-mute);font-weight:600;margin-left:6px">/ admin</span></a>
+    <a class="logo" href="index.html">
+      <svg viewBox="0 0 48 48" fill="none" style="width:32px;height:32px"><defs><linearGradient id="fflg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#7c3aed"/><stop offset="0.55" stop-color="#e0489f"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#fflg)"/><path d="M15 34V14h15.5v4.6h-10v4.2h8.4v4.6h-8.4V34H15z" fill="#fff"/><circle cx="33" cy="31.5" r="4.6" fill="#fff" opacity="0.92"/></svg>
+      Flex<b>Fam</b> <span style="font-size:12px;color:var(--ink-mute);font-weight:600;margin-left:6px">/ admin</span>
+    </a>
     <div class="head-actions">
       <a href="index.html" class="btn btn-ghost btn-sm always">← Site</a>
       <button class="btn btn-ghost btn-sm hidden" id="btn-logout">Logout</button>
@@ -137,15 +141,21 @@
       <div>
         <div class="panel">
           <div class="panel-head"><h3>Top pages</h3><span class="status-pill on">Live</span></div>
-          <table class="ff-table"><thead><tr><th>Page</th><th style="text-align:right">Views</th></tr></thead><tbody id="t-pages"></tbody></table>
+          <div class="table-responsive">
+            <table class="ff-table"><thead><tr><th>Page</th><th style="text-align:right">Views</th></tr></thead><tbody id="t-pages"></tbody></table>
+          </div>
         </div>
         <div class="panel mt-16">
           <div class="panel-head"><h3>Referrers</h3></div>
-          <table class="ff-table"><thead><tr><th>Source</th><th style="text-align:right">Visits</th></tr></thead><tbody id="t-refs"></tbody></table>
+          <div class="table-responsive">
+            <table class="ff-table"><thead><tr><th>Source</th><th style="text-align:right">Visits</th></tr></thead><tbody id="t-refs"></tbody></table>
+          </div>
         </div>
         <div class="panel mt-16">
           <div class="panel-head"><h3>Events by type</h3></div>
-          <table class="ff-table"><thead><tr><th>Event</th><th style="text-align:right">Count</th></tr></thead><tbody id="t-types"></tbody></table>
+          <div class="table-responsive">
+            <table class="ff-table"><thead><tr><th>Event</th><th style="text-align:right">Count</th></tr></thead><tbody id="t-types"></tbody></table>
+          </div>
         </div>
       </div>
       <div>
@@ -173,10 +183,7 @@
 
 <script src="assets/js/supabase-config.js"></script>
 <script>
-/* FlexFam admin — Supabase Auth + analytics over plain REST (fetch).
-   No CDN library and no ES modules on purpose: a `type="module"` script
-   never executes from a file:// URL, and a CDN <script> can be blocked by
-   ad blockers or a flaky network. fetch() always works. */
+/* FlexFam admin — Supabase Auth + analytics over plain REST (fetch). */
 (function () {
   "use strict";
 
@@ -270,7 +277,7 @@
       if (eventRows) {
         last = eventRows;
         render(last);
-        if (!last.length) toast("Connected, but no events are readable yet.");
+        if (!last.length) toast("Connected, but no events are recorded yet.");
       } else {
         reportLoadError(eventsError, "analytics");
       }
@@ -373,7 +380,6 @@
       cfg.url.indexOf("your-project") === -1 && cfg.anonKey.indexOf("your-anon") === -1;
     if (!configured) { show("nocfg"); return; }
 
-    /* Always paint a usable screen before touching the network. */
     show("login");
 
     $("admin-login-form").addEventListener("submit", function (e) {
@@ -408,7 +414,6 @@
       a.click();
     };
 
-    /* Resume a previous sign-in if one is stored. */
     var stored = loadSession();
     if (stored && stored.access_token) applySession(stored);
   }
@@ -418,8 +423,6 @@
 })();
 </script>
 <script>
-/* Last-resort net: if the admin script above never ran at all (very old
-   browser, JS error), make sure the page is not left completely blank. */
 window.addEventListener("DOMContentLoaded", function () {
   setTimeout(function () {
     var n = document.getElementById("view-nocfg"),
