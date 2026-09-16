@@ -2030,6 +2030,9 @@ input[type="range"]::-moz-range-thumb {
 .badge.rejected, .badge.cancelled { color: #ff8b98; background: rgba(255,93,110,.1); border: 1px solid rgba(255,93,110,.3); }
 .badge.info { color: #8fdcff; background: rgba(34,211,238,.1); border: 1px solid rgba(34,211,238,.3); }
 
+.btn-ghost.danger { color: #ff8b98; border-color: rgba(255,93,110,.35); }
+.btn-ghost.danger:hover { background: rgba(255,93,110,.12); border-color: rgba(255,93,110,.55); }
+
 /* network / address blocks */
 .addr-box {
   display: flex; align-items: center; gap: 10px; padding: 13px 14px;

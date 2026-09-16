@@ -12,8 +12,8 @@
   const store = FF.store;
 
   const CFG = {
-    minDeposit: 5,
-    minWithdraw: 10,
+    minDeposit: 10,
+    minWithdraw: 5,
     withdrawFeePct: 1,        // network + processing fee
     platformFeePct: 5,        // charged to task creators on escrow
     /* Only networks with a real, verified receiving wallet are listed here.
@@ -29,8 +29,8 @@
     networkNote: {
       "BEP20 (BSC)": "BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.",
     },
-    /* Withdrawals are reviewed manually, so users may request any chain. */
-    withdrawNetworks: ["BEP20 (BSC)", "TRC20 (Tron)", "Polygon", "TON"],
+    /* Withdrawals are also BEP20 (BSC) only, same network as deposits. */
+    withdrawNetworks: ["BEP20 (BSC)"],
     pointsPerUsdt: 1000,       // points -> USDT conversion rate
     minPointsConvert: 1000,
   };
@@ -256,6 +256,23 @@
     return j;
   }
 
+  /* ---------- admin overrides ---------- */
+  function adminCancelJob(jobId) {
+    const list = jobs();
+    const j = list.find((x) => x.id === jobId);
+    if (!j) throw new Error("Task not found");
+    return cancelJob(j.owner, jobId);
+  }
+
+  function adminSetJobStatus(jobId, status) {
+    const list = jobs();
+    const j = list.find((x) => x.id === jobId);
+    if (!j) throw new Error("Task not found");
+    j.status = status;
+    saveJobs(list);
+    return j;
+  }
+
   /* ---------- points -> USDT ---------- */
   function convertPoints(email, points) {
     points = parseInt(points, 10);
@@ -316,6 +333,7 @@
     createDeposit, createWithdraw, settleRequest, requests, myRequests,
     jobs, openJobs, myJobs, postJob, cancelJob,
     subs, jobSubs, mySubs, submitProof, reviewSub,
+    adminCancelJob, adminSetJobStatus,
     convertPoints, syncWalletPills, purgeDemoData, USDT_SVG,
   };
 })();
