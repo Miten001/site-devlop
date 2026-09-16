@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Post a Task — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="tasks.html">Task Market</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="wallet.html">Wallet</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
+      <a href="earn.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="add.html">Add Page</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+
+    <aside class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
+      <a href="post-task.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
+      <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Back to Site</a>
+      <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Post work</span>
+          <h1>Post a <span class="grad-text-cool">task</span></h1>
+          <p class="sub">Get real people to complete your work. Funds are held in escrow and only released when you approve a submission.</p>
+        </div>
+        <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT available</a>
+      </div>
+
+      <div class="panel">
+        <form id="job-form" novalidate>
+          <div class="field">
+            <label>Task title</label>
+            <input type="text" id="j-title" placeholder="e.g. Subscribe to my YouTube channel and like the latest video" maxlength="110" />
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <div class="control">
+              <select id="j-cat"></select>
+              <span class="pick-caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Full instructions</label>
+            <textarea id="j-desc" rows="5" placeholder="Step 1: Open the link&#10;Step 2: Subscribe with your real account&#10;Step 3: Send a screenshot of your subscribed state"></textarea>
+          </div>
+          <div class="field">
+            <label>Task link (optional)</label>
+            <input type="url" id="j-url" placeholder="https://youtube.com/@yourchannel" />
+          </div>
+          <div class="field">
+            <label>Proof workers must submit</label>
+            <input type="text" id="j-proof" placeholder="Screenshot link + your username" />
+          </div>
+          <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div>
+              <label>Reward per worker (USDT)</label>
+              <input type="text" inputmode="decimal" id="j-reward" placeholder="0.10" />
+            </div>
+            <div>
+              <label>Number of workers</label>
+              <input type="text" inputmode="numeric" id="j-slots" placeholder="50" />
+            </div>
+          </div>
+
+          <div class="summary-rows">
+            <div class="row"><span>Worker budget</span><b id="j-s1">$0.00</b></div>
+            <div class="row"><span>Platform fee (<span id="j-fee-pct">5</span>%)</span><b id="j-s2">$0.00</b></div>
+            <div class="row total"><span>Total charged to wallet</span><b id="j-s3">$0.00</b></div>
+          </div>
+
+          <div class="fee-hint" style="margin-top:16px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <span>Funds move into escrow when you publish. Approve a proof to release payment, reject bad work for free, or cancel the task any time to get unused escrow refunded.</span>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit" style="margin-top:18px">Fund escrow &amp; publish task</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/ff-analytics.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/wallet.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const user = FF.currentUser();
+  if (!user) return;
+  const W = FF.W, $ = (id) => document.getElementById(id);
+  $("j-cat").innerHTML = W.CATEGORIES.map((c) => '<option value="' + c.key + '">' + c.name + "</option>").join("");
+  $("j-fee-pct").textContent = W.CFG.platformFeePct;
+
+  function calc() {
+    const r = Number($("j-reward").value) || 0;
+    const s = parseInt($("j-slots").value, 10) || 0;
+    const budget = r * s;
+    const fee = Math.round(budget * W.CFG.platformFeePct) / 100;
+    $("j-s1").textContent = W.usd(budget);
+    $("j-s2").textContent = W.usd(fee);
+    $("j-s3").textContent = W.usd(budget + fee);
+  }
+  ["j-reward", "j-slots"].forEach((id) => $(id).addEventListener("input", calc));
+
+  $("job-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    try {
+      W.postJob(user.email, user.name, {
+        title: $("j-title").value, category: $("j-cat").value, description: $("j-desc").value,
+        url: $("j-url").value, proofNote: $("j-proof").value,
+        reward: $("j-reward").value, slots: $("j-slots").value,
+      });
+      FF.toast("Task published! Workers can start right away.", "ok");
+      setTimeout(() => (window.location.href = "my-tasks.html"), 800);
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+  calc();
+});
+</script>
+
+</body>
+</html>

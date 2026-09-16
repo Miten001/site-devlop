@@ -21,9 +21,12 @@
     <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
     <ul class="nav-links">
       <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="#usdt">Earn USDT</a></li>
       <li><a href="#platforms">Platforms</a></li>
       <li><a href="#how">How it Works</a></li>
       <li><a href="#pricing">Pricing</a></li>
+      <li data-user-only class="hidden"><a href="tasks.html">Task Market</a></li>
+      <li data-user-only class="hidden"><a href="wallet.html">Wallet</a></li>
       <li data-user-only class="hidden"><a href="earn.html">Earn Points</a></li>
       <li data-user-only class="hidden"><a href="add.html">Add Page</a></li>
     </ul>
@@ -39,6 +42,9 @@
 
 <nav class="mobile-nav">
   <a href="index.html" class="active">Home</a>
+  <a href="index.html#usdt">Earn USDT</a>
+  <a href="tasks.html" data-user-only class="hidden">Task Market</a>
+  <a href="wallet.html" data-user-only class="hidden">Wallet</a>
   <a href="index.html#platforms">Platforms</a>
   <a href="index.html#how">How it Works</a>
   <a href="index.html#pricing">Pricing</a>
@@ -237,6 +243,57 @@
   </div>
 </section>
 
+<!-- ================= USDT EARNING ================= -->
+<section class="how" id="usdt">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span> Real money tasks</span>
+      <h2>Do tasks. <span class="grad-text">Get paid in USDT.</span></h2>
+      <p>Beyond points, FlexFam runs a full micro-task marketplace. Anyone can post work, anyone can complete it — and payment settles in USDT with escrow protection.</p>
+    </div>
+
+    <div class="how-grid">
+      <div class="how-card reveal">
+        <div class="step-num">01</div>
+        <h3>Pick a paid task</h3>
+        <p>Social actions, app installs, signups, reviews, airdrops, surveys and more. Every listing shows the exact USDT reward before you start.</p>
+      </div>
+      <div class="how-card reveal" data-delay="1">
+        <div class="step-num">02</div>
+        <h3>Submit your proof</h3>
+        <p>Complete the work and upload your proof. The buyer's funds are already locked in escrow, so approved work always gets paid.</p>
+      </div>
+      <div class="how-card reveal" data-delay="2">
+        <div class="step-num">03</div>
+        <h3>Withdraw anywhere</h3>
+        <p>Cash out to any USDT address on TRC20, BEP20, Polygon or TON. Minimum withdrawal $10, payouts processed within 24 hours.</p>
+      </div>
+    </div>
+
+    <div class="bal-grid reveal" style="margin-top:26px">
+      <div class="bal-card main">
+        <span class="cap">Deposit &amp; fund your tasks</span>
+        <div class="amt">BEP20 <small>USDT</small></div>
+        <p class="note">Deposit USDT on BNB Smart Chain from $5. Funds stay in escrow until you approve the work.</p>
+        <div class="bal-actions">
+          <a class="btn btn-primary btn-sm" href="tasks.html">Browse task market</a>
+          <a class="btn btn-ghost btn-sm" href="post-task.html">Post a task</a>
+        </div>
+      </div>
+      <div class="bal-card">
+        <span class="cap">Worker fee</span>
+        <div class="amt">0<small>%</small></div>
+        <p class="note">Workers keep 100% of every approved reward. Only task creators pay a 5% platform fee.</p>
+      </div>
+      <div class="bal-card">
+        <span class="cap">Points to USDT</span>
+        <div class="amt">1000<small>= $1</small></div>
+        <p class="note">Convert the points you earn from social campaigns into real USDT balance any time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= SPLIT: EARN ================= -->
 <section class="split">
   <div class="container split-grid">
@@ -413,6 +470,9 @@
       <div>
         <h5>Platform</h5>
         <ul>
+          <li><a href="tasks.html">Task Market (USDT)</a></li>
+          <li><a href="post-task.html">Post a Task</a></li>
+          <li><a href="wallet.html">USDT Wallet</a></li>
           <li><a href="earn.html">Earn Points</a></li>
           <li><a href="add.html">Add Page</a></li>
           <li><a href="dashboard.html">Dashboard</a></li>
@@ -460,6 +520,7 @@
 <script src="assets/js/supabase-config.js"></script>
 <script src="assets/js/ff-analytics.js"></script>
 <script src="assets/js/main.js"></script>
+<script src="assets/js/wallet.js"></script>
 <script>
   // duplicate marquee content for seamless horizontal loop
   document.addEventListener("DOMContentLoaded", () => {

@@ -18,12 +18,13 @@
   <div class="container bar">
     <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
     <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
       <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="tasks.html">Task Market</a></li>
       <li><a href="earn.html">Earn Points</a></li>
-      <li><a href="add.html" class="active">Add Page</a></li>
+      <li><a href="wallet.html">Wallet</a></li>
     </ul>
     <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
       <a href="dashboard.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
       <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
       <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
@@ -32,9 +33,12 @@
 </header>
 
 <nav class="mobile-nav">
-  <a href="index.html">Home</a>
   <a href="dashboard.html">Dashboard</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
   <a href="earn.html">Earn Points</a>
+  <a href="wallet.html">Wallet</a>
   <a href="add.html" class="active">Add Page</a>
   <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
 </nav>
@@ -100,6 +104,7 @@
 <script src="assets/js/supabase-config.js"></script>
 <script src="assets/js/ff-analytics.js"></script>
 <script src="assets/js/main.js"></script>
+<script src="assets/js/wallet.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
