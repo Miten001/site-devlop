@@ -62,8 +62,8 @@
       <div class="page-head">
         <div>
           <span class="eyebrow"><span class="dot"></span> Admin</span>
-          <h1>Payment <span class="grad-text">console</span></h1>
-          <p class="sub">Confirm incoming USDT deposits and settle withdrawal payouts.</p>
+          <h1>Admin <span class="grad-text">console</span></h1>
+          <p class="sub">Payments, point campaigns and USDT marketplace tasks — all in one place.</p>
         </div>
         <a href="admin.html" class="btn btn-ghost btn-sm">Analytics panel</a>
       </div>
@@ -73,22 +73,75 @@
       </div>
 
       <div id="adm-root" class="hidden">
-        <div class="mini-stats">
-          <div class="mini-stat"><b id="a-dep">0</b><span>Pending deposits</span></div>
-          <div class="mini-stat"><b id="a-wd">0</b><span>Pending withdrawals</span></div>
-          <div class="mini-stat"><b id="a-depv">$0.00</b><span>Deposit value</span></div>
-          <div class="mini-stat"><b id="a-wdv">$0.00</b><span>Payout value</span></div>
+        <div class="tabs" id="adm-tabs">
+          <button class="tab-btn active" data-tab="payments">Payments</button>
+          <button class="tab-btn" data-tab="campaigns">Point Campaigns</button>
+          <button class="tab-btn" data-tab="market">USDT Tasks</button>
         </div>
 
-        <div class="panel">
-          <div class="panel-head"><div><h3>Pending requests</h3><p class="panel-sub">Verify the on-chain transaction before approving.</p></div></div>
-          <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>User</th><th>Type</th><th>Network</th><th>TXID / Address</th><th>Amount</th><th>Action</th></tr></thead><tbody id="a-pending"></tbody></table></div>
-          <div class="empty-mini hidden" id="a-pending-empty"><b>Queue is clear</b>No pending deposits or withdrawals.</div>
+        <!-- PAYMENTS -->
+        <div class="tab-pane active" id="pane-payments">
+          <div class="mini-stats">
+            <div class="mini-stat"><b id="a-dep">0</b><span>Pending deposits</span></div>
+            <div class="mini-stat"><b id="a-wd">0</b><span>Pending withdrawals</span></div>
+            <div class="mini-stat"><b id="a-depv">$0.00</b><span>Deposit value</span></div>
+            <div class="mini-stat"><b id="a-wdv">$0.00</b><span>Payout value</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><div><h3>Pending requests</h3><p class="panel-sub">Verify the on-chain transaction before approving.</p></div></div>
+            <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>User</th><th>Type</th><th>Network</th><th>TXID / Address</th><th>Amount</th><th>Action</th></tr></thead><tbody id="a-pending"></tbody></table></div>
+            <div class="empty-mini hidden" id="a-pending-empty"><b>Queue is clear</b>No pending deposits or withdrawals.</div>
+          </div>
+
+          <div class="panel" style="margin-top:16px">
+            <div class="panel-head"><div><h3>Settled history</h3></div></div>
+            <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>User</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody id="a-history"></tbody></table></div>
+          </div>
         </div>
 
-        <div class="panel" style="margin-top:16px">
-          <div class="panel-head"><div><h3>Settled history</h3></div></div>
-          <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>User</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody id="a-history"></tbody></table></div>
+        <!-- POINT CAMPAIGNS (Add Page / Earn Points) -->
+        <div class="tab-pane" id="pane-campaigns">
+          <div class="mini-stats">
+            <div class="mini-stat"><b id="c-total">0</b><span>Campaigns</span></div>
+            <div class="mini-stat"><b id="c-live">0</b><span>Live</span></div>
+            <div class="mini-stat"><b id="c-pending">0</b><span>Proofs pending</span></div>
+            <div class="mini-stat"><b id="c-actions">0</b><span>Total approved actions</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><div><h3>All campaigns</h3><p class="panel-sub">Every page/campaign posted from Add Page, with its owner.</p></div></div>
+            <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Created</th><th>Owner</th><th>Campaign</th><th>Platform</th><th>Payout</th><th>Status</th><th>Action</th></tr></thead><tbody id="c-body"></tbody></table></div>
+            <div class="empty-mini hidden" id="c-empty"><b>No campaigns yet</b>Nothing posted from Add Page yet.</div>
+          </div>
+
+          <div class="panel" style="margin-top:16px">
+            <div class="panel-head"><div><h3>Pending proof submissions</h3><p class="panel-sub">Admin override — approve or reject any worker's proof directly.</p></div></div>
+            <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Worker</th><th>Campaign</th><th>Proof</th><th>Reward</th><th>Action</th></tr></thead><tbody id="cs-body"></tbody></table></div>
+            <div class="empty-mini hidden" id="cs-empty"><b>Queue is clear</b>No campaign proofs pending.</div>
+          </div>
+        </div>
+
+        <!-- USDT MARKETPLACE TASKS (Post a Task / Task Market) -->
+        <div class="tab-pane" id="pane-market">
+          <div class="mini-stats">
+            <div class="mini-stat"><b id="j-total">0</b><span>Tasks posted</span></div>
+            <div class="mini-stat"><b id="j-active">0</b><span>Active</span></div>
+            <div class="mini-stat"><b id="j-pending">0</b><span>Proofs pending</span></div>
+            <div class="mini-stat"><b id="j-escrow">$0.00</b><span>USDT in escrow</span></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><div><h3>All marketplace tasks</h3><p class="panel-sub">Every task posted from Post a Task, with its owner.</p></div></div>
+            <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Created</th><th>Owner</th><th>Task</th><th>Category</th><th>Reward</th><th>Slots</th><th>Status</th><th>Action</th></tr></thead><tbody id="j-body"></tbody></table></div>
+            <div class="empty-mini hidden" id="j-empty"><b>No tasks yet</b>Nothing posted from Post a Task yet.</div>
+          </div>
+
+          <div class="panel" style="margin-top:16px">
+            <div class="panel-head"><div><h3>Pending proof submissions</h3><p class="panel-sub">Admin override — approve or reject any worker's proof directly.</p></div></div>
+            <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Worker</th><th>Task</th><th>Proof</th><th>Reward</th><th>Action</th></tr></thead><tbody id="js-body"></tbody></table></div>
+            <div class="empty-mini hidden" id="js-empty"><b>Queue is clear</b>No task proofs pending.</div>
+          </div>
         </div>
       </div>
     </section>
@@ -149,7 +202,125 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) { FF.toast(err.message, "err"); }
   });
 
+  /* ---------- tabs ---------- */
+  const tabs = $("adm-tabs");
+  tabs.addEventListener("click", (e) => {
+    const b = e.target.closest(".tab-btn"); if (!b) return;
+    tabs.querySelectorAll(".tab-btn").forEach((t) => t.classList.toggle("active", t === b));
+    document.querySelectorAll(".tab-pane").forEach((p) => p.classList.toggle("active", p.id === "pane-" + b.dataset.tab));
+  });
+
+  /* ---------- point campaigns (Add Page) ---------- */
+  function renderCampaigns() {
+    const camps = FF.DB.campaigns() || [];
+    const subs = FF.DB.campSubs ? FF.DB.campSubs() : [];
+    const pending = subs.filter((s) => s.status === "pending");
+    $("c-total").textContent = camps.length;
+    $("c-live").textContent = camps.filter((c) => c.active !== false).length;
+    $("c-pending").textContent = pending.length;
+    $("c-actions").textContent = camps.reduce((n, c) => n + (c.actions || 0), 0);
+
+    $("c-empty").classList.toggle("hidden", camps.length > 0);
+    $("c-body").innerHTML = camps.map((c) => {
+      const p = FF.PLATFORMS[c.platform] || { name: c.platform || "Platform" };
+      return "<tr><td>" + (c.created ? fdate(c.created) : "—") + "</td><td>" + esc(c.authorEmail || c.user || "—") + "</td>" +
+        "<td><b>" + esc(c.title || c.user) + "</b></td><td>" + esc(p.name) + "</td>" +
+        '<td class="num">+' + (c.payout || 0) + " pts</td>" +
+        '<td><span class="status-pill ' + (c.active === false ? "off" : "on") + '">' + (c.active === false ? "Paused" : "Live") + "</span></td>" +
+        '<td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" data-camp-toggle="' + c.id + '">' + (c.active === false ? "Resume" : "Pause") + "</button> " +
+        '<button class="btn btn-ghost btn-sm danger" data-camp-del="' + c.id + '">Delete</button></td></tr>';
+    }).join("");
+
+    $("cs-empty").classList.toggle("hidden", pending.length > 0);
+    $("cs-body").innerHTML = pending.map((s) => (
+      "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.workerName) + "</b></td><td>" + esc(s.campaignTitle) + "</td>" +
+      '<td><span class="mono-cut" title="' + esc(s.proof) + '">' + esc(s.proof) + "</span>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s.note) + "</span>" : "") + "</td>" +
+      '<td class="num pos">+' + s.payout + "</td>" +
+      '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-cs-ok="' + s.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-cs-no="' + s.id + '">Reject</button></td></tr>'
+    )).join("");
+  }
+
+  document.addEventListener("click", (e) => {
+    const toggle = e.target.closest("[data-camp-toggle]");
+    const del = e.target.closest("[data-camp-del]");
+    const csOk = e.target.closest("[data-cs-ok]");
+    const csNo = e.target.closest("[data-cs-no]");
+    try {
+      if (toggle) {
+        const c = (FF.DB.campaigns() || []).find((x) => x.id === toggle.dataset.campToggle);
+        if (c) { FF.updateCampaign(c.id, { active: c.active === false ? true : false }); FF.toast("Campaign updated.", "ok"); renderCampaigns(); }
+      } else if (del) {
+        if (!window.confirm("Delete this campaign permanently?")) return;
+        FF.deleteCampaign(del.dataset.campDel);
+        FF.toast("Campaign deleted.", "info");
+        renderCampaigns();
+      } else if (csOk) {
+        FF.reviewCampaignSub(csOk.dataset.csOk, true);
+        FF.toast("Approved — points paid to the worker.", "ok");
+        renderCampaigns();
+      } else if (csNo) {
+        const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
+        FF.reviewCampaignSub(csNo.dataset.csNo, false, reason);
+        FF.toast("Submission rejected.", "info");
+        renderCampaigns();
+      }
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+
+  /* ---------- USDT marketplace tasks (Post a Task) ---------- */
+  function renderMarket() {
+    const jobs = W.jobs();
+    const subs = W.subs();
+    const pending = subs.filter((s) => s.status === "pending");
+    $("j-total").textContent = jobs.length;
+    $("j-active").textContent = jobs.filter((j) => j.status === "active").length;
+    $("j-pending").textContent = pending.length;
+    $("j-escrow").textContent = W.usd(jobs.filter((j) => j.status === "active").reduce((n, j) => n + Math.max(0, j.slots - j.filled) * j.reward, 0));
+
+    $("j-empty").classList.toggle("hidden", jobs.length > 0);
+    $("j-body").innerHTML = jobs.map((j) => {
+      const c = W.category(j.category);
+      return "<tr><td>" + fdate(j.createdAt) + "</td><td>" + esc(j.owner) + "</td><td><b>" + esc(j.title) + "</b></td>" +
+        "<td>" + esc(c.name) + "</td><td class=\"num\">" + W.usd(j.reward) + "</td><td>" + j.filled + " / " + j.slots + "</td>" +
+        '<td><span class="badge ' + j.status + '">' + j.status + "</span></td>" +
+        '<td style="white-space:nowrap">' + (j.status === "active" ? '<button class="btn btn-ghost btn-sm danger" data-job-cancel="' + j.id + '">Cancel &amp; refund</button>' : "—") + "</td></tr>";
+    }).join("");
+
+    $("js-empty").classList.toggle("hidden", pending.length > 0);
+    $("js-body").innerHTML = pending.map((s) => (
+      "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.workerName) + "</b></td><td>" + esc(s.jobTitle) + "</td>" +
+      '<td><span class="mono-cut" title="' + esc(s.proof) + '">' + esc(s.proof) + "</span>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s.note) + "</span>" : "") + "</td>" +
+      '<td class="num pos">' + W.usd(s.reward) + "</td>" +
+      '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-js-ok="' + s.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-js-no="' + s.id + '">Reject</button></td></tr>'
+    )).join("");
+  }
+
+  document.addEventListener("click", (e) => {
+    const cancel = e.target.closest("[data-job-cancel]");
+    const jsOk = e.target.closest("[data-js-ok]");
+    const jsNo = e.target.closest("[data-js-no]");
+    try {
+      if (cancel) {
+        if (!window.confirm("Cancel this task and refund the unused escrow?")) return;
+        W.adminCancelJob(cancel.dataset.jobCancel);
+        FF.toast("Task cancelled — escrow refunded.", "ok");
+        renderMarket();
+      } else if (jsOk) {
+        W.reviewSub(jsOk.dataset.jsOk, true);
+        FF.toast("Approved — USDT released to the worker.", "ok");
+        renderMarket();
+      } else if (jsNo) {
+        const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
+        W.reviewSub(jsNo.dataset.jsNo, false, reason);
+        FF.toast("Submission rejected.", "info");
+        renderMarket();
+      }
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+
   render();
+  renderCampaigns();
+  renderMarket();
 });
 </script>
 

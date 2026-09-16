@@ -127,6 +127,12 @@
             </div>
           </div>
 
+          <div class="panel reveal mt-16" id="camp-review-panel" style="display:none">
+            <div class="panel-head"><div><h3>Pending campaign proofs</h3><p class="panel-sub">Approve to pay the worker instantly from your points balance, or reject with a reason.</p></div></div>
+            <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Worker</th><th>Campaign</th><th>Proof</th><th>Reward</th><th>Action</th></tr></thead><tbody id="camp-rev-body"></tbody></table></div>
+            <div class="empty-mini hidden" id="camp-rev-empty"><b>No proofs waiting</b>You're all caught up.</div>
+          </div>
+
           <div class="panel reveal mt-16">
             <div class="panel-head"><h3>This week's earning</h3><span class="status-pill on" id="week-delta">Live</span></div>
             <div class="mini-chart" id="mini-chart"></div>
@@ -322,8 +328,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
   }
 
+  /* pending campaign proofs — owner review */
+  const campRevPanel = document.getElementById("camp-review-panel");
+  const campRevBody = document.getElementById("camp-rev-body");
+  const campRevEmpty = document.getElementById("camp-rev-empty");
+  const escCr = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const fdateCr = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  function renderCampReviews() {
+    if (!FF.campSubsFor) { campRevPanel.style.display = "none"; return; }
+    const myCampaignIds = (FF.DB.campaigns() || []).filter((c) => c.authorEmail === user.email).map((c) => c.id);
+    const pending = myCampaignIds
+      .reduce((acc, id) => acc.concat(FF.campSubsFor(id)), [])
+      .filter((s) => s.status === "pending")
+      .sort((a, b) => b.at - a.at);
+
+    if (!myCampaignIds.length) { campRevPanel.style.display = "none"; return; }
+    campRevPanel.style.display = "";
+    campRevEmpty.classList.toggle("hidden", pending.length > 0);
+    campRevBody.innerHTML = pending.map((s) => (
+      "<tr><td>" + fdateCr(s.at) + "</td><td><b>" + escCr(s.workerName) + "</b></td><td>" + escCr(s.campaignTitle) + "</td>" +
+      '<td><span class="mono-cut" title="' + escCr(s.proof) + '">' + escCr(s.proof) + "</span>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + escCr(s.note) + "</span>" : "") + "</td>" +
+      '<td class="num pos">+' + s.payout + "</td>" +
+      '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-camp-ok="' + s.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-camp-no="' + s.id + '">Reject</button></td></tr>'
+    )).join("");
+  }
+
+  campRevBody.addEventListener("click", (e) => {
+    const ok = e.target.closest("[data-camp-ok]"), no = e.target.closest("[data-camp-no]");
+    if (!ok && !no) return;
+    try {
+      if (ok) { FF.reviewCampaignSub(ok.dataset.campOk, true); FF.toast("Approved — points paid to the worker.", "ok"); }
+      else {
+        const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
+        FF.reviewCampaignSub(no.dataset.campNo, false, reason);
+        FF.toast("Submission rejected.", "info");
+      }
+      user = FF.currentUser();
+      renderCampReviews();
+      paintStats();
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+
   renderCamps();
   renderActivity();
+  renderCampReviews();
   paintStats();
 });
 </script>

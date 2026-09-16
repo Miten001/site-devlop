@@ -108,6 +108,8 @@
     saveCampaigns(c) { store.set("ff_campaigns", c); },
     doneMap() { return store.get("ff_done", {}); },
     saveDoneMap(d) { store.set("ff_done", d); },
+    campSubs() { return store.get("ff_camp_subs", []); },
+    saveCampSubs(s) { store.set("ff_camp_subs", s); },
   };
 
   function currentUser() {
@@ -149,6 +151,71 @@
   function deleteCampaign(id) {
     const all = DB.campaigns().filter((c) => c.id !== id);
     DB.saveCampaigns(all);
+  }
+
+  /* ---------- point-campaign proof review (Earn Points page) ----------
+     A real, user-posted campaign (add.html) only pays out once its owner
+     reviews and approves the worker's proof — no auto-credit on click. */
+  function campId(prefix) {
+    const bytes = new Uint32Array(2);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+    else { bytes[0] = Date.now(); bytes[1] = Math.floor(Math.random() * 1e9); }
+    return (prefix || "cs") + "_" + Array.from(bytes).map((n) => n.toString(36)).join("");
+  }
+
+  function campSubsFor(campaignId) { return DB.campSubs().filter((s) => s.campaignId === campaignId); }
+  function myCampSubs(email) { return DB.campSubs().filter((s) => s.worker === email); }
+
+  function submitCampaignProof(email, name, campaignId, proof, note) {
+    const camp = DB.campaigns().find((c) => c.id === campaignId);
+    if (!camp) throw new Error("Campaign not found");
+    if (camp.active === false) throw new Error("This campaign is paused");
+    if (camp.authorEmail && camp.authorEmail === email) throw new Error("You cannot complete your own campaign");
+    const already = DB.campSubs().some((s) => s.campaignId === campaignId && s.worker === email && s.status !== "rejected");
+    if (already) throw new Error("You already submitted this campaign");
+    if (!proof || proof.trim().length < 3) throw new Error("Add proof (link, username or screenshot URL)");
+    const sub = {
+      id: campId("csub"), campaignId, campaignTitle: camp.title || camp.user,
+      worker: email, workerName: name || email.split("@")[0],
+      owner: camp.authorEmail || "", payout: Number(camp.payout || 0),
+      proof: proof.trim(), note: (note || "").trim(), status: "pending", at: Date.now(),
+    };
+    const all = DB.campSubs(); all.unshift(sub); DB.saveCampSubs(all);
+    return sub;
+  }
+
+  function reviewCampaignSub(subId, approve, reason) {
+    const all = DB.campSubs();
+    const i = all.findIndex((s) => s.id === subId);
+    if (i < 0) throw new Error("Submission not found");
+    const s = all[i];
+    if (s.status !== "pending") throw new Error("Already reviewed");
+    if (approve && s.owner) {
+      const owner = currentUser() && currentUser().email === s.owner ? currentUser() : DB.users().find((u) => u.email === s.owner);
+      if (!owner || (owner.credits || 0) < s.payout) throw new Error("Not enough points in your balance to pay this reward");
+    }
+
+    s.status = approve ? "approved" : "rejected";
+    s.reason = reason || "";
+    s.reviewedAt = Date.now();
+
+    if (approve) {
+      if (s.owner) spendCredits(s.owner, s.payout, 'Paid ' + s.workerName + ' for "' + s.campaignTitle + '"');
+      awardCredits(s.worker, s.payout, 'Campaign approved: "' + s.campaignTitle + '"');
+      const dm = DB.doneMap();
+      dm[s.worker] = dm[s.worker] || [];
+      if (!dm[s.worker].includes(s.campaignId)) dm[s.worker].push(s.campaignId);
+      DB.saveDoneMap(dm);
+      const camps = DB.campaigns();
+      const c = camps.find((x) => x.id === s.campaignId);
+      if (c) {
+        c.actions = (c.actions || 0) + 1;
+        c.spent = (c.spent || 0) + s.payout;
+        DB.saveCampaigns(camps);
+      }
+    }
+    DB.saveCampSubs(all);
+    return s;
   }
 
   /* ---------- member auth ---------- */
@@ -324,144 +391,21 @@
     });
   }
 
-  /* ---------- seed demo data ---------- */
-  const SEED_NAMES = [
-    "Aarav Shots", "Neha Vlogs", "UrbanBeatz", "Kavya Creates", "TechGuru Rohan",
-    "FitWithSimran", "PixelNinja", "DesiFoodies", "GameLordYT", "MelodyMaya",
-    "TravelTales.in", "CoderKiBaatein", "StyleSansar", "CricketFever", "ArtByIra",
-    "FinanceWala", "DailyMotivation", "GadgetGram", "DanceWithDev", "BookishBella",
-  ];
-
-  function seededRand(seed) {
-    let h = 2166136261;
-    for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
-    return function () { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967295; };
+  /* ---------- purge legacy seeded/demo campaigns ----------
+     Earlier builds injected randomly-generated "genesis" campaigns and a
+     handful of hardcoded extras (bot-start, website-visit, etc.) directly
+     into ff_campaigns so the Earn page never looked empty. Those were fake,
+     unowned listings with no real advertiser behind them. Strip them out on
+     load so the Earn page only ever shows campaigns real users created via
+     add.html. This runs once per browser (flagged by ff_demo_campaigns_purged)
+     and is safe to re-run. */
+  function purgeSeedCampaigns() {
+    if (store.get("ff_demo_campaigns_purged", 0) >= 1) return;
+    const real = DB.campaigns().filter((c) => c && c.mine === true && c.authorEmail);
+    DB.saveCampaigns(real);
+    store.set("ff_demo_campaigns_purged", 1);
   }
 
-  const SEED_VERSION = 3;
-
-  function buildSeedCampaigns() {
-    const keys = Object.keys(PLATFORMS);
-    const list = [];
-    const rnd = seededRand("flexfam-genesis-v2");
-    let id = 1;
-    keys.forEach((pk) => {
-      const p = PLATFORMS[pk];
-      const per = pk === "telegram" ? 5 : pk === "website" ? 5 : 3;
-      for (let i = 0; i < per; i++) {
-        const name = SEED_NAMES[Math.floor(rnd() * SEED_NAMES.length)];
-        const action = p.actions[Math.floor(rnd() * p.actions.length)];
-        const payout = [2, 3, 4, 5, 6][Math.floor(rnd() * 5)];
-        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
-        const urls = {
-          telegram: action === "Start Bot" ? "https://t.me/" + slug + "bot?start=flexfam" : "https://t.me/" + slug,
-          youtube: "https://youtube.com/@" + slug,
-          instagram: "https://instagram.com/" + slug,
-          x: "https://x.com/" + slug,
-          tiktok: "https://tiktok.com/@" + slug,
-          facebook: "https://facebook.com/" + slug,
-          twitch: "https://twitch.tv/" + slug,
-          pinterest: "https://pinterest.com/" + slug,
-          website: "https://example.com/?ref=" + slug,
-        };
-        list.push({
-          id: "c" + id++,
-          platform: pk,
-          action,
-          user: name,
-          title: name + " · " + action,
-          url: urls[pk],
-          payout,
-          mine: false,
-          active: true,
-        });
-      }
-    });
-    return list;
-  }
-
-  const EXTRA_SEED_CAMPAIGNS = [
-    {
-      id: "seed-bot-start-flexfam",
-      platform: "telegram",
-      action: "Start @sub_for_sub_bot",
-      user: "FlexFam Rewards Bot (@sub_for_sub_bot)",
-      title: "FlexFam Rewards Bot (@sub_for_sub_bot) · Start @sub_for_sub_bot",
-      url: "https://t.me/sub_for_sub_bot?start=web_bonus",
-      payout: 15,
-      mine: false,
-      active: true,
-    },
-    {
-      id: "seed-bot-start-deals",
-      platform: "telegram",
-      action: "Start Bot",
-      user: "Deals Radar Bot",
-      title: "Deals Radar Bot · Start Bot",
-      url: "https://t.me/dealsradarbot?start=flexfam",
-      payout: 10,
-      mine: false,
-      active: true,
-    },
-    {
-      id: "seed-web-visit-home",
-      platform: "website",
-      action: "Visit Website",
-      user: "FlexFam Home",
-      title: "FlexFam Home · Visit Website",
-      url: "index.html#platforms",
-      payout: 6,
-      mine: false,
-      active: true,
-    },
-    {
-      id: "seed-web-read-guide",
-      platform: "website",
-      action: "Read Article",
-      user: "Creator Growth Guide",
-      title: "Creator Growth Guide · Read Article",
-      url: "index.html#how",
-      payout: 5,
-      mine: false,
-      active: true,
-    },
-    {
-      id: "seed-web-explore-offer",
-      platform: "website",
-      action: "Explore Page",
-      user: "Turbo Perks Page",
-      title: "Turbo Perks Page · Explore Page",
-      url: "index.html#pricing",
-      payout: 4,
-      mine: false,
-      active: true,
-    },
-  ];
-
-  function seedCampaigns() {
-    const version = store.get("ff_seed_version", 0);
-    let list = DB.campaigns();
-    const needsFreshSeed = !store.get("ff_seeded", false) || !Array.isArray(list) || !list.length;
-
-    if (needsFreshSeed) {
-      list = buildSeedCampaigns();
-    }
-
-    if (version < SEED_VERSION) {
-      EXTRA_SEED_CAMPAIGNS.slice().reverse().forEach((c) => {
-        const existingIndex = list.findIndex((item) => item.id === c.id);
-        if (existingIndex > -1) {
-          list[existingIndex] = Object.assign({}, list[existingIndex], c);
-        } else {
-          list.unshift(c);
-        }
-      });
-    }
-
-    DB.saveCampaigns(list);
-    store.set("ff_seeded", true);
-    store.set("ff_seed_version", SEED_VERSION);
-  }
 
   /* ---------- credits engine ---------- */
   function addActivity(user, type, text, amount) {
@@ -823,7 +767,7 @@
 
   /* ---------- boot ---------- */
   document.addEventListener("DOMContentLoaded", () => {
-    seedCampaigns();
+    purgeSeedCampaigns();
     guard();
     initHeader();
     initAuth();
@@ -850,6 +794,7 @@
     store, DB, currentUser, updateUser, memberConfig,
     addCampaign, updateCampaign, deleteCampaign,
     awardCredits, spendCredits, syncCreditPills,
+    campSubsFor, myCampSubs, submitCampaignProof, reviewCampaignSub,
     toast, avatarColor, initials,
   };
 })();
