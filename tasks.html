@@ -94,9 +94,9 @@
         <div class="empty-mini hidden" id="sub-empty"><b>No submissions yet</b>Pick a task above and send your first proof.</div>
       </div>
 
-<div class="modal-veil" id="job-modal">
-  <div class="modal modal-pos" id="job-modal-card">
-    <button class="m-close" data-close-modal aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+<div class="modal-veil" id="job-modal" aria-hidden="true">
+  <div class="modal modal-pos" id="job-modal-card" role="dialog" aria-modal="true" aria-labelledby="jm-title" aria-describedby="jm-desc" tabindex="-1">
+    <button class="m-close" data-close-modal type="button" aria-label="Close task"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     <h3 id="jm-title">Task</h3>
     <p class="m-sub" id="jm-sub"></p>
     <div style="text-align:left;margin:16px 0;font-size:13.6px;line-height:1.6;color:var(--ink-dim);white-space:pre-wrap" id="jm-desc"></div>
@@ -190,11 +190,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const modal = $("job-modal");
+  const modalCard = $("job-modal-card");
+  let opener = null;
+
+  function openTaskModal(trigger) {
+    opener = trigger;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+    window.requestAnimationFrame(() => $("jm-proof").focus());
+  }
+
+  function close() {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+    current = null;
+    if (opener && document.contains(opener)) opener.focus();
+    opener = null;
+  }
+
   $("job-grid").addEventListener("click", (e) => {
     const b = e.target.closest("[data-job]"); if (!b) return;
     current = (feed ? feed.open : []).find((j) => j.id === b.dataset.job); if (!current) return;
     const c = category(current.category);
-    $("job-modal-card").style.setProperty("--pf", c.color);
+    modalCard.style.setProperty("--pf", c.color);
     $("jm-title").textContent = current.title;
     $("jm-sub").innerHTML = esc(c.name) + " · Reward <b style='color:var(--green)'>" + W.usd(current.reward) + " USDT</b> · " + (current.slots - current.filled) + " slots left";
     $("jm-desc").textContent = current.description;
@@ -202,12 +222,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const link = $("jm-open");
     if (current.url) { link.href = current.url; link.classList.remove("hidden"); } else link.classList.add("hidden");
     $("jm-proof").value = ""; $("jm-note").value = "";
-    modal.classList.add("open");
+    openTaskModal(b);
   });
 
-  function close() { modal.classList.remove("open"); current = null; }
   document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", close));
   modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("open")) close(); });
 
   $("jm-submit").addEventListener("click", () => {
     if (!current) return;
