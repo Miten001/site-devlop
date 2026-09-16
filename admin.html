@@ -214,9 +214,12 @@
     if (!r) { r = document.createElement("div"); r.className = "toast-root"; document.body.appendChild(r); }
     var x = document.createElement("div");
     x.className = "toast " + (err ? "err" : "ok");
-    x.textContent = m;
+    x.innerHTML = '<span>' + esc(m) + '</span>';
     r.appendChild(x);
-    setTimeout(function () { x.remove(); }, 5000);
+    setTimeout(function () {
+      x.classList.add("leaving");
+      setTimeout(function () { x.remove(); }, 350);
+    }, 4500);
   }
 
   function saveSession(s) {
