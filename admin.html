@@ -127,6 +127,17 @@
       </div>
     </div>
 
+    <section class="panel member-panel" aria-labelledby="members-title">
+      <div class="panel-head"><h3 id="members-title">Registered accounts</h3><span class="status-pill on" id="member-count">0 members</span></div>
+      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
+      <div class="member-table-wrap">
+        <table class="ff-table member-table">
+          <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Password</th></tr></thead>
+          <tbody id="t-members"><tr><td colspan="5">Loading registered accounts…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <div class="admin-grid">
       <div class="dash-stat" style="--c:#22d3ee"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span><div class="ds-num" id="k-views">—</div><div class="ds-lbl">Total views</div></div>
       <div class="dash-stat" style="--c:#ffd166"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><div class="ds-num" id="k-today">—</div><div class="ds-lbl">Today's views</div></div>
@@ -136,6 +147,8 @@
       <div class="dash-stat" style="--c:#ff8a3d"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><div class="ds-num" id="k-camps">—</div><div class="ds-lbl">Campaigns created</div></div>
       <div class="dash-stat" style="--c:#e0489f"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg></span><div class="ds-num" id="k-members">—</div><div class="ds-lbl">Registered members</div></div>
     </div>
+
+
 
     <div class="admin-cols">
       <div>
@@ -168,16 +181,7 @@
       </div>
     </div>
 
-    <section class="panel member-panel" aria-labelledby="members-title">
-      <div class="panel-head"><h3 id="members-title">Registered accounts</h3><span class="status-pill on" id="member-count">0 members</span></div>
-      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
-      <div class="member-table-wrap">
-        <table class="ff-table member-table">
-          <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Password</th></tr></thead>
-          <tbody id="t-members"><tr><td colspan="5">Loading registered accounts…</td></tr></tbody>
-        </table>
-      </div>
-    </section>
+
   </div>
 </main>
 

@@ -856,6 +856,14 @@
     purgeSeedCampaigns();
     guard();
     initHeader();
+    if (!document.querySelector(".global-support")) {
+      const support = document.createElement("a");
+      support.className = "global-support";
+      support.href = "https://t.me/codex_here";
+      support.target = "_blank"; support.rel = "noopener";
+      support.textContent = "Support @codex_here";
+      document.body.appendChild(support);
+    }
     initAuth();
     paintUserUI();
     initReveal();
