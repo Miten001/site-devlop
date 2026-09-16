@@ -12,7 +12,7 @@
 - 📈 **Admin panel** — `admin.html` with Supabase Auth login + permanent Postgres analytics and a protected registered-accounts list (account ID, display name, email, signup time, JSON export; never passwords)
 - 🤖 **Telegram Sub4Sub Bot** — real, fully-working bot: users join each other's Telegram groups to earn points, then spend them to grow their own groups (SQLite, auto join-verification, anti-leave refunds, referrals, admin panel). See [`telegram-bot/`](telegram-bot/)
 - 💵 **USDT Task Marketplace** — `tasks.html` (browse & work), `post-task.html` (publish jobs with escrow), `my-tasks.html` (review proofs, release payments, cancel & refund). 8 categories, per-task rewards, worker slots, proof review workflow. **No sample listings — the market only shows real, user-posted and escrow-funded tasks**
-- 🏦 **USDT Wallet** — `wallet.html` with deposit (USDT on BEP20, min $10, live QR code + TXID submission), withdrawal requests (BEP20 only, min $5, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger
+- 🏦 **USDT Wallet** — `wallet.html` with deposit (USDT on BEP20, min $10, live QR code + TXID submission), withdrawal requests (BEP20 only, min $5, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger. Wallet, escrow and the marketplace all run on a **server-authoritative Postgres backend** ([`supabase-wallet.sql`](supabase-wallet.sql))
 - ⛏️ **Cloud Mining** — `mining.html`: rent hashrate with **points or USDT**, rigs mine 24/7 (rewards accrue even while offline), free daily +25% boost, claim mined USDT to the wallet or as points with a +10% bonus. Ships with a **server-authoritative Postgres backend** ([`supabase-mining.sql`](supabase-mining.sql)) so balances cannot be edited from the browser console
 - 🛡️ **Payments admin** — `admin-payments.html` for allowlisted admins to approve/reject deposits and withdrawals
 - 🎨 Premium dark UI — aurora gradients, glassmorphism, 3D tilt, scroll reveals
@@ -40,22 +40,44 @@ If the config is missing or still has placeholders, tracking is disabled and `ad
 
 The USDT marketplace ships **empty on purpose**: no demo or placeholder tasks are injected, so every listing a visitor sees is a real job funded by a real user. (`FF.W.purgeDemoData()` clears sample listings left in `localStorage` by earlier builds.)
 
-Money flow is currently a **front-end simulation** stored in `localStorage` (`ff_wallets`, `ff_pay_requests`, `ff_jobs`, `ff_job_subs`) and implemented in [`assets/js/wallet.js`](assets/js/wallet.js).
+Like mining, the wallet runs in one of **two modes**. With Supabase configured and a signed-in member, balances, escrow and every payout live in Postgres ([`supabase-wallet.sql`](supabase-wallet.sql)) and cannot be edited from the browser console. Without a session it falls back to the `localStorage` simulation in [`assets/js/wallet.js`](assets/js/wallet.js) (`ff_wallets`, `ff_pay_requests`, `ff_jobs`, `ff_job_subs`) so local previews and the demo account keep working. `wallet.html` shows which mode is live via the **Balance mode** pill.
 
-| Setting | Value | Where |
+| | Browser mode | **Server mode (recommended)** |
 | --- | --- | --- |
-| Min deposit | $10 | `FF.W.CFG.minDeposit` |
-| Min withdrawal | $5 | `FF.W.CFG.minWithdraw` |
-| Withdrawal fee | 1% | `FF.W.CFG.withdrawFeePct` |
-| Platform fee (task creators) | 5% | `FF.W.CFG.platformFeePct` |
-| Points → USDT | 1000 pts = $1 | `FF.W.CFG.pointsPerUsdt` |
-| Deposit network | BEP20 (BNB Smart Chain) only | `FF.W.CFG.networks` |
-| Deposit address | `0xe85d1b6b330219de89e826f314a9bc2bcd595e53` | `FF.W.CFG.depositAddress` |
-| Withdrawal networks | BEP20 (BNB Smart Chain) only | `FF.W.CFG.withdrawNetworks` |
+| State lives in | `localStorage` | Postgres, in your Supabase project |
+| Can a user edit their balance from devtools? | **Yes** | **No** |
+| Needs setup | none | run [`supabase-wallet.sql`](supabase-wallet.sql) |
 
-Deposits currently accept **USDT on BEP20 only**, to the verified address above (QR at `assets/img/deposit-bep20-qr.png`). To support another chain, add a real verified address to `depositAddress`, a note to `networkNote`, a QR to `depositQr`, and list it in `networks` — never ship a placeholder address. **Before going live** move deposits, withdrawals and escrow settlement onto a server/Postgres so balances cannot be edited from the browser console.
+In server mode the settings below come from the `public.wallet_config`, `public.wallet_networks` and `public.job_categories` tables instead of `FF.W.CFG`, so you can retune fees, minimums, deposit addresses and task categories from the Supabase dashboard without a redeploy.
 
-Admins listed in `window.FF_ADMIN_EMAILS` can settle payment requests at `admin-payments.html`.
+| Setting | Value | Browser mode | Server mode |
+| --- | --- | --- | --- |
+| Min deposit | $10 | `FF.W.CFG.minDeposit` | `wallet_config.min_deposit` |
+| Min withdrawal | $5 | `FF.W.CFG.minWithdraw` | `wallet_config.min_withdraw` |
+| Withdrawal fee | 1% | `FF.W.CFG.withdrawFeePct` | `wallet_config.withdraw_fee_pct` |
+| Platform fee (task creators) | 5% | `FF.W.CFG.platformFeePct` | `wallet_config.platform_fee_pct` |
+| Min task reward | $0.02 per worker | hard-coded | `wallet_config.min_job_reward` |
+| Points → USDT | 1000 pts = $1 | `FF.W.CFG.pointsPerUsdt` | `mining_config.points_per_usdt` |
+| Min points to convert | 1000 | `FF.W.CFG.minPointsConvert` | `wallet_config.min_points_convert` |
+| Deposit / withdrawal network | BEP20 (BNB Smart Chain) only | `FF.W.CFG.networks` | `wallet_networks` |
+| Deposit address | `0xe85d1b6b330219de89e826f314a9bc2bcd595e53` | `FF.W.CFG.depositAddress` | `wallet_networks.address` |
+| Task categories | 8 | `FF.W.CATEGORIES` | `job_categories` |
+
+Deposits currently accept **USDT on BEP20 only**, to the verified address above (QR at `assets/img/deposit-bep20-qr.png`). To support another chain, insert a row into `public.wallet_networks` (server mode) or add a real verified address to `depositAddress` / `networkNote` / `depositQr` / `networks` in `FF.W.CFG` (browser mode) — never ship a placeholder address.
+
+### Turning on server mode
+
+1. Run [`supabase.sql`](supabase.sql), then [`supabase-mining.sql`](supabase-mining.sql) (it creates `public.balances`, shared by mining and the wallet).
+2. Run [`supabase-wallet.sql`](supabase-wallet.sql) **as one script** in the Supabase SQL editor. It is idempotent — re-running it never touches existing balances, jobs or config.
+3. Sign in with a Supabase Auth account — `wallet.html` should show **Server-synced**.
+
+**Why it cannot be cheated:** exactly like mining, there is *no* insert/update/delete policy on any wallet or marketplace table and DML is revoked from `anon` and `authenticated`. Every write goes through a `security definer` RPC — `wallet_create_deposit`, `wallet_create_withdraw`, `wallet_convert_points`, `jobs_post`, `jobs_submit_proof`, `jobs_review`, `jobs_cancel` — which re-derives fees and amounts from `wallet_config` and holds row locks, so the escrow release and the worker credit happen in one transaction. A worker cannot approve their own proof, a proof cannot be paid twice, and a deposit is credited only after an admin approves it.
+
+Members can `select` only their own `wallet_txns` / `pay_requests`; job listings are visible to signed-in members (that is how the market works) and a submission is visible only to its worker and the job owner.
+
+### Admin
+
+Admins listed in `window.FF_ADMIN_EMAILS` settle payment requests at `admin-payments.html`. In server mode the page calls `wallet_admin_queue`, `wallet_admin_settle`, `jobs_admin_review` and `jobs_admin_cancel`, all gated by the `public.admins` allowlist — the browser-side `FF_ADMIN_EMAILS` list is only a UI hint. Approving a deposit credits the balance; rejecting a withdrawal returns the locked funds; cancelling a task refunds the unused escrow to its owner.
 
 ## Cloud mining
 
@@ -118,10 +140,6 @@ action: `admin-payments.html` → **Cloud Mining** tab, which calls
 Mining payouts appear in the browser wallet ledger as `mining` transactions
 when running in browser mode; in server mode they land in `public.balances` and
 the member's `mining_ledger`.
-
-> The **wallet, escrow and task marketplace are still browser-side** — only
-> mining has been moved to the server so far. Move those the same way before
-> handling real money.
 
 ## Telegram bot
 

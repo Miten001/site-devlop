@@ -102,20 +102,28 @@
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
   if (!user) return;
-  const W = FF.W, $ = (id) => document.getElementById(id);
+  const W = FF.W, A = W.api, $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
   const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
-  function render() {
-    const jobs = W.myJobs(user.email);
-    const ids = jobs.map((j) => j.id);
-    const all = W.subs().filter((s) => ids.indexOf(s.jobId) > -1);
-    const pending = all.filter((s) => s.status === "pending");
+  let feed = null;
+  let cats = W.CATEGORIES;
+  const category = (key) => cats.find((c) => c.key === key) || cats[cats.length - 1] || { name: key, color: "#ff8a3d" };
+  const fail = (err) => FF.toast(err && err.message ? err.message : "Something went wrong", "err");
 
-    $("m-active").textContent = jobs.filter((j) => j.status === "active").length;
+  function render(f) {
+    feed = f || feed;
+    if (!feed) return;
+    if (feed.categories && feed.categories.length) cats = feed.categories;
+
+    const jobs = feed.mine;
+    const active = jobs.filter((j) => j.status === "active");
+    const pending = feed.inbox;
+
+    $("m-active").textContent = active.length;
     $("m-pending").textContent = pending.length;
-    $("m-escrow").textContent = W.usd(jobs.filter((j) => j.status === "active").reduce((n, j) => n + (j.slots - j.filled) * j.reward, 0));
-    $("m-paid").textContent = W.usd(all.filter((s) => s.status === "approved").reduce((n, s) => n + s.reward, 0));
+    $("m-escrow").textContent = W.usd(jobs.reduce((n, j) => n + (j.escrow || 0), 0));
+    $("m-paid").textContent = W.usd(jobs.reduce((n, j) => n + j.filled * j.reward, 0));
 
     $("rev-empty").classList.toggle("hidden", pending.length > 0);
     $("rev-body").innerHTML = pending.map((s) => (
@@ -127,33 +135,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $("mine-empty").classList.toggle("hidden", jobs.length > 0);
     $("mine-grid").innerHTML = jobs.map((j) => {
-      const c = W.category(j.category);
+      const c = category(j.category);
       const pct = Math.round((j.filled / j.slots) * 100);
       return '<div class="job-card" style="--pf:' + c.color + '">' +
         '<div class="j-top"><div><span class="j-cat">' + esc(c.name) + '</span><h4>' + esc(j.title) + "</h4></div>" +
         '<div class="j-pay"><b>' + W.usd(j.reward) + "</b><span>PER TASK</span></div></div>" +
         '<div class="slot-bar"><i style="width:' + pct + '%"></i></div>' +
-        '<div class="j-meta"><span>' + j.filled + " / " + j.slots + ' done</span><span>Escrow ' + W.usd(Math.max(0, j.slots - j.filled) * j.reward) + '</span><span class="badge ' + j.status + '">' + j.status + "</span></div>" +
+        '<div class="j-meta"><span>' + j.filled + " / " + j.slots + ' done</span><span>Escrow ' + W.usd(j.escrow || 0) + '</span><span class="badge ' + esc(j.status) + '">' + esc(j.status) + "</span></div>" +
         (j.status === "active" ? '<div class="j-foot"><button class="btn btn-ghost btn-sm" data-cancel="' + j.id + '">Cancel &amp; refund escrow</button></div>' : "") +
         "</div>";
     }).join("");
   }
 
+  function lock(el, on) { if (el) { el.disabled = on; el.style.opacity = on ? ".6" : ""; } }
+
   document.addEventListener("click", (e) => {
     const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]"), cn = e.target.closest("[data-cancel]");
-    try {
-      if (ok) { W.reviewSub(ok.dataset.ok, true); FF.toast("Approved — USDT released to the worker.", "ok"); render(); }
-      else if (no) {
-        const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
-        W.reviewSub(no.dataset.no, false, reason); FF.toast("Submission rejected.", "info"); render();
-      } else if (cn) {
-        if (!window.confirm("Cancel this task and refund the unused escrow?")) return;
-        W.cancelJob(user.email, cn.dataset.cancel); FF.toast("Task cancelled — escrow refunded.", "ok"); render();
-      }
-    } catch (err) { FF.toast(err.message, "err"); }
+    if (ok) {
+      lock(ok, true);
+      A.reviewSub(ok.dataset.ok, true).then((f) => { FF.toast("Approved — USDT released to the worker.", "ok"); render(f); })
+        .catch((err) => { fail(err); lock(ok, false); });
+    } else if (no) {
+      const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
+      lock(no, true);
+      A.reviewSub(no.dataset.no, false, reason).then((f) => { FF.toast("Submission rejected.", "info"); render(f); })
+        .catch((err) => { fail(err); lock(no, false); });
+    } else if (cn) {
+      if (!window.confirm("Cancel this task and refund the unused escrow?")) return;
+      lock(cn, true);
+      A.cancelJob(cn.dataset.cancel).then((f) => { FF.toast("Task cancelled — escrow refunded.", "ok"); render(f); })
+        .catch((err) => { fail(err); lock(cn, false); });
+    }
   });
 
-  render();
+  A.feed().then(render).catch(fail);
 });
 </script>
 

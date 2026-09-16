@@ -134,33 +134,54 @@
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
   if (!user) return;
-  const W = FF.W, $ = (id) => document.getElementById(id);
-  $("j-cat").innerHTML = W.CATEGORIES.map((c) => '<option value="' + c.key + '">' + c.name + "</option>").join("");
-  $("j-fee-pct").textContent = W.CFG.platformFeePct;
+  const W = FF.W, A = W.api, $ = (id) => document.getElementById(id);
+
+  /* Categories, the platform fee and the minimum reward all come from the
+     server when it is configured, so changing them is a config change and
+     not a redeploy. */
+  let feePct = W.CFG.platformFeePct;
+
+  function fillCategories(cats) {
+    $("j-cat").innerHTML = cats.map((c) => '<option value="' + c.key + '">' + c.name + "</option>").join("");
+  }
+  fillCategories(W.CATEGORIES);
+  $("j-fee-pct").textContent = feePct;
 
   function calc() {
     const r = Number($("j-reward").value) || 0;
     const s = parseInt($("j-slots").value, 10) || 0;
     const budget = r * s;
-    const fee = Math.round(budget * W.CFG.platformFeePct) / 100;
+    const fee = Math.round(budget * feePct) / 100;
     $("j-s1").textContent = W.usd(budget);
     $("j-s2").textContent = W.usd(fee);
     $("j-s3").textContent = W.usd(budget + fee);
   }
   ["j-reward", "j-slots"].forEach((id) => $(id).addEventListener("input", calc));
 
+  A.feed().then((feed) => {
+    if (feed.categories && feed.categories.length) fillCategories(feed.categories);
+    feePct = feed.config.platformFeePct;
+    $("j-fee-pct").textContent = feePct;
+    calc();
+  }).catch(() => {});
+
   $("job-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    try {
-      W.postJob(user.email, user.name, {
-        title: $("j-title").value, category: $("j-cat").value, description: $("j-desc").value,
-        url: $("j-url").value, proofNote: $("j-proof").value,
-        reward: $("j-reward").value, slots: $("j-slots").value,
-      });
+    const btn = $("job-form").querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.style.opacity = ".6"; }
+    A.postJob({
+      title: $("j-title").value, category: $("j-cat").value, description: $("j-desc").value,
+      url: $("j-url").value, proofNote: $("j-proof").value,
+      reward: $("j-reward").value, slots: $("j-slots").value,
+    }).then(() => {
       FF.toast("Task published! Workers can start right away.", "ok");
       setTimeout(() => (window.location.href = "my-tasks.html"), 800);
-    } catch (err) { FF.toast(err.message, "err"); }
+    }).catch((err) => {
+      FF.toast(err.message, "err");
+      if (btn) { btn.disabled = false; btn.style.opacity = ""; }
+    });
   });
+
   calc();
 });
 </script>

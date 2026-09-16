@@ -203,18 +203,19 @@ document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
   if (!user) return;
 
-  /* USDT wallet + task marketplace summary */
+  /* USDT wallet + task marketplace summary (server-synced when configured) */
   if (FF.W) {
     const W = FF.W;
-    const mine = W.mySubs(user.email).filter((s) => s.status === "approved");
-    const jobs = W.myJobs(user.email);
-    const jobIds = jobs.map((j) => j.id);
-    const waiting = W.subs().filter((s) => s.status === "pending" && jobIds.indexOf(s.jobId) > -1);
-    document.getElementById("db-task-earn").textContent = W.usd(mine.reduce((n, s) => n + s.reward, 0));
-    document.getElementById("db-task-done").textContent = mine.length;
-    document.getElementById("db-jobs").textContent = jobs.filter((j) => j.status === "active").length;
-    document.getElementById("db-reviews").textContent = waiting.length;
     W.syncWalletPills();
+    W.api.wallet().catch(() => null);
+    W.api.feed().then((feed) => {
+      if (!feed) return;
+      const done = feed.mySubs.filter((s) => s.status === "approved");
+      document.getElementById("db-task-earn").textContent = W.usd(done.reduce((n, s) => n + s.reward, 0));
+      document.getElementById("db-task-done").textContent = done.length;
+      document.getElementById("db-jobs").textContent = feed.mine.filter((j) => j.status === "active").length;
+      document.getElementById("db-reviews").textContent = feed.inbox.length;
+    }).catch(() => {});
   }
 
   /* cloud mining summary (server-synced when Supabase is configured) */

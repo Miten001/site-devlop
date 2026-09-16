@@ -235,6 +235,7 @@
       tx(j.owner, "payout", -j.reward, 'Paid ' + s.workerName + ' for "' + j.title + '"', "completed", { jobId: j.id });
       tx(s.worker, "earning", j.reward, 'Task approved: "' + j.title + '"', "completed", { jobId: j.id });
       j.filled += 1;
+      j.escrow = Math.round(Math.max(0, (j.escrow || 0) - j.reward) * 10000) / 10000;
       if (j.filled >= j.slots) j.status = "completed";
       saveJobs(list);
     }
@@ -248,6 +249,7 @@
     if (j.status === "cancelled") throw new Error("Already cancelled");
     const remaining = Math.max(0, j.slots - j.filled) * j.reward;
     j.status = "cancelled";
+    j.escrow = 0;
     saveJobs(list);
     if (remaining > 0) {
       patchWallet(email, (acc) => { acc.locked -= remaining; acc.available += remaining; });
@@ -321,10 +323,250 @@
 
   const USDT_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5L1.2 8.1 12 22.5 22.8 8.1 12 1.5zm1.6 9.7v1.6c-.5.03-1.05.05-1.6.05s-1.1-.02-1.6-.05v-1.6c-2.6-.13-4.5-.66-4.5-1.3 0-.63 1.9-1.17 4.5-1.3v1.45c.5.03 1.03.05 1.6.05s1.1-.02 1.6-.05V8.6c2.6.13 4.5.67 4.5 1.3 0 .64-1.9 1.17-4.5 1.3zM12 12.1c3.2 0 5.9-.5 6.6-1.16v1.1c0 .74-2.95 1.34-6.6 1.34s-6.6-.6-6.6-1.34v-1.1c.7.66 3.4 1.16 6.6 1.16z"/></svg>';
 
+  /* ============================================================
+     SERVER LAYER
+     When Supabase is configured and the member holds a real Auth session,
+     the wallet, escrow and marketplace live in Postgres (supabase-wallet.sql).
+     Balances, fees and escrow releases are computed there inside a single
+     transaction, so editing localStorage changes nothing. Without a session
+     everything falls back to the browser simulation above, which keeps local
+     previews and demo accounts working.
+     ============================================================ */
+
+  let serverDown = false;   // set after an auth/offline failure
+  let lastWallet = null;    // last wallet_state payload
+  let lastFeed = null;      // last jobs_feed payload
+
+  function serverReady() {
+    return !!(FF.hasServer && FF.hasServer() && !serverDown);
+  }
+
+  /* Any RPC failure that is an auth/config problem drops us into local mode
+     for the rest of the session; a real validation error is re-thrown. */
+  function call(fn, args) {
+    return FF.rpc(fn, args).catch((err) => {
+      if (err && err.offline) { serverDown = true; throw Object.assign(err, { fellBack: true }); }
+      throw err;
+    });
+  }
+
+  function num(n) { return Number(n || 0); }
+
+  /* Server payload -> the shape the pages render, identical in both modes. */
+  function adoptWallet(payload) {
+    lastWallet = payload;
+    const cfg = payload.config || {};
+    const nets = payload.networks || [];
+    const view = {
+      mode: "server",
+      config: {
+        minDeposit: num(cfg.minDeposit) || CFG.minDeposit,
+        minWithdraw: num(cfg.minWithdraw) || CFG.minWithdraw,
+        withdrawFeePct: num(cfg.withdrawFeePct),
+        platformFeePct: num(cfg.platformFeePct),
+        minPointsConvert: num(cfg.minPointsConvert) || CFG.minPointsConvert,
+        minJobReward: num(cfg.minJobReward) || 0.02,
+        pointsPerUsdt: num(cfg.pointsPerUsdt) || CFG.pointsPerUsdt,
+      },
+      networks: nets.map((n) => ({
+        network: n.network, address: n.address, qr: n.qr, note: n.note,
+        deposit: n.deposit !== false, withdraw: n.withdraw !== false,
+      })),
+      categories: (payload.categories || []).map((c) => ({ key: c.key, name: c.name, color: c.color })),
+      wallet: {
+        available: num((payload.wallet || {}).available),
+        locked: num((payload.wallet || {}).locked),
+        points: num((payload.wallet || {}).points),
+        totalEarned: num((payload.wallet || {}).totalEarned),
+        totalDeposited: num((payload.wallet || {}).totalDeposited),
+        totalWithdrawn: num((payload.wallet || {}).totalWithdrawn),
+      },
+      txns: (payload.txns || []).map((t) => ({
+        id: t.id, type: t.type, amount: num(t.amount), note: t.note || "",
+        status: t.status, at: num(t.at),
+      })),
+      requests: (payload.requests || []).map((r) => ({
+        id: r.id, kind: r.kind, amount: num(r.amount), fee: num(r.fee), receive: num(r.receive),
+        network: r.network, address: r.address, txid: r.txid, status: r.status, at: num(r.at),
+      })),
+    };
+    paintPills(view.wallet);
+    return view;
+  }
+
+  function adoptFeed(payload) {
+    lastFeed = payload;
+    const cfg = payload.config || {};
+    const job = (j) => ({
+      id: j.id, title: j.title, category: j.category, description: j.description,
+      url: j.url || "", proofNote: j.proofNote || "", reward: num(j.reward),
+      slots: num(j.slots), filled: num(j.filled), escrow: num(j.escrow), fee: num(j.fee),
+      status: j.status || "active", ownerName: j.ownerName || "",
+      createdAt: num(j.createdAt),
+    });
+    const sub = (s) => ({
+      id: s.id, jobId: s.jobId, jobTitle: s.jobTitle, reward: num(s.reward),
+      proof: s.proof, note: s.note || "", reason: s.reason || "",
+      workerName: s.workerName || "", status: s.status, at: num(s.at),
+    });
+    return {
+      mode: "server",
+      config: {
+        platformFeePct: num(cfg.platformFeePct),
+        minJobReward: num(cfg.minJobReward) || 0.02,
+      },
+      categories: (payload.categories || []).map((c) => ({ key: c.key, name: c.name, color: c.color })),
+      open: (payload.open || []).map(job),
+      mine: (payload.mine || []).map(job),
+      mySubs: (payload.mySubs || []).map(sub),
+      inbox: (payload.inbox || []).map(sub),
+    };
+  }
+
+  /* Local equivalents of the two server payloads, same shape. */
+  function localWalletView(email) {
+    const w = wallet(email);
+    const user = FF.currentUser() || {};
+    return {
+      mode: "local",
+      config: {
+        minDeposit: CFG.minDeposit, minWithdraw: CFG.minWithdraw,
+        withdrawFeePct: CFG.withdrawFeePct, platformFeePct: CFG.platformFeePct,
+        minPointsConvert: CFG.minPointsConvert, minJobReward: 0.02,
+        pointsPerUsdt: CFG.pointsPerUsdt,
+      },
+      networks: CFG.networks.map((n) => ({
+        network: n, address: CFG.depositAddress[n], qr: CFG.depositQr[n],
+        note: CFG.networkNote[n],
+        deposit: true, withdraw: CFG.withdrawNetworks.indexOf(n) > -1,
+      })),
+      categories: CATEGORIES,
+      wallet: {
+        available: num(w.available), locked: num(w.locked), points: num(user.credits),
+        totalEarned: num(w.totalEarned), totalDeposited: num(w.totalDeposited),
+        totalWithdrawn: num(w.totalWithdrawn),
+      },
+      txns: (w.txns || []).slice(0, 60),
+      requests: myRequests(email),
+    };
+  }
+
+  function localFeedView(email) {
+    const name = (FF.currentUser() || {}).name;
+    const mine = myJobs(email);
+    const ids = mine.map((j) => j.id);
+    return {
+      mode: "local",
+      config: { platformFeePct: CFG.platformFeePct, minJobReward: 0.02 },
+      categories: CATEGORIES,
+      open: openJobs(email).map((j) => Object.assign({}, j, { ownerName: j.ownerName || name || "Member" })),
+      mine,
+      mySubs: mySubs(email),
+      inbox: subs().filter((s) => ids.indexOf(s.jobId) > -1 && s.status === "pending"),
+    };
+  }
+
+  function paintPills(w) {
+    document.querySelectorAll("[data-usdt]").forEach((el) => { el.textContent = num(w.available).toFixed(2); });
+    document.querySelectorAll("[data-usdt-locked]").forEach((el) => { el.textContent = num(w.locked).toFixed(2); });
+    document.querySelectorAll("[data-credits]").forEach((el) => { el.textContent = num(w.points).toLocaleString("en-IN"); });
+  }
+
+  /* Every mutation returns the fresh view, so pages just re-render. */
+  function remote(fn, args, localFn, kind) {
+    const u = FF.currentUser();
+    if (!u) return Promise.reject(new Error("Please log in"));
+    const fallback = () => (kind === "feed" ? localFeedView(u.email) : localWalletView(u.email));
+    const runLocal = () => Promise.resolve().then(() => { if (localFn) localFn(u); return fallback(); });
+    if (!serverReady()) return runLocal();
+    return call(fn, args)
+      .then((payload) => (kind === "feed" ? adoptFeed(payload) : adoptWallet(payload)))
+      .catch((err) => { if (err.fellBack) return runLocal(); throw err; });
+  }
+
+  const api = {
+    isServer() { return serverReady(); },
+
+    /* --- wallet --- */
+    wallet() { return remote("wallet_state", null, null, "wallet"); },
+
+    createDeposit(amount, network, txid) {
+      return remote("wallet_create_deposit",
+        { p_amount: Number(amount), p_network: network, p_txid: String(txid || "").trim() },
+        (u) => createDeposit(u.email, u.name, amount, network, txid), "wallet");
+    },
+
+    createWithdraw(amount, network, address) {
+      return remote("wallet_create_withdraw",
+        { p_amount: Number(amount), p_network: network, p_address: String(address || "").trim() },
+        (u) => createWithdraw(u.email, u.name, amount, network, address), "wallet");
+    },
+
+    convertPoints(points) {
+      return remote("wallet_convert_points", { p_points: parseInt(points, 10) },
+        (u) => convertPoints(u.email, points), "wallet");
+    },
+
+    /* --- marketplace --- */
+    feed() { return remote("jobs_feed", null, null, "feed"); },
+
+    postJob(data) {
+      return remote("jobs_post", {
+        p_title: data.title, p_category: data.category, p_description: data.description,
+        p_url: data.url || "", p_proof_note: data.proofNote || "",
+        p_reward: Number(data.reward), p_slots: parseInt(data.slots, 10),
+      }, (u) => postJob(u.email, u.name, data), "feed");
+    },
+
+    submitProof(jobId, proof, note) {
+      return remote("jobs_submit_proof", { p_job: jobId, p_proof: proof, p_note: note || "" },
+        (u) => submitProof(u.email, u.name, jobId, proof, note), "feed");
+    },
+
+    reviewSub(subId, approve, reason) {
+      return remote("jobs_review", { p_sub: subId, p_approve: !!approve, p_reason: reason || "" },
+        () => reviewSub(subId, approve, reason), "feed");
+    },
+
+    cancelJob(jobId) {
+      return remote("jobs_cancel", { p_job: jobId }, (u) => cancelJob(u.email, jobId), "feed");
+    },
+
+    /* --- admin --- */
+    adminQueue() {
+      if (!serverReady()) return Promise.resolve(null);
+      return call("wallet_admin_queue").catch((err) => { if (err.fellBack) return null; throw err; });
+    },
+
+    adminSettle(id, approve, note) {
+      if (!serverReady()) return Promise.resolve().then(() => { settleRequest(id, approve); return null; });
+      return call("wallet_admin_settle", { p_request: id, p_approve: !!approve, p_note: note || "" })
+        .catch((err) => { if (err.fellBack) { settleRequest(id, approve); return null; } throw err; });
+    },
+
+    adminReviewSub(subId, approve, reason) {
+      if (!serverReady()) return Promise.resolve().then(() => { reviewSub(subId, approve, reason); return null; });
+      return call("jobs_admin_review", { p_sub: subId, p_approve: !!approve, p_reason: reason || "" })
+        .catch((err) => { if (err.fellBack) { reviewSub(subId, approve, reason); return null; } throw err; });
+    },
+
+    adminCancelJob(jobId) {
+      if (!serverReady()) return Promise.resolve().then(() => { adminCancelJob(jobId); return null; });
+      return call("jobs_admin_cancel", { p_job: jobId })
+        .catch((err) => { if (err.fellBack) { adminCancelJob(jobId); return null; } throw err; });
+    },
+
+    /* Cached payloads, for pages that want them without a round trip. */
+    cached() { return { wallet: lastWallet, feed: lastFeed }; },
+  };
+
   document.addEventListener("DOMContentLoaded", () => {
     purgeDemoData();
     document.querySelectorAll("[data-usdt-icon]").forEach((el) => (el.innerHTML = USDT_SVG));
     syncWalletPills();
+    /* In server mode the header chips must show the server balance, not the
+       stale localStorage one. Harmless no-op when there is no session. */
+    if (serverReady()) api.wallet().catch(() => {});
   });
 
   FF.W = {
@@ -335,5 +577,6 @@
     subs, jobSubs, mySubs, submitProof, reviewSub,
     adminCancelJob, adminSetJobStatus,
     convertPoints, syncWalletPills, purgeDemoData, USDT_SVG,
+    api, serverReady,
   };
 })();

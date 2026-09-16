@@ -214,10 +214,35 @@ document.addEventListener("DOMContentLoaded", () => {
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
   const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
-  function render() {
+  /* Payments, escrow and the marketplace are server-authoritative when
+     Supabase is configured; the admin queue RPC returns everything at once.
+     Without a session we fall back to the browser ledger. */
+  let queue = null;
+
+  function localQueue() {
     const all = W.requests();
-    const pending = all.filter((r) => r.status === "pending");
-    const settled = all.filter((r) => r.status !== "pending");
+    const subs = W.subs().filter((x) => x.status === "pending");
+    const jobs = W.jobs();
+    return {
+      pending: all.filter((r) => r.status === "pending"),
+      history: all.filter((r) => r.status !== "pending"),
+      jobs: jobs.map((j) => Object.assign({}, j, { email: j.owner, createdAt: j.createdAt })),
+      subs: subs,
+      totals: { escrow: jobs.filter((j) => j.status === "active").reduce((n, j) => n + Math.max(0, j.slots - j.filled) * j.reward, 0) },
+    };
+  }
+
+  function loadQueue() {
+    return W.api.adminQueue().then((q) => q || localQueue()).catch((err) => {
+      FF.toast(err.message, "err");
+      return localQueue();
+    });
+  }
+
+  function render(q) {
+    queue = q || queue || localQueue();
+    const pending = queue.pending || [];
+    const settled = queue.history || [];
     const deps = pending.filter((r) => r.kind === "deposit");
     const wds = pending.filter((r) => r.kind === "withdraw");
     $("a-dep").textContent = deps.length;
@@ -236,18 +261,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $("a-history").innerHTML = settled.map((r) => (
       "<tr><td>" + fdate(r.settledAt || r.at) + "</td><td>" + esc(r.email) + "</td><td>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") +
-      '</td><td class="num">' + W.usd(r.amount) + '</td><td><span class="badge ' + r.status + '">' + r.status + "</span></td></tr>"
+      '</td><td class="num">' + W.usd(r.amount) + '</td><td><span class="badge ' + esc(r.status) + '">' + esc(r.status) + "</span></td></tr>"
     )).join("");
+
+    renderMarket();
   }
+
+  function lock(el, on) { if (el) { el.disabled = on; el.style.opacity = on ? ".6" : ""; } }
 
   document.addEventListener("click", (e) => {
     const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]");
     if (!ok && !no) return;
-    try {
-      W.settleRequest((ok || no).dataset[ok ? "ok" : "no"], Boolean(ok));
-      FF.toast(ok ? "Request approved." : "Request rejected and refunded.", ok ? "ok" : "info");
-      render();
-    } catch (err) { FF.toast(err.message, "err"); }
+    const btn = ok || no;
+    const id = btn.dataset[ok ? "ok" : "no"];
+    const note = ok ? "" : (window.prompt("Reason for rejecting (optional):") || "");
+    lock(btn, true);
+    W.api.adminSettle(id, Boolean(ok), note)
+      .then((q) => q || loadQueue())
+      .then((q) => {
+        FF.toast(ok ? "Request approved." : "Request rejected and refunded.", ok ? "ok" : "info");
+        render(q);
+      })
+      .catch((err) => { FF.toast(err.message, "err"); lock(btn, false); });
   });
 
   /* ---------- tabs ---------- */
@@ -377,29 +412,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- USDT marketplace tasks (Post a Task) ---------- */
   function renderMarket() {
-    const jobs = W.jobs();
-    const subs = W.subs();
-    const pending = subs.filter((s) => s.status === "pending");
+    const jobs = (queue && queue.jobs) || [];
+    const pending = (queue && queue.subs) || [];
     $("j-total").textContent = jobs.length;
     $("j-active").textContent = jobs.filter((j) => j.status === "active").length;
     $("j-pending").textContent = pending.length;
-    $("j-escrow").textContent = W.usd(jobs.filter((j) => j.status === "active").reduce((n, j) => n + Math.max(0, j.slots - j.filled) * j.reward, 0));
+    $("j-escrow").textContent = W.usd((queue && queue.totals && queue.totals.escrow) ||
+      jobs.filter((j) => j.status === "active").reduce((n, j) => n + (j.escrow || 0), 0));
 
     $("j-empty").classList.toggle("hidden", jobs.length > 0);
     $("j-body").innerHTML = jobs.map((j) => {
       const c = W.category(j.category);
-      return "<tr><td>" + fdate(j.createdAt) + "</td><td>" + esc(j.owner) + "</td><td><b>" + esc(j.title) + "</b></td>" +
+      return "<tr><td>" + fdate(j.createdAt) + "</td><td>" + esc(j.email || j.owner) + "</td><td><b>" + esc(j.title) + "</b></td>" +
         "<td>" + esc(c.name) + "</td><td class=\"num\">" + W.usd(j.reward) + "</td><td>" + j.filled + " / " + j.slots + "</td>" +
-        '<td><span class="badge ' + j.status + '">' + j.status + "</span></td>" +
+        '<td><span class="badge ' + esc(j.status) + '">' + esc(j.status) + "</span></td>" +
         '<td style="white-space:nowrap">' + (j.status === "active" ? '<button class="btn btn-ghost btn-sm danger" data-job-cancel="' + j.id + '">Cancel &amp; refund</button>' : "—") + "</td></tr>";
     }).join("");
 
     $("js-empty").classList.toggle("hidden", pending.length > 0);
-    $("js-body").innerHTML = pending.map((s) => (
-      "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.workerName) + "</b></td><td>" + esc(s.jobTitle) + "</td>" +
-      '<td><span class="mono-cut" title="' + esc(s.proof) + '">' + esc(s.proof) + "</span>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s.note) + "</span>" : "") + "</td>" +
-      '<td class="num pos">' + W.usd(s.reward) + "</td>" +
-      '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-js-ok="' + s.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-js-no="' + s.id + '">Reject</button></td></tr>'
+    $("js-body").innerHTML = pending.map((s2) => (
+      "<tr><td>" + fdate(s2.at) + "</td><td><b>" + esc(s2.workerName) + "</b></td><td>" + esc(s2.jobTitle) + "</td>" +
+      '<td><span class="mono-cut" title="' + esc(s2.proof) + '">' + esc(s2.proof) + "</span>" + (s2.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s2.note) + "</span>" : "") + "</td>" +
+      '<td class="num pos">' + W.usd(s2.reward) + "</td>" +
+      '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-js-ok="' + s2.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-js-no="' + s2.id + '">Reject</button></td></tr>'
     )).join("");
   }
 
@@ -407,28 +442,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const cancel = e.target.closest("[data-job-cancel]");
     const jsOk = e.target.closest("[data-js-ok]");
     const jsNo = e.target.closest("[data-js-no]");
-    try {
-      if (cancel) {
-        if (!window.confirm("Cancel this task and refund the unused escrow?")) return;
-        W.adminCancelJob(cancel.dataset.jobCancel);
-        FF.toast("Task cancelled — escrow refunded.", "ok");
-        renderMarket();
-      } else if (jsOk) {
-        W.reviewSub(jsOk.dataset.jsOk, true);
-        FF.toast("Approved — USDT released to the worker.", "ok");
-        renderMarket();
-      } else if (jsNo) {
-        const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
-        W.reviewSub(jsNo.dataset.jsNo, false, reason);
-        FF.toast("Submission rejected.", "info");
-        renderMarket();
-      }
-    } catch (err) { FF.toast(err.message, "err"); }
+    if (!cancel && !jsOk && !jsNo) return;
+    const btn = cancel || jsOk || jsNo;
+    let work, msg, kind;
+    if (cancel) {
+      if (!window.confirm("Cancel this task and refund the unused escrow?")) return;
+      work = W.api.adminCancelJob(cancel.dataset.jobCancel);
+      msg = "Task cancelled — escrow refunded."; kind = "ok";
+    } else if (jsOk) {
+      work = W.api.adminReviewSub(jsOk.dataset.jsOk, true, "");
+      msg = "Approved — USDT released to the worker."; kind = "ok";
+    } else {
+      const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
+      work = W.api.adminReviewSub(jsNo.dataset.jsNo, false, reason);
+      msg = "Submission rejected."; kind = "info";
+    }
+    lock(btn, true);
+    work.then((q) => q || loadQueue()).then((q) => { FF.toast(msg, kind); render(q); })
+      .catch((err) => { FF.toast(err.message, "err"); lock(btn, false); });
   });
 
-  render();
+  loadQueue().then(render);
   renderCampaigns();
-  renderMarket();
 });
 </script>
 
