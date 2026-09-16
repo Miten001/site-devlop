@@ -18,6 +18,7 @@
   <div class="container bar">
     <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
     <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="earn.html">Earn Points</a></li>
       <li><a href="add.html" class="active">Add Page</a></li>
@@ -31,10 +32,11 @@
 </header>
 
 <nav class="mobile-nav">
+  <a href="index.html">Home</a>
   <a href="dashboard.html">Dashboard</a>
   <a href="earn.html">Earn Points</a>
-  <a href="add.html">Add Page</a>
-  <a href="index.html" data-logout>Logout</a>
+  <a href="add.html" class="active">Add Page</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
 </nav>
 
 <main class="app-main">
@@ -43,7 +45,7 @@
       <div style="width:100%">
         <span class="eyebrow"><span class="dot"></span> Promote</span>
         <h1>Add your <span class="grad-text-cool">page</span></h1>
-        <p class="sub" style="max-width:560px;margin-left:auto;margin-right:auto">Telegram channel/bot, YouTube, Instagram, website visits — whatever you want to grow, build a campaign here. The community gives you engagements, you just pay points.</p>
+        <p class="sub" style="max-width:580px;margin-left:auto;margin-right:auto">Telegram channel/bot, YouTube, Instagram, website visits — create your campaign here. The community completes engagements, you pay points.</p>
       </div>
     </div>
 
@@ -124,15 +126,26 @@ document.addEventListener("DOMContentLoaded", () => {
     </button>`).join("");
 
   function refreshActions() {
-    const p = FF.PLATFORMS[selected];
+    const p = FF.PLATFORMS[selected] || { actions: ["Visit"], name: selected };
     actionSelect.innerHTML = p.actions.map((a) => `<option value="${a}">${a}</option>`).join("");
-    urlInput.placeholder = { telegram: "https://t.me/yourchannel-or-bot", youtube: "https://youtube.com/@yourchannel", instagram: "https://instagram.com/yourpage", x: "https://x.com/yourhandle", tiktok: "https://tiktok.com/@yourhandle", facebook: "https://facebook.com/yourpage", twitch: "https://twitch.tv/yourchannel", pinterest: "https://pinterest.com/yourboard", website: "https://yourwebsite.com/landing-page" }[selected];
+    urlInput.placeholder = {
+      telegram: "https://t.me/yourchannel-or-bot",
+      youtube: "https://youtube.com/@yourchannel",
+      instagram: "https://instagram.com/yourpage",
+      x: "https://x.com/yourhandle",
+      tiktok: "https://tiktok.com/@yourhandle",
+      facebook: "https://facebook.com/yourpage",
+      twitch: "https://twitch.tv/yourchannel",
+      pinterest: "https://pinterest.com/yourboard",
+      website: "https://yourwebsite.com/landing-page"
+    }[selected] || "https://example.com";
     refreshEst();
   }
 
   function refreshEst() {
     const payout = parseInt(payoutSlider.value, 10);
-    const credits = user ? (FF.currentUser().credits || 0) : 0;
+    const u = FF.currentUser();
+    const credits = u ? (u.credits || 0) : 0;
     payoutOut.textContent = payout + " pts";
     const min = parseInt(payoutSlider.min, 10);
     const max = parseInt(payoutSlider.max, 10);
@@ -156,20 +169,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const p = FF.PLATFORMS[selected];
+    const p = FF.PLATFORMS[selected] || { name: selected };
     const url = urlInput.value.trim();
     const title = document.getElementById("camp-title").value.trim();
     const payout = parseInt(payoutSlider.value, 10);
     const action = actionSelect.value;
+    const u = FF.currentUser();
 
     if (!/^https?:\/\/.+\..+/.test(url)) return FF.toast("Please enter a valid URL (https://...)", "err");
     if (selected === "telegram" && !/t\.me\//i.test(url)) return FF.toast("Telegram link must be in the t.me/ format", "err");
     if (selected === "youtube" && !/(youtube\.com|youtu\.be)/i.test(url)) return FF.toast("That doesn't look like a YouTube link", "err");
     if (selected === "instagram" && !/instagram\.com/i.test(url)) return FF.toast("Please check the Instagram URL", "err");
     if (title.length < 3) return FF.toast("Title must be at least 3 characters", "err");
-    if ((FF.currentUser().credits || 0) < payout) return FF.toast("Not enough points — earn some on the Earn page first!", "err");
+    if ((u.credits || 0) < payout) return FF.toast("Not enough points — earn some on the Earn page first!", "err");
 
-    const u = FF.currentUser();
     const camp = {
       id: "m" + Date.now(),
       platform: selected,
@@ -182,7 +195,23 @@ document.addEventListener("DOMContentLoaded", () => {
       spent: 0,
       created: Date.now(),
     };
+
     FF.updateUser(u.email, { campaigns: [camp].concat(u.campaigns || []) });
+    if (FF.addCampaign) {
+      FF.addCampaign({
+        id: camp.id,
+        platform: camp.platform,
+        action: camp.action,
+        user: u.name,
+        title: camp.title,
+        url: camp.url,
+        payout: camp.payout,
+        mine: true,
+        active: true,
+        authorEmail: u.email,
+      });
+    }
+
     if (window.FFA) {
       FFA.track("campaign_created", {
         campaignId: String(camp.id),
@@ -194,6 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       FFA.saveCampaign(camp);
     }
+
     FF.toast(p.name + " campaign is live! 🚀", "ok");
     setTimeout(() => (window.location.href = "dashboard.html"), 900);
   });

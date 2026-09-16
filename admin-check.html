@@ -31,6 +31,11 @@
   .verdict.ok  { background: rgba(52,229,165,.1);  border: 1px solid rgba(52,229,165,.4); }
   .verdict.bad { background: rgba(255,93,110,.08); border: 1px solid rgba(255,93,110,.35); }
   a { color: #c4a8ff; }
+  @media (max-width: 480px) {
+    body { padding: 20px 14px; }
+    .row { flex-direction: column; }
+    input, button { width: 100%; min-width: 0; }
+  }
 </style>
 </head>
 <body>

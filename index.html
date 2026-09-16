@@ -30,7 +30,7 @@
     <div class="head-actions">
       <a href="login.html" class="btn btn-ghost btn-sm" data-guest-only>Login</a>
       <a href="signup.html" class="btn btn-primary btn-sm always" data-guest-only>Join Free</a>
-      <a href="earn.html" class="credit-chip btn-sm hidden" data-user-only style="padding:9px 16px"><span data-coin></span><span data-credits>0</span></a>
+      <a href="earn.html" class="credit-chip btn-sm hidden" data-user-only style="padding:8px 14px"><span data-coin></span><span data-credits>0</span></a>
       <a href="dashboard.html" class="btn btn-primary btn-sm always hidden" data-user-only>Dashboard</a>
       <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
     </div>
@@ -38,20 +38,23 @@
 </header>
 
 <nav class="mobile-nav">
-  <a href="index.html">Home</a>
+  <a href="index.html" class="active">Home</a>
   <a href="index.html#platforms">Platforms</a>
-  <a href="earn.html">Earn Points</a>
-  <a href="add.html">Add Page</a>
-  <a href="dashboard.html">Dashboard</a>
-  <a href="login.html">Login</a>
-  <a href="signup.html">Join Free</a>
+  <a href="index.html#how">How it Works</a>
+  <a href="index.html#pricing">Pricing</a>
+  <a href="earn.html" data-user-only class="hidden">Earn Points</a>
+  <a href="add.html" data-user-only class="hidden">Add Page</a>
+  <a href="dashboard.html" data-user-only class="hidden">Dashboard</a>
+  <a href="login.html" data-guest-only>Login</a>
+  <a href="signup.html" data-guest-only class="btn btn-primary btn-sm" style="margin-top:10px">Join Free</a>
+  <a href="#" data-user-only data-logout class="hidden" style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
 </nav>
 
 <!-- ================= HERO ================= -->
 <section class="hero">
   <div class="container hero-grid">
     <div>
-      <span class="eyebrow"><span class="dot"></span> 100% Free Social Exchange · Telegram Bot + Website Visits</span>
+      <span class="eyebrow"><span class="dot"></span> 100% Free Social Exchange · Real Community Growth</span>
       <h1>Grow your <span class="grad-text">Fam</span>.<br />Exchange. Earn. <span class="grad-text-cool">Flex.</span></h1>
       <p class="sub">FlexFam is a free social exchange hub — earn points by starting Telegram bots, visiting websites, joining Telegram channels, subscribing on YouTube, following on Instagram &amp; more. Then use those points to promote your pages. Real engagement, real growth.</p>
       <div class="hero-cta">
@@ -62,7 +65,7 @@
         <div class="avatars"><span style="background:#7c3aed;color:#fff">AS</span><span style="background:#e0489f;color:#fff">NV</span><span style="background:#22d3ee">UB</span><span style="background:#ff8a3d;color:#fff">KC</span></div>
         <p><b>48,000+ creators</b> already flexing with FlexFam</p>
       </div>
-      <div class="live-ticker"><span class="pulse"></span><span id="ticker-text"></span></div>
+      <div class="live-ticker"><span class="pulse"></span><span id="ticker-text"><b>@aaravshots</b> started <b>FlexFam Rewards Bot (@sub_for_sub_bot)</b> on Telegram &amp; earned <b>+15</b> points</span></div>
     </div>
 
     <div class="hero-visual">
@@ -122,15 +125,15 @@
   <div class="container">
     <div class="marquee-wrap">
       <div class="marquee" id="marquee">
-        <span class="m-item" style="color:#ff3355" data-icon="youtube"></span><span class="m-item">YouTube</span>
-        <span class="m-item" style="color:#2aabee" data-icon="telegram"></span><span class="m-item">Telegram</span>
-        <span class="m-item" style="color:#e1306c" data-icon="instagram"></span><span class="m-item">Instagram</span>
-        <span class="m-item" style="color:#25f4ee" data-icon="tiktok"></span><span class="m-item">TikTok</span>
-        <span class="m-item" style="color:#e7e9ea" data-icon="x"></span><span class="m-item">X / Twitter</span>
-        <span class="m-item" style="color:#1877f2" data-icon="facebook"></span><span class="m-item">Facebook</span>
-        <span class="m-item" style="color:#a970ff" data-icon="twitch"></span><span class="m-item">Twitch</span>
-        <span class="m-item" style="color:#ff4f6d" data-icon="pinterest"></span><span class="m-item">Pinterest</span>
-        <span class="m-item" style="color:#34e5a5" data-icon="website"></span><span class="m-item">Website Visits</span>
+        <div class="m-item" style="--pf:#ff3355"><span class="m-ico" data-icon="youtube"></span><span>YouTube</span></div>
+        <div class="m-item" style="--pf:#2aabee"><span class="m-ico" data-icon="telegram"></span><span>Telegram</span></div>
+        <div class="m-item" style="--pf:#e1306c"><span class="m-ico" data-icon="instagram"></span><span>Instagram</span></div>
+        <div class="m-item" style="--pf:#25f4ee"><span class="m-ico" data-icon="tiktok"></span><span>TikTok</span></div>
+        <div class="m-item" style="--pf:#e7e9ea"><span class="m-ico" data-icon="x"></span><span>X / Twitter</span></div>
+        <div class="m-item" style="--pf:#1877f2"><span class="m-ico" data-icon="facebook"></span><span>Facebook</span></div>
+        <div class="m-item" style="--pf:#a970ff"><span class="m-ico" data-icon="twitch"></span><span>Twitch</span></div>
+        <div class="m-item" style="--pf:#ff4f6d"><span class="m-ico" data-icon="pinterest"></span><span>Pinterest</span></div>
+        <div class="m-item" style="--pf:#34e5a5"><span class="m-ico" data-icon="website"></span><span>Website Visits</span></div>
       </div>
     </div>
   </div>
@@ -171,32 +174,32 @@
         <h3>Instagram</h3>
         <p>Followers, post likes and reel views — all powered by points. Aesthetic grid, real reach.</p>
       </div>
-      <div class="pf-card reveal" style="--pf:#25f4ee" data-delay="3">
+      <div class="pf-card reveal" style="--pf:#25f4ee" data-delay="1">
         <span class="ico" style="--pf:#25f4ee" data-icon="tiktok"></span>
         <h3>TikTok</h3>
         <p>No shortcut to going viral, but flex for sure — grow your followers and video likes.</p>
       </div>
-      <div class="pf-card reveal" style="--pf:#e7e9ea">
+      <div class="pf-card reveal" style="--pf:#e7e9ea" data-delay="2">
         <span class="ico" style="--pf:#e7e9ea" data-icon="x"></span>
         <h3>X (Twitter)</h3>
         <p>Followers, reposts and likes. Make your tweets the king of the timeline.</p>
       </div>
-      <div class="pf-card reveal" style="--pf:#1877f2" data-delay="1">
+      <div class="pf-card reveal" style="--pf:#1877f2" data-delay="3">
         <span class="ico" style="--pf:#1877f2" data-icon="facebook"></span>
         <h3>Facebook</h3>
         <p>Exchange page likes and followers. The perfect boost for business pages.</p>
       </div>
-      <div class="pf-card reveal" style="--pf:#a970ff" data-delay="2">
+      <div class="pf-card reveal" style="--pf:#a970ff" data-delay="1">
         <span class="ico" style="--pf:#a970ff" data-icon="twitch"></span>
         <h3>Twitch</h3>
         <p>Grow your stream followers and unlock the affiliate milestone faster.</p>
       </div>
-      <div class="pf-card reveal" style="--pf:#ff4f6d" data-delay="3">
+      <div class="pf-card reveal" style="--pf:#ff4f6d" data-delay="2">
         <span class="ico" style="--pf:#ff4f6d" data-icon="pinterest"></span>
         <h3>Pinterest</h3>
         <p>Followers and pin saves — a new engine of organic reach for your boards.</p>
       </div>
-      <div class="pf-card reveal" style="--pf:#34e5a5">
+      <div class="pf-card reveal" style="--pf:#34e5a5" data-delay="3">
         <span class="tag" style="background:rgba(52,229,165,.16);color:#9ff6d4;border-color:rgba(52,229,165,.3)">Bonus</span>
         <span class="ico" style="--pf:#34e5a5" data-icon="website"></span>
         <h3>Website Visits</h3>
@@ -309,7 +312,7 @@
             <span class="status-pill off">Paused</span>
           </div>
         </div>
-        <div class="mt-24 est-box" style="grid-template-columns:repeat(3,1fr)">
+        <div class="mt-24 est-box">
           <div class="est"><b class="grad-text">1,235</b><span>Total actions</span></div>
           <div class="est"><b class="grad-text">7,430</b><span>Points spent</span></div>
           <div class="est"><b class="grad-text">3.2x</b><span>Avg. reach boost</span></div>
@@ -325,13 +328,15 @@
     <span class="eyebrow"><span class="dot"></span> Fam speaks</span>
     <h2>Creators <span class="grad-text">love the flex.</span></h2>
   </div>
-  <div class="testi-row" id="testi-row">
-    <div class="t-card"><p>"FlexFam took my Telegram channel from 200 to 4,000 members — and I didn't spend a single rupee. Earning points is honestly addictive."</p><div class="t-user"><span class="av" style="background:#2aabee;color:#04141c">RS</span><div><h5>Rohan Sharma</h5><span>@techguru · YouTuber</span></div></div></div>
-    <div class="t-card"><p>"I switched from YouLikeHits and never looked back. The interface feels premium and Telegram support is a game-changer."</p><div class="t-user"><span class="av" style="background:#e0489f;color:#fff">NV</span><div><h5>Neha Verma</h5><span>@nehavlogs · Vlogger</span></div></div></div>
-    <div class="t-card"><p>"Payout rates are fair and tasks are endless. I earn points while riding the metro in my free time. 10/10 recommend."</p><div class="t-user"><span class="av" style="background:#7c3aed;color:#fff">AR</span><div><h5>Arjun Rathi</h5><span>@gamelordyt · Streamer</span></div></div></div>
-    <div class="t-card"><p>"Growing a Telegram community organically is so slow. FlexFam gave my group 1K+ members in 3 weeks. I'm a fan for life."</p><div class="t-user"><span class="av" style="background:#34e5a5;color:#04140c">SI</span><div><h5>Simran Iyer</h5><span>@fitwithsimran · Coach</span></div></div></div>
-    <div class="t-card"><p>"The dashboard is so clean it feels like a SaaS product, not an exchange site. I've earned 2,300 bonus points from the referral system."</p><div class="t-user"><span class="av" style="background:#ff8a3d;color:#1a0d03">KC</span><div><h5>Kavya Chauhan</h5><span>@kavyacreates · Artist</span></div></div></div>
-    <div class="t-card"><p>"9 earning modes in one place, real users, zero fake followers. My Instagram engagement rate actually improved. FlexFam is the real deal."</p><div class="t-user"><span class="av" style="background:#22d3ee;color:#04141c">DM</span><div><h5>Dev Mehta</h5><span>@melodymaya · Musician</span></div></div></div>
+  <div class="container">
+    <div class="testi-row" id="testi-row">
+      <div class="t-card reveal"><p>"FlexFam took my Telegram channel from 200 to 4,000 members — and I didn't spend a single rupee. Earning points is honestly addictive."</p><div class="t-user"><span class="av" style="background:#2aabee;color:#04141c">RS</span><div><h5>Rohan Sharma</h5><span>@techguru · YouTuber</span></div></div></div>
+      <div class="t-card reveal" data-delay="1"><p>"I switched from YouLikeHits and never looked back. The interface feels premium and Telegram support is a game-changer."</p><div class="t-user"><span class="av" style="background:#e0489f;color:#fff">NV</span><div><h5>Neha Verma</h5><span>@nehavlogs · Vlogger</span></div></div></div>
+      <div class="t-card reveal" data-delay="2"><p>"Payout rates are fair and tasks are endless. I earn points while riding the metro in my free time. 10/10 recommend."</p><div class="t-user"><span class="av" style="background:#7c3aed;color:#fff">AR</span><div><h5>Arjun Rathi</h5><span>@gamelordyt · Streamer</span></div></div></div>
+      <div class="t-card reveal"><p>"Growing a Telegram community organically is so slow. FlexFam gave my group 1K+ members in 3 weeks. I'm a fan for life."</p><div class="t-user"><span class="av" style="background:#34e5a5;color:#04140c">SI</span><div><h5>Simran Iyer</h5><span>@fitwithsimran · Coach</span></div></div></div>
+      <div class="t-card reveal" data-delay="1"><p>"The dashboard is so clean it feels like a SaaS product, not an exchange site. I've earned 2,300 bonus points from the referral system."</p><div class="t-user"><span class="av" style="background:#ff8a3d;color:#1a0d03">KC</span><div><h5>Kavya Chauhan</h5><span>@kavyacreates · Artist</span></div></div></div>
+      <div class="t-card reveal" data-delay="2"><p>"9 earning modes in one place, real users, zero fake followers. My Instagram engagement rate actually improved. FlexFam is the real deal."</p><div class="t-user"><span class="av" style="background:#22d3ee;color:#04141c">DM</span><div><h5>Dev Mehta</h5><span>@melodymaya · Musician</span></div></div></div>
+    </div>
   </div>
 </section>
 
@@ -350,7 +355,7 @@
         <p class="desc">All core exchange features, unlimited earning.</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Unlimited point earning</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> All 9 platforms incl. Telegram bot & website visits</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> All 9 platforms supported</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> 3 active campaigns</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg> Community support</li>
         </ul>
@@ -456,12 +461,13 @@
 <script src="assets/js/ff-analytics.js"></script>
 <script src="assets/js/main.js"></script>
 <script>
-  // duplicate marquee + testimonials content for seamless loop
+  // duplicate marquee content for seamless horizontal loop
   document.addEventListener("DOMContentLoaded", () => {
     const m = document.getElementById("marquee");
-    if (m) m.innerHTML += m.innerHTML;
-    const t = document.getElementById("testi-row");
-    if (t) t.innerHTML += t.innerHTML;
+    if (m && !m.dataset.duplicated) {
+      m.innerHTML += m.innerHTML;
+      m.dataset.duplicated = "true";
+    }
   });
 </script>
 </body>

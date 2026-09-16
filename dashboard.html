@@ -18,6 +18,7 @@
   <div class="container bar">
     <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
     <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
       <li><a href="dashboard.html" class="active">Dashboard</a></li>
       <li><a href="earn.html">Earn Points</a></li>
       <li><a href="add.html">Add Page</a></li>
@@ -31,10 +32,11 @@
 </header>
 
 <nav class="mobile-nav">
-  <a href="dashboard.html">Dashboard</a>
+  <a href="index.html">Home</a>
+  <a href="dashboard.html" class="active">Dashboard</a>
   <a href="earn.html">Earn Points</a>
   <a href="add.html">Add Page</a>
-  <a href="index.html" data-logout>Logout</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
 </nav>
 
 <main class="app-main">
@@ -44,7 +46,8 @@
       <a href="dashboard.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
       <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
       <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Add Page</a>
-      <a href="index.html" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Back to Site</a>
+      <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
     </aside>
 
     <section>
@@ -52,7 +55,7 @@
         <div>
           <span class="eyebrow"><span class="dot"></span> Overview</span>
           <h1>Yo, <span class="grad-text" id="hello-name">Flexer</span> 👋</h1>
-          <p class="sub">Your fam's numbers, at a glance.</p>
+          <p class="sub">Your fam's numbers and campaign stats, at a glance.</p>
         </div>
         <a href="add.html" class="btn btn-primary btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New Campaign</a>
       </div>
@@ -88,7 +91,7 @@
             <div class="empty-state hidden" id="camp-empty">
               <span class="big-ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span>
               <h3>No campaigns yet</h3>
-              <p>Add your first page — Telegram channel, YouTube, anything. Growth starts in 5 minutes.</p>
+              <p>Add your first page — Telegram channel, YouTube, Instagram, website. Growth starts right away.</p>
               <a href="add.html" class="btn btn-primary btn-sm mt-16">Add Your First Page</a>
             </div>
           </div>
@@ -102,7 +105,7 @@
         <div>
           <div class="panel reveal">
             <div class="panel-head"><h3>Refer &amp; earn</h3></div>
-            <p class="text-mute" style="font-size:13.5px">When a friend joins FlexFam, you get <b style="color:var(--green)">10% of their earnings for life</b> — automatically.</p>
+            <p class="text-mute" style="font-size:13.5px;line-height:1.5">When a friend joins FlexFam, you get <b style="color:var(--green)">10% of their earnings for life</b> — automatically.</p>
             <div class="ref-box">
               <code id="ref-link">flexfam.io/r/—</code>
               <button class="btn btn-primary btn-sm" id="copy-ref">Copy</button>
@@ -110,16 +113,16 @@
           </div>
 
           <div class="panel reveal mt-16">
-            <div class="panel-head"><h3>New earning modes</h3><a href="earn.html">Try now</a></div>
+            <div class="panel-head"><h3>Quick earning modes</h3><a href="earn.html">Try now</a></div>
             <div class="mode-list">
               <a class="mode-row" href="earn.html" style="--pf:#2aabee">
                 <span class="mode-ico" data-icon="telegram"></span>
-                <div><h5>Telegram Bot Start</h5><p>Bot ko start karke one-time bonus points claim karo.</p></div>
+                <div><h5>Telegram Bot Start</h5><p>Bot start karke one-time bonus claim karo.</p></div>
                 <b>+15</b>
               </a>
               <a class="mode-row" href="earn.html" style="--pf:#34e5a5">
                 <span class="mode-ico" data-icon="website"></span>
-                <div><h5>Website Visit</h5><p>Website open karo, timer complete karo aur points lo.</p></div>
+                <div><h5>Website Visit</h5><p>Website visit karke instant points grab karo.</p></div>
                 <b>+6</b>
               </a>
               <a class="mode-row" href="earn.html" style="--pf:#ffd166">
@@ -149,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
   if (!user) return;
 
-  const first = user.name.split(" ")[0];
+  const first = (user.name || "Flexer").split(" ")[0];
   document.getElementById("hello-name").textContent = first;
 
   /* stats */
@@ -171,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const camps = user.campaigns || [];
     campEmpty.classList.toggle("hidden", camps.length > 0);
     campList.innerHTML = camps.map((c) => {
-      const p = FF.PLATFORMS[c.platform];
+      const p = FF.PLATFORMS[c.platform] || { color: "#7c3aed", icon: "", name: "Platform", actions: ["Engage"] };
       return `
       <div class="camp-row" style="--pf:${p.color}">
         <span class="cr-pf">${p.icon}</span>
@@ -202,6 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (c) {
         c.active = !c.active;
         FF.updateUser(user.email, { campaigns: camps });
+        if (FF.updateCampaign) FF.updateCampaign(c.id, { active: c.active });
         FF.toast(c.active ? '"' + c.title + '" resumed' : '"' + c.title + '" paused', "info");
       }
     }
@@ -209,6 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const c = camps.find((x) => x.id === dBtn.dataset.delCamp);
       const rest = camps.filter((x) => x.id !== dBtn.dataset.delCamp);
       FF.updateUser(user.email, { campaigns: rest });
+      if (FF.deleteCampaign) FF.deleteCampaign(dBtn.dataset.delCamp);
       FF.toast('"' + (c ? c.title : "Campaign") + '" deleted', "info");
     }
     if (tBtn || dBtn) { user = FF.currentUser(); renderCamps(); paintStats(); }
@@ -218,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const chart = document.getElementById("mini-chart");
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const weekly = user.weekly || [42, 68, 55, 90, 74, 110, 96];
-  const max = Math.max.apply(null, weekly);
+  const max = Math.max.apply(null, weekly) || 1;
   chart.innerHTML = weekly.map((v, i) =>
     '<div class="mcol"><div class="mbar" style="height:' + Math.round((v / max) * 100) + '%" title="' + v + ' points"></div><span>' + days[i] + "</span></div>"
   ).join("");
@@ -227,11 +232,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* referral */
   const refLink = document.getElementById("ref-link");
-  refLink.textContent = "flexfam.io/r/" + (user.refCode || "FLEXER");
-  document.getElementById("copy-ref").addEventListener("click", async () => {
+  const copyBtn = document.getElementById("copy-ref");
+  const code = user.refCode || "FLEXER";
+  refLink.textContent = "flexfam.io/r/" + code;
+  copyBtn.addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText("https://flexfam.io/r/" + user.refCode);
+      await navigator.clipboard.writeText("https://flexfam.io/r/" + code);
+      copyBtn.textContent = "Copied! ✓";
       FF.toast("Referral link copied!", "ok");
+      setTimeout(() => { copyBtn.textContent = "Copy"; }, 2000);
     } catch (err) {
       FF.toast("Couldn't copy — select the link manually", "err");
     }
@@ -249,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderActivity() {
     const acts = user.activity || [];
     if (!acts.length) {
-      actList.innerHTML = '<div class="empty-state" style="padding:34px 10px"><p>No activity yet — earn some points on the Earn page first!</p></div>';
+      actList.innerHTML = '<div class="empty-state" style="padding:28px 10px"><p>No activity yet — earn some points on the Earn page!</p></div>';
       return;
     }
     actList.innerHTML = acts.slice(0, 10).map((a) => {
