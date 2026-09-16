@@ -1628,12 +1628,16 @@ input[type="range"]::-moz-range-thumb {
 }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
-/* modal */
+/* modal — keep task forms visually consistent with the light app surface. */
+body.modal-open { overflow: hidden; }
 .modal-veil {
   position: fixed;
   inset: 0;
-  z-index: 200;
-  background: rgba(4, 3, 9, 0.8);
+  /* Above the support chip (250); notifications intentionally stay above it. */
+  z-index: 300;
+  background: rgba(27, 35, 48, 0.46);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   display: grid;
   place-items: center;
   padding: 20px;
@@ -1646,14 +1650,24 @@ input[type="range"]::-moz-range-thumb {
   width: min(470px, 100%);
   border-radius: 24px;
   border: 1px solid var(--line-2);
-  background: #0d0a18;
+  background: linear-gradient(145deg, #ffffff 0%, #f7f9fc 100%);
+  color: var(--ink);
   padding: 30px 26px;
   transform: translateY(20px) scale(0.96);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 20px 45px rgba(16, 27, 48, 0.14);
+  box-shadow: 0 24px 58px rgba(16, 27, 48, 0.26);
   position: relative;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.modal::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  border-radius: 24px 24px 0 0;
+  background: var(--pf, var(--orange));
 }
 .modal-veil.open .modal { transform: translateY(0) scale(1); }
 .modal .m-close {

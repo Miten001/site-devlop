@@ -535,17 +535,32 @@
 
   /* ---------- toast ---------- */
   function toast(msg, kind) {
-    kind = kind || "ok";
+    const icons = { ok: CHECK_SVG, err: WARN_SVG, info: SPARK_SVG };
+    kind = icons[kind] ? kind : "info";
+
     let root = document.querySelector(".toast-root");
     if (!root) {
       root = document.createElement("div");
       root.className = "toast-root";
+      root.setAttribute("aria-live", "polite");
+      root.setAttribute("aria-atomic", "false");
       document.body.appendChild(root);
     }
-    const icons = { ok: CHECK_SVG, err: WARN_SVG, info: SPARK_SVG };
+
     const el = document.createElement("div");
     el.className = "toast " + kind;
-    el.innerHTML = '<span class="t-ic">' + (icons[kind] || CHECK_SVG) + "</span><span>" + msg + "</span>";
+    if (kind === "err") el.setAttribute("role", "alert");
+
+    const icon = document.createElement("span");
+    icon.className = "t-ic";
+    /* The SVGs above are fixed application markup; message text is never HTML. */
+    icon.innerHTML = icons[kind];
+
+    const text = document.createElement("span");
+    text.className = "toast-message";
+    text.textContent = String(msg == null || msg === "" ? "Something went wrong" : msg);
+
+    el.append(icon, text);
     root.appendChild(el);
     setTimeout(() => {
       el.classList.add("leaving");
