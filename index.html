@@ -22,10 +22,12 @@
     <ul class="nav-links">
       <li><a href="index.html" class="active">Home</a></li>
       <li><a href="#usdt">Earn USDT</a></li>
+      <li><a href="#mining">Mining</a></li>
       <li><a href="#platforms">Platforms</a></li>
       <li><a href="#how">How it Works</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li data-user-only class="hidden"><a href="tasks.html">Task Market</a></li>
+      <li data-user-only class="hidden"><a href="mining.html">Mining</a></li>
       <li data-user-only class="hidden"><a href="wallet.html">Wallet</a></li>
       <li data-user-only class="hidden"><a href="earn.html">Earn Points</a></li>
       <li data-user-only class="hidden"><a href="add.html">Add Page</a></li>
@@ -43,7 +45,9 @@
 <nav class="mobile-nav">
   <a href="index.html" class="active">Home</a>
   <a href="index.html#usdt">Earn USDT</a>
+  <a href="index.html#mining">Cloud Mining</a>
   <a href="tasks.html" data-user-only class="hidden">Task Market</a>
+  <a href="mining.html" data-user-only class="hidden">Cloud Mining</a>
   <a href="wallet.html" data-user-only class="hidden">Wallet</a>
   <a href="index.html#platforms">Platforms</a>
   <a href="index.html#how">How it Works</a>
@@ -294,6 +298,57 @@
   </div>
 </section>
 
+<!-- ================= CLOUD MINING ================= -->
+<section class="how" id="mining">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span> Cloud mining</span>
+      <h2>Mine crypto with <span class="grad-text-cool">points or USDT</span></h2>
+      <p>Don't own a rig? Rent hashrate from the FlexFam pool. Pay with the points you earned from tasks, or with USDT from your wallet — then let it mine 24/7 and claim your rewards whenever you like.</p>
+    </div>
+
+    <div class="how-grid">
+      <div class="how-card reveal">
+        <div class="step-num">01</div>
+        <h3>Get hashrate</h3>
+        <p>Start the free 30 GH/s starter rig, or buy a plan from 250 GH/s up to a 1.7 TH/s data center. Pay in USDT or convert your points into hashrate.</p>
+      </div>
+      <div class="how-card reveal" data-delay="1">
+        <div class="step-num">02</div>
+        <h3>Mine non-stop</h3>
+        <p>Rewards accrue every single second — while you sleep, while the tab is closed. A free daily boost adds +25% speed for 8 hours.</p>
+      </div>
+      <div class="how-card reveal" data-delay="2">
+        <div class="step-num">03</div>
+        <h3>Claim your rewards</h3>
+        <p>Send mined USDT straight to your wallet and withdraw it, or take it as points with a +10% bonus and spend it on promoting your pages.</p>
+      </div>
+    </div>
+
+    <div class="bal-grid reveal" style="margin-top:26px">
+      <div class="bal-card main">
+        <span class="cap">Free starter rig</span>
+        <div class="amt">30<small>GH/s</small></div>
+        <p class="note">Every member gets a free 7-day rig — no deposit, no payment, mined rewards are yours to claim.</p>
+        <div class="bal-actions">
+          <a class="btn btn-primary btn-sm" href="mining.html">Start mining</a>
+          <a class="btn btn-ghost btn-sm" href="mining.html#pane-plans">See all plans</a>
+        </div>
+      </div>
+      <div class="bal-card">
+        <span class="cap">Buy hashrate with points</span>
+        <div class="amt">1000<small>pts = $1</small></div>
+        <p class="note">Turn task points straight into mining power — no deposit required to get started.</p>
+      </div>
+      <div class="bal-card">
+        <span class="cap">Daily free boost</span>
+        <div class="amt">+25<small>%</small></div>
+        <p class="note">One free speed boost every 24 hours, active for 8 hours on all your running rigs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= SPLIT: EARN ================= -->
 <section class="split">
   <div class="container split-grid">
@@ -472,6 +527,7 @@
         <ul>
           <li><a href="tasks.html">Task Market (USDT)</a></li>
           <li><a href="post-task.html">Post a Task</a></li>
+          <li><a href="mining.html">Cloud Mining</a></li>
           <li><a href="wallet.html">USDT Wallet</a></li>
           <li><a href="earn.html">Earn Points</a></li>
           <li><a href="add.html">Add Page</a></li>
@@ -521,6 +577,7 @@
 <script src="assets/js/ff-analytics.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/wallet.js"></script>
+<script src="assets/js/mining.js"></script>
 <script>
   // duplicate marquee content for seamless horizontal loop
   document.addEventListener("DOMContentLoaded", () => {

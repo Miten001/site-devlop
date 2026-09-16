@@ -2155,3 +2155,102 @@ input[type="range"]::-moz-range-thumb {
   .qr-shell img { width: 168px; height: 168px; }
   .qr-addr { font-size: 13px; }
 }
+
+/* =========================================================
+   CLOUD MINING
+   ========================================================= */
+.rig-hero {
+  display: grid; grid-template-columns: 300px 1fr; gap: 22px; align-items: center;
+  padding: 24px; border-radius: var(--radius); margin-bottom: 18px;
+  border: 1px solid var(--line-2);
+  background: radial-gradient(120% 140% at 0% 0%, rgba(124,58,237,.18), transparent 60%),
+              linear-gradient(165deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+}
+.rig-core { display: flex; justify-content: center; }
+.rig-ring { position: relative; width: 236px; height: 236px; display: grid; place-items: center; }
+.rig-ring span {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.07); border-top-color: rgba(124,58,237,.5);
+}
+.rig-ring span:nth-child(2) { inset: 18px; border-top-color: rgba(224,72,159,.5); }
+.rig-ring span:nth-child(3) { inset: 36px; border-top-color: rgba(52,229,165,.5); }
+.rig-core.on .rig-ring span { animation: rig-spin 5.5s linear infinite; }
+.rig-core.on .rig-ring span:nth-child(2) { animation-duration: 3.8s; animation-direction: reverse; }
+.rig-core.on .rig-ring span:nth-child(3) { animation-duration: 2.6s; }
+@keyframes rig-spin { to { transform: rotate(360deg); } }
+.rig-core-in { text-align: center; padding: 0 20px; }
+.rig-core-in .cap { font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-mute); }
+.rig-core-in b { display: block; font-family: var(--font-display); font-size: 27px; font-weight: 800; margin: 6px 0 4px; color: #e1c2ff; }
+.rig-core-in small { font-size: 11.5px; color: var(--ink-mute); }
+.rig-core.on .rig-core-in small { color: var(--green); }
+
+.rig-info .cap { font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-mute); }
+.rig-amt { font-family: var(--font-display); font-size: 40px; font-weight: 800; color: #b9ffe4; letter-spacing: -.02em; margin: 4px 0 16px; font-variant-numeric: tabular-nums; }
+.rig-amt small { font-size: 15px; color: var(--ink-dim); font-weight: 700; }
+.rig-ticks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.rig-ticks div { padding: 11px 12px; border-radius: 13px; background: rgba(255,255,255,.035); border: 1px solid var(--line); }
+.rig-ticks b { display: block; font-family: var(--font-display); font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.rig-ticks span { font-size: 10.5px; color: var(--ink-mute); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.rig-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.rig-note { font-size: 12.5px; color: var(--ink-mute); margin-top: 12px; }
+
+/* plan cards */
+.plan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.plan-card {
+  position: relative; display: flex; flex-direction: column; gap: 12px;
+  padding: 22px 20px; border-radius: var(--radius);
+  border: 1px solid var(--line-2); background: linear-gradient(165deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+  transition: transform .2s, border-color .2s, box-shadow .2s;
+}
+.plan-card:hover { transform: translateY(-4px); border-color: var(--pf, var(--line-2)); box-shadow: 0 22px 50px rgba(0,0,0,.42); }
+.plan-card.featured { border-color: color-mix(in srgb, var(--pf, #22d3ee) 55%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pf, #22d3ee) 12%, transparent); }
+.plan-card .p-tag {
+  align-self: flex-start; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 999px; color: var(--pf, var(--violet));
+  background: color-mix(in srgb, var(--pf, #7c3aed) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pf, #7c3aed) 35%, transparent);
+}
+.plan-card h4 { font-size: 17px; font-weight: 800; }
+.plan-card .p-hash { font-family: var(--font-display); font-size: 25px; font-weight: 800; color: var(--pf, var(--ink)); letter-spacing: -.02em; }
+.plan-card .p-price { display: flex; align-items: baseline; gap: 8px; }
+.plan-card .p-price b { font-family: var(--font-display); font-size: 21px; color: #b9ffe4; }
+.plan-card .p-price span { font-size: 12px; color: var(--ink-mute); font-weight: 700; }
+.plan-card .p-perks { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.plan-card .p-perks li { position: relative; padding-left: 17px; font-size: 12.8px; color: var(--ink-dim); line-height: 1.45; }
+.plan-card .p-perks li::before { content: ""; position: absolute; left: 0; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--pf, var(--violet)); }
+.plan-card .p-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.plan-card .p-stats b { display: block; font-size: 13.5px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.plan-card .p-stats span { font-size: 10.5px; color: var(--ink-mute); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.plan-card .btn { margin-top: auto; }
+
+/* my rigs */
+.rig-list { display: flex; flex-direction: column; gap: 10px; }
+.rig-row {
+  display: flex; align-items: center; gap: 14px; padding: 15px 16px;
+  border-radius: 15px; border: 1px solid var(--line); background: rgba(255,255,255,.028);
+}
+.rig-row.live { border-color: rgba(52,229,165,.32); background: rgba(52,229,165,.05); }
+.rig-row .rr-ic {
+  width: 42px; height: 42px; flex-shrink: 0; border-radius: 13px; display: grid; place-items: center;
+  background: rgba(124,58,237,.14); color: #c4a7ff; border: 1px solid rgba(124,58,237,.3);
+}
+.rig-row.live .rr-ic { background: rgba(52,229,165,.13); color: #7ff0c3; border-color: rgba(52,229,165,.32); }
+.rig-row .rr-ic svg { width: 21px; height: 21px; }
+.rig-row .rr-main { flex: 1; min-width: 0; }
+.rig-row h5 { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.rig-row p { font-size: 12px; color: var(--ink-mute); margin: 4px 0 8px; }
+.rig-row .rr-time { margin: 7px 0 0; font-size: 11.5px; }
+.rig-row .rr-earn { text-align: right; flex-shrink: 0; }
+.rig-row .rr-earn b { display: block; font-family: var(--font-display); font-size: 15.5px; color: #b9ffe4; font-variant-numeric: tabular-nums; }
+.rig-row .rr-earn span { font-size: 10.5px; color: var(--ink-mute); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+
+@media (max-width: 900px) {
+  .rig-hero { grid-template-columns: 1fr; }
+  .rig-ticks { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .rig-amt { font-size: 32px; }
+  .rig-ring { width: 200px; height: 200px; }
+  .rig-actions .btn { flex: 1; }
+  .rig-row { flex-wrap: wrap; }
+}

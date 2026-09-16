@@ -13,6 +13,7 @@
 - 🤖 **Telegram Sub4Sub Bot** — real, fully-working bot: users join each other's Telegram groups to earn points, then spend them to grow their own groups (SQLite, auto join-verification, anti-leave refunds, referrals, admin panel). See [`telegram-bot/`](telegram-bot/)
 - 💵 **USDT Task Marketplace** — `tasks.html` (browse & work), `post-task.html` (publish jobs with escrow), `my-tasks.html` (review proofs, release payments, cancel & refund). 8 categories, per-task rewards, worker slots, proof review workflow. **No sample listings — the market only shows real, user-posted and escrow-funded tasks**
 - 🏦 **USDT Wallet** — `wallet.html` with deposit (USDT on BEP20, min $10, live QR code + TXID submission), withdrawal requests (BEP20 only, min $5, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger
+- ⛏️ **Cloud Mining** — `mining.html`: rent hashrate with **points or USDT**, rigs mine 24/7 (rewards accrue even while offline), free daily +25% boost, claim mined USDT to the wallet or as points with a +10% bonus
 - 🛡️ **Payments admin** — `admin-payments.html` for allowlisted admins to approve/reject deposits and withdrawals
 - 🎨 Premium dark UI — aurora gradients, glassmorphism, 3D tilt, scroll reveals
 
@@ -55,6 +56,24 @@ Money flow is currently a **front-end simulation** stored in `localStorage` (`ff
 Deposits currently accept **USDT on BEP20 only**, to the verified address above (QR at `assets/img/deposit-bep20-qr.png`). To support another chain, add a real verified address to `depositAddress`, a note to `networkNote`, a QR to `depositQr`, and list it in `networks` — never ship a placeholder address. **Before going live** move deposits, withdrawals and escrow settlement onto a server/Postgres so balances cannot be edited from the browser console.
 
 Admins listed in `window.FF_ADMIN_EMAILS` can settle payment requests at `admin-payments.html`.
+
+## Cloud mining
+
+`mining.html` + [`assets/js/mining.js`](assets/js/mining.js) add a hashrate-rental miner on top of the wallet. Users buy a contract with **USDT** (debited from `ff_wallets`) or with **points** (`1000 pts = $1`, same rate as the wallet converter), and the rig accrues rewards every second — including while the user is offline, because accrual is computed from wall-clock time on every read.
+
+| Setting | Value | Where |
+| --- | --- | --- |
+| Output per 1 GH/s / day (gross) | $0.000826 | `FF.M.CFG.usdPerGhsDay` |
+| Maintenance + pool fee | 8% (already deducted) | `FF.M.CFG.maintenancePct` |
+| Custom rig price | $0.017–$0.020 per GH/s / 30 days | `FF.M.CFG.customTiers` |
+| Custom rig range | 100 – 20,000 GH/s, 7+ days | `FF.M.CFG.customMinGhs` / `customMaxGhs` |
+| Minimum claim | $0.05 | `FF.M.CFG.minClaimUsdt` |
+| Claim-as-points bonus | +10% | `FF.M.CFG.pointsBonusPct` |
+| Free daily boost | +25% for 8h, once per 24h | `FF.M.CFG.boostPct` / `boostHours` |
+
+Plans live in `FF.M.PLANS` (free 30 GH/s starter rig + Bronze/Silver/Gold/Titan). They are tuned so a contract returns roughly **1.15x–1.55x** of its price over the full term, longer contracts returning more — edit `usdPerGhsDay` to make the whole pool faster or slower.
+
+State is stored in `localStorage` under `ff_mining` (`{ [email]: { contracts, unclaimed, claimed, lastAccrue, boostUntil, lastBoost, log } }`). Mining payouts appear in the wallet ledger as `mining` transactions. Like the rest of the wallet this is a **front-end simulation** — before going live, move accrual, contract state and payouts to your backend/mining-pool API so users cannot edit them from the browser console.
 
 ## Telegram bot
 
