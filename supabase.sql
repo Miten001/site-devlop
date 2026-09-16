@@ -141,6 +141,23 @@ $$;
 revoke all on function public.is_admin() from public;
 grant execute on function public.is_admin() to authenticated;
 
+-- Dashboard's real "today" counters. The function runs with a pinned search path
+-- and only exposes aggregates, never event or profile rows.
+create or replace function public.site_today_stats()
+returns table (visitors bigint, registered bigint)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    (select count(distinct nullif(trim(e.vid), '')) from public.events e where e.day = current_date),
+    (select count(*) from public.profiles p where p.created_at >= current_date::timestamptz);
+$$;
+
+revoke all on function public.site_today_stats() from public, anon;
+grant execute on function public.site_today_stats() to authenticated;
+
 -- ============================================================
 -- 4. Row level security
 -- ============================================================
