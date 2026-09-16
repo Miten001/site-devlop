@@ -1740,7 +1740,7 @@ input[type="range"]::-moz-range-thumb {
   padding: 13px 18px;
   border-radius: 14px;
   border: 1px solid var(--line-2);
-  background: #ffffff;
+  background: #fff !important;
   color: #172033;
   box-shadow: 0 8px 20px rgba(16, 27, 48, 0.10);
   font-size: 13.5px;
@@ -1749,6 +1749,9 @@ input[type="range"]::-moz-range-thumb {
   max-width: 360px;
 }
 .toast.leaving { animation: toast-out 0.25s forwards; }
+.toast span {
+  color: #172033;
+}
 .toast .t-ic {
   width: 28px; height: 28px;
   border-radius: 8px;
@@ -1759,7 +1762,7 @@ input[type="range"]::-moz-range-thumb {
 .toast .t-ic svg { width: 15px; height: 15px; }
 .toast.ok .t-ic { background: rgba(52, 229, 165, 0.14); color: var(--green); }
 .toast.err .t-ic { background: rgba(255, 93, 110, 0.14); color: var(--danger); }
-.toast.info .t-ic { background: rgba(124, 58, 237, 0.16); color: #b18cff; }
+.toast.info .t-ic { background: rgba(124, 58, 237, 0.16); color: #7c3aed; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(0.92); } }
 @keyframes toast-out { to { opacity: 0; transform: translateY(10px) scale(0.92); } }
 
