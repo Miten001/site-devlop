@@ -18,12 +18,13 @@
   <div class="container bar">
     <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
     <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
       <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="tasks.html">Task Market</a></li>
       <li><a href="earn.html">Earn Points</a></li>
-      <li><a href="add.html">Add Page</a></li>
+      <li><a href="wallet.html">Wallet</a></li>
     </ul>
     <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
       <a href="earn.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
       <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
       <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
@@ -32,9 +33,12 @@
 </header>
 
 <nav class="mobile-nav">
-  <a href="index.html">Home</a>
   <a href="dashboard.html" class="active">Dashboard</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
   <a href="earn.html">Earn Points</a>
+  <a href="wallet.html">Wallet</a>
   <a href="add.html">Add Page</a>
   <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
 </nav>
@@ -44,6 +48,10 @@
 
     <aside class="side-nav">
       <a href="dashboard.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
+      <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
+      <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
       <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
       <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Add Page</a>
       <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Back to Site</a>
@@ -58,6 +66,29 @@
           <p class="sub">Your fam's numbers and campaign stats, at a glance.</p>
         </div>
         <a href="add.html" class="btn btn-primary btn-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> New Campaign</a>
+      </div>
+
+      <div class="bal-grid">
+        <div class="bal-card main">
+          <span class="cap"><span data-usdt-icon style="display:flex"></span> USDT balance</span>
+          <div class="amt"><span data-usdt>0.00</span> <small>USDT</small></div>
+          <p class="note">In escrow / pending: <b data-usdt-locked>0.00</b> USDT</p>
+          <div class="bal-actions">
+            <a class="btn btn-primary btn-sm" href="wallet.html#deposit">Deposit</a>
+            <a class="btn btn-ghost btn-sm" href="wallet.html#withdraw">Withdraw</a>
+            <a class="btn btn-ghost btn-sm" href="tasks.html">Earn USDT</a>
+          </div>
+        </div>
+        <div class="bal-card">
+          <span class="cap">Task earnings</span>
+          <div class="amt" id="db-task-earn">$0.00</div>
+          <p class="note"><span id="db-task-done">0</span> tasks approved · <a href="tasks.html" style="color:var(--fuchsia)">browse market</a></p>
+        </div>
+        <div class="bal-card">
+          <span class="cap">My posted tasks</span>
+          <div class="amt" id="db-jobs">0</div>
+          <p class="note"><span id="db-reviews">0</span> proofs waiting · <a href="my-tasks.html" style="color:var(--fuchsia)">review now</a></p>
+        </div>
       </div>
 
       <div class="dash-grid">
@@ -147,10 +178,25 @@
 <script src="assets/js/supabase-config.js"></script>
 <script src="assets/js/ff-analytics.js"></script>
 <script src="assets/js/main.js"></script>
+<script src="assets/js/wallet.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
   if (!user) return;
+
+  /* USDT wallet + task marketplace summary */
+  if (FF.W) {
+    const W = FF.W;
+    const mine = W.mySubs(user.email).filter((s) => s.status === "approved");
+    const jobs = W.myJobs(user.email);
+    const jobIds = jobs.map((j) => j.id);
+    const waiting = W.subs().filter((s) => s.status === "pending" && jobIds.indexOf(s.jobId) > -1);
+    document.getElementById("db-task-earn").textContent = W.usd(mine.reduce((n, s) => n + s.reward, 0));
+    document.getElementById("db-task-done").textContent = mine.length;
+    document.getElementById("db-jobs").textContent = jobs.filter((j) => j.status === "active").length;
+    document.getElementById("db-reviews").textContent = waiting.length;
+    W.syncWalletPills();
+  }
 
   const first = (user.name || "Flexer").split(" ")[0];
   document.getElementById("hello-name").textContent = first;

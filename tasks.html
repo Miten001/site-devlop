@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Task Market — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="tasks.html" class="active">Task Market</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="wallet.html">Wallet</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
+      <a href="earn.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="add.html">Add Page</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+
+    <aside class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="tasks.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
+      <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
+      <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Back to Site</a>
+      <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Task market</span>
+          <h1>Complete tasks, <span class="grad-text">earn USDT</span></h1>
+          <p class="sub">Real micro-jobs posted by the community. Submit your proof, get approved, and USDT lands straight in your wallet.</p>
+        </div>
+        <a href="post-task.html" class="btn btn-primary btn-sm">Post a task</a>
+      </div>
+
+      <div class="mini-stats">
+        <div class="mini-stat"><b id="s-open">0</b><span>Open tasks</span></div>
+        <div class="mini-stat"><b id="s-value">$0.00</b><span>Available rewards</span></div>
+        <div class="mini-stat"><b id="s-pending">0</b><span>My pending proofs</span></div>
+        <div class="mini-stat"><b id="s-earned">$0.00</b><span>My task earnings</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="chip-row" id="cat-row"></div>
+        <div class="job-grid" id="job-grid"></div>
+        <div class="empty-mini hidden" id="job-empty"><b>No open tasks in this category</b>Try another filter or post your own task for the community.</div>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><div><h3>My submissions</h3><p class="panel-sub">Proofs you sent and their review status.</p></div></div>
+        <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Task</th><th>Proof</th><th>Reward</th><th>Status</th></tr></thead><tbody id="sub-body"></tbody></table></div>
+        <div class="empty-mini hidden" id="sub-empty"><b>No submissions yet</b>Pick a task above and send your first proof.</div>
+      </div>
+
+<div class="modal-veil" id="job-modal">
+  <div class="modal modal-pos" id="job-modal-card">
+    <button class="m-close" data-close-modal aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3 id="jm-title">Task</h3>
+    <p class="m-sub" id="jm-sub"></p>
+    <div style="text-align:left;margin:16px 0;font-size:13.6px;line-height:1.6;color:var(--ink-dim);white-space:pre-wrap" id="jm-desc"></div>
+    <div class="fee-hint" id="jm-proofnote" style="text-align:left"></div>
+    <a class="btn btn-ghost btn-block hidden" id="jm-open" href="#" target="_blank" rel="noopener" style="margin-top:14px">Open task link</a>
+    <div class="field" style="text-align:left;margin-top:16px">
+      <label>Your proof (link, screenshot URL, username or ID)</label>
+      <input type="text" id="jm-proof" placeholder="https://... or @username" />
+    </div>
+    <div class="field" style="text-align:left">
+      <label>Note to the buyer (optional)</label>
+      <textarea id="jm-note" rows="2" placeholder="Anything the buyer should know"></textarea>
+    </div>
+    <button class="btn btn-primary btn-block" id="jm-submit">Submit proof &amp; claim reward</button>
+  </div>
+</div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/ff-analytics.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/wallet.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  let user = FF.currentUser();
+  if (!user) return;
+  const W = FF.W, $ = (id) => document.getElementById(id);
+  let filter = "all", current = null;
+
+  const catRow = $("cat-row");
+  catRow.innerHTML = '<button class="chip active" data-cat="all" style="--pf:#e0489f">All tasks</button>' +
+    W.CATEGORIES.map((c) => '<button class="chip" data-cat="' + c.key + '" style="--pf:' + c.color + '">' + c.name + "</button>").join("");
+  catRow.addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    filter = b.dataset.cat;
+    catRow.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c === b));
+    render();
+  });
+
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  function render() {
+    const all = W.openJobs(user.email);
+    const list = all.filter((j) => filter === "all" || j.category === filter);
+    $("s-open").textContent = all.length;
+    $("s-value").textContent = W.usd(all.reduce((n, j) => n + j.reward * (j.slots - j.filled), 0));
+    const mine = W.mySubs(user.email);
+    $("s-pending").textContent = mine.filter((s) => s.status === "pending").length;
+    $("s-earned").textContent = W.usd(mine.filter((s) => s.status === "approved").reduce((n, s) => n + s.reward, 0));
+
+    $("job-empty").classList.toggle("hidden", list.length > 0);
+    $("job-grid").innerHTML = list.map((j) => {
+      const c = W.category(j.category);
+      const pct = Math.round((j.filled / j.slots) * 100);
+      return '<div class="job-card" style="--pf:' + c.color + '">' +
+        '<div class="j-top"><div><span class="j-cat">' + esc(c.name) + '</span><h4>' + esc(j.title) + "</h4></div>" +
+        '<div class="j-pay"><b>' + W.usd(j.reward) + "</b><span>PER TASK</span></div></div>" +
+        '<p class="j-desc">' + esc(j.description) + "</p>" +
+        '<div class="slot-bar"><i style="width:' + pct + '%"></i></div>' +
+        '<div class="j-meta"><span>' + (j.slots - j.filled) + " of " + j.slots + " slots left</span><span>by " + esc(j.ownerName) + "</span><span>" + fdate(j.createdAt) + "</span></div>" +
+        '<div class="j-foot"><button class="btn btn-primary btn-sm" data-job="' + j.id + '">Do this task</button></div></div>';
+    }).join("");
+
+    $("sub-empty").classList.toggle("hidden", mine.length > 0);
+    $("sub-body").innerHTML = mine.map((s) => (
+      "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.jobTitle) + "</b></td>" +
+      '<td><span class="mono-cut">' + esc(s.proof) + "</span></td>" +
+      '<td class="num pos">' + W.usd(s.reward) + "</td>" +
+      '<td><span class="badge ' + s.status + '">' + s.status + "</span></td></tr>"
+    )).join("");
+  }
+
+  const modal = $("job-modal");
+  $("job-grid").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-job]"); if (!b) return;
+    current = W.jobs().find((j) => j.id === b.dataset.job); if (!current) return;
+    const c = W.category(current.category);
+    $("job-modal-card").style.setProperty("--pf", c.color);
+    $("jm-title").textContent = current.title;
+    $("jm-sub").innerHTML = c.name + " · Reward <b style='color:var(--green)'>" + W.usd(current.reward) + " USDT</b> · " + (current.slots - current.filled) + " slots left";
+    $("jm-desc").textContent = current.description;
+    $("jm-proofnote").innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span><b>Required proof:</b> ' + esc(current.proofNote) + "</span>";
+    const link = $("jm-open");
+    if (current.url) { link.href = current.url; link.classList.remove("hidden"); } else link.classList.add("hidden");
+    $("jm-proof").value = ""; $("jm-note").value = "";
+    modal.classList.add("open");
+  });
+
+  function close() { modal.classList.remove("open"); current = null; }
+  document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", close));
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  $("jm-submit").addEventListener("click", () => {
+    if (!current) return;
+    try {
+      W.submitProof(user.email, user.name, current.id, $("jm-proof").value, $("jm-note").value);
+      FF.toast("Proof submitted! The buyer will review it shortly.", "ok");
+      close(); render();
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+
+  render();
+});
+</script>
+
+</body>
+</html>

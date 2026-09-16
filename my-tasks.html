@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Tasks — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="tasks.html">Task Market</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="wallet.html">Wallet</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
+      <a href="earn.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="add.html">Add Page</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+
+    <aside class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
+      <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
+      <a href="my-tasks.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Back to Site</a>
+      <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Manage</span>
+          <h1>My <span class="grad-text">tasks</span></h1>
+          <p class="sub">Review worker proofs, release USDT payments and manage your escrow.</p>
+        </div>
+        <a href="post-task.html" class="btn btn-primary btn-sm">Post a task</a>
+      </div>
+
+      <div class="mini-stats">
+        <div class="mini-stat"><b id="m-active">0</b><span>Active tasks</span></div>
+        <div class="mini-stat"><b id="m-pending">0</b><span>Proofs to review</span></div>
+        <div class="mini-stat"><b id="m-escrow">$0.00</b><span>In escrow</span></div>
+        <div class="mini-stat"><b id="m-paid">$0.00</b><span>Paid to workers</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>Pending submissions</h3><p class="panel-sub">Approve to release the reward instantly, or reject with a reason.</p></div></div>
+        <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Worker</th><th>Task</th><th>Proof</th><th>Reward</th><th>Action</th></tr></thead><tbody id="rev-body"></tbody></table></div>
+        <div class="empty-mini hidden" id="rev-empty"><b>No proofs waiting</b>You're all caught up.</div>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><div><h3>My posted tasks</h3><p class="panel-sub">Progress and escrow for every campaign you funded.</p></div></div>
+        <div class="job-grid" id="mine-grid"></div>
+        <div class="empty-mini hidden" id="mine-empty"><b>You haven't posted a task yet</b>Fund your wallet and publish your first micro-job.</div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/ff-analytics.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/wallet.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const user = FF.currentUser();
+  if (!user) return;
+  const W = FF.W, $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  function render() {
+    const jobs = W.myJobs(user.email);
+    const ids = jobs.map((j) => j.id);
+    const all = W.subs().filter((s) => ids.indexOf(s.jobId) > -1);
+    const pending = all.filter((s) => s.status === "pending");
+
+    $("m-active").textContent = jobs.filter((j) => j.status === "active").length;
+    $("m-pending").textContent = pending.length;
+    $("m-escrow").textContent = W.usd(jobs.filter((j) => j.status === "active").reduce((n, j) => n + (j.slots - j.filled) * j.reward, 0));
+    $("m-paid").textContent = W.usd(all.filter((s) => s.status === "approved").reduce((n, s) => n + s.reward, 0));
+
+    $("rev-empty").classList.toggle("hidden", pending.length > 0);
+    $("rev-body").innerHTML = pending.map((s) => (
+      "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.workerName) + "</b></td><td>" + esc(s.jobTitle) + "</td>" +
+      '<td><span class="mono-cut" title="' + esc(s.proof) + '">' + esc(s.proof) + "</span>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s.note) + "</span>" : "") + "</td>" +
+      '<td class="num pos">' + W.usd(s.reward) + "</td>" +
+      '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-ok="' + s.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-no="' + s.id + '">Reject</button></td></tr>'
+    )).join("");
+
+    $("mine-empty").classList.toggle("hidden", jobs.length > 0);
+    $("mine-grid").innerHTML = jobs.map((j) => {
+      const c = W.category(j.category);
+      const pct = Math.round((j.filled / j.slots) * 100);
+      return '<div class="job-card" style="--pf:' + c.color + '">' +
+        '<div class="j-top"><div><span class="j-cat">' + esc(c.name) + '</span><h4>' + esc(j.title) + "</h4></div>" +
+        '<div class="j-pay"><b>' + W.usd(j.reward) + "</b><span>PER TASK</span></div></div>" +
+        '<div class="slot-bar"><i style="width:' + pct + '%"></i></div>' +
+        '<div class="j-meta"><span>' + j.filled + " / " + j.slots + ' done</span><span>Escrow ' + W.usd(Math.max(0, j.slots - j.filled) * j.reward) + '</span><span class="badge ' + j.status + '">' + j.status + "</span></div>" +
+        (j.status === "active" ? '<div class="j-foot"><button class="btn btn-ghost btn-sm" data-cancel="' + j.id + '">Cancel &amp; refund escrow</button></div>' : "") +
+        "</div>";
+    }).join("");
+  }
+
+  document.addEventListener("click", (e) => {
+    const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]"), cn = e.target.closest("[data-cancel]");
+    try {
+      if (ok) { W.reviewSub(ok.dataset.ok, true); FF.toast("Approved — USDT released to the worker.", "ok"); render(); }
+      else if (no) {
+        const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
+        W.reviewSub(no.dataset.no, false, reason); FF.toast("Submission rejected.", "info"); render();
+      } else if (cn) {
+        if (!window.confirm("Cancel this task and refund the unused escrow?")) return;
+        W.cancelJob(user.email, cn.dataset.cancel); FF.toast("Task cancelled — escrow refunded.", "ok"); render();
+      }
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+
+  render();
+});
+</script>
+
+</body>
+</html>

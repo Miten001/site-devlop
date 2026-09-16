@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>USDT Wallet — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="tasks.html">Task Market</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="wallet.html" class="active">Wallet</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
+      <a href="earn.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="add.html">Add Page</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+
+    <aside class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
+      <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
+      <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="wallet.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Back to Site</a>
+      <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Wallet</span>
+          <h1>USDT <span class="grad-text-cool">wallet</span></h1>
+          <p class="sub">Deposit USDT, get paid for completed tasks, and withdraw to any TRC20 / BEP20 / Polygon / TON address.</p>
+        </div>
+      </div>
+
+      <div class="bal-grid">
+        <div class="bal-card main">
+          <span class="cap"><span data-usdt-icon style="display:flex"></span> Available balance</span>
+          <div class="amt" id="w-available">0.00 <small>USDT</small></div>
+          <p class="note">Ready to spend on tasks or withdraw right now.</p>
+          <div class="bal-actions">
+            <button class="btn btn-primary btn-sm" data-goto="deposit">Deposit</button>
+            <button class="btn btn-ghost btn-sm" data-goto="withdraw">Withdraw</button>
+            <a class="btn btn-ghost btn-sm" href="tasks.html">Earn more</a>
+          </div>
+        </div>
+        <div class="bal-card">
+          <span class="cap">In escrow / pending</span>
+          <div class="amt" id="w-locked">0.00 <small>USDT</small></div>
+          <p class="note">Locked for your posted tasks and pending withdrawals.</p>
+        </div>
+        <div class="bal-card">
+          <span class="cap">Lifetime earned</span>
+          <div class="amt" id="w-earned">0.00 <small>USDT</small></div>
+          <p class="note" id="w-flow">Deposited $0.00 · Withdrawn $0.00</p>
+        </div>
+      </div>
+
+      <div class="tabs" id="w-tabs">
+        <button class="tab-btn active" data-tab="deposit">Deposit</button>
+        <button class="tab-btn" data-tab="withdraw">Withdraw</button>
+        <button class="tab-btn" data-tab="convert">Points → USDT</button>
+        <button class="tab-btn" data-tab="history">History</button>
+        <button class="tab-btn" data-tab="requests">My requests</button>
+      </div>
+
+      <!-- DEPOSIT -->
+      <div class="tab-pane active" id="pane-deposit">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Deposit USDT</h3><p class="panel-sub">Send USDT to the address below, then submit the transaction hash for confirmation.</p></div></div>
+
+          <div class="field">
+            <label>1. Choose network</label>
+            <div class="net-picker" id="dep-nets"></div>
+          </div>
+
+          <div class="field">
+            <label>2. Send USDT to this address</label>
+            <div class="addr-box"><code id="dep-addr">—</code><button class="btn btn-ghost btn-sm" id="dep-copy" type="button">Copy</button></div>
+            <div class="fee-hint warn" style="margin-top:12px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
+              <span>Send <b>only USDT</b> on the selected network. Coins sent on the wrong network are permanently lost. Minimum deposit <b id="dep-min">$5.00</b>.</span>
+            </div>
+          </div>
+
+          <form id="dep-form" novalidate>
+            <div class="field">
+              <label>3. Amount sent (USDT)</label>
+              <input type="text" inputmode="decimal" id="dep-amount" placeholder="25.00" />
+            </div>
+            <div class="field">
+              <label>4. Transaction hash (TXID)</label>
+              <input type="text" id="dep-txid" placeholder="e.g. 9f2c1a...e84b" />
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">Submit deposit for confirmation</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- WITHDRAW -->
+      <div class="tab-pane" id="pane-withdraw">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Withdraw USDT</h3><p class="panel-sub">Payouts are reviewed and sent within 24 hours on business days.</p></div></div>
+          <form id="wd-form" novalidate>
+            <div class="field">
+              <label>Network</label>
+              <div class="net-picker" id="wd-nets"></div>
+            </div>
+            <div class="field">
+              <label>Your USDT wallet address</label>
+              <input type="text" id="wd-address" placeholder="TJ9... / 0x..." />
+            </div>
+            <div class="field">
+              <label>Amount (USDT)</label>
+              <input type="text" inputmode="decimal" id="wd-amount" placeholder="10.00" />
+              <p class="panel-sub" style="margin-top:7px">Available: <b id="wd-avail">$0.00</b> · Minimum: <b id="wd-min">$10.00</b> · <button type="button" class="btn btn-ghost btn-sm" id="wd-max" style="padding:3px 10px;font-size:12px">Max</button></p>
+            </div>
+            <div class="summary-rows">
+              <div class="row"><span>Withdrawal amount</span><b id="wd-s1">$0.00</b></div>
+              <div class="row"><span>Network + processing fee (<span id="wd-fee-pct">1</span>%)</span><b id="wd-s2">$0.00</b></div>
+              <div class="row total"><span>You receive</span><b id="wd-s3">$0.00</b></div>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit" style="margin-top:18px">Request withdrawal</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- CONVERT -->
+      <div class="tab-pane" id="pane-convert">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Convert points to USDT</h3><p class="panel-sub">Turn the points you earned from social campaigns into real USDT balance.</p></div></div>
+          <div class="fee-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <span>Rate: <b id="cv-rate">1000 points = $1.00 USDT</b> · Minimum conversion <b id="cv-min">1000</b> points.</span>
+          </div>
+          <form id="cv-form" novalidate style="margin-top:18px">
+            <div class="field">
+              <label>Points to convert</label>
+              <input type="text" inputmode="numeric" id="cv-points" placeholder="1000" />
+              <p class="panel-sub" style="margin-top:7px">You have <b data-credits>0</b> points · You get <b id="cv-out" style="color:var(--green)">$0.00</b></p>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">Convert to USDT</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="tab-pane" id="pane-history">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Transaction history</h3><p class="panel-sub">Every deposit, earning, escrow and withdrawal on your account.</p></div></div>
+          <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Type</th><th>Details</th><th>Amount</th><th>Status</th></tr></thead><tbody id="tx-body"></tbody></table></div>
+          <div class="empty-mini hidden" id="tx-empty"><b>No transactions yet</b>Deposit USDT or complete a task to get started.</div>
+        </div>
+      </div>
+
+      <!-- REQUESTS -->
+      <div class="tab-pane" id="pane-requests">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Deposit &amp; withdrawal requests</h3><p class="panel-sub">Track the status of everything you sent for review.</p></div></div>
+          <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Type</th><th>Network</th><th>Reference</th><th>Amount</th><th>Status</th></tr></thead><tbody id="rq-body"></tbody></table></div>
+          <div class="empty-mini hidden" id="rq-empty"><b>Nothing here yet</b>Your deposit and withdrawal requests will show up here.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/ff-analytics.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/wallet.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  let user = FF.currentUser();
+  if (!user) return;
+  const W = FF.W, CFG = W.CFG;
+  const $ = (id) => document.getElementById(id);
+
+  /* tabs */
+  const tabs = $("w-tabs");
+  function showTab(key) {
+    tabs.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === key));
+    document.querySelectorAll(".tab-pane").forEach((p) => p.classList.toggle("active", p.id === "pane-" + key));
+  }
+  tabs.addEventListener("click", (e) => { const b = e.target.closest(".tab-btn"); if (b) showTab(b.dataset.tab); });
+  document.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => {
+    showTab(b.dataset.goto); window.scrollTo({ top: 220, behavior: "smooth" });
+  }));
+  const hash = (location.hash || "").replace("#", "");
+  if (hash) showTab(hash);
+
+  /* balances */
+  function paint() {
+    const w = W.wallet(user.email);
+    $("w-available").innerHTML = w.available.toFixed(2) + ' <small>USDT</small>';
+    $("w-locked").innerHTML = w.locked.toFixed(2) + ' <small>USDT</small>';
+    $("w-earned").innerHTML = w.totalEarned.toFixed(2) + ' <small>USDT</small>';
+    $("w-flow").textContent = "Deposited " + W.usd(w.totalDeposited) + " · Withdrawn " + W.usd(w.totalWithdrawn);
+    $("wd-avail").textContent = W.usd(w.available);
+    W.syncWalletPills();
+    renderTx(); renderReq();
+  }
+
+  /* networks */
+  let depNet = CFG.networks[0], wdNet = CFG.networks[0];
+  function netButtons(host, current, onPick) {
+    host.innerHTML = CFG.networks.map((n) => '<button type="button" class="net-pick' + (n === current ? " on" : "") + '" data-net="' + n + '">' + n + "</button>").join("");
+    host.onclick = (e) => {
+      const b = e.target.closest("[data-net]"); if (!b) return;
+      onPick(b.dataset.net);
+    };
+  }
+  function paintDepNets() {
+    netButtons($("dep-nets"), depNet, (n) => { depNet = n; paintDepNets(); });
+    $("dep-addr").textContent = CFG.depositAddress[depNet] || "—";
+  }
+  function paintWdNets() { netButtons($("wd-nets"), wdNet, (n) => { wdNet = n; paintWdNets(); }); }
+  paintDepNets(); paintWdNets();
+  $("dep-min").textContent = W.usd(CFG.minDeposit);
+  $("wd-min").textContent = W.usd(CFG.minWithdraw);
+  $("wd-fee-pct").textContent = CFG.withdrawFeePct;
+  $("cv-rate").textContent = CFG.pointsPerUsdt + " points = $1.00 USDT";
+  $("cv-min").textContent = CFG.minPointsConvert;
+
+  $("dep-copy").addEventListener("click", () => {
+    const t = $("dep-addr").textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+      .then(() => FF.toast("Deposit address copied!", "ok"))
+      .catch(() => FF.toast("Copy failed — select the address manually", "err"));
+  });
+
+  /* deposit */
+  $("dep-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    try {
+      W.createDeposit(user.email, user.name, $("dep-amount").value, depNet, $("dep-txid").value);
+      FF.toast("Deposit submitted! It will be credited after confirmation.", "ok");
+      $("dep-amount").value = ""; $("dep-txid").value = "";
+      paint(); showTab("requests");
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+
+  /* withdraw */
+  function wdSummary() {
+    const a = Math.max(0, Number($("wd-amount").value) || 0);
+    const fee = Math.round(a * CFG.withdrawFeePct) / 100;
+    $("wd-s1").textContent = W.usd(a);
+    $("wd-s2").textContent = W.usd(fee);
+    $("wd-s3").textContent = W.usd(Math.max(0, a - fee));
+  }
+  $("wd-amount").addEventListener("input", wdSummary);
+  $("wd-max").addEventListener("click", () => { $("wd-amount").value = W.wallet(user.email).available.toFixed(2); wdSummary(); });
+  $("wd-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    try {
+      W.createWithdraw(user.email, user.name, $("wd-amount").value, wdNet, $("wd-address").value);
+      FF.toast("Withdrawal requested — payout within 24 hours.", "ok");
+      $("wd-amount").value = ""; wdSummary();
+      paint(); showTab("requests");
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+
+  /* convert */
+  $("cv-points").addEventListener("input", () => {
+    const p = parseInt($("cv-points").value, 10) || 0;
+    $("cv-out").textContent = W.usd(p / CFG.pointsPerUsdt);
+  });
+  $("cv-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    try {
+      const amt = W.convertPoints(user.email, $("cv-points").value);
+      user = FF.currentUser();
+      FF.toast("Converted to " + W.usd(amt) + " USDT!", "ok");
+      $("cv-points").value = ""; $("cv-out").textContent = "$0.00";
+      paint();
+    } catch (err) { FF.toast(err.message, "err"); }
+  });
+
+  /* tables */
+  const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Points conversion" };
+
+  function renderTx() {
+    const list = W.wallet(user.email).txns || [];
+    $("tx-empty").classList.toggle("hidden", list.length > 0);
+    $("tx-body").innerHTML = list.map((t) => (
+      "<tr><td>" + fdate(t.at) + "</td>" +
+      "<td><b>" + (LABEL[t.type] || t.type) + "</b></td>" +
+      "<td>" + (t.note || "—") + "</td>" +
+      '<td class="num ' + (t.amount >= 0 ? "pos" : "neg") + '">' + (t.amount >= 0 ? "+" : "−") + W.usd(Math.abs(t.amount)) + "</td>" +
+      '<td><span class="badge ' + t.status + '">' + t.status + "</span></td></tr>"
+    )).join("");
+  }
+
+  function renderReq() {
+    const list = W.myRequests(user.email);
+    $("rq-empty").classList.toggle("hidden", list.length > 0);
+    $("rq-body").innerHTML = list.map((r) => (
+      "<tr><td>" + fdate(r.at) + "</td>" +
+      "<td><b>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") + "</b></td>" +
+      "<td>" + r.network + "</td>" +
+      '<td><span class="mono-cut">' + (r.txid || r.address || "—") + "</span></td>" +
+      '<td class="num">' + W.usd(r.amount) + "</td>" +
+      '<td><span class="badge ' + r.status + '">' + r.status + "</span></td></tr>"
+    )).join("");
+  }
+
+  paint();
+});
+</script>
+
+</body>
+</html>
