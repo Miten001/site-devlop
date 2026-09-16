@@ -20,7 +20,7 @@
     youtube: {
       key: "youtube",
       name: "YouTube",
-      color: "#ff3355",
+      color: "#ff0000",
       actions: ["Subscribe", "Watch Video", "Like Video"],
       hint: "youtube.com or youtu.be",
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 12s0-3.83-.49-5.68a2.94 2.94 0 0 0-2.07-2.07C18.63 3.75 12 3.75 12 3.75s-6.63 0-8.44.5A2.94 2.94 0 0 0 1.5 6.32C1 8.17 1 12 1 12s0 3.83.5 5.68a2.94 2.94 0 0 0 2.06 2.07c1.81.5 8.44.5 8.44.5s6.63 0 8.44-.5a2.94 2.94 0 0 0 2.07-2.07C23 15.83 23 12 23 12zM9.75 15.5v-7L15.5 12l-5.75 3.5z"/></svg>',
@@ -36,7 +36,7 @@
     x: {
       key: "x",
       name: "X (Twitter)",
-      color: "#e7e9ea",
+      color: "#15202b",
       actions: ["Follow", "Repost", "Like Post"],
       hint: "x.com or twitter.com",
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.4l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.6l5.24 6.93 6.06-6.93zM17.6 20.65h2.04L6.49 3.24H4.3l13.3 17.4z"/></svg>',
@@ -44,7 +44,7 @@
     tiktok: {
       key: "tiktok",
       name: "TikTok",
-      color: "#25f4ee",
+      color: "#010101",
       actions: ["Follow", "Like Video", "Watch Video"],
       hint: "tiktok.com",
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-2.31-2.83V9.36a6.34 6.34 0 1 0 5.76 6.31V8.75a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.18z"/></svg>',
@@ -60,7 +60,7 @@
     twitch: {
       key: "twitch",
       name: "Twitch",
-      color: "#a970ff",
+      color: "#7c5cff",
       actions: ["Follow", "Watch Stream"],
       hint: "twitch.tv",
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 1L1.5 5.25v16.5h5.4V24h3l2.25-2.25h3.45L21 16.35V1H4.3zm15.2 14.4L16.75 18H13.5l-2.25 2.25V18H6.6V2.5h12.9v12.9zM16.3 6.4v5.4h-1.8V6.4h1.8zm-4.95 0v5.4H9.55V6.4h1.8z"/></svg>',
@@ -68,7 +68,7 @@
     pinterest: {
       key: "pinterest",
       name: "Pinterest",
-      color: "#ff4f6d",
+      color: "#e60023",
       actions: ["Follow", "Save Pin"],
       hint: "pinterest.com",
       icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.08 2.46 7.58 5.98 9.12-.08-.78-.16-1.97.03-2.82.17-.74 1.1-4.68 1.1-4.68s-.28-.56-.28-1.39c0-1.3.76-2.27 1.7-2.27.8 0 1.19.6 1.19 1.32 0 .8-.51 2.01-.78 3.13-.22.94.47 1.7 1.4 1.7 1.67 0 2.96-1.77 2.96-4.32 0-2.26-1.62-3.84-3.94-3.84-2.68 0-4.26 2.01-4.26 4.09 0 .81.31 1.68.7 2.15.08.1.09.19.07.29-.07.32-.24 1-.27 1.14-.04.18-.14.22-.33.13-1.25-.58-2.03-2.4-2.03-3.87 0-3.15 2.29-6.04 6.6-6.04 3.46 0 6.16 2.47 6.16 5.77 0 3.44-2.17 6.22-5.19 6.22-1.01 0-1.97-.53-2.29-1.15l-.62 2.37c-.23.87-.84 1.95-1.25 2.61.94.29 1.94.45 2.97.45 5.52 0 10-4.48 10-10S17.52 2 12 2z"/></svg>',
@@ -76,7 +76,7 @@
     website: {
       key: "website",
       name: "Website Visit",
-      color: "#34e5a5",
+      color: "#17b26a",
       actions: ["Visit Website", "Read Article", "Explore Page", "Sign Up"],
       hint: "website URL",
       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg>',
