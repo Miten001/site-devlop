@@ -217,19 +217,21 @@ document.addEventListener("DOMContentLoaded", () => {
     W.syncWalletPills();
   }
 
-  /* cloud mining summary */
+  /* cloud mining summary (server-synced when Supabase is configured) */
   if (FF.M) {
-    const M = FF.M;
-    const paintMine = () => {
-      const s = M.stats(user.email);
-      M.syncMiningPills();
+    const M = FF.M, A = M.api;
+    const paint = (v) => {
+      if (!v) return;
+      document.querySelectorAll("[data-mine-hash]").forEach((el) => (el.textContent = M.fmtHash(v.ghs)));
+      document.querySelectorAll("[data-mine-unclaimed]").forEach((el) => (el.textContent = Number(v.unclaimed).toFixed(4)));
       const cta = document.getElementById("db-mine-cta");
-      if (cta) cta.textContent = s.ghs > 0
-        ? (s.unclaimed >= M.CFG.minClaimUsdt ? "Claim " + FF.W.usd(s.unclaimed) : "Mining live · " + FF.W.usd(s.perDay) + "/day")
+      if (cta) cta.textContent = v.ghs > 0
+        ? (v.unclaimed >= v.config.minClaimUsdt ? "Claim " + FF.W.usd(v.unclaimed) : "Mining live · " + FF.W.usd(v.perDay) + "/day")
         : "Start mining free";
     };
-    paintMine();
-    setInterval(paintMine, 5000);
+    paint(A.view());
+    A.load().then(paint);
+    setInterval(() => paint(A.view()), 5000);
   }
 
   const first = (user.name || "Flexer").split(" ")[0];

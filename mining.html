@@ -67,6 +67,7 @@
           <span class="eyebrow"><span class="dot"></span> Cloud mining</span>
           <h1>Mine crypto with <span class="grad-text">points or USDT</span></h1>
           <p class="sub">Rent hashrate from the FlexFam pool, let the rig run 24/7 — even while you are offline — and claim your mined USDT any time.</p>
+          <p class="sub" style="margin-top:8px">Balance mode: <span class="status-pill off" id="mode-pill">checking…</span> <span id="mode-note" style="font-size:12.5px;color:var(--ink-mute)"></span></p>
         </div>
         <button class="btn btn-ghost btn-sm" id="mine-boost">⚡ Free daily boost</button>
       </div>
@@ -222,11 +223,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
   if (!user) return;
-  const M = FF.M, W = FF.W, $ = (id) => document.getElementById(id);
-  const email = user.email;
+  const M = FF.M, W = FF.W, A = M.api, $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
   const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
   const pts = (n) => Math.round(n).toLocaleString("en-IN");
+
+  let view = A.view();          // latest normalised state (server or local)
+  let busy = false;
 
   /* tabs */
   $("m-tabs").addEventListener("click", (e) => {
@@ -235,45 +238,61 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".tab-pane").forEach((p) => p.classList.toggle("active", p.id === "pane-" + b.dataset.tab));
   });
 
-  $("rate-line").textContent = W.CFG.pointsPerUsdt + " points = $1.00";
-  $("maint-pct").textContent = M.CFG.maintenancePct;
-  $("how-boost").textContent = M.CFG.boostPct;
-  $("how-boost-h").textContent = M.CFG.boostHours;
-  $("how-bonus").textContent = M.CFG.pointsBonusPct;
+  function setBusy(on) {
+    busy = on;
+    document.querySelectorAll("#bm-usdt, #bm-points, #cu-buy-usdt, #cu-buy-points, #claim-usdt, #claim-points, #mine-boost")
+      .forEach((b) => { b.disabled = on; });
+    if (!on) paintBoostBtn();
+  }
+
+  /* run a mutating API call, repaint, surface errors */
+  function act(promise, okMsg) {
+    if (busy) return;
+    setBusy(true);
+    promise.then((next) => {
+      view = next;
+      if (typeof okMsg === "function") FF.toast(okMsg(next), "ok");
+      else if (okMsg) FF.toast(okMsg, "ok");
+      renderAll();
+    }).catch((err) => {
+      FF.toast(err.message || "Something went wrong", "err");
+    }).finally(() => setBusy(false));
+  }
 
   /* ---------- plans ---------- */
   function renderPlans() {
-    $("plan-grid").innerHTML = M.PLANS.map((p) => {
-      const daily = M.dailyUsd(p.ghs), total = M.totalUsd(p.ghs, p.days);
+    $("plan-grid").innerHTML = (view.plans || []).map((p) => {
+      const daily = A.dailyUsd(view, p.ghs), total = daily * p.days;
       const price = p.priceUsd > 0 ? W.usd(p.priceUsd) : "FREE";
-      const ptsPrice = p.priceUsd > 0 ? pts(M.pointsPrice(p.priceUsd)) + " pts" : "0 pts";
-      return '<div class="plan-card' + (p.featured ? " featured" : "") + '" style="--pf:' + p.color + '">' +
+      const ptsPrice = p.priceUsd > 0 ? pts(A.pointsPrice(view, p.priceUsd)) + " pts" : "0 pts";
+      return '<div class="plan-card' + (p.featured ? " featured" : "") + '" style="--pf:' + esc(p.color) + '">' +
         '<span class="p-tag">' + esc(p.tag) + "</span>" +
         "<h4>" + esc(p.name) + "</h4>" +
         '<div class="p-hash">' + M.fmtHash(p.ghs) + "</div>" +
         '<div class="p-price"><b>' + price + "</b>" + (p.priceUsd > 0 ? "<span>or " + ptsPrice + "</span>" : "<span>starter rig</span>") + "</div>" +
-        '<ul class="p-perks">' + p.perks.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" +
+        '<ul class="p-perks">' + (p.perks || []).map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" +
         '<div class="p-stats"><div><b>' + W.usd(daily) + "</b><span>per day</span></div><div><b>" + p.days + "</b><span>days</span></div><div><b>" + W.usd(total) + "</b><span>total est.</span></div></div>" +
-        '<button class="btn ' + (p.featured ? "btn-primary" : "btn-ghost") + ' btn-block" data-plan="' + p.key + '">' + (p.free ? "Start free rig" : "Get this rig") + "</button>" +
+        '<button class="btn ' + (p.featured ? "btn-primary" : "btn-ghost") + ' btn-block" data-plan="' + esc(p.key) + '">' + (p.free ? "Start free rig" : "Get this rig") + "</button>" +
         "</div>";
     }).join("");
   }
 
   /* ---------- buy modal ---------- */
   const modal = $("buy-modal");
-  let pending = null; // {type:'plan'|'custom', ...}
+  let pending = null;
 
   function openBuy(cfg) {
     pending = cfg;
+    const daily = A.dailyUsd(view, cfg.ghs);
     $("bm-title").textContent = cfg.title;
     $("bm-sub").textContent = cfg.sub;
     $("bm-hash").textContent = M.fmtHash(cfg.ghs);
     $("bm-days").textContent = cfg.days + " days";
-    $("bm-day").textContent = W.usd(M.dailyUsd(cfg.ghs));
-    $("bm-total").textContent = W.usd(M.totalUsd(cfg.ghs, cfg.days));
+    $("bm-day").textContent = W.usd(daily);
+    $("bm-total").textContent = W.usd(daily * cfg.days);
     $("bm-usdt").textContent = cfg.priceUsd > 0 ? "Pay " + W.usd(cfg.priceUsd) + " with USDT" : "Start free rig";
     $("bm-points").classList.toggle("hidden", cfg.priceUsd <= 0);
-    $("bm-points").textContent = "Pay " + pts(M.pointsPrice(cfg.priceUsd)) + " points";
+    $("bm-points").textContent = "Pay " + pts(A.pointsPrice(view, cfg.priceUsd)) + " points";
     modal.classList.add("open");
   }
   function closeBuy() { modal.classList.remove("open"); pending = null; }
@@ -281,72 +300,69 @@ document.addEventListener("DOMContentLoaded", () => {
   modal.addEventListener("click", (e) => { if (e.target === modal) closeBuy(); });
 
   function doBuy(currency) {
-    if (!pending) return;
-    try {
-      if (pending.type === "plan") M.buyPlan(email, pending.plan, currency);
-      else M.buyCustom(email, pending.ghs, pending.days, currency);
-      FF.toast("Rig started — your hashrate is live now ⛏️", "ok");
-      closeBuy(); paintAll();
-    } catch (err) { FF.toast(err.message, "err"); }
+    if (!pending || busy) return;
+    const p = pending;
+    const run = p.type === "plan" ? A.buyPlan(p.plan, currency) : A.buyCustom(p.ghs, p.days, currency);
+    closeBuy();
+    act(run, "Rig started — your hashrate is live now ⛏️");
   }
   $("bm-usdt").addEventListener("click", () => doBuy("usdt"));
   $("bm-points").addEventListener("click", () => doBuy("points"));
 
   $("plan-grid").addEventListener("click", (e) => {
     const b = e.target.closest("[data-plan]"); if (!b) return;
-    const p = M.plan(b.dataset.plan); if (!p) return;
+    const p = (view.plans || []).find((x) => x.key === b.dataset.plan); if (!p) return;
     openBuy({ type: "plan", plan: p.key, title: p.name, sub: p.free ? "Free starter rig — no payment required." : "Choose how you want to pay for this rig.", ghs: p.ghs, days: p.days, priceUsd: p.priceUsd });
   });
 
   /* ---------- custom rig ---------- */
   const cuGhs = $("cu-ghs"), cuDays = $("cu-days");
-  cuGhs.min = M.CFG.customMinGhs; cuGhs.max = M.CFG.customMaxGhs;
-  if (Number(cuGhs.value) < M.CFG.customMinGhs) cuGhs.value = M.CFG.customMinGhs;
   function paintCustom() {
+    const lo = view.config.customMinGhs, hi = view.config.customMaxGhs;
+    cuGhs.min = lo; cuGhs.max = hi;
+    if (Number(cuGhs.value) < lo) cuGhs.value = lo;
+    if (Number(cuGhs.value) > hi) cuGhs.value = hi;
     const g = Number(cuGhs.value), d = Number(cuDays.value);
-    const price = M.customPrice(g, d);
+    const price = A.priceCustom(view, g, d);
+    const daily = A.dailyUsd(view, g);
     $("cu-ghs-out").textContent = g;
     $("cu-days-out").textContent = d;
     $("cu-hash-lbl").textContent = M.fmtHash(g);
     $("cu-days-lbl").textContent = d + " days";
-    $("cu-day").textContent = W.usd(M.dailyUsd(g));
-    $("cu-total").textContent = W.usd(M.totalUsd(g, d));
-    $("cu-points").textContent = pts(M.pointsPrice(price)) + " pts";
+    $("cu-day").textContent = W.usd(daily);
+    $("cu-total").textContent = W.usd(daily * d);
+    $("cu-points").textContent = pts(A.pointsPrice(view, price)) + " pts";
     $("cu-price").textContent = W.usd(price);
   }
   cuGhs.addEventListener("input", paintCustom);
   cuDays.addEventListener("input", paintCustom);
   function customCfg() {
     const g = Number(cuGhs.value), d = Number(cuDays.value);
-    return { type: "custom", title: "Custom rig", sub: M.fmtHash(g) + " for " + d + " days", ghs: g, days: d, priceUsd: M.customPrice(g, d) };
+    return { type: "custom", title: "Custom rig", sub: M.fmtHash(g) + " for " + d + " days", ghs: g, days: d, priceUsd: A.priceCustom(view, g, d) };
   }
   $("cu-buy-usdt").addEventListener("click", () => { pending = customCfg(); doBuy("usdt"); });
   $("cu-buy-points").addEventListener("click", () => { pending = customCfg(); doBuy("points"); });
 
   /* ---------- claim + boost ---------- */
   function claim(mode) {
-    try {
-      const r = M.claim(email, mode);
-      FF.toast(r.mode === "points"
-        ? "Claimed " + W.usd(r.amount) + " as " + pts(r.points) + " points!"
-        : "Claimed " + W.usd(r.amount) + " to your USDT wallet!", "ok");
-      paintAll();
-    } catch (err) { FF.toast(err.message, "err"); }
+    const before = view.unclaimed;
+    act(A.claim(mode), () => mode === "points"
+      ? "Claimed " + W.usd(before) + " as points (+" + view.config.pointsBonusPct + "% bonus)!"
+      : "Claimed " + W.usd(before) + " to your USDT balance!");
   }
   $("claim-usdt").addEventListener("click", () => claim("usdt"));
   $("claim-points").addEventListener("click", () => claim("points"));
   $("mine-boost").addEventListener("click", () => {
-    try { M.activateBoost(email); FF.toast("Boost active — +" + M.CFG.boostPct + "% for " + M.CFG.boostHours + "h ⚡", "ok"); paintAll(); }
-    catch (err) { FF.toast(err.message, "err"); }
+    act(A.boost(), () => "Boost active — +" + view.config.boostPct + "% for " + view.config.boostHours + "h ⚡");
   });
 
   /* ---------- rigs + log ---------- */
   function renderRigs() {
-    const list = M.state(email).contracts;
+    const list = view.contracts || [];
     $("rig-empty").classList.toggle("hidden", list.length > 0);
     $("rig-list").innerHTML = list.map((c) => {
       const live = c.status === "active" && Date.now() < c.endsAt;
-      const total = c.endsAt - c.startedAt;
+      const total = Math.max(1, c.endsAt - c.startedAt);
       const pct = Math.max(0, Math.min(100, Math.round(((Date.now() - c.startedAt) / total) * 100)));
       const paid = c.priceUsd > 0
         ? (c.paidWith === "points" ? pts(c.paidAmount) + " pts" : W.usd(c.priceUsd))
@@ -356,54 +372,87 @@ document.addEventListener("DOMContentLoaded", () => {
         '<div class="rr-main"><h5>' + esc(c.name) + ' <span class="badge ' + (live ? "active" : "cancelled") + '">' + (live ? "mining" : "expired") + "</span></h5>" +
         "<p>" + M.fmtHash(c.ghs) + " · " + c.days + " day contract · paid " + paid + "</p>" +
         '<div class="slot-bar"><i style="width:' + pct + '%"></i></div>' +
-        "<p class=\"rr-time\">" + (live ? M.fmtDur(c.endsAt - Date.now()) + " remaining" : "Ended " + fdate(c.endsAt)) + "</p></div>" +
+        '<p class="rr-time">' + (live ? M.fmtDur(c.endsAt - Date.now()) + " remaining" : "Ended " + fdate(c.endsAt)) + "</p></div>" +
         '<div class="rr-earn"><b>' + M.fmtUsd6(c.earned) + "</b><span>mined</span></div></div>";
     }).join("");
   }
 
   function renderLog() {
-    const l = M.state(email).log || [];
+    const l = view.log || [];
     $("log-empty").classList.toggle("hidden", l.length > 0);
     $("log-body").innerHTML = l.map((e) => (
-      "<tr><td>" + fdate(e.at) + '</td><td><span class="badge ' + (e.type === "claim" ? "approved" : e.type === "boost" ? "info" : "pending") + '">' + e.type + "</span></td>" +
+      "<tr><td>" + fdate(e.at) + '</td><td><span class="badge ' + (e.type === "claim" ? "approved" : e.type === "boost" ? "info" : "pending") + '">' + esc(e.type) + "</span></td>" +
       "<td>" + esc(e.text) + "</td>" +
       '<td class="num ' + (e.amount > 0 ? "pos" : e.amount < 0 ? "neg" : "") + '">' + (e.amount ? W.usd(Math.abs(e.amount)) : "—") + "</td></tr>"
     )).join("");
   }
 
-  /* ---------- live paint ---------- */
-  function paintStats() {
-    const s = M.stats(email);
-    $("rig-hash").textContent = M.fmtHash(s.ghs);
-    $("rig-state").textContent = s.ghs > 0 ? (s.boosted ? "Mining · boost active ⚡" : "Mining live") : "Idle — no rig running";
-    document.querySelector(".rig-core").classList.toggle("on", s.ghs > 0);
-    $("rig-unclaimed").textContent = Number(s.unclaimed).toFixed(6);
-    $("rig-day").textContent = "$" + s.perDay.toFixed(4);
-    $("rig-hour").textContent = "$" + s.perHour.toFixed(6);
-    $("rig-active").textContent = s.active;
-    $("rig-lifetime").textContent = W.usd(s.lifetime);
-    $("net-invested").textContent = W.usd(s.invested);
+  function paintBoostBtn() {
+    const btn = $("mine-boost");
+    if (busy) return;
+    const wait = view.boostReadyIn;
+    btn.disabled = wait > 0;
+    btn.textContent = wait > 0 ? "Boost in " + M.fmtDur(wait) : "⚡ Free daily boost";
+  }
 
-    const wait = M.boostReadyIn(email);
-    $("mine-boost").disabled = wait > 0;
-    $("mine-boost").textContent = wait > 0 ? "Boost in " + M.fmtDur(wait) : "⚡ Free daily boost";
-    $("rig-boost-note").textContent = s.boosted
-      ? "Boost running — +" + M.CFG.boostPct + "% until " + new Date(s.boostUntil).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
-      : "Minimum claim " + W.usd(M.CFG.minClaimUsdt) + " · rewards keep mining while you are offline.";
+  /* ---------- live paint (ticks every second between server polls) ---------- */
+  function paintStats() {
+    const v = A.view();
+    if (v) { view = Object.assign(view, v); }
+    $("rig-hash").textContent = M.fmtHash(view.ghs);
+    $("rig-state").textContent = view.ghs > 0 ? (view.boosted ? "Mining · boost active ⚡" : "Mining live") : "Idle — no rig running";
+    document.querySelector(".rig-core").classList.toggle("on", view.ghs > 0);
+    $("rig-unclaimed").textContent = Number(view.unclaimed).toFixed(6);
+    $("rig-day").textContent = "$" + Number(view.perDay).toFixed(4);
+    $("rig-hour").textContent = "$" + (Number(view.perDay) / 24).toFixed(6);
+    $("rig-active").textContent = view.active;
+    $("rig-lifetime").textContent = W.usd(view.lifetime);
+    $("net-invested").textContent = W.usd(view.invested);
+
+    paintBoostBtn();
+    $("rig-boost-note").textContent = view.boosted
+      ? "Boost running — +" + view.config.boostPct + "% until " + new Date(view.boostUntil).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+      : "Minimum claim " + W.usd(view.config.minClaimUsdt) + " · rewards keep mining while you are offline.";
 
     const n = M.networkStats();
     $("net-pool").textContent = (n.poolHash / 1000).toFixed(1) + " TH/s";
     $("net-miners").textContent = n.miners.toLocaleString("en-IN");
     $("net-uptime").textContent = n.uptime.toFixed(1) + "%";
-    M.syncMiningPills();
-    W.syncWalletPills();
+
+    const onServer = A.isServer();
+    $("mode-pill").textContent = onServer ? "Server-synced" : "This browser only";
+    $("mode-pill").className = "status-pill " + (onServer ? "on" : "off");
+    $("mode-note").textContent = onServer
+      ? "Contracts, rewards and balances are held in Postgres — nothing here can be changed from your browser."
+      : "Supabase is not configured (or you signed in with the local fallback), so mining runs as a browser-only simulation.";
+
+    /* balances shown in the header chips come from whichever mode is live */
+    document.querySelectorAll("[data-mine-hash]").forEach((el) => (el.textContent = M.fmtHash(view.ghs)));
+    document.querySelectorAll("[data-mine-unclaimed]").forEach((el) => (el.textContent = Number(view.unclaimed).toFixed(4)));
+    if (A.isServer()) {
+      document.querySelectorAll("[data-usdt]").forEach((el) => (el.textContent = Number(view.balances.usdt).toFixed(2)));
+      document.querySelectorAll("[data-credits]").forEach((el) => (el.textContent = Number(view.balances.points).toLocaleString("en-IN")));
+    } else {
+      W.syncWalletPills();
+      FF.syncCreditPills();
+    }
   }
 
-  function paintAll() { renderPlans(); renderRigs(); renderLog(); paintCustom(); paintStats(); FF.syncCreditPills(); }
+  function renderAll() {
+    $("rate-line").textContent = view.config.pointsPerUsdt + " points = $1.00";
+    $("maint-pct").textContent = view.config.maintenancePct;
+    $("how-boost").textContent = view.config.boostPct;
+    $("how-boost-h").textContent = view.config.boostHours;
+    $("how-bonus").textContent = view.config.pointsBonusPct;
+    renderPlans(); renderRigs(); renderLog(); paintCustom(); paintStats();
+  }
 
-  paintAll();
+  renderAll();
+  /* pull authoritative state, then keep it fresh */
+  A.load().then((v) => { if (v) { view = v; renderAll(); } });
   setInterval(paintStats, 1000);
-  setInterval(renderRigs, 15000);
+  setInterval(renderRigs, 5000);
+  setInterval(() => { if (!busy) A.load().then((v) => { if (v) { view = v; renderRigs(); renderLog(); } }); }, 60000);
 });
 </script>
 

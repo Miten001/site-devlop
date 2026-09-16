@@ -331,6 +331,218 @@
     };
   }
 
+
+  /* ============================================================
+     SERVER LAYER
+     When Supabase is configured and the member holds a real Auth session,
+     mining is authoritative on the server: prices, elapsed time, balances
+     and payouts are all recomputed by Postgres functions (see
+     supabase-mining.sql), so editing localStorage changes nothing.
+     Without a server session everything falls back to the browser-only
+     simulation above, which keeps local previews and demo accounts working.
+     ============================================================ */
+
+  let snapshot = null;     // last server payload
+  let snapshotAt = 0;      // when we received it
+  let serverDown = false;  // set after an auth/offline failure
+
+  function serverReady() {
+    return !!(FF.hasServer && FF.hasServer() && !serverDown);
+  }
+
+  /* Normalised view used by the UI, identical in both modes. */
+  function localSnapshot(email) {
+    const s = stats(email);
+    const st = state(email);
+    const user = FF.currentUser() || {};
+    return {
+      mode: "local",
+      config: {
+        minClaimUsdt: CFG.minClaimUsdt, pointsBonusPct: CFG.pointsBonusPct,
+        boostPct: CFG.boostPct, boostHours: CFG.boostHours,
+        maintenancePct: CFG.maintenancePct, pointsPerUsdt: pointsPerUsdt(),
+        customMinGhs: CFG.customMinGhs, customMaxGhs: CFG.customMaxGhs,
+        netRate: netRate(),
+      },
+      plans: PLANS,
+      balances: { usdt: W.wallet(email).available, points: Number(user.credits || 0) },
+      ghs: s.ghs, perDay: s.perDay, unclaimed: s.unclaimed, claimed: s.claimed,
+      lifetime: s.lifetime, active: s.active, invested: s.invested,
+      boosted: s.boosted, boostUntil: s.boostUntil,
+      boostReadyIn: boostReadyIn(email),
+      contracts: st.contracts, log: st.log || [],
+    };
+  }
+
+  function adoptServer(payload) {
+    snapshot = payload;
+    snapshotAt = Date.now();
+    serverDown = false;
+    return normalise(payload);
+  }
+
+  /* Pure: turns a server payload into the shape the UI renders. Must NOT
+     touch snapshotAt, otherwise the per-second interpolation freezes. */
+  function normalise(payload) {
+    const cfg = payload.config || {};
+    const acc = payload.account || {};
+    const contracts = payload.contracts || [];
+    const live = contracts.filter((c) => c.status === "active");
+    const cooldownMs = (cfg.boost_cooldown_h || CFG.boostCooldownH) * 3600000;
+    return {
+      mode: "server",
+      config: {
+        minClaimUsdt: Number(cfg.min_claim_usdt != null ? cfg.min_claim_usdt : CFG.minClaimUsdt),
+        pointsBonusPct: Number(cfg.points_bonus_pct != null ? cfg.points_bonus_pct : CFG.pointsBonusPct),
+        boostPct: Number(cfg.boost_pct != null ? cfg.boost_pct : CFG.boostPct),
+        boostHours: Number(cfg.boost_hours != null ? cfg.boost_hours : CFG.boostHours),
+        maintenancePct: Number(cfg.maintenance_pct != null ? cfg.maintenance_pct : CFG.maintenancePct),
+        pointsPerUsdt: Number(cfg.points_per_usdt || pointsPerUsdt()),
+        customMinGhs: Number(cfg.custom_min_ghs || CFG.customMinGhs),
+        customMaxGhs: Number(cfg.custom_max_ghs || CFG.customMaxGhs),
+        customTiers: cfg.customTiers || null,
+        customBaseDays: Number(cfg.custom_base_days || CFG.customDays),
+        netRate: Number(cfg.netRate != null ? cfg.netRate : netRate()),
+      },
+      plans: (payload.plans || []).map((p) => ({
+        key: p.key, name: p.name, tag: p.tag, ghs: Number(p.ghs), days: Number(p.days),
+        priceUsd: Number(p.priceUsd), color: p.color, free: !!p.free,
+        featured: !!p.featured, perks: p.perks || [],
+      })),
+      balances: {
+        usdt: Number((payload.balances && payload.balances.usdt) || 0),
+        points: Number((payload.balances && payload.balances.points) || 0),
+      },
+      ghs: Number(acc.ghs || 0),
+      perDay: Number(acc.perDay || 0),
+      unclaimed: Number(acc.unclaimed || 0),
+      claimed: Number(acc.claimed || 0),
+      lifetime: round(Number(acc.claimed || 0) + Number(acc.unclaimed || 0)),
+      active: live.length,
+      invested: contracts.reduce((n, c) => n + Number(c.priceUsd || 0), 0),
+      boosted: !!acc.boosted,
+      boostUntil: Number(acc.boostUntil || 0),
+      boostReadyIn: Math.max(0, Number(acc.lastBoost || 0) + cooldownMs - Date.now()),
+      contracts: contracts.map((c) => ({
+        id: c.id, plan: c.plan, name: c.name, ghs: Number(c.ghs), days: Number(c.days),
+        startedAt: Number(c.startedAt), endsAt: Number(c.endsAt), priceUsd: Number(c.priceUsd),
+        paidWith: c.paidWith, paidAmount: Number(c.paidAmount), earned: Number(c.earned),
+        status: c.status,
+      })),
+      log: (payload.log || []).map((l) => ({
+        id: l.id, type: l.type, text: l.text, amount: Number(l.amount || 0), at: Number(l.at),
+      })),
+    };
+  }
+
+  /* Smoothly interpolate between server polls so the counter still ticks
+     every second. The server value always wins on the next refresh. */
+  function interpolate(view) {
+    if (!view || view.mode !== "server") return view;
+    const elapsed = Math.max(0, Date.now() - snapshotAt);
+    const drift = (view.perDay / 86400000) * elapsed;
+    const out = Object.assign({}, view);
+    out.unclaimed = round(view.unclaimed + drift);
+    out.lifetime = round(view.claimed + out.unclaimed);
+    out.boosted = view.boostUntil > Date.now();
+    out.boostReadyIn = Math.max(0, view.boostReadyIn - elapsed);
+    return out;
+  }
+
+  /* Any RPC failure that is an auth/config problem drops us into local mode
+     for the rest of the session; a real validation error is re-thrown. */
+  function call(fn, args) {
+    return FF.rpc(fn, args).then((payload) => adoptServer(payload)).catch((err) => {
+      if (err && err.offline) { serverDown = true; throw Object.assign(err, { fellBack: true }); }
+      throw err;
+    });
+  }
+
+  const api = {
+    isServer() { return !!(snapshot && !serverDown); },
+
+    /* Current view without hitting the network. */
+    view() {
+      const u = FF.currentUser();
+      if (!u) return null;
+      if (snapshot && !serverDown) return interpolate(normalise(snapshot));
+      return localSnapshot(u.email);
+    },
+
+    /* Fetch authoritative state; silently degrades to the local simulation. */
+    load() {
+      const u = FF.currentUser();
+      if (!u) return Promise.resolve(null);
+      if (!serverReady()) return Promise.resolve(localSnapshot(u.email));
+      return call("mining_state").catch(() => localSnapshot(u.email));
+    },
+
+    buyPlan(key, currency) {
+      const u = FF.currentUser();
+      if (!u) return Promise.reject(new Error("Please log in"));
+      if (!serverReady()) return Promise.resolve().then(() => { buyPlan(u.email, key, currency); return localSnapshot(u.email); });
+      return call("mining_buy_plan", { p_plan: key, p_currency: currency }).catch((err) => {
+        if (err.fellBack) { buyPlan(u.email, key, currency); return localSnapshot(u.email); }
+        throw err;
+      });
+    },
+
+    buyCustom(ghs, days, currency) {
+      const u = FF.currentUser();
+      if (!u) return Promise.reject(new Error("Please log in"));
+      if (!serverReady()) return Promise.resolve().then(() => { buyCustom(u.email, ghs, days, currency); return localSnapshot(u.email); });
+      return call("mining_buy_custom", { p_ghs: Math.round(ghs), p_days: Math.round(days), p_currency: currency }).catch((err) => {
+        if (err.fellBack) { buyCustom(u.email, ghs, days, currency); return localSnapshot(u.email); }
+        throw err;
+      });
+    },
+
+    claim(mode) {
+      const u = FF.currentUser();
+      if (!u) return Promise.reject(new Error("Please log in"));
+      snapshotPrevUnclaimed = (this.view() || {}).unclaimed || 0;
+      if (!serverReady()) return Promise.resolve().then(() => { const r = claim(u.email, mode); const v = localSnapshot(u.email); v.claimResult = r; return v; });
+      return call("mining_claim", { p_mode: mode }).then((v) => {
+        v.claimResult = { mode, amount: round(Math.max(0, (snapshotPrevUnclaimed || 0))) };
+        return v;
+      }).catch((err) => {
+        if (err.fellBack) { const r = claim(u.email, mode); const v = localSnapshot(u.email); v.claimResult = r; return v; }
+        throw err;
+      });
+    },
+
+    boost() {
+      const u = FF.currentUser();
+      if (!u) return Promise.reject(new Error("Please log in"));
+      if (!serverReady()) return Promise.resolve().then(() => { activateBoost(u.email); return localSnapshot(u.email); });
+      return call("mining_boost").catch((err) => {
+        if (err.fellBack) { activateBoost(u.email); return localSnapshot(u.email); }
+        throw err;
+      });
+    },
+
+    /* Price of a custom rig using whichever tier table is in force. */
+    priceCustom(view, ghs, days) {
+      const tiers = view && view.config && view.config.customTiers;
+      if (!tiers || !tiers.length) return customPrice(ghs, days);
+      const base = (view.config.customBaseDays || CFG.customDays);
+      const tier = tiers.find((t) => ghs <= Number(t.upTo)) || tiers[tiers.length - 1];
+      return Math.round(ghs * Number(tier.usdPerGhs) * (days / base) * 100) / 100;
+    },
+
+    pointsPrice(view, usd) {
+      const rate = (view && view.config && view.config.pointsPerUsdt) || pointsPerUsdt();
+      return Math.ceil(Number(usd || 0) * rate);
+    },
+
+    dailyUsd(view, ghs) {
+      const rate = (view && view.config && view.config.netRate) || netRate();
+      return ghs * rate;
+    },
+  };
+
+  let snapshotPrevUnclaimed = 0;
+
   /* ---------- pills ---------- */
   function syncMiningPills() {
     const u = FF.currentUser();
@@ -355,5 +567,6 @@
     state, stats, accrue, hashrate, activeContracts, boostActive, boostReadyIn,
     buyPlan, buyCustom, claim, activateBoost,
     fmtHash, fmtDur, fmtUsd6, networkStats, syncMiningPills,
+    api, serverReady,
   };
 })();

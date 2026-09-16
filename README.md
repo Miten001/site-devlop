@@ -13,7 +13,7 @@
 - 🤖 **Telegram Sub4Sub Bot** — real, fully-working bot: users join each other's Telegram groups to earn points, then spend them to grow their own groups (SQLite, auto join-verification, anti-leave refunds, referrals, admin panel). See [`telegram-bot/`](telegram-bot/)
 - 💵 **USDT Task Marketplace** — `tasks.html` (browse & work), `post-task.html` (publish jobs with escrow), `my-tasks.html` (review proofs, release payments, cancel & refund). 8 categories, per-task rewards, worker slots, proof review workflow. **No sample listings — the market only shows real, user-posted and escrow-funded tasks**
 - 🏦 **USDT Wallet** — `wallet.html` with deposit (USDT on BEP20, min $10, live QR code + TXID submission), withdrawal requests (BEP20 only, min $5, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger
-- ⛏️ **Cloud Mining** — `mining.html`: rent hashrate with **points or USDT**, rigs mine 24/7 (rewards accrue even while offline), free daily +25% boost, claim mined USDT to the wallet or as points with a +10% bonus
+- ⛏️ **Cloud Mining** — `mining.html`: rent hashrate with **points or USDT**, rigs mine 24/7 (rewards accrue even while offline), free daily +25% boost, claim mined USDT to the wallet or as points with a +10% bonus. Ships with a **server-authoritative Postgres backend** ([`supabase-mining.sql`](supabase-mining.sql)) so balances cannot be edited from the browser console
 - 🛡️ **Payments admin** — `admin-payments.html` for allowlisted admins to approve/reject deposits and withdrawals
 - 🎨 Premium dark UI — aurora gradients, glassmorphism, 3D tilt, scroll reveals
 
@@ -71,9 +71,57 @@ Admins listed in `window.FF_ADMIN_EMAILS` can settle payment requests at `admin-
 | Claim-as-points bonus | +10% | `FF.M.CFG.pointsBonusPct` |
 | Free daily boost | +25% for 8h, once per 24h | `FF.M.CFG.boostPct` / `boostHours` |
 
+In server mode every value above is read from the `public.mining_config` row instead, so you can retune the economy live from the Supabase dashboard.
+
 Plans live in `FF.M.PLANS` (free 30 GH/s starter rig + Bronze/Silver/Gold/Titan). They are tuned so a contract returns roughly **1.15x–1.55x** of its price over the full term, longer contracts returning more — edit `usdPerGhsDay` to make the whole pool faster or slower.
 
-State is stored in `localStorage` under `ff_mining` (`{ [email]: { contracts, unclaimed, claimed, lastAccrue, boostUntil, lastBoost, log } }`). Mining payouts appear in the wallet ledger as `mining` transactions. Like the rest of the wallet this is a **front-end simulation** — before going live, move accrual, contract state and payouts to your backend/mining-pool API so users cannot edit them from the browser console.
+### Two modes
+
+| | Browser mode | **Server mode (recommended)** |
+| --- | --- | --- |
+| State lives in | `localStorage` (`ff_mining`) | Postgres, in your Supabase project |
+| Can a user edit their balance from devtools? | **Yes** | **No** |
+| Needs setup | none | run [`supabase-mining.sql`](supabase-mining.sql) |
+
+The page shows which mode it is in via the **Balance mode** pill. Server mode
+switches on automatically as soon as Supabase Auth is configured and the member
+is signed in with a real Supabase account; otherwise the browser simulation is
+used so local previews and the demo account keep working.
+
+### Turning on server mode
+
+1. Run [`supabase.sql`](supabase.sql) first (it creates `public.admins` and `public.is_admin()`).
+2. Run [`supabase-mining.sql`](supabase-mining.sql) **as one script** in the Supabase SQL editor.
+3. Sign in on the site with a Supabase Auth account — the mining page should show **Server-synced**.
+
+That migration creates the catalog (`mining_config`, `mining_plans`,
+`mining_custom_tiers`) and the per-user tables (`balances`, `mining_accounts`,
+`mining_contracts`, `mining_ledger`). Tune the economy by editing rows in
+`mining_config` / `mining_plans` — no redeploy needed, the page reads the
+catalog from the server.
+
+**Why it cannot be cheated:** there is deliberately *no* insert/update/delete
+policy on any mining table, and write permission is revoked from `anon` and
+`authenticated`. The only write path is a handful of `security definer`
+functions — `mining_buy_plan`, `mining_buy_custom`, `mining_claim`,
+`mining_boost` — which re-derive the price from the catalog and the elapsed
+time from the server clock. The client sends only a plan key, a hashrate and a
+currency; a forged price, hashrate or duration is ignored. Members can `select`
+their own rows and nothing else.
+
+Crediting a member (an approved deposit, a points migration) is an admin
+action: `admin-payments.html` → **Cloud Mining** tab, which calls
+`mining_admin_adjust(email, usdt, points, note)`. It is gated by the same
+`public.admins` allowlist as the analytics dashboard, so the public
+`FF_ADMIN_EMAILS` list in the browser config is only a UI hint.
+
+Mining payouts appear in the browser wallet ledger as `mining` transactions
+when running in browser mode; in server mode they land in `public.balances` and
+the member's `mining_ledger`.
+
+> The **wallet, escrow and task marketplace are still browser-side** — only
+> mining has been moved to the server so far. Move those the same way before
+> handling real money.
 
 ## Telegram bot
 

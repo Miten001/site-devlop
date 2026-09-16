@@ -80,6 +80,7 @@
           <button class="tab-btn active" data-tab="payments">Payments</button>
           <button class="tab-btn" data-tab="campaigns">Point Campaigns</button>
           <button class="tab-btn" data-tab="market">USDT Tasks</button>
+          <button class="tab-btn" data-tab="mining">Cloud Mining</button>
         </div>
 
         <!-- PAYMENTS -->
@@ -144,6 +145,49 @@
             <div class="panel-head"><div><h3>Pending proof submissions</h3><p class="panel-sub">Admin override — approve or reject any worker's proof directly.</p></div></div>
             <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Worker</th><th>Task</th><th>Proof</th><th>Reward</th><th>Action</th></tr></thead><tbody id="js-body"></tbody></table></div>
             <div class="empty-mini hidden" id="js-empty"><b>Queue is clear</b>No task proofs pending.</div>
+          </div>
+
+        <!-- CLOUD MINING (server-backed) -->
+        <div class="tab-pane" id="pane-mining">
+          <div class="fee-hint" style="margin-bottom:16px" id="mn-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <span id="mn-note-text">Checking the mining server…</span>
+          </div>
+
+          <div class="mini-stats">
+            <div class="mini-stat"><b id="mn-miners">0</b><span>Active miners</span></div>
+            <div class="mini-stat"><b id="mn-pool">0 GH/s</b><span>Pool hashrate</span></div>
+            <div class="mini-stat"><b id="mn-sold">$0.00</b><span>Hashrate sold</span></div>
+            <div class="mini-stat"><b id="mn-owed">$0.00</b><span>Unclaimed rewards</span></div>
+          </div>
+
+          <div class="panel" id="mn-adjust-panel">
+            <div class="panel-head"><div><h3>Credit a member's server balance</h3><p class="panel-sub">Use this after you confirm a USDT deposit on-chain, or to migrate a member's browser points into the server ledger. Negative values debit.</p></div></div>
+            <div class="field">
+              <label>Member email</label>
+              <input type="text" id="mn-email" placeholder="member@example.com" />
+            </div>
+            <div class="flex gap-12 wrap">
+              <div class="field" style="flex:1;min-width:160px">
+                <label>USDT (+/−)</label>
+                <input type="text" inputmode="decimal" id="mn-usdt" placeholder="0.00" />
+              </div>
+              <div class="field" style="flex:1;min-width:160px">
+                <label>Points (+/−)</label>
+                <input type="text" inputmode="numeric" id="mn-points" placeholder="0" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Note for the member's mining log</label>
+              <input type="text" id="mn-note-input" placeholder="Approved BEP20 deposit 0x…" />
+            </div>
+            <button class="btn btn-primary" id="mn-apply">Apply adjustment</button>
+          </div>
+
+          <div class="panel" style="margin-top:16px">
+            <div class="panel-head"><div><h3>Member balances</h3><p class="panel-sub">Server-side USDT, points, live hashrate and mining payouts.</p></div><button class="btn btn-ghost btn-sm" id="mn-refresh">Refresh</button></div>
+            <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Member</th><th>USDT</th><th>Points</th><th>Hashrate</th><th>Unclaimed</th><th>Claimed</th></tr></thead><tbody id="mn-body"></tbody></table></div>
+            <div class="empty-mini hidden" id="mn-empty"><b>No server miners yet</b>Balances appear here once members sign in with Supabase Auth and start a rig.</div>
           </div>
         </div>
       </div>
@@ -213,6 +257,66 @@ document.addEventListener("DOMContentLoaded", () => {
     tabs.querySelectorAll(".tab-btn").forEach((t) => t.classList.toggle("active", t === b));
     document.querySelectorAll(".tab-pane").forEach((p) => p.classList.toggle("active", p.id === "pane-" + b.dataset.tab));
   });
+
+
+  /* ---------- cloud mining (server-authoritative) ---------- */
+  (function miningAdmin() {
+    const note = $("mn-note-text");
+    const setNote = (msg, warn) => {
+      note.textContent = msg;
+      $("mn-note").className = "fee-hint" + (warn ? " warn" : "");
+    };
+    const offline = () => {
+      setNote("The mining server is not reachable from this session. Run supabase-mining.sql in the Supabase SQL editor and log in with your Supabase admin account — until then mining runs in browser-only mode and there is nothing to administer here.", true);
+      $("mn-adjust-panel").classList.add("hidden");
+      $("mn-empty").classList.remove("hidden");
+    };
+
+    function load() {
+      if (!FF.hasServer || !FF.hasServer()) return offline();
+      FF.rpc("mining_admin_overview").then((o) => {
+        setNote("Connected to the mining server. Balances below are the authoritative Postgres ledger — members cannot change them from the browser.", false);
+        $("mn-adjust-panel").classList.remove("hidden");
+        $("mn-miners").textContent = o.miners;
+        $("mn-pool").textContent = FF.M.fmtHash(Number(o.poolGhs || 0));
+        $("mn-sold").textContent = W.usd(o.sold);
+        $("mn-owed").textContent = W.usd(o.unclaimed);
+        const rows = o.rows || [];
+        $("mn-empty").classList.toggle("hidden", rows.length > 0);
+        $("mn-body").innerHTML = rows.map((r) => (
+          "<tr><td><b>" + esc(r.email) + "</b></td>" +
+          '<td class="num">' + W.usd(r.usdt) + "</td>" +
+          '<td class="num">' + Number(r.points).toLocaleString("en-IN") + "</td>" +
+          "<td>" + FF.M.fmtHash(Number(r.ghs || 0)) + "</td>" +
+          '<td class="num">' + W.usd(r.unclaimed) + "</td>" +
+          '<td class="num pos">' + W.usd(r.claimed) + "</td></tr>"
+        )).join("");
+      }).catch((err) => {
+        if (err && err.offline) return offline();
+        setNote("Mining server error: " + err.message, true);
+      });
+    }
+
+    $("mn-refresh").addEventListener("click", load);
+    $("mn-apply").addEventListener("click", () => {
+      const email = $("mn-email").value.trim();
+      const usdt = Number($("mn-usdt").value || 0);
+      const points = Math.round(Number($("mn-points").value || 0));
+      if (!email) return FF.toast("Enter the member's email", "err");
+      if (!usdt && !points) return FF.toast("Enter a USDT or points amount", "err");
+      const btn = $("mn-apply");
+      btn.disabled = true;
+      FF.rpc("mining_admin_adjust", {
+        p_email: email, p_usdt: usdt, p_points: points, p_note: $("mn-note-input").value.trim(),
+      }).then((r) => {
+        FF.toast(email + " now holds " + W.usd(r.usdt) + " and " + Number(r.points).toLocaleString("en-IN") + " points", "ok");
+        $("mn-usdt").value = ""; $("mn-points").value = ""; $("mn-note-input").value = "";
+        load();
+      }).catch((err) => FF.toast(err.message, "err")).finally(() => { btn.disabled = false; });
+    });
+
+    load();
+  })();
 
   /* ---------- point campaigns (Add Page) ---------- */
   function renderCampaigns() {

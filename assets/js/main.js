@@ -103,7 +103,20 @@
     users() { return store.get("ff_users", []); },
     saveUsers(u) { store.set("ff_users", u); },
     session() { return store.get("ff_session", null); },
-    setSession(email) { store.set("ff_session", email); },
+    setSession(email) { store.set("ff_session", email); if (!email) store.set("ff_auth", null); },
+    /* Supabase Auth tokens. Kept separate from the member cache so logging
+       out always drops them, and so nothing password-like is ever stored. */
+    auth() { return store.get("ff_auth", null); },
+    setAuth(session) {
+      if (!session || !session.access_token) return store.set("ff_auth", null);
+      store.set("ff_auth", {
+        accessToken: session.access_token,
+        refreshToken: session.refresh_token || null,
+        userId: (session.user && session.user.id) || null,
+        email: (session.user && session.user.email) || null,
+        expiresAt: Date.now() + (Number(session.expires_in || 3600) - 60) * 1000,
+      });
+    },
     campaigns() { return store.get("ff_campaigns", []); },
     saveCampaigns(c) { store.set("ff_campaigns", c); },
     doneMap() { return store.get("ff_done", {}); },
@@ -367,7 +380,7 @@
     }).then((result) => {
       if (!result.user || !result.user.id) throw new Error("The account could not be created. Please try again.");
       const member = rememberMember(name, email, result.user.id);
-      if (result.session) DB.setSession(email);
+      if (result.session) { DB.setAuth(result.session); DB.setSession(email); }
       return { member, confirmationRequired: !result.session, localOnly: false };
     });
   }
@@ -381,6 +394,7 @@
       if (!result.user) throw new Error("Incorrect email or password");
       const profileName = result.user.user_metadata && result.user.user_metadata.display_name;
       const member = rememberMember(profileName || email.split("@")[0], email, result.user.id);
+      DB.setAuth(result);
       DB.setSession(email);
       return member;
     }).catch((error) => {
@@ -388,6 +402,78 @@
       const cached = DB.users().find((u) => u.email === email);
       if (cached && (cached.passwordDigest || cached.pass)) return localLogin(email, password);
       throw error;
+    });
+  }
+
+  /* ---------- Supabase RPC (server-authoritative features) ----------
+     Any feature that must not be editable from the browser console (cloud
+     mining balances, contracts, payouts) goes through a Postgres function
+     instead of localStorage. If Supabase is not configured, or the member
+     signed in with the local fallback, hasServer() is false and the caller
+     falls back to the browser-only simulation. */
+
+  function refreshAuth() {
+    const auth = DB.auth();
+    const cfg = memberConfig();
+    if (!cfg || !auth || !auth.refreshToken) return Promise.resolve(null);
+    return authRequest("/auth/v1/token?grant_type=refresh_token", {
+      body: { refresh_token: auth.refreshToken },
+    }).then((result) => {
+      if (!result || !result.access_token) throw new Error("Session expired — please log in again");
+      DB.setAuth(result);
+      return DB.auth();
+    }).catch(() => { DB.setAuth(null); return null; });
+  }
+
+  function accessToken() {
+    const auth = DB.auth();
+    if (!auth) return Promise.resolve(null);
+    if (auth.expiresAt && auth.expiresAt > Date.now()) return Promise.resolve(auth.accessToken);
+    return refreshAuth().then((fresh) => (fresh ? fresh.accessToken : null));
+  }
+
+  function hasServer() {
+    const u = currentUser();
+    return !!(memberConfig() && DB.auth() && u && DB.auth().email &&
+              String(DB.auth().email).toLowerCase() === String(u.email).toLowerCase());
+  }
+
+  /* Calls a Postgres function. Rejects with err.offline = true when the
+     member has no server session, so callers can degrade gracefully. */
+  function rpc(fn, args) {
+    const cfg = memberConfig();
+    if (!cfg) {
+      const e = new Error("Server features are not configured on this deployment");
+      e.offline = true;
+      return Promise.reject(e);
+    }
+    return accessToken().then((token) => {
+      if (!token) {
+        const e = new Error("Please log in again to sync with the server");
+        e.offline = true;
+        throw e;
+      }
+      return fetch(String(cfg.url).replace(/\/+$/, "") + "/rest/v1/rpc/" + fn, {
+        method: "POST",
+        headers: {
+          apikey: cfg.anonKey,
+          Authorization: "Bearer " + token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(args || {}),
+      }).then((res) => res.text().then((text) => {
+        let json = null;
+        try { json = text ? JSON.parse(text) : null; } catch (e) {}
+        if (!res.ok) {
+          const msg = (json && (json.message || json.hint || json.error_description || json.error)) ||
+            "Request failed (" + res.status + ")";
+          const err = new Error(msg);
+          /* 401/403 = the session died; let the caller fall back locally. */
+          if (res.status === 401 || res.status === 403) err.offline = true;
+          throw err;
+        }
+        return json;
+      }));
     });
   }
 
@@ -792,6 +878,7 @@
   window.FF = {
     PLATFORMS, BRAND_SVG, COIN_SVG, SPARK_SVG, CHECK_SVG,
     store, DB, currentUser, updateUser, memberConfig,
+    rpc, hasServer, accessToken, refreshAuth,
     addCampaign, updateCampaign, deleteCampaign,
     awardCredits, spendCredits, syncCreditPills,
     campSubsFor, myCampSubs, submitCampaignProof, reviewCampaignSub,
