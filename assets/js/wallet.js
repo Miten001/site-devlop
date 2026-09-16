@@ -270,62 +270,28 @@
     return amount;
   }
 
-  /* ---------- demo marketplace seed ---------- */
-  const SEED_JOBS = [
-    { id: "seedjob1", owner: "growth@flexfam.io", ownerName: "GrowthLab", category: "social",
-      title: "Subscribe to my YouTube channel and like the latest video",
-      description: "1. Open the channel link\n2. Subscribe with a real account (no throwaways)\n3. Like the most recent video\n4. Send a screenshot showing your subscribed state",
-      url: "https://youtube.com", proofNote: "Screenshot link + your YouTube handle", reward: 0.12, slots: 80, filled: 23 },
-    { id: "seedjob2", owner: "appteam@flexfam.io", ownerName: "AppBoost Media", category: "app",
-      title: "Install our Android app and leave an honest 5-star review",
-      description: "1. Install the app from Play Store\n2. Use it for at least 2 minutes\n3. Leave an honest review (min 10 words)\n4. Share your review screenshot and reviewer name",
-      url: "https://play.google.com", proofNote: "Review screenshot + reviewer name", reward: 0.45, slots: 40, filled: 11 },
-    { id: "seedjob3", owner: "crypto@flexfam.io", ownerName: "AirdropHunter", category: "crypto",
-      title: "Join our Telegram airdrop group and complete the captcha",
-      description: "1. Join the Telegram group\n2. Complete the captcha in the welcome bot\n3. Stay in the group for at least 7 days\n4. Send your Telegram @username",
-      url: "https://t.me/sub_for_sub_bot?start=web_bonus", proofNote: "Your Telegram @username", reward: 0.08, slots: 200, filled: 87 },
-    { id: "seedjob4", owner: "surveys@flexfam.io", ownerName: "InsightPanel", category: "survey",
-      title: "Complete a 3-minute product feedback survey",
-      description: "1. Open the survey form\n2. Answer all 10 questions honestly\n3. Copy the completion code shown at the end\n4. Paste the completion code as your proof",
-      url: "https://example.com/survey", proofNote: "Survey completion code", reward: 0.25, slots: 60, filled: 34 },
-    { id: "seedjob5", owner: "writers@flexfam.io", ownerName: "ContentKart", category: "content",
-      title: "Write a 150-word blog comment on our article",
-      description: "1. Read the article fully\n2. Write a genuine, on-topic comment of at least 150 words\n3. No spam, no links\n4. Submit the direct link to your comment",
-      url: "https://example.com/blog", proofNote: "Direct link to your published comment", reward: 0.60, slots: 25, filled: 6 },
-    { id: "seedjob6", owner: "signupdesk@flexfam.io", ownerName: "ReferPro", category: "signup",
-      title: "Sign up on our platform using my referral link and verify email",
-      description: "1. Register through the referral link\n2. Verify your email address\n3. Complete your profile\n4. Send your registered username",
-      url: "https://example.com/?ref=flexfam", proofNote: "Your registered username / user ID", reward: 0.35, slots: 100, filled: 41 },
-    { id: "seedjob7", owner: "videoads@flexfam.io", ownerName: "StreamPush", category: "video",
-      title: "Watch a 5-minute video fully and answer one question",
-      description: "1. Watch the entire video without skipping\n2. Note the word shown at minute 4:30\n3. Submit that word as your proof",
-      url: "https://youtube.com", proofNote: "The secret word from the video", reward: 0.10, slots: 150, filled: 62 },
-    { id: "seedjob8", owner: "instapush@flexfam.io", ownerName: "ReelRocket", category: "social",
-      title: "Follow my Instagram page and save 3 posts",
-      description: "1. Follow the page from a real account\n2. Save any 3 posts\n3. Like the pinned reel\n4. Send your Instagram handle",
-      url: "https://instagram.com", proofNote: "Your Instagram handle", reward: 0.09, slots: 120, filled: 58 },
-  ];
+  /* ---------- one-time cleanup of the old demo listings ----------
+     Earlier builds injected sample "seedjob*" tasks and a fake demo
+     balance into localStorage. Strip them so the market only ever
+     shows real, user-posted work. */
+  function purgeDemoData() {
+    if (store.get("ff_demo_purged", 0) >= 1) return;
 
-  function seedMarketplace() {
-    if (store.get("ff_jobs_seeded", 0) >= 1) return;
-    const existing = jobs();
-    const have = existing.map((j) => j.id);
-    SEED_JOBS.forEach((j) => {
-      if (have.indexOf(j.id) > -1) return;
-      existing.push(Object.assign({
-        escrow: j.reward * j.slots, fee: 0, status: "active",
-        createdAt: Date.now() - Math.floor(Math.random() * 6 + 1) * 3600000,
-      }, j));
+    const cleanJobs = jobs().filter((j) => !/^seedjob/.test(String(j.id || "")));
+    saveJobs(cleanJobs);
+
+    const keep = cleanJobs.map((j) => j.id);
+    saveSubs(subs().filter((s) => keep.indexOf(s.jobId) > -1));
+
+    const all = wallets();
+    Object.keys(all).forEach((email) => {
+      const w = all[email];
+      w.txns = (w.txns || []).filter((t) => t.note !== "Demo starting balance");
     });
-    saveJobs(existing);
-    store.set("ff_jobs_seeded", 1);
+    saveWallets(all);
 
-    /* give the demo account a usable starting balance */
-    const me = FF.currentUser();
-    if (me && me.email === "demo@flexfam.io" && !wallet(me.email).totalDeposited) {
-      patchWallet(me.email, (acc) => { acc.available = 25; acc.totalDeposited = 25; });
-      tx(me.email, "deposit", 25, "Demo starting balance", "completed");
-    }
+    store.set("ff_jobs_seeded", 0);
+    store.set("ff_demo_purged", 1);
   }
 
   /* ---------- UI helpers ---------- */
@@ -339,7 +305,7 @@
   const USDT_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5L1.2 8.1 12 22.5 22.8 8.1 12 1.5zm1.6 9.7v1.6c-.5.03-1.05.05-1.6.05s-1.1-.02-1.6-.05v-1.6c-2.6-.13-4.5-.66-4.5-1.3 0-.63 1.9-1.17 4.5-1.3v1.45c.5.03 1.03.05 1.6.05s1.1-.02 1.6-.05V8.6c2.6.13 4.5.67 4.5 1.3 0 .64-1.9 1.17-4.5 1.3zM12 12.1c3.2 0 5.9-.5 6.6-1.16v1.1c0 .74-2.95 1.34-6.6 1.34s-6.6-.6-6.6-1.34v-1.1c.7.66 3.4 1.16 6.6 1.16z"/></svg>';
 
   document.addEventListener("DOMContentLoaded", () => {
-    seedMarketplace();
+    purgeDemoData();
     document.querySelectorAll("[data-usdt-icon]").forEach((el) => (el.innerHTML = USDT_SVG));
     syncWalletPills();
   });
@@ -350,6 +316,6 @@
     createDeposit, createWithdraw, settleRequest, requests, myRequests,
     jobs, openJobs, myJobs, postJob, cancelJob,
     subs, jobSubs, mySubs, submitProof, reviewSub,
-    convertPoints, syncWalletPills, seedMarketplace, USDT_SVG,
+    convertPoints, syncWalletPills, purgeDemoData, USDT_SVG,
   };
 })();

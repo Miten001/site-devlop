@@ -78,7 +78,11 @@
       <div class="panel">
         <div class="chip-row" id="cat-row"></div>
         <div class="job-grid" id="job-grid"></div>
-        <div class="empty-mini hidden" id="job-empty"><b>No open tasks in this category</b>Try another filter or post your own task for the community.</div>
+        <div class="empty-mini hidden" id="job-empty">
+          <b id="job-empty-title">No open tasks right now</b>
+          <span id="job-empty-text">Tasks posted by the community appear here as soon as they are funded. Be the first to post one.</span>
+          <div style="margin-top:16px"><a href="post-task.html" class="btn btn-primary btn-sm">Post the first task</a></div>
+        </div>
       </div>
 
       <div class="panel" style="margin-top:16px">
@@ -144,6 +148,13 @@ document.addEventListener("DOMContentLoaded", () => {
     $("s-earned").textContent = W.usd(mine.filter((s) => s.status === "approved").reduce((n, s) => n + s.reward, 0));
 
     $("job-empty").classList.toggle("hidden", list.length > 0);
+    if (!list.length) {
+      const filtered = filter !== "all";
+      $("job-empty-title").textContent = filtered ? "No open tasks in this category" : "No open tasks right now";
+      $("job-empty-text").textContent = filtered
+        ? "Try another category filter, or post your own task for the community."
+        : "Tasks posted by the community appear here as soon as they are funded. Be the first to post one.";
+    }
     $("job-grid").innerHTML = list.map((j) => {
       const c = W.category(j.category);
       const pct = Math.round((j.filled / j.slots) * 100);
