@@ -103,18 +103,39 @@
         <div class="panel">
           <div class="panel-head"><div><h3>Deposit USDT</h3><p class="panel-sub">Send USDT to the address below, then submit the transaction hash for confirmation.</p></div></div>
 
-          <div class="field">
-            <label>1. Choose network</label>
-            <div class="net-picker" id="dep-nets"></div>
+          <div class="warn-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
+            <div>
+              <b>Read before you send — transfers cannot be reversed</b>
+              <ul>
+                <li>Send <b>USDT only</b> on <b>BNB Smart Chain (BEP20)</b>. Any other network or token is <b>permanently lost</b>.</li>
+                <li>Do <b>not</b> send NFTs to this address.</li>
+                <li>Always <b>verify the full address</b> character by character — malware can swap a copied address.</li>
+                <li>Minimum deposit is <b id="dep-min">$5.00</b>. Smaller amounts may not be credited.</li>
+                <li>Your balance is credited only <b>after</b> you submit the TXID below and it is confirmed on-chain.</li>
+              </ul>
+            </div>
           </div>
 
           <div class="field">
-            <label>2. Send USDT to this address</label>
-            <div class="addr-box"><code id="dep-addr">—</code><button class="btn btn-ghost btn-sm" id="dep-copy" type="button">Copy</button></div>
-            <div class="fee-hint warn" style="margin-top:12px">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
-              <span>Send <b>only USDT</b> on the selected network. Coins sent on the wrong network are permanently lost. Minimum deposit <b id="dep-min">$5.00</b>.</span>
+            <label>1. Choose network</label>
+            <div class="net-picker" id="dep-nets"></div>
+            <p class="panel-sub" style="margin-top:8px" id="dep-note"></p>
+          </div>
+
+          <div class="field">
+            <label>2. Scan the QR or copy the address</label>
+            <div class="qr-block">
+              <div class="qr-shell"><img id="dep-qr" src="assets/img/deposit-bep20-qr.png" alt="USDT BEP20 deposit address QR code" width="220" height="220" /></div>
+              <div class="qr-side">
+                <span class="qr-net" id="dep-qr-net">BNB Smart Chain (BEP20)</span>
+                <p class="qr-lbl">Wallet address</p>
+                <p class="qr-addr" id="dep-addr-full">—</p>
+                <button class="btn btn-primary btn-sm" id="dep-copy" type="button">Copy address</button>
+                <p class="qr-warn">Only USDT · BEP20 · No NFTs</p>
+              </div>
             </div>
+            <div class="addr-box"><code id="dep-addr">—</code><button class="btn btn-ghost btn-sm" id="dep-copy2" type="button">Copy</button></div>
           </div>
 
           <form id="dep-form" novalidate>
@@ -135,6 +156,18 @@
       <div class="tab-pane" id="pane-withdraw">
         <div class="panel">
           <div class="panel-head"><div><h3>Withdraw USDT</h3><p class="panel-sub">Payouts are reviewed and sent within 24 hours on business days.</p></div></div>
+          <div class="warn-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
+            <div>
+              <b>Double-check your payout address</b>
+              <ul>
+                <li>The address must match the network you select — a wrong pair means <b>lost funds</b>, and we cannot recover them.</li>
+                <li>Paste the address from your own wallet app, then compare the <b>first and last 6 characters</b>.</li>
+                <li>Withdrawals are reviewed manually and paid within 24 hours on business days.</li>
+              </ul>
+            </div>
+          </div>
+
           <form id="wd-form" novalidate>
             <div class="field">
               <label>Network</label>
@@ -236,19 +269,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* networks */
-  let depNet = CFG.networks[0], wdNet = CFG.networks[0];
-  function netButtons(host, current, onPick) {
-    host.innerHTML = CFG.networks.map((n) => '<button type="button" class="net-pick' + (n === current ? " on" : "") + '" data-net="' + n + '">' + n + "</button>").join("");
+  let depNet = CFG.networks[0], wdNet = CFG.withdrawNetworks[0];
+  function netButtons(host, current, onPick, nets) {
+    host.innerHTML = (nets || CFG.networks).map((n) => '<button type="button" class="net-pick' + (n === current ? " on" : "") + '" data-net="' + n + '">' + n + "</button>").join("");
     host.onclick = (e) => {
       const b = e.target.closest("[data-net]"); if (!b) return;
       onPick(b.dataset.net);
     };
   }
   function paintDepNets() {
-    netButtons($("dep-nets"), depNet, (n) => { depNet = n; paintDepNets(); });
-    $("dep-addr").textContent = CFG.depositAddress[depNet] || "—";
+    netButtons($("dep-nets"), depNet, (n) => { depNet = n; paintDepNets(); }, CFG.networks);
+    const addr = CFG.depositAddress[depNet] || "—";
+    $("dep-addr").textContent = addr;
+    $("dep-addr-full").textContent = addr;
+    $("dep-qr-net").textContent = depNet;
+    $("dep-note").textContent = CFG.networkNote[depNet] || "";
+    const qr = CFG.depositQr[depNet];
+    $("dep-qr").src = qr || "";
+    $("dep-qr").style.display = qr ? "" : "none";
   }
-  function paintWdNets() { netButtons($("wd-nets"), wdNet, (n) => { wdNet = n; paintWdNets(); }); }
+  function paintWdNets() { netButtons($("wd-nets"), wdNet, (n) => { wdNet = n; paintWdNets(); }, CFG.withdrawNetworks); }
   paintDepNets(); paintWdNets();
   $("dep-min").textContent = W.usd(CFG.minDeposit);
   $("wd-min").textContent = W.usd(CFG.minWithdraw);
@@ -256,16 +296,17 @@ document.addEventListener("DOMContentLoaded", () => {
   $("cv-rate").textContent = CFG.pointsPerUsdt + " points = $1.00 USDT";
   $("cv-min").textContent = CFG.minPointsConvert;
 
-  $("dep-copy").addEventListener("click", () => {
+  ["dep-copy", "dep-copy2"].forEach((id) => $(id).addEventListener("click", () => {
     const t = $("dep-addr").textContent;
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
-      .then(() => FF.toast("Deposit address copied!", "ok"))
+      .then(() => FF.toast("Address copied — verify it in your wallet before sending!", "ok"))
       .catch(() => FF.toast("Copy failed — select the address manually", "err"));
-  });
+  }));
 
   /* deposit */
   $("dep-form").addEventListener("submit", (e) => {
     e.preventDefault();
+    if (!window.confirm("Confirm you sent USDT on " + depNet + " to:\n\n" + $("dep-addr").textContent + "\n\nFunds sent on any other network cannot be recovered.")) return;
     try {
       W.createDeposit(user.email, user.name, $("dep-amount").value, depNet, $("dep-txid").value);
       FF.toast("Deposit submitted! It will be credited after confirmation.", "ok");
@@ -286,6 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("wd-max").addEventListener("click", () => { $("wd-amount").value = W.wallet(user.email).available.toFixed(2); wdSummary(); });
   $("wd-form").addEventListener("submit", (e) => {
     e.preventDefault();
+    if (!window.confirm("Send " + W.usd(Number($("wd-amount").value) || 0) + " on " + wdNet + " to:\n\n" + $("wd-address").value.trim() + "\n\nIs this address correct? Payouts to a wrong address cannot be recovered.")) return;
     try {
       W.createWithdraw(user.email, user.name, $("wd-amount").value, wdNet, $("wd-address").value);
       FF.toast("Withdrawal requested — payout within 24 hours.", "ok");

@@ -12,7 +12,7 @@
 - 📈 **Admin panel** — `admin.html` with Supabase Auth login + permanent Postgres analytics and a protected registered-accounts list (account ID, display name, email, signup time, JSON export; never passwords)
 - 🤖 **Telegram Sub4Sub Bot** — real, fully-working bot: users join each other's Telegram groups to earn points, then spend them to grow their own groups (SQLite, auto join-verification, anti-leave refunds, referrals, admin panel). See [`telegram-bot/`](telegram-bot/)
 - 💵 **USDT Task Marketplace** — `tasks.html` (browse & work), `post-task.html` (publish jobs with escrow), `my-tasks.html` (review proofs, release payments, cancel & refund). 8 categories, per-task rewards, worker slots, proof review workflow
-- 🏦 **USDT Wallet** — `wallet.html` with deposit (TRC20 / BEP20 / Polygon / TON + TXID submission), withdrawal requests (min $10, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger
+- 🏦 **USDT Wallet** — `wallet.html` with deposit (USDT on BEP20 with live QR code + TXID submission), withdrawal requests (min $10, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger
 - 🛡️ **Payments admin** — `admin-payments.html` for allowlisted admins to approve/reject deposits and withdrawals
 - 🎨 Premium dark UI — aurora gradients, glassmorphism, 3D tilt, scroll reveals
 
@@ -46,9 +46,11 @@ Money flow is currently a **front-end simulation** stored in `localStorage` (`ff
 | Withdrawal fee | 1% | `FF.W.CFG.withdrawFeePct` |
 | Platform fee (task creators) | 5% | `FF.W.CFG.platformFeePct` |
 | Points → USDT | 1000 pts = $1 | `FF.W.CFG.pointsPerUsdt` |
-| Deposit addresses | per network | `FF.W.CFG.depositAddress` |
+| Deposit network | BEP20 (BNB Smart Chain) only | `FF.W.CFG.networks` |
+| Deposit address | `0xe85d1b6b330219de89e826f314a9bc2bcd595e53` | `FF.W.CFG.depositAddress` |
+| Withdrawal networks | BEP20 / TRC20 / Polygon / TON | `FF.W.CFG.withdrawNetworks` |
 
-Replace the placeholder deposit addresses in `assets/js/wallet.js` with your real wallets, and **before going live** move deposits, withdrawals and escrow settlement onto a server/Postgres so balances cannot be edited from the browser console.
+Deposits currently accept **USDT on BEP20 only**, to the verified address above (QR at `assets/img/deposit-bep20-qr.png`). To support another chain, add a real verified address to `depositAddress`, a note to `networkNote`, a QR to `depositQr`, and list it in `networks` — never ship a placeholder address. **Before going live** move deposits, withdrawals and escrow settlement onto a server/Postgres so balances cannot be edited from the browser console.
 
 Admins listed in `window.FF_ADMIN_EMAILS` can settle payment requests at `admin-payments.html`.
 

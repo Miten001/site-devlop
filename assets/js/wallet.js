@@ -16,13 +16,21 @@
     minWithdraw: 10,
     withdrawFeePct: 1,        // network + processing fee
     platformFeePct: 5,        // charged to task creators on escrow
-    networks: ["TRC20 (Tron)", "BEP20 (BSC)", "Polygon", "TON"],
+    /* Only networks with a real, verified receiving wallet are listed here.
+       Add more entries to depositAddress (and to this list) once you have a
+       confirmed address for that chain — never ship a placeholder. */
+    networks: ["BEP20 (BSC)"],
     depositAddress: {
-      "TRC20 (Tron)": "TJ9FlexFamUSDTdepositWallet8sQ2xA",
-      "BEP20 (BSC)": "0xFLEXfam4d21b9e7c5a8d0f6b3c1e9a7d2f4b6c8e0",
-      "Polygon": "0xFLEXpoly7c2a9d4f1b6e3c8a5d0f2b7e9c4a1d6f3",
-      "TON": "UQFlexFamTonDepositWalletAddr9x7Kd2",
+      "BEP20 (BSC)": "0xe85d1b6b330219de89e826f314a9bc2bcd595e53",
     },
+    depositQr: {
+      "BEP20 (BSC)": "assets/img/deposit-bep20-qr.png",
+    },
+    networkNote: {
+      "BEP20 (BSC)": "BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.",
+    },
+    /* Withdrawals are reviewed manually, so users may request any chain. */
+    withdrawNetworks: ["BEP20 (BSC)", "TRC20 (Tron)", "Polygon", "TON"],
     pointsPerUsdt: 1000,       // points -> USDT conversion rate
     minPointsConvert: 1000,
   };
@@ -78,7 +86,7 @@
   function createDeposit(email, name, amount, network, txid) {
     amount = Number(amount);
     if (!(amount >= CFG.minDeposit)) throw new Error("Minimum deposit is " + usd(CFG.minDeposit) + " USDT");
-    if (!network) throw new Error("Select a network");
+    if (!network || !CFG.depositAddress[network]) throw new Error("Select a supported deposit network");
     if (!txid || txid.trim().length < 8) throw new Error("Paste the transaction hash (TXID) from your wallet");
     const req = {
       id: uid("dep"), kind: "deposit", email, name: name || email, amount,
@@ -94,7 +102,7 @@
     const w = wallet(email);
     if (!(amount >= CFG.minWithdraw)) throw new Error("Minimum withdrawal is " + usd(CFG.minWithdraw) + " USDT");
     if (amount > w.available) throw new Error("Not enough available balance");
-    if (!network) throw new Error("Select a network");
+    if (!network || CFG.withdrawNetworks.indexOf(network) < 0) throw new Error("Select a network");
     if (!address || address.trim().length < 15) throw new Error("Enter a valid USDT wallet address");
     const fee = Math.round(amount * CFG.withdrawFeePct) / 100;
     patchWallet(email, (acc) => { acc.available -= amount; acc.locked += amount; });

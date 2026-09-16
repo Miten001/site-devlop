@@ -2111,3 +2111,44 @@ input[type="range"]::-moz-range-thumb {
   .bal-card .amt { font-size: 28px; }
   .bal-actions .btn { flex: 1; }
 }
+
+/* ---- deposit QR + risk warnings ---- */
+.warn-banner {
+  display: flex; gap: 13px; align-items: flex-start;
+  padding: 16px 18px; border-radius: 16px; margin-bottom: 22px;
+  background: linear-gradient(140deg, rgba(255,93,110,.12), rgba(255,209,102,.07));
+  border: 1px solid rgba(255,93,110,.32);
+}
+.warn-banner > svg { width: 21px; height: 21px; flex-shrink: 0; color: #ff8b98; margin-top: 1px; }
+.warn-banner b { display: block; color: #ffc3ca; font-size: 14.5px; margin-bottom: 8px; }
+.warn-banner ul { margin: 0; padding-left: 17px; }
+.warn-banner li { font-size: 13px; line-height: 1.65; color: var(--ink-dim); margin-bottom: 4px; }
+.warn-banner li b { display: inline; color: #ffd8dd; font-size: inherit; }
+
+.qr-block {
+  display: grid; grid-template-columns: auto 1fr; gap: 22px; align-items: center;
+  padding: 22px; border-radius: 18px; margin-bottom: 12px;
+  border: 1px solid var(--line-2); background: rgba(255,255,255,.03);
+}
+.qr-shell { background: #fff; padding: 12px; border-radius: 16px; line-height: 0; box-shadow: 0 14px 40px rgba(0,0,0,.4); }
+.qr-shell img { display: block; width: 200px; height: 200px; image-rendering: pixelated; }
+.qr-side { min-width: 0; }
+.qr-net {
+  display: inline-block; padding: 5px 12px; border-radius: 999px; margin-bottom: 12px;
+  font-size: 12px; font-weight: 800; color: #ffd98a;
+  background: rgba(240,185,11,.12); border: 1px solid rgba(240,185,11,.35);
+}
+.qr-lbl { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 6px; }
+.qr-addr {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14.5px; line-height: 1.5; color: #9fe9ce; word-break: break-all;
+  margin-bottom: 14px; font-weight: 600;
+}
+.qr-warn { margin-top: 12px; font-size: 12px; font-weight: 700; color: #ff9aa6; letter-spacing: .03em; }
+
+@media (max-width: 680px) {
+  .qr-block { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 18px; }
+  .qr-side { text-align: center; }
+  .qr-shell img { width: 168px; height: 168px; }
+  .qr-addr { font-size: 13px; }
+}
