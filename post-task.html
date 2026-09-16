@@ -21,6 +21,7 @@
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="tasks.html">Task Market</a></li>
       <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="mining.html">Mining</a></li>
       <li><a href="wallet.html">Wallet</a></li>
     </ul>
     <div class="head-actions">
@@ -38,6 +39,7 @@
   <a href="post-task.html">Post a Task</a>
   <a href="my-tasks.html">My Tasks</a>
   <a href="earn.html">Earn Points</a>
+  <a href="mining.html">Cloud Mining</a>
   <a href="wallet.html">Wallet</a>
   <a href="add.html">Add Page</a>
   <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
@@ -51,6 +53,7 @@
       <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
       <a href="post-task.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
       <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="mining.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg> Cloud Mining</a>
       <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
       <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
       <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
@@ -126,37 +129,59 @@
 <script src="assets/js/ff-analytics.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/wallet.js"></script>
+<script src="assets/js/mining.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
   if (!user) return;
-  const W = FF.W, $ = (id) => document.getElementById(id);
-  $("j-cat").innerHTML = W.CATEGORIES.map((c) => '<option value="' + c.key + '">' + c.name + "</option>").join("");
-  $("j-fee-pct").textContent = W.CFG.platformFeePct;
+  const W = FF.W, A = W.api, $ = (id) => document.getElementById(id);
+
+  /* Categories, the platform fee and the minimum reward all come from the
+     server when it is configured, so changing them is a config change and
+     not a redeploy. */
+  let feePct = W.CFG.platformFeePct;
+
+  function fillCategories(cats) {
+    $("j-cat").innerHTML = cats.map((c) => '<option value="' + c.key + '">' + c.name + "</option>").join("");
+  }
+  fillCategories(W.CATEGORIES);
+  $("j-fee-pct").textContent = feePct;
 
   function calc() {
     const r = Number($("j-reward").value) || 0;
     const s = parseInt($("j-slots").value, 10) || 0;
     const budget = r * s;
-    const fee = Math.round(budget * W.CFG.platformFeePct) / 100;
+    const fee = Math.round(budget * feePct) / 100;
     $("j-s1").textContent = W.usd(budget);
     $("j-s2").textContent = W.usd(fee);
     $("j-s3").textContent = W.usd(budget + fee);
   }
   ["j-reward", "j-slots"].forEach((id) => $(id).addEventListener("input", calc));
 
+  A.feed().then((feed) => {
+    if (feed.categories && feed.categories.length) fillCategories(feed.categories);
+    feePct = feed.config.platformFeePct;
+    $("j-fee-pct").textContent = feePct;
+    calc();
+  }).catch(() => {});
+
   $("job-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    try {
-      W.postJob(user.email, user.name, {
-        title: $("j-title").value, category: $("j-cat").value, description: $("j-desc").value,
-        url: $("j-url").value, proofNote: $("j-proof").value,
-        reward: $("j-reward").value, slots: $("j-slots").value,
-      });
+    const btn = $("job-form").querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.style.opacity = ".6"; }
+    A.postJob({
+      title: $("j-title").value, category: $("j-cat").value, description: $("j-desc").value,
+      url: $("j-url").value, proofNote: $("j-proof").value,
+      reward: $("j-reward").value, slots: $("j-slots").value,
+    }).then(() => {
       FF.toast("Task published! Workers can start right away.", "ok");
       setTimeout(() => (window.location.href = "my-tasks.html"), 800);
-    } catch (err) { FF.toast(err.message, "err"); }
+    }).catch((err) => {
+      FF.toast(err.message, "err");
+      if (btn) { btn.disabled = false; btn.style.opacity = ""; }
+    });
   });
+
   calc();
 });
 </script>

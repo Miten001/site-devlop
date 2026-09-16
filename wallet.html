@@ -21,6 +21,7 @@
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="tasks.html">Task Market</a></li>
       <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="mining.html">Mining</a></li>
       <li><a href="wallet.html" class="active">Wallet</a></li>
     </ul>
     <div class="head-actions">
@@ -38,6 +39,7 @@
   <a href="post-task.html">Post a Task</a>
   <a href="my-tasks.html">My Tasks</a>
   <a href="earn.html">Earn Points</a>
+  <a href="mining.html">Cloud Mining</a>
   <a href="wallet.html">Wallet</a>
   <a href="add.html">Add Page</a>
   <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
@@ -51,6 +53,7 @@
       <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
       <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
       <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="mining.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg> Cloud Mining</a>
       <a href="wallet.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
       <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
       <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
@@ -64,6 +67,7 @@
           <span class="eyebrow"><span class="dot"></span> Wallet</span>
           <h1>USDT <span class="grad-text-cool">wallet</span></h1>
           <p class="sub">Deposit USDT, get paid for completed tasks, and withdraw to any TRC20 / BEP20 / Polygon / TON address.</p>
+          <p class="sub" style="margin-top:8px">Balance mode: <span class="status-pill off" id="w-mode-pill">checking…</span> <span id="w-mode-note" style="font-size:12.5px;color:var(--ink-mute)"></span></p>
         </div>
       </div>
 
@@ -236,12 +240,18 @@
 <script src="assets/js/ff-analytics.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/wallet.js"></script>
+<script src="assets/js/mining.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
   if (!user) return;
-  const W = FF.W, CFG = W.CFG;
+  const W = FF.W, A = W.api;
   const $ = (id) => document.getElementById(id);
+
+  /* The whole page renders from one view object. In server mode it is the
+     wallet_state() payload; without a session it is the local simulation. */
+  let view = null;
+  let depNet = null, wdNet = null;
 
   /* tabs */
   const tabs = $("w-tabs");
@@ -256,45 +266,69 @@ document.addEventListener("DOMContentLoaded", () => {
   const hash = (location.hash || "").replace("#", "");
   if (hash) showTab(hash);
 
-  /* balances */
-  function paint() {
-    const w = W.wallet(user.email);
+  const depositNets = () => view.networks.filter((n) => n.deposit);
+  const withdrawNets = () => view.networks.filter((n) => n.withdraw);
+  const net = (list, name) => list.find((n) => n.network === name) || list[0] || null;
+
+  function fail(err) { FF.toast(err && err.message ? err.message : "Something went wrong", "err"); }
+  function busy(form, on) {
+    const b = form.querySelector('button[type="submit"]');
+    if (b) { b.disabled = on; b.style.opacity = on ? ".6" : ""; }
+  }
+
+  /* ---------- render ---------- */
+  function paint(v) {
+    view = v || view;
+    if (!view) return;
+    const w = view.wallet, cfg = view.config;
+
     $("w-available").innerHTML = w.available.toFixed(2) + ' <small>USDT</small>';
     $("w-locked").innerHTML = w.locked.toFixed(2) + ' <small>USDT</small>';
     $("w-earned").innerHTML = w.totalEarned.toFixed(2) + ' <small>USDT</small>';
     $("w-flow").textContent = "Deposited " + W.usd(w.totalDeposited) + " · Withdrawn " + W.usd(w.totalWithdrawn);
     $("wd-avail").textContent = W.usd(w.available);
-    W.syncWalletPills();
+
+    const onServer = view.mode === "server";
+    $("w-mode-pill").textContent = onServer ? "Server-synced" : "This browser only";
+    $("w-mode-pill").className = "status-pill " + (onServer ? "on" : "off");
+    $("w-mode-note").textContent = onServer
+      ? "Balances, escrow and payouts are held in Postgres — nothing here can be changed from your browser."
+      : "Supabase is not configured (or you signed in with the local fallback), so this wallet is a browser-only simulation.";
+
+    $("dep-min").textContent = W.usd(cfg.minDeposit);
+    $("wd-min").textContent = W.usd(cfg.minWithdraw);
+    $("wd-fee-pct").textContent = cfg.withdrawFeePct;
+    $("cv-rate").textContent = cfg.pointsPerUsdt + " points = $1.00 USDT";
+    $("cv-min").textContent = cfg.minPointsConvert;
+
+    depNet = (net(depositNets(), depNet && depNet.network) || {}).network || null;
+    wdNet = (net(withdrawNets(), wdNet && wdNet.network) || {}).network || null;
+    paintDepNets(); paintWdNets(); wdSummary(); cvSummary();
     renderTx(); renderReq();
   }
 
-  /* networks */
-  let depNet = CFG.networks[0], wdNet = CFG.withdrawNetworks[0];
-  function netButtons(host, current, onPick, nets) {
-    host.innerHTML = (nets || CFG.networks).map((n) => '<button type="button" class="net-pick' + (n === current ? " on" : "") + '" data-net="' + n + '">' + n + "</button>").join("");
-    host.onclick = (e) => {
-      const b = e.target.closest("[data-net]"); if (!b) return;
-      onPick(b.dataset.net);
-    };
+  function netButtons(host, list, current, onPick) {
+    host.innerHTML = list.map((n) => '<button type="button" class="net-pick' + (n.network === current ? " on" : "") +
+      '" data-net="' + n.network + '">' + n.network + "</button>").join("");
+    host.onclick = (e) => { const b = e.target.closest("[data-net]"); if (b) onPick(b.dataset.net); };
   }
+
   function paintDepNets() {
-    netButtons($("dep-nets"), depNet, (n) => { depNet = n; paintDepNets(); }, CFG.networks);
-    const addr = CFG.depositAddress[depNet] || "—";
+    const list = depositNets();
+    netButtons($("dep-nets"), list, depNet, (n) => { depNet = n; paintDepNets(); });
+    const n = net(list, depNet) || {};
+    const addr = n.address || "—";
     $("dep-addr").textContent = addr;
     $("dep-addr-full").textContent = addr;
-    $("dep-qr-net").textContent = depNet;
-    $("dep-note").textContent = CFG.networkNote[depNet] || "";
-    const qr = CFG.depositQr[depNet];
-    $("dep-qr").src = qr || "";
-    $("dep-qr").style.display = qr ? "" : "none";
+    $("dep-qr-net").textContent = n.network || "—";
+    $("dep-note").textContent = n.note || "";
+    $("dep-qr").src = n.qr || "";
+    $("dep-qr").style.display = n.qr ? "" : "none";
   }
-  function paintWdNets() { netButtons($("wd-nets"), wdNet, (n) => { wdNet = n; paintWdNets(); }, CFG.withdrawNetworks); }
-  paintDepNets(); paintWdNets();
-  $("dep-min").textContent = W.usd(CFG.minDeposit);
-  $("wd-min").textContent = W.usd(CFG.minWithdraw);
-  $("wd-fee-pct").textContent = CFG.withdrawFeePct;
-  $("cv-rate").textContent = CFG.pointsPerUsdt + " points = $1.00 USDT";
-  $("cv-min").textContent = CFG.minPointsConvert;
+
+  function paintWdNets() {
+    netButtons($("wd-nets"), withdrawNets(), wdNet, (n) => { wdNet = n; paintWdNets(); });
+  }
 
   ["dep-copy", "dep-copy2"].forEach((id) => $(id).addEventListener("click", () => {
     const t = $("dep-addr").textContent;
@@ -303,85 +337,91 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch(() => FF.toast("Copy failed — select the address manually", "err"));
   }));
 
-  /* deposit */
+  /* ---------- deposit ---------- */
   $("dep-form").addEventListener("submit", (e) => {
     e.preventDefault();
+    if (!depNet) return FF.toast("No deposit network is available right now", "err");
     if (!window.confirm("Confirm you sent USDT on " + depNet + " to:\n\n" + $("dep-addr").textContent + "\n\nFunds sent on any other network cannot be recovered.")) return;
-    try {
-      W.createDeposit(user.email, user.name, $("dep-amount").value, depNet, $("dep-txid").value);
+    busy($("dep-form"), true);
+    A.createDeposit($("dep-amount").value, depNet, $("dep-txid").value).then((v) => {
       FF.toast("Deposit submitted! It will be credited after confirmation.", "ok");
       $("dep-amount").value = ""; $("dep-txid").value = "";
-      paint(); showTab("requests");
-    } catch (err) { FF.toast(err.message, "err"); }
+      paint(v); showTab("requests");
+    }).catch(fail).then(() => busy($("dep-form"), false));
   });
 
-  /* withdraw */
+  /* ---------- withdraw ---------- */
   function wdSummary() {
     const a = Math.max(0, Number($("wd-amount").value) || 0);
-    const fee = Math.round(a * CFG.withdrawFeePct) / 100;
+    const fee = Math.round(a * view.config.withdrawFeePct) / 100;
     $("wd-s1").textContent = W.usd(a);
     $("wd-s2").textContent = W.usd(fee);
     $("wd-s3").textContent = W.usd(Math.max(0, a - fee));
   }
   $("wd-amount").addEventListener("input", wdSummary);
-  $("wd-max").addEventListener("click", () => { $("wd-amount").value = W.wallet(user.email).available.toFixed(2); wdSummary(); });
+  $("wd-max").addEventListener("click", () => { $("wd-amount").value = view.wallet.available.toFixed(2); wdSummary(); });
   $("wd-form").addEventListener("submit", (e) => {
     e.preventDefault();
+    if (!wdNet) return FF.toast("No withdrawal network is available right now", "err");
     if (!window.confirm("Send " + W.usd(Number($("wd-amount").value) || 0) + " on " + wdNet + " to:\n\n" + $("wd-address").value.trim() + "\n\nIs this address correct? Payouts to a wrong address cannot be recovered.")) return;
-    try {
-      W.createWithdraw(user.email, user.name, $("wd-amount").value, wdNet, $("wd-address").value);
+    busy($("wd-form"), true);
+    A.createWithdraw($("wd-amount").value, wdNet, $("wd-address").value).then((v) => {
       FF.toast("Withdrawal requested — payout within 24 hours.", "ok");
-      $("wd-amount").value = ""; wdSummary();
-      paint(); showTab("requests");
-    } catch (err) { FF.toast(err.message, "err"); }
+      $("wd-amount").value = "";
+      paint(v); showTab("requests");
+    }).catch(fail).then(() => busy($("wd-form"), false));
   });
 
-  /* convert */
-  $("cv-points").addEventListener("input", () => {
+  /* ---------- convert ---------- */
+  function cvSummary() {
     const p = parseInt($("cv-points").value, 10) || 0;
-    $("cv-out").textContent = W.usd(p / CFG.pointsPerUsdt);
-  });
+    $("cv-out").textContent = W.usd(p / view.config.pointsPerUsdt);
+  }
+  $("cv-points").addEventListener("input", cvSummary);
   $("cv-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    try {
-      const amt = W.convertPoints(user.email, $("cv-points").value);
-      user = FF.currentUser();
-      FF.toast("Converted to " + W.usd(amt) + " USDT!", "ok");
-      $("cv-points").value = ""; $("cv-out").textContent = "$0.00";
-      paint();
-    } catch (err) { FF.toast(err.message, "err"); }
+    const before = view.wallet.available;
+    busy($("cv-form"), true);
+    A.convertPoints($("cv-points").value).then((v) => {
+      user = FF.currentUser() || user;
+      const gained = Math.max(0, v.wallet.available - before);
+      FF.toast("Converted to " + W.usd(gained) + " USDT!", "ok");
+      $("cv-points").value = "";
+      paint(v); cvSummary();
+    }).catch(fail).then(() => busy($("cv-form"), false));
   });
 
-  /* tables */
+  /* ---------- tables ---------- */
   const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Points conversion" };
+  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Points conversion", mining: "Cloud mining", adjust: "Admin adjustment" };
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 
   function renderTx() {
-    const list = W.wallet(user.email).txns || [];
+    const list = view.txns || [];
     $("tx-empty").classList.toggle("hidden", list.length > 0);
     $("tx-body").innerHTML = list.map((t) => (
       "<tr><td>" + fdate(t.at) + "</td>" +
-      "<td><b>" + (LABEL[t.type] || t.type) + "</b></td>" +
-      "<td>" + (t.note || "—") + "</td>" +
+      "<td><b>" + esc(LABEL[t.type] || t.type) + "</b></td>" +
+      "<td>" + (esc(t.note) || "—") + "</td>" +
       '<td class="num ' + (t.amount >= 0 ? "pos" : "neg") + '">' + (t.amount >= 0 ? "+" : "−") + W.usd(Math.abs(t.amount)) + "</td>" +
-      '<td><span class="badge ' + t.status + '">' + t.status + "</span></td></tr>"
+      '<td><span class="badge ' + esc(t.status) + '">' + esc(t.status) + "</span></td></tr>"
     )).join("");
   }
 
   function renderReq() {
-    const list = W.myRequests(user.email);
+    const list = view.requests || [];
     $("rq-empty").classList.toggle("hidden", list.length > 0);
     $("rq-body").innerHTML = list.map((r) => (
       "<tr><td>" + fdate(r.at) + "</td>" +
       "<td><b>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") + "</b></td>" +
-      "<td>" + r.network + "</td>" +
-      '<td><span class="mono-cut">' + (r.txid || r.address || "—") + "</span></td>" +
+      "<td>" + esc(r.network) + "</td>" +
+      '<td><span class="mono-cut">' + (esc(r.txid || r.address) || "—") + "</span></td>" +
       '<td class="num">' + W.usd(r.amount) + "</td>" +
-      '<td><span class="badge ' + r.status + '">' + r.status + "</span></td></tr>"
+      '<td><span class="badge ' + esc(r.status) + '">' + esc(r.status) + "</span></td></tr>"
     )).join("");
   }
 
-  paint();
+  A.wallet().then(paint).catch(fail);
 });
 </script>
 

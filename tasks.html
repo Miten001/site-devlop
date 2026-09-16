@@ -21,6 +21,7 @@
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="tasks.html" class="active">Task Market</a></li>
       <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="mining.html">Mining</a></li>
       <li><a href="wallet.html">Wallet</a></li>
     </ul>
     <div class="head-actions">
@@ -38,6 +39,7 @@
   <a href="post-task.html">Post a Task</a>
   <a href="my-tasks.html">My Tasks</a>
   <a href="earn.html">Earn Points</a>
+  <a href="mining.html">Cloud Mining</a>
   <a href="wallet.html">Wallet</a>
   <a href="add.html">Add Page</a>
   <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
@@ -51,6 +53,7 @@
       <a href="tasks.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
       <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
       <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="mining.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg> Cloud Mining</a>
       <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
       <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
       <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
@@ -118,16 +121,25 @@
 <script src="assets/js/ff-analytics.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/wallet.js"></script>
+<script src="assets/js/mining.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
   if (!user) return;
-  const W = FF.W, $ = (id) => document.getElementById(id);
-  let filter = "all", current = null;
+  const W = FF.W, A = W.api, $ = (id) => document.getElementById(id);
+  let filter = "all", current = null, feed = null, cats = W.CATEGORIES;
+
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  const category = (key) => cats.find((c) => c.key === key) || cats[cats.length - 1] || { name: key, color: "#ff8a3d" };
+  const fail = (err) => FF.toast(err && err.message ? err.message : "Something went wrong", "err");
 
   const catRow = $("cat-row");
-  catRow.innerHTML = '<button class="chip active" data-cat="all" style="--pf:#e0489f">All tasks</button>' +
-    W.CATEGORIES.map((c) => '<button class="chip" data-cat="' + c.key + '" style="--pf:' + c.color + '">' + c.name + "</button>").join("");
+  function paintCats() {
+    catRow.innerHTML = '<button class="chip' + (filter === "all" ? " active" : "") + '" data-cat="all" style="--pf:#e0489f">All tasks</button>' +
+      cats.map((c) => '<button class="chip' + (filter === c.key ? " active" : "") + '" data-cat="' + c.key + '" style="--pf:' + c.color + '">' + esc(c.name) + "</button>").join("");
+  }
+  paintCats();
   catRow.addEventListener("click", (e) => {
     const b = e.target.closest(".chip"); if (!b) return;
     filter = b.dataset.cat;
@@ -135,15 +147,16 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
-  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
-  const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  function render(f) {
+    feed = f || feed;
+    if (!feed) return;
+    if (feed.categories && feed.categories.length && feed.categories !== cats) { cats = feed.categories; paintCats(); }
 
-  function render() {
-    const all = W.openJobs(user.email);
+    const all = feed.open;
     const list = all.filter((j) => filter === "all" || j.category === filter);
     $("s-open").textContent = all.length;
     $("s-value").textContent = W.usd(all.reduce((n, j) => n + j.reward * (j.slots - j.filled), 0));
-    const mine = W.mySubs(user.email);
+    const mine = feed.mySubs;
     $("s-pending").textContent = mine.filter((s) => s.status === "pending").length;
     $("s-earned").textContent = W.usd(mine.filter((s) => s.status === "approved").reduce((n, s) => n + s.reward, 0));
 
@@ -156,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
         : "Tasks posted by the community appear here as soon as they are funded. Be the first to post one.";
     }
     $("job-grid").innerHTML = list.map((j) => {
-      const c = W.category(j.category);
+      const c = category(j.category);
       const pct = Math.round((j.filled / j.slots) * 100);
       return '<div class="job-card" style="--pf:' + c.color + '">' +
         '<div class="j-top"><div><span class="j-cat">' + esc(c.name) + '</span><h4>' + esc(j.title) + "</h4></div>" +
@@ -172,18 +185,18 @@ document.addEventListener("DOMContentLoaded", () => {
       "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.jobTitle) + "</b></td>" +
       '<td><span class="mono-cut">' + esc(s.proof) + "</span></td>" +
       '<td class="num pos">' + W.usd(s.reward) + "</td>" +
-      '<td><span class="badge ' + s.status + '">' + s.status + "</span></td></tr>"
+      '<td><span class="badge ' + esc(s.status) + '">' + esc(s.status) + "</span></td></tr>"
     )).join("");
   }
 
   const modal = $("job-modal");
   $("job-grid").addEventListener("click", (e) => {
     const b = e.target.closest("[data-job]"); if (!b) return;
-    current = W.jobs().find((j) => j.id === b.dataset.job); if (!current) return;
-    const c = W.category(current.category);
+    current = (feed ? feed.open : []).find((j) => j.id === b.dataset.job); if (!current) return;
+    const c = category(current.category);
     $("job-modal-card").style.setProperty("--pf", c.color);
     $("jm-title").textContent = current.title;
-    $("jm-sub").innerHTML = c.name + " · Reward <b style='color:var(--green)'>" + W.usd(current.reward) + " USDT</b> · " + (current.slots - current.filled) + " slots left";
+    $("jm-sub").innerHTML = esc(c.name) + " · Reward <b style='color:var(--green)'>" + W.usd(current.reward) + " USDT</b> · " + (current.slots - current.filled) + " slots left";
     $("jm-desc").textContent = current.description;
     $("jm-proofnote").innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span><b>Required proof:</b> ' + esc(current.proofNote) + "</span>";
     const link = $("jm-open");
@@ -198,14 +211,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("jm-submit").addEventListener("click", () => {
     if (!current) return;
-    try {
-      W.submitProof(user.email, user.name, current.id, $("jm-proof").value, $("jm-note").value);
+    const btn = $("jm-submit");
+    btn.disabled = true; btn.style.opacity = ".6";
+    A.submitProof(current.id, $("jm-proof").value, $("jm-note").value).then((f) => {
       FF.toast("Proof submitted! The buyer will review it shortly.", "ok");
-      close(); render();
-    } catch (err) { FF.toast(err.message, "err"); }
+      close(); render(f);
+    }).catch(fail).then(() => { btn.disabled = false; btn.style.opacity = ""; });
   });
 
-  render();
+  A.feed().then(render).catch(fail);
 });
 </script>
 

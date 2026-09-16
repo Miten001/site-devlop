@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cloud Mining — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="tasks.html">Task Market</a></li>
+      <li><a href="mining.html" class="active">Mining</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="wallet.html">Wallet</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
+      <a href="earn.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
+  <a href="mining.html">Cloud Mining</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="add.html">Add Page</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+
+    <aside class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
+      <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
+      <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="mining.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg> Cloud Mining</a>
+      <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
+      <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Back to Site</a>
+      <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Cloud mining</span>
+          <h1>Mine crypto with <span class="grad-text">points or USDT</span></h1>
+          <p class="sub">Rent hashrate from the FlexFam pool, let the rig run 24/7 — even while you are offline — and claim your mined USDT any time.</p>
+          <p class="sub" style="margin-top:8px">Balance mode: <span class="status-pill off" id="mode-pill">checking…</span> <span id="mode-note" style="font-size:12.5px;color:var(--ink-mute)"></span></p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="mine-boost">⚡ Free daily boost</button>
+      </div>
+
+      <!-- LIVE RIG -->
+      <div class="rig-hero">
+        <div class="rig-core">
+          <div class="rig-ring"><span></span><span></span><span></span>
+            <div class="rig-core-in">
+              <span class="cap">Your hashrate</span>
+              <b id="rig-hash">0 GH/s</b>
+              <small id="rig-state">Idle — no rig running</small>
+            </div>
+          </div>
+        </div>
+        <div class="rig-info">
+          <span class="cap">Mined &amp; unclaimed</span>
+          <div class="rig-amt"><span id="rig-unclaimed">0.000000</span> <small>USDT</small></div>
+          <div class="rig-ticks">
+            <div><b id="rig-day">$0.0000</b><span>Per day</span></div>
+            <div><b id="rig-hour">$0.000000</b><span>Per hour</span></div>
+            <div><b id="rig-active">0</b><span>Active rigs</span></div>
+            <div><b id="rig-lifetime">$0.00</b><span>Lifetime mined</span></div>
+          </div>
+          <div class="rig-actions">
+            <button class="btn btn-primary btn-sm" id="claim-usdt">Claim to USDT wallet</button>
+            <button class="btn btn-ghost btn-sm" id="claim-points">Claim as points +10%</button>
+          </div>
+          <p class="rig-note" id="rig-boost-note"></p>
+        </div>
+      </div>
+
+      <div class="mini-stats">
+        <div class="mini-stat"><b id="net-pool">0 TH/s</b><span>Pool hashrate</span></div>
+        <div class="mini-stat"><b id="net-miners">0</b><span>Active miners</span></div>
+        <div class="mini-stat"><b id="net-uptime">0%</b><span>Pool uptime</span></div>
+        <div class="mini-stat"><b id="net-invested">$0.00</b><span>My hashrate spend</span></div>
+      </div>
+
+      <div class="tabs" id="m-tabs">
+        <button class="tab-btn active" data-tab="plans">Buy hashrate</button>
+        <button class="tab-btn" data-tab="custom">Custom rig</button>
+        <button class="tab-btn" data-tab="rigs">My rigs</button>
+        <button class="tab-btn" data-tab="log">Mining log</button>
+        <button class="tab-btn" data-tab="how">How it works</button>
+      </div>
+
+      <!-- PLANS -->
+      <div class="tab-pane active" id="pane-plans">
+        <div class="fee-hint" style="margin-bottom:16px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span>Pay with <b>USDT</b> from your wallet or with <b>points</b> you earned from tasks — <b id="rate-line">1000 points = $1.00</b>. Maintenance &amp; pool fee (<b id="maint-pct">8</b>%) is already deducted from every rate shown.</span>
+        </div>
+        <div class="plan-grid" id="plan-grid"></div>
+      </div>
+
+      <!-- CUSTOM -->
+      <div class="tab-pane" id="pane-custom">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Build your own rig</h3><p class="panel-sub">Pick the exact hashrate and contract length you want.</p></div></div>
+          <div class="field">
+            <label>Hashrate — <b id="cu-hash-lbl">500 GH/s</b></label>
+            <div class="range-row">
+              <input type="range" id="cu-ghs" min="100" max="20000" step="50" value="500" style="flex:1" />
+              <output id="cu-ghs-out">500</output>
+            </div>
+          </div>
+          <div class="field">
+            <label>Contract length — <b id="cu-days-lbl">30 days</b></label>
+            <div class="range-row">
+              <input type="range" id="cu-days" min="7" max="365" step="1" value="30" style="flex:1" />
+              <output id="cu-days-out">30</output>
+            </div>
+          </div>
+          <div class="summary-rows">
+            <div class="row"><span>Estimated daily output</span><b id="cu-day">$0.00</b></div>
+            <div class="row"><span>Estimated total output</span><b id="cu-total">$0.00</b></div>
+            <div class="row"><span>Price in points</span><b id="cu-points">0 pts</b></div>
+            <div class="row total"><span>Price</span><b id="cu-price">$0.00</b></div>
+          </div>
+          <div class="flex gap-12 wrap" style="margin-top:18px">
+            <button class="btn btn-primary" id="cu-buy-usdt" style="flex:1">Buy with USDT</button>
+            <button class="btn btn-ghost" id="cu-buy-points" style="flex:1">Buy with points</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY RIGS -->
+      <div class="tab-pane" id="pane-rigs">
+        <div class="panel">
+          <div class="panel-head"><div><h3>My rigs</h3><p class="panel-sub">Every contract you own, its remaining time and what it has mined so far.</p></div></div>
+          <div id="rig-list" class="rig-list"></div>
+          <div class="empty-mini hidden" id="rig-empty"><b>No rigs yet</b>Start the free starter rig or buy hashrate to begin mining.</div>
+        </div>
+      </div>
+
+      <!-- LOG -->
+      <div class="tab-pane" id="pane-log">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Mining log</h3><p class="panel-sub">Purchases, boosts and payouts.</p></div></div>
+          <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Event</th><th>Details</th><th>Amount</th></tr></thead><tbody id="log-body"></tbody></table></div>
+          <div class="empty-mini hidden" id="log-empty"><b>Nothing logged yet</b>Your mining activity will show up here.</div>
+        </div>
+      </div>
+
+      <!-- HOW -->
+      <div class="tab-pane" id="pane-how">
+        <div class="panel">
+          <div class="panel-head"><div><h3>How FlexFam cloud mining works</h3><p class="panel-sub">Rent hashrate, earn continuously, claim whenever you like.</p></div></div>
+          <div class="m-steps" style="margin-bottom:22px">
+            <div><span class="n">1</span> <b>Get hashrate.</b>&nbsp;Start the free starter rig, or buy a plan with USDT from your wallet or with points earned from tasks and campaigns.</div>
+            <div><span class="n">2</span> <b>The rig mines 24/7.</b>&nbsp;Rewards accrue every second in real time and keep accumulating while you are offline or the tab is closed.</div>
+            <div><span class="n">3</span> <b>Boost it daily.</b>&nbsp;One free +<span id="how-boost">25</span>% speed boost every 24 hours, active for <span id="how-boost-h">8</span> hours.</div>
+            <div><span class="n">4</span> <b>Claim your rewards.</b>&nbsp;Send the mined balance to your USDT wallet, or take it as points with a +<span id="how-bonus">10</span>% bonus.</div>
+          </div>
+          <div class="fee-hint warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
+            <span><b>Mining is not a guaranteed income.</b> Output depends on network difficulty and pool performance, contracts expire at the end of their term, and hashrate purchases are non-refundable. Never spend more than you can afford to lose.</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<!-- BUY MODAL -->
+<div class="modal-veil" id="buy-modal">
+  <div class="modal modal-pos" id="buy-modal-card">
+    <button class="m-close" data-close-modal aria-label="Close"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <span class="m-ico" data-mine-icon></span>
+    <h3 id="bm-title">Start rig</h3>
+    <p class="m-sub" id="bm-sub"></p>
+    <div class="summary-rows" style="text-align:left">
+      <div class="row"><span>Hashrate</span><b id="bm-hash">—</b></div>
+      <div class="row"><span>Contract</span><b id="bm-days">—</b></div>
+      <div class="row"><span>Estimated daily</span><b id="bm-day">—</b></div>
+      <div class="row total"><span>Total estimated output</span><b id="bm-total">—</b></div>
+    </div>
+    <div class="flex gap-12" style="flex-direction:column;margin-top:18px">
+      <button class="btn btn-primary btn-block" id="bm-usdt">Pay with USDT</button>
+      <button class="btn btn-ghost btn-block" id="bm-points">Pay with points</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/ff-analytics.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/wallet.js"></script>
+<script src="assets/js/mining.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const user = FF.currentUser();
+  if (!user) return;
+  const M = FF.M, W = FF.W, A = M.api, $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  const pts = (n) => Math.round(n).toLocaleString("en-IN");
+
+  let view = A.view();          // latest normalised state (server or local)
+  let busy = false;
+
+  /* tabs */
+  $("m-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest(".tab-btn"); if (!b) return;
+    document.querySelectorAll("#m-tabs .tab-btn").forEach((x) => x.classList.toggle("active", x === b));
+    document.querySelectorAll(".tab-pane").forEach((p) => p.classList.toggle("active", p.id === "pane-" + b.dataset.tab));
+  });
+
+  function setBusy(on) {
+    busy = on;
+    document.querySelectorAll("#bm-usdt, #bm-points, #cu-buy-usdt, #cu-buy-points, #claim-usdt, #claim-points, #mine-boost")
+      .forEach((b) => { b.disabled = on; });
+    if (!on) paintBoostBtn();
+  }
+
+  /* run a mutating API call, repaint, surface errors */
+  function act(promise, okMsg) {
+    if (busy) return;
+    setBusy(true);
+    promise.then((next) => {
+      view = next;
+      if (typeof okMsg === "function") FF.toast(okMsg(next), "ok");
+      else if (okMsg) FF.toast(okMsg, "ok");
+      renderAll();
+    }).catch((err) => {
+      FF.toast(err.message || "Something went wrong", "err");
+    }).finally(() => setBusy(false));
+  }
+
+  /* ---------- plans ---------- */
+  function renderPlans() {
+    $("plan-grid").innerHTML = (view.plans || []).map((p) => {
+      const daily = A.dailyUsd(view, p.ghs), total = daily * p.days;
+      const price = p.priceUsd > 0 ? W.usd(p.priceUsd) : "FREE";
+      const ptsPrice = p.priceUsd > 0 ? pts(A.pointsPrice(view, p.priceUsd)) + " pts" : "0 pts";
+      return '<div class="plan-card' + (p.featured ? " featured" : "") + '" style="--pf:' + esc(p.color) + '">' +
+        '<span class="p-tag">' + esc(p.tag) + "</span>" +
+        "<h4>" + esc(p.name) + "</h4>" +
+        '<div class="p-hash">' + M.fmtHash(p.ghs) + "</div>" +
+        '<div class="p-price"><b>' + price + "</b>" + (p.priceUsd > 0 ? "<span>or " + ptsPrice + "</span>" : "<span>starter rig</span>") + "</div>" +
+        '<ul class="p-perks">' + (p.perks || []).map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" +
+        '<div class="p-stats"><div><b>' + W.usd(daily) + "</b><span>per day</span></div><div><b>" + p.days + "</b><span>days</span></div><div><b>" + W.usd(total) + "</b><span>total est.</span></div></div>" +
+        '<button class="btn ' + (p.featured ? "btn-primary" : "btn-ghost") + ' btn-block" data-plan="' + esc(p.key) + '">' + (p.free ? "Start free rig" : "Get this rig") + "</button>" +
+        "</div>";
+    }).join("");
+  }
+
+  /* ---------- buy modal ---------- */
+  const modal = $("buy-modal");
+  let pending = null;
+
+  function openBuy(cfg) {
+    pending = cfg;
+    const daily = A.dailyUsd(view, cfg.ghs);
+    $("bm-title").textContent = cfg.title;
+    $("bm-sub").textContent = cfg.sub;
+    $("bm-hash").textContent = M.fmtHash(cfg.ghs);
+    $("bm-days").textContent = cfg.days + " days";
+    $("bm-day").textContent = W.usd(daily);
+    $("bm-total").textContent = W.usd(daily * cfg.days);
+    $("bm-usdt").textContent = cfg.priceUsd > 0 ? "Pay " + W.usd(cfg.priceUsd) + " with USDT" : "Start free rig";
+    $("bm-points").classList.toggle("hidden", cfg.priceUsd <= 0);
+    $("bm-points").textContent = "Pay " + pts(A.pointsPrice(view, cfg.priceUsd)) + " points";
+    modal.classList.add("open");
+  }
+  function closeBuy() { modal.classList.remove("open"); pending = null; }
+  document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", closeBuy));
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeBuy(); });
+
+  function doBuy(currency) {
+    if (!pending || busy) return;
+    const p = pending;
+    const run = p.type === "plan" ? A.buyPlan(p.plan, currency) : A.buyCustom(p.ghs, p.days, currency);
+    closeBuy();
+    act(run, "Rig started — your hashrate is live now ⛏️");
+  }
+  $("bm-usdt").addEventListener("click", () => doBuy("usdt"));
+  $("bm-points").addEventListener("click", () => doBuy("points"));
+
+  $("plan-grid").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-plan]"); if (!b) return;
+    const p = (view.plans || []).find((x) => x.key === b.dataset.plan); if (!p) return;
+    openBuy({ type: "plan", plan: p.key, title: p.name, sub: p.free ? "Free starter rig — no payment required." : "Choose how you want to pay for this rig.", ghs: p.ghs, days: p.days, priceUsd: p.priceUsd });
+  });
+
+  /* ---------- custom rig ---------- */
+  const cuGhs = $("cu-ghs"), cuDays = $("cu-days");
+  function paintCustom() {
+    const lo = view.config.customMinGhs, hi = view.config.customMaxGhs;
+    cuGhs.min = lo; cuGhs.max = hi;
+    if (Number(cuGhs.value) < lo) cuGhs.value = lo;
+    if (Number(cuGhs.value) > hi) cuGhs.value = hi;
+    const g = Number(cuGhs.value), d = Number(cuDays.value);
+    const price = A.priceCustom(view, g, d);
+    const daily = A.dailyUsd(view, g);
+    $("cu-ghs-out").textContent = g;
+    $("cu-days-out").textContent = d;
+    $("cu-hash-lbl").textContent = M.fmtHash(g);
+    $("cu-days-lbl").textContent = d + " days";
+    $("cu-day").textContent = W.usd(daily);
+    $("cu-total").textContent = W.usd(daily * d);
+    $("cu-points").textContent = pts(A.pointsPrice(view, price)) + " pts";
+    $("cu-price").textContent = W.usd(price);
+  }
+  cuGhs.addEventListener("input", paintCustom);
+  cuDays.addEventListener("input", paintCustom);
+  function customCfg() {
+    const g = Number(cuGhs.value), d = Number(cuDays.value);
+    return { type: "custom", title: "Custom rig", sub: M.fmtHash(g) + " for " + d + " days", ghs: g, days: d, priceUsd: A.priceCustom(view, g, d) };
+  }
+  $("cu-buy-usdt").addEventListener("click", () => { pending = customCfg(); doBuy("usdt"); });
+  $("cu-buy-points").addEventListener("click", () => { pending = customCfg(); doBuy("points"); });
+
+  /* ---------- claim + boost ---------- */
+  function claim(mode) {
+    const before = view.unclaimed;
+    act(A.claim(mode), () => mode === "points"
+      ? "Claimed " + W.usd(before) + " as points (+" + view.config.pointsBonusPct + "% bonus)!"
+      : "Claimed " + W.usd(before) + " to your USDT balance!");
+  }
+  $("claim-usdt").addEventListener("click", () => claim("usdt"));
+  $("claim-points").addEventListener("click", () => claim("points"));
+  $("mine-boost").addEventListener("click", () => {
+    act(A.boost(), () => "Boost active — +" + view.config.boostPct + "% for " + view.config.boostHours + "h ⚡");
+  });
+
+  /* ---------- rigs + log ---------- */
+  function renderRigs() {
+    const list = view.contracts || [];
+    $("rig-empty").classList.toggle("hidden", list.length > 0);
+    $("rig-list").innerHTML = list.map((c) => {
+      const live = c.status === "active" && Date.now() < c.endsAt;
+      const total = Math.max(1, c.endsAt - c.startedAt);
+      const pct = Math.max(0, Math.min(100, Math.round(((Date.now() - c.startedAt) / total) * 100)));
+      const paid = c.priceUsd > 0
+        ? (c.paidWith === "points" ? pts(c.paidAmount) + " pts" : W.usd(c.priceUsd))
+        : "Free";
+      return '<div class="rig-row' + (live ? " live" : "") + '">' +
+        '<div class="rr-ic">' + M.RIG_SVG + "</div>" +
+        '<div class="rr-main"><h5>' + esc(c.name) + ' <span class="badge ' + (live ? "active" : "cancelled") + '">' + (live ? "mining" : "expired") + "</span></h5>" +
+        "<p>" + M.fmtHash(c.ghs) + " · " + c.days + " day contract · paid " + paid + "</p>" +
+        '<div class="slot-bar"><i style="width:' + pct + '%"></i></div>' +
+        '<p class="rr-time">' + (live ? M.fmtDur(c.endsAt - Date.now()) + " remaining" : "Ended " + fdate(c.endsAt)) + "</p></div>" +
+        '<div class="rr-earn"><b>' + M.fmtUsd6(c.earned) + "</b><span>mined</span></div></div>";
+    }).join("");
+  }
+
+  function renderLog() {
+    const l = view.log || [];
+    $("log-empty").classList.toggle("hidden", l.length > 0);
+    $("log-body").innerHTML = l.map((e) => (
+      "<tr><td>" + fdate(e.at) + '</td><td><span class="badge ' + (e.type === "claim" ? "approved" : e.type === "boost" ? "info" : "pending") + '">' + esc(e.type) + "</span></td>" +
+      "<td>" + esc(e.text) + "</td>" +
+      '<td class="num ' + (e.amount > 0 ? "pos" : e.amount < 0 ? "neg" : "") + '">' + (e.amount ? W.usd(Math.abs(e.amount)) : "—") + "</td></tr>"
+    )).join("");
+  }
+
+  function paintBoostBtn() {
+    const btn = $("mine-boost");
+    if (busy) return;
+    const wait = view.boostReadyIn;
+    btn.disabled = wait > 0;
+    btn.textContent = wait > 0 ? "Boost in " + M.fmtDur(wait) : "⚡ Free daily boost";
+  }
+
+  /* ---------- live paint (ticks every second between server polls) ---------- */
+  function paintStats() {
+    const v = A.view();
+    if (v) { view = Object.assign(view, v); }
+    $("rig-hash").textContent = M.fmtHash(view.ghs);
+    $("rig-state").textContent = view.ghs > 0 ? (view.boosted ? "Mining · boost active ⚡" : "Mining live") : "Idle — no rig running";
+    document.querySelector(".rig-core").classList.toggle("on", view.ghs > 0);
+    $("rig-unclaimed").textContent = Number(view.unclaimed).toFixed(6);
+    $("rig-day").textContent = "$" + Number(view.perDay).toFixed(4);
+    $("rig-hour").textContent = "$" + (Number(view.perDay) / 24).toFixed(6);
+    $("rig-active").textContent = view.active;
+    $("rig-lifetime").textContent = W.usd(view.lifetime);
+    $("net-invested").textContent = W.usd(view.invested);
+
+    paintBoostBtn();
+    $("rig-boost-note").textContent = view.boosted
+      ? "Boost running — +" + view.config.boostPct + "% until " + new Date(view.boostUntil).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+      : "Minimum claim " + W.usd(view.config.minClaimUsdt) + " · rewards keep mining while you are offline.";
+
+    const n = M.networkStats();
+    $("net-pool").textContent = (n.poolHash / 1000).toFixed(1) + " TH/s";
+    $("net-miners").textContent = n.miners.toLocaleString("en-IN");
+    $("net-uptime").textContent = n.uptime.toFixed(1) + "%";
+
+    const onServer = A.isServer();
+    $("mode-pill").textContent = onServer ? "Server-synced" : "This browser only";
+    $("mode-pill").className = "status-pill " + (onServer ? "on" : "off");
+    $("mode-note").textContent = onServer
+      ? "Contracts, rewards and balances are held in Postgres — nothing here can be changed from your browser."
+      : "Supabase is not configured (or you signed in with the local fallback), so mining runs as a browser-only simulation.";
+
+    /* balances shown in the header chips come from whichever mode is live */
+    document.querySelectorAll("[data-mine-hash]").forEach((el) => (el.textContent = M.fmtHash(view.ghs)));
+    document.querySelectorAll("[data-mine-unclaimed]").forEach((el) => (el.textContent = Number(view.unclaimed).toFixed(4)));
+    if (A.isServer()) {
+      document.querySelectorAll("[data-usdt]").forEach((el) => (el.textContent = Number(view.balances.usdt).toFixed(2)));
+      document.querySelectorAll("[data-credits]").forEach((el) => (el.textContent = Number(view.balances.points).toLocaleString("en-IN")));
+    } else {
+      W.syncWalletPills();
+      FF.syncCreditPills();
+    }
+  }
+
+  function renderAll() {
+    $("rate-line").textContent = view.config.pointsPerUsdt + " points = $1.00";
+    $("maint-pct").textContent = view.config.maintenancePct;
+    $("how-boost").textContent = view.config.boostPct;
+    $("how-boost-h").textContent = view.config.boostHours;
+    $("how-bonus").textContent = view.config.pointsBonusPct;
+    renderPlans(); renderRigs(); renderLog(); paintCustom(); paintStats();
+  }
+
+  renderAll();
+  /* pull authoritative state, then keep it fresh */
+  A.load().then((v) => { if (v) { view = v; renderAll(); } });
+  setInterval(paintStats, 1000);
+  setInterval(renderRigs, 5000);
+  setInterval(() => { if (!busy) A.load().then((v) => { if (v) { view = v; renderRigs(); renderLog(); } }); }, 60000);
+});
+</script>
+
+</body>
+</html>
