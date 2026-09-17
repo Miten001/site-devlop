@@ -321,6 +321,94 @@
     document.querySelectorAll("[data-usdt-locked]").forEach((el) => { el.textContent = Number(w.locked).toFixed(2); });
   }
 
+  /* ---------- server ⇄ browser balance merge ----------
+     Points and USDT earned inside the browser (welcome bonus, daily bonus
+     missions, approved campaign work, balances from before the server
+     upgrade) live in localStorage, while a signed-in member's server ledger
+     starts empty. Repainting the header chips straight from the server
+     payload therefore wiped everything the member had earned locally — the
+     chips flashed the correct number for a second and then dropped to 0.
+
+     reconcileServer() MERGES instead of overwriting: everything earned in
+     the browser since the last server snapshot rides on top of the server
+     balance, the merged value is written back to localStorage (so every
+     page and every pill paints the same number), and the server snapshot
+     becomes the new baseline. Server-side spends (points → USDT conversion,
+     mining purchases) lower the baseline, so they are reflected too. */
+  function srvMarks() { return store.get("ff_srv_sync", {}); }
+
+  function setSrvMark(email, patch) {
+    if (!email) return;
+    const all = srvMarks();
+    all[email] = Object.assign({ pts: 0, usdt: 0 }, all[email], patch);
+    store.set("ff_srv_sync", all);
+  }
+
+  function reconcileServer(srvPts, srvUsdt) {
+    const u = FF.currentUser();
+    const out = { points: Number(srvPts || 0), usdt: Number(srvUsdt || 0), exPoints: 0, exUsdt: 0 };
+    if (!u) return out;
+    const mark = Object.assign({ pts: 0, usdt: 0 }, srvMarks()[u.email]);
+    const locPts = Number(u.credits || 0);
+    const locUsdt = Number(wallet(u.email).available || 0);
+    out.exPoints = Math.max(0, locPts - mark.pts);   // earned here, not yet on the server
+    out.exUsdt = Math.max(0, locUsdt - mark.usdt);
+    out.points = Number(srvPts || 0) + out.exPoints;
+    out.usdt = Number(srvUsdt || 0) + out.exUsdt;
+    if (out.points !== locPts) {
+      const patch = { credits: out.points };
+      if (out.points > locPts) patch.earned = (u.earned || 0) + (out.points - locPts);
+      FF.updateUser(u.email, patch);
+    }
+    if (out.usdt !== locUsdt) patchWallet(u.email, (acc) => { acc.available = out.usdt; });
+    setSrvMark(u.email, { pts: Number(srvPts || 0), usdt: Number(srvUsdt || 0) });
+    syncWalletPills();
+    FF.syncCreditPills();
+    return out;
+  }
+
+  /* Optional companion SQL (supabase-points-import.sql) lets a signed-in
+     member hand their browser-earned points over to the server ledger so
+     they also become spendable there (points → USDT conversion, mining
+     purchases). Tried at most once per member per day and skipped silently
+     when the SQL is not installed — the merged display above keeps working
+     either way. */
+  let importing = false;
+  function importFlags() { return store.get("ff_pts_import", {}); }
+
+  function maybeImportPoints() {
+    if (importing || !serverReady()) return;
+    const u = FF.currentUser();
+    if (!u) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const flag = importFlags()[u.email];
+    if (flag && flag.day === today) return;
+    const mark = Object.assign({ pts: 0, usdt: 0 }, srvMarks()[u.email]);
+    const ex = Math.max(0, Number(u.credits || 0) - mark.pts);
+    if (ex < 1) return;
+    importing = true;
+    call("wallet_import_points", { p_points: ex }).then((payload) => {
+      const a = importFlags();
+      a[u.email] = { day: today, at: Date.now() };
+      store.set("ff_pts_import", a);
+      if (payload && payload.wallet) {
+        /* The import returns a fresh wallet_state. Record the post-import
+           server points as the new baseline FIRST so the imported points
+           are not counted twice (server + local excess). */
+        setSrvMark(u.email, { pts: num(payload.wallet.points) });
+        adoptWallet(payload);
+      }
+    }).catch((err) => {
+      /* Not installed / daily cap reached / validation error — back off for
+         today. A dropped session (offline) is transient: retry next load. */
+      if (!(err && err.offline)) {
+        const a = importFlags();
+        a[u.email] = { day: today, at: Date.now() };
+        store.set("ff_pts_import", a);
+      }
+    }).finally(() => { importing = false; });
+  }
+
   const USDT_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5L1.2 8.1 12 22.5 22.8 8.1 12 1.5zm1.6 9.7v1.6c-.5.03-1.05.05-1.6.05s-1.1-.02-1.6-.05v-1.6c-2.6-.13-4.5-.66-4.5-1.3 0-.63 1.9-1.17 4.5-1.3v1.45c.5.03 1.03.05 1.6.05s1.1-.02 1.6-.05V8.6c2.6.13 4.5.67 4.5 1.3 0 .64-1.9 1.17-4.5 1.3zM12 12.1c3.2 0 5.9-.5 6.6-1.16v1.1c0 .74-2.95 1.34-6.6 1.34s-6.6-.6-6.6-1.34v-1.1c.7.66 3.4 1.16 6.6 1.16z"/></svg>';
 
   /* ============================================================
@@ -357,6 +445,12 @@
     lastWallet = payload;
     const cfg = payload.config || {};
     const nets = payload.networks || [];
+    /* Merge the server ledger with points/USDT earned in this browser so
+       the chips never drop back to zero (see reconcileServer). */
+    const rec = reconcileServer(
+      num((payload.wallet || {}).points),
+      num((payload.wallet || {}).available)
+    );
     const view = {
       mode: "server",
       config: {
@@ -374,9 +468,11 @@
       })),
       categories: (payload.categories || []).map((c) => ({ key: c.key, name: c.name, color: c.color })),
       wallet: {
-        available: num((payload.wallet || {}).available),
+        available: rec.usdt,
         locked: num((payload.wallet || {}).locked),
-        points: num((payload.wallet || {}).points),
+        points: rec.points,
+        exPoints: rec.exPoints,
+        exUsdt: rec.exUsdt,
         totalEarned: num((payload.wallet || {}).totalEarned),
         totalDeposited: num((payload.wallet || {}).totalDeposited),
         totalWithdrawn: num((payload.wallet || {}).totalWithdrawn),
@@ -391,6 +487,9 @@
       })),
     };
     paintPills(view.wallet);
+    /* Hand browser-earned points to the server ledger when the optional
+       import SQL is installed (guarded, at most once per day). */
+    maybeImportPoints();
     return view;
   }
 
@@ -577,6 +676,7 @@
     subs, jobSubs, mySubs, submitProof, reviewSub,
     adminCancelJob, adminSetJobStatus,
     convertPoints, syncWalletPills, purgeDemoData, USDT_SVG,
+    reconcileServer, maybeImportPoints, setSrvMark, localView: localWalletView,
     api, serverReady,
   };
 })();

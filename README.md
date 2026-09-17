@@ -79,6 +79,21 @@ Members can `select` only their own `wallet_txns` / `pay_requests`; job listings
 
 Admins listed in `window.FF_ADMIN_EMAILS` settle payment requests at `admin-payments.html`. In server mode the page calls `wallet_admin_queue`, `wallet_admin_settle`, `jobs_admin_review` and `jobs_admin_cancel`, all gated by the `public.admins` allowlist — the browser-side `FF_ADMIN_EMAILS` list is only a UI hint. Approving a deposit credits the balance; rejecting a withdrawal returns the locked funds; cancelling a task refunds the unused escrow to its owner.
 
+## Points never zero out (browser ⇄ server merge)
+
+Points and USDT earned **inside the browser** — the +25 welcome bonus, daily bonus missions, approved campaign work, and balances from before the Supabase upgrade — live in `localStorage`, while a signed-in member's **server ledger starts empty**. Earlier builds repainted the header chips straight from the server balance, so everything earned locally flashed for a second and then dropped to **0** on every page.
+
+[`assets/js/wallet.js`](assets/js/wallet.js) now **merges** the two instead of overwriting (`reconcileServer()`):
+
+- the header/panel chips always show **server balance + everything earned in this browser since the last sync** — the number can only grow locally, never reset;
+- the merged value is written back to `localStorage`, so dashboard, wallet, mining and earn pages all paint the same number;
+- server-side spends (points → USDT conversion, mining purchases) lower the baseline and are reflected on the next sync;
+- logging in on a new browser adopts the server balance automatically (no duplicate welcome bonus), and points earned there sync back through the same merge.
+
+**Optional (recommended): make browser-earned points server-spendable.** The merge above keeps the *display* correct, but the server can only spend points it knows about. Run [`supabase-points-import.sql`](supabase-points-import.sql) (after `supabase-wallet.sql` + `supabase-mining.sql`) to add a `wallet_import_points()` RPC: signed-in members hand their browser-earned points to the server ledger **at most once per day, capped at 10,000 points**, every import logged in `wallet_txns`. The site calls it automatically — with the SQL absent it silently skips and the merged display keeps working.
+
+Regression tests for the merge live in [`tests/reconcile.test.js`](tests/reconcile.test.js) (`node tests/reconcile.test.js`).
+
 ## Cloud mining
 
 `mining.html` + [`assets/js/mining.js`](assets/js/mining.js) add a hashrate-rental miner on top of the wallet. Users buy a contract with **USDT** (debited from `ff_wallets`) or with **points** (`1000 pts = $1`, same rate as the wallet converter), and the rig accrues rewards every second — including while the user is offline, because accrual is computed from wall-clock time on every read.

@@ -331,16 +331,16 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="task-top">
             <span class="pf-badge">${p.icon}</span>
             <div>
-              <h4>${c.user || c.title}</h4>
-              <p>${p.name} · ${c.action}</p>
+              <h4>${esc(c.user || c.title)}</h4>
+              <p>${p.name} · ${esc(c.action)}</p>
             </div>
-            <div class="pay-bubble"><b>+${c.payout}</b><span>points</span></div>
+            <div class="pay-bubble"><b>+${Number(c.payout || 0)}</b><span>points</span></div>
           </div>
           <div class="task-action">
-            <button class="btn ${btnClass} btn-sm" data-task="${c.id}" ${disabled ? "disabled" : ""}>
+            <button class="btn ${btnClass} btn-sm" data-task="${esc(c.id)}" ${disabled ? "disabled" : ""}>
               ${label}
             </button>
-            <a class="btn btn-ghost btn-sm" href="${c.url}" target="_blank" rel="noopener" title="Open link">
+            <a class="btn btn-ghost btn-sm" href="${esc(c.url)}" target="_blank" rel="noopener" title="Open link">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
             </a>
           </div>

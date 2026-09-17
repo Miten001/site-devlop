@@ -378,7 +378,17 @@
     snapshot = payload;
     snapshotAt = Date.now();
     serverDown = false;
-    return normalise(payload);
+    /* Merge the server balances with points/USDT earned in this browser so
+       the header chips never zero out (wallet.js reconcileServer does the
+       merge and writes the result back to localStorage). */
+    if (payload && payload.balances && W.reconcileServer) {
+      const rec = W.reconcileServer(Number(payload.balances.points || 0), Number(payload.balances.usdt || 0));
+      snapshot = Object.assign({}, payload, {
+        balances: { points: rec.points, usdt: rec.usdt },
+      });
+      if (W.maybeImportPoints) W.maybeImportPoints();
+    }
+    return normalise(snapshot);
   }
 
   /* Pure: turns a server payload into the shape the UI renders. Must NOT

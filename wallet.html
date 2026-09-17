@@ -304,6 +304,15 @@ document.addEventListener("DOMContentLoaded", () => {
     depNet = (net(depositNets(), depNet && depNet.network) || {}).network || null;
     wdNet = (net(withdrawNets(), wdNet && wdNet.network) || {}).network || null;
     paintDepNets(); paintWdNets(); wdSummary(); cvSummary();
+
+    /* Points earned in this browser ride on top of the server balance (see
+       wallet.js reconcileServer). Tell the member which part is still being
+       handed over to the server ledger. */
+    const exPts = Math.max(0, Number(w.exPoints || 0));
+    $("cv-sync-note").textContent = (view.mode === "server" && exPts > 0)
+      ? exPts.toLocaleString("en-IN") + " of these points were earned in this browser and are queued to sync to the server ledger (once per day) — they already count towards your balance above."
+      : "";
+
     renderTx(); renderReq();
   }
 
@@ -421,7 +430,14 @@ document.addEventListener("DOMContentLoaded", () => {
     )).join("");
   }
 
-  A.wallet().then(paint).catch(fail);
+  A.wallet().then(paint).catch((err) => {
+    fail(err);
+    /* If the server state could not be read (e.g. the SQL functions are not
+       installed yet), still render the browser wallet so the withdraw /
+       convert calculators keep working instead of crashing on a null view. */
+    const u = FF.currentUser();
+    if (u && W.localView) paint(W.localView(u.email));
+  });
 });
 </script>
 
