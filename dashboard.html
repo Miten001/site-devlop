@@ -278,8 +278,8 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="camp-row" style="--pf:${p.color}">
         <span class="cr-pf">${p.icon}</span>
         <div class="cr-info">
-          <h5>${c.title}</h5>
-          <p>${p.name} · ${c.action || p.actions[0]} · ${c.payout} pts/action</p>
+          <h5>${escCr(c.title)}</h5>
+          <p>${p.name} · ${escCr(c.action || p.actions[0])} · ${Number(c.payout || 0)} pts/action</p>
         </div>
         <div class="cr-meta"><b>${(c.actions || 0).toLocaleString("en-IN")}</b>engagements</div>
         <span class="status-pill ${c.active ? "on" : "off"}">${c.active ? "Live" : "Paused"}</span>

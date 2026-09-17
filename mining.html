@@ -426,16 +426,14 @@ document.addEventListener("DOMContentLoaded", () => {
       ? "Contracts, rewards and balances are held in Postgres — nothing here can be changed from your browser."
       : "Supabase is not configured (or you signed in with the local fallback), so mining runs as a browser-only simulation.";
 
-    /* balances shown in the header chips come from whichever mode is live */
+    /* header chips: mining stats come from the live view, but the point /
+       USDT chips always paint from the merged balances (server + browser
+       earned) that wallet.js keeps in localStorage — never straight from
+       the raw server payload, which zeroed out locally earned points. */
     document.querySelectorAll("[data-mine-hash]").forEach((el) => (el.textContent = M.fmtHash(view.ghs)));
     document.querySelectorAll("[data-mine-unclaimed]").forEach((el) => (el.textContent = Number(view.unclaimed).toFixed(4)));
-    if (A.isServer()) {
-      document.querySelectorAll("[data-usdt]").forEach((el) => (el.textContent = Number(view.balances.usdt).toFixed(2)));
-      document.querySelectorAll("[data-credits]").forEach((el) => (el.textContent = Number(view.balances.points).toLocaleString("en-IN")));
-    } else {
-      W.syncWalletPills();
-      FF.syncCreditPills();
-    }
+    W.syncWalletPills();
+    FF.syncCreditPills();
   }
 
   function renderAll() {

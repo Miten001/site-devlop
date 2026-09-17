@@ -262,11 +262,21 @@
     };
   }
 
-  function rememberMember(name, email, memberId) {
+  function rememberMember(name, email, memberId, opts) {
     const users = DB.users();
     const i = users.findIndex((u) => u.email === email);
     if (i === -1) {
       const member = defaultMember(name || email.split("@")[0], email, memberId);
+      /* A brand-new local record created by a LOGIN (not a signup) gets no
+         welcome bonus — the member already has an account, and their real
+         balance arrives from the server on the first sync. Without this,
+         every extra browser/device added a phantom +25 points. */
+      if (opts && opts.welcome === false) {
+        member.credits = 0;
+        member.earned = 0;
+        member.spent = 0;
+        member.activity = [];
+      }
       users.push(member);
       DB.saveUsers(users);
       return member;
@@ -400,7 +410,7 @@
     }).then((result) => {
       if (!result.user) throw new Error("Incorrect email or password");
       const profileName = result.user.user_metadata && result.user.user_metadata.display_name;
-      const member = rememberMember(profileName || email.split("@")[0], email, result.user.id);
+      const member = rememberMember(profileName || email.split("@")[0], email, result.user.id, { welcome: false });
       DB.setAuth(result);
       DB.setSession(email);
       return member;
@@ -904,6 +914,7 @@
     PLATFORMS, BRAND_SVG, COIN_SVG, SPARK_SVG, CHECK_SVG,
     store, DB, currentUser, updateUser, memberConfig,
     rpc, hasServer, accessToken, refreshAuth,
+    loginMember, signupMember,
     addCampaign, updateCampaign, deleteCampaign,
     awardCredits, spendCredits, syncCreditPills,
     campSubsFor, myCampSubs, submitCampaignProof, reviewCampaignSub,
