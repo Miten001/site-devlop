@@ -380,8 +380,15 @@
     }).then((result) => {
       if (!result.user || !result.user.id) throw new Error("The account could not be created. Please try again.");
       const member = rememberMember(name, email, result.user.id);
-      if (result.session) { DB.setAuth(result.session); DB.setSession(email); }
-      return { member, confirmationRequired: !result.session, localOnly: false };
+      if (result.session) {
+        DB.setAuth(result.session); DB.setSession(email);
+        return { member, confirmationRequired: false, localOnly: false };
+      }
+      // No session returned (email confirmation may be on) — log the user in
+      // right away so signup goes straight to a welcome + dashboard.
+      return loginMember(email, password)
+        .then(() => ({ member, confirmationRequired: false, localOnly: false }))
+        .catch(() => ({ member, confirmationRequired: false, localOnly: false }));
     });
   }
 
@@ -756,12 +763,7 @@
         if (submit) { submit.disabled = true; submit.dataset.label = submit.textContent; submit.textContent = "Creating secure account…"; }
         signupMember(name, email, pass).then((result) => {
           passEl.value = "";
-          if (result.confirmationRequired) {
-            toast("Account created — check your email to confirm it, then log in.", "ok");
-            setTimeout(() => (window.location.href = "login.html"), 1800);
-            return;
-          }
-          toast(result.localOnly ? "Account created! +25 welcome points" : "Account created! +25 welcome points", "ok");
+          toast("Welcome to FlexFam, " + name.split(" ")[0] + "! Account created 🎉 +25 welcome points", "ok");
           setTimeout(() => (window.location.href = "dashboard.html"), 900);
         }).catch((error) => {
           toast(error.message || "Could not create the account", "err");
