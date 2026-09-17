@@ -78,7 +78,6 @@
           <div class="rig-ring"><span></span><span></span><span></span>
             <div class="rig-coins" aria-label="Mining coins"><span class="coin coin-btc">₿</span><span class="coin coin-usdt">₮</span></div>
             <div class="rig-core-in">
-              <span class="cap">Your hashrate</span>
               <b id="rig-hash">0 GH/s</b>
               <small id="rig-state">Idle — no rig running</small>
             </div>
@@ -273,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
         '<div class="p-price"><b>' + price + "</b>" + (p.priceUsd > 0 ? "<span>or " + ptsPrice + "</span>" : "<span>starter rig</span>") + "</div>" +
         '<ul class="p-perks">' + (p.perks || []).map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" +
         '<div class="p-stats"><div><b>' + W.usd(daily) + "</b><span>per day</span></div><div><b>" + p.days + "</b><span>days</span></div><div><b>" + W.usd(total) + "</b><span>total est.</span></div></div>" +
-        '<button class="btn ' + (p.featured ? "btn-primary" : "btn-ghost") + ' btn-block" data-plan="' + esc(p.key) + '">' + (p.free ? "Start free rig" : "Get this rig") + "</button>" +
+        '<button class="btn ' + (p.featured ? "btn-primary" : "btn-ghost") + ' btn-block" data-plan="' + esc(p.key) + '">' + (p.free ? "Start free rig" : "Start mining") + "</button>" +
         "</div>";
     }).join("");
   }

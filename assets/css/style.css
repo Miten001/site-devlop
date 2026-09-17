@@ -125,6 +125,64 @@ body {
   background: radial-gradient(circle, rgba(47, 111, 237, 0.08), rgba(47, 111, 237, 0.02) 45%, transparent 70%);
 }
 
+/* Floating crypto background — USDT & BTC coins */
+.crypto-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.crypto-bg .coin {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  opacity: 0.10;
+  box-shadow: 0 10px 30px rgba(16, 27, 48, 0.12);
+  animation: coinFloat 16s ease-in-out infinite;
+}
+.crypto-bg .coin-usdt {
+  background: linear-gradient(135deg, #26a17b, #4fd1a5);
+}
+.crypto-bg .coin-btc {
+  background: linear-gradient(135deg, #f7931a, #ffb84d);
+}
+.crypto-bg .c1 { width: 120px; height: 120px; font-size: 60px; top: 12%; left: 6%; animation-delay: 0s; }
+.crypto-bg .c2 { width: 90px;  height: 90px;  font-size: 46px; top: 24%; right: 9%; animation-delay: -3s; }
+.crypto-bg .c3 { width: 70px;  height: 70px;  font-size: 36px; top: 58%; left: 12%; animation-delay: -6s; }
+.crypto-bg .c4 { width: 140px; height: 140px; font-size: 70px; bottom: 10%; right: 6%; animation-delay: -9s; }
+.crypto-bg .c5 { width: 60px;  height: 60px;  font-size: 30px; bottom: 22%; left: 44%; animation-delay: -12s; }
+.crypto-bg .c6 { width: 100px; height: 100px; font-size: 52px; top: 46%; right: 40%; animation-delay: -7s; }
+@keyframes coinFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-26px) rotate(8deg); }
+}
+@media (max-width: 720px) {
+  .crypto-bg .coin { opacity: 0.07; }
+  .crypto-bg .c3, .crypto-bg .c5, .crypto-bg .c6 { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crypto-bg .coin { animation: none; }
+}
+
+/* USDT / BTC chip icons */
+.float-chip .ic-usdt {
+  background: linear-gradient(135deg, #26a17b, #4fd1a5);
+  color: #fff;
+  font-weight: 800;
+  font-size: 18px;
+}
+.float-chip .ic-btc {
+  background: linear-gradient(135deg, #f7931a, #ffb84d);
+  color: #fff;
+  font-weight: 800;
+  font-size: 18px;
+}
+
 ::selection {
   background: rgba(247, 148, 29, 0.28);
   color: var(--ink);
