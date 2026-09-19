@@ -1,0 +1,91 @@
+/* FLEXFAM mobile hardening — shared by every public and app page */
+
+/* Fluid content and media must never force horizontal page scrolling. */
+html, body { max-width: 100%; }
+svg, video, canvas, iframe { max-width: 100%; }
+button, input, select, textarea { max-width: 100%; }
+.app-shell > *, .dash-cols > *, .hero-grid > *, .split-grid > * { min-width: 0; }
+
+/* Comfortable touch targets on touch-first devices. */
+@media (hover: none) and (pointer: coarse) {
+  .btn, .tab-btn, .side-nav a, .nav-links a, .burger { min-height: 44px; }
+  input, select, textarea { min-height: 44px; }
+}
+
+@media (max-width: 768px) {
+  body { overflow-wrap: anywhere; }
+  .container { width: calc(100% - 28px); }
+
+  /* Header remains usable without squeezing the logo or account controls. */
+  .site-head .bar { gap: 8px; }
+  .head-actions { min-width: 0; }
+  .head-actions .credit-chip { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+  .mobile-menu { max-height: calc(100dvh - 70px); overflow-y: auto; overscroll-behavior: contain; }
+
+  /* App navigation is a thumb-friendly horizontal strip. */
+  .app-shell { gap: 14px; }
+  .side-nav { margin-inline: -14px; padding-inline: 14px; border-radius: 0; scroll-snap-type: x proximity; }
+  .side-nav a { flex: 0 0 auto; scroll-snap-align: start; }
+  .app-head { align-items: flex-start; gap: 12px; }
+  .app-head h1 { font-size: clamp(25px, 7vw, 34px); }
+
+  /* Forms and action rows stack instead of overflowing. */
+  .form-row, .field-row, .modal-actions, .panel-head { flex-wrap: wrap; }
+  .form-row > *, .field-row > * { min-width: min(100%, 220px); flex: 1 1 220px; }
+  .form-card .field[style*="grid-template-columns"] { grid-template-columns: 1fr !important; gap: 0 !important; }
+  .modal-actions .btn { flex: 1 1 140px; }
+
+  /* Tables retain all data and scroll inside their own region. */
+  .ff-table-wrap, .table-responsive, .member-table-wrap, .scroll-box {
+    max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+  }
+
+  .tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { flex: 0 0 auto; }
+}
+
+@media (max-width: 560px) {
+  .container { width: calc(100% - 24px); }
+  .app-main { padding-top: 76px; }
+  .panel, .form-card, .bal-card, .job-card, .plan-card, .rig-hero { padding: 16px 14px; }
+
+  .section-head { margin-bottom: 30px; }
+  .hero p, .section-head p { font-size: 15px; }
+  .eyebrow { max-width: 100%; white-space: normal; text-align: left; }
+
+  .app-head { flex-direction: column; }
+  .app-head > .btn, .app-head > a.btn { width: 100%; }
+  .bal-actions, .rig-actions, .job-card .j-foot { flex-direction: column; }
+  .bal-actions .btn, .rig-actions .btn, .job-card .j-foot .btn { width: 100%; }
+
+  .addr-box { align-items: stretch; flex-direction: column; }
+  .addr-box code { width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  .summary-rows .row { gap: 14px; }
+  .summary-rows .row b { text-align: right; overflow-wrap: anywhere; }
+
+  .mini-stats { gap: 8px; }
+  .mini-stat { padding: 13px 11px; }
+  .mini-stat b { font-size: 19px; }
+
+  .rig-row .rr-earn { width: 100%; text-align: left; padding-left: 56px; }
+  .warn-banner { padding: 14px 12px; }
+  .global-support { max-width: calc(100% - 24px); }
+}
+
+@media (max-width: 390px) {
+  .container { width: calc(100% - 18px); }
+  .logo span { font-size: 17px; }
+  .head-actions .credit-chip { display: none; }
+  .stats-grid, .dash-grid, .mini-stats { grid-template-columns: 1fr; }
+  .net-picker { grid-template-columns: 1fr; }
+  .payout-feed { white-space: normal; }
+}
+
+/* Respect notches and browser safe areas on modern phones. */
+@supports (padding: max(0px)) {
+  .site-head .bar { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .global-support { bottom: max(12px, env(safe-area-inset-bottom)); }
+  .toast-root { bottom: max(16px, env(safe-area-inset-bottom)); }
+}
