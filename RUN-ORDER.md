@@ -13,14 +13,16 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 
 ---
 
-## Cloud mining ke naye numbers live karne ke liye (2025 update)
+## Cloud mining ke naye numbers live karne ke liye (2026 update)
 
-Latest mining changes — global rate **0.00095**, **+20% invest boost** ($10+ purchase wale contracts pe permanent), aur plans **bronze 260 / silver 620 / gold 1100 / titan 2000 GH/s** — front-end (`assets/js/mining.js`) me already live hain aur GitHub Pages pe deploy ho chuke hain.
+Latest mining changes — global gross rate **0.00105**, **+20% invest boost** ($10+ purchase wale contracts pe permanent), aur naye **Emerald ($10), Diamond (6 TH/s) aur Quantum (12 TH/s)** plans — front-end (`assets/js/mining.js`) me included hain. Diamond/Quantum ki estimated earning $5/day se aage jaati hai.
 
-**Server mode** me ye numbers Postgres se aate hain, isliye ek baar [`supabase-mining.sql`](supabase-mining.sql) (#2) **dobara run karo**. Wo purane installs ko safely upgrade kar deta hai:
+**Server mode** me ye numbers Postgres se aate hain, isliye deploy/merge ke baad ek baar [`supabase-mining.sql`](supabase-mining.sql) (#2) **dobara run karo**. Wo purane installs ko safely upgrade karta hai, naye plan rows add karta hai, aur agar rate abhi kisi purane shipped default par hai tabhi usko badalta hai. Admin ka custom rate overwrite nahi hota:
 
 ```sql
 alter table public.mining_config add column if not exists invest_boost_min_usd numeric not null default 10;
 alter table public.mining_config add column if not exists invest_boost_pct     numeric not null default 20;
-update public.mining_config set usd_per_ghs_day = 0.00095 where id = 1 and usd_per_ghs_day = 0.000826;
+update public.mining_config
+   set usd_per_ghs_day = 0.00105, updated_at = now()
+ where id = 1 and usd_per_ghs_day in (0.000826, 0.00095);
 ```

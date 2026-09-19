@@ -100,7 +100,7 @@ Regression tests for the merge live in [`tests/reconcile.test.js`](tests/reconci
 
 | Setting | Value | Where |
 | --- | --- | --- |
-| Output per 1 GH/s / day (gross) | $0.000826 | `FF.M.CFG.usdPerGhsDay` |
+| Output per 1 GH/s / day (gross) | $0.00105 | `FF.M.CFG.usdPerGhsDay` |
 | Maintenance + pool fee | 8% (already deducted) | `FF.M.CFG.maintenancePct` |
 | Custom rig price | $0.017–$0.020 per GH/s / 30 days | `FF.M.CFG.customTiers` |
 | Custom rig range | 100 – 20,000 GH/s, 7+ days | `FF.M.CFG.customMinGhs` / `customMaxGhs` |
@@ -110,7 +110,7 @@ Regression tests for the merge live in [`tests/reconcile.test.js`](tests/reconci
 
 In server mode every value above is read from the `public.mining_config` row instead, so you can retune the economy live from the Supabase dashboard.
 
-Plans live in `FF.M.PLANS` (free 30 GH/s starter rig + Bronze/Silver/Gold/Titan). They are tuned so a contract returns roughly **1.15x–1.55x** of its price over the full term, longer contracts returning more — edit `usdPerGhsDay` to make the whole pool faster or slower.
+Plans live in `FF.M.PLANS` (free 30 GH/s starter rig + Bronze/Emerald/Silver/Gold/Titan/Diamond/Quantum). Emerald adds a $10 step above the $5 starter plan; Diamond and Quantum provide 6–12 TH/s and show estimated output above $5/day. Catalog estimates include the permanent +20% boost on qualifying purchases. Edit `usdPerGhsDay` to make the whole pool faster or slower.
 
 ### Two modes
 

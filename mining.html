@@ -119,7 +119,7 @@
       <div class="tab-pane active" id="pane-plans">
         <div class="fee-hint" style="margin-bottom:16px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-          <span>Pay with <b>USDT</b> from your wallet or with <b>points</b> you earned from tasks — <b id="rate-line">1000 points = $1.00</b>. Maintenance &amp; pool fee (<b id="maint-pct">8</b>%) is already deducted from every rate shown.</span>
+          <span>Pay with <b>USDT</b> from your wallet or with <b>points</b> you earned from tasks — <b id="rate-line">1000 points = $1.00</b>. Current net output: <b id="mining-rate">$0.000966/GH/s/day</b>. Maintenance &amp; pool fee (<b id="maint-pct">8</b>%) is already deducted, and estimates include any permanent invest boost.</span>
         </div>
         <div class="plan-grid" id="plan-grid"></div>
       </div>
@@ -219,7 +219,7 @@
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.0"></script>
 <script src="assets/js/wallet.js?v=2.0"></script>
-<script src="assets/js/mining.js?v=2.0"></script>
+<script src="assets/js/mining.js?v=2.1"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ---------- plans ---------- */
   function renderPlans() {
     $("plan-grid").innerHTML = (view.plans || []).map((p) => {
-      const daily = A.dailyUsd(view, p.ghs), total = daily * p.days;
+      const daily = A.dailyUsd(view, p.ghs, p.priceUsd), total = daily * p.days;
       const price = p.priceUsd > 0 ? W.usd(p.priceUsd) : "FREE";
       const ptsPrice = p.priceUsd > 0 ? pts(A.pointsPrice(view, p.priceUsd)) + " pts" : "0 pts";
       return '<div class="plan-card' + (p.featured ? " featured" : "") + '" style="--pf:' + esc(p.color) + '">' +
@@ -284,7 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function openBuy(cfg) {
     pending = cfg;
-    const daily = A.dailyUsd(view, cfg.ghs);
+    const daily = A.dailyUsd(view, cfg.ghs, cfg.priceUsd);
     $("bm-title").textContent = cfg.title;
     $("bm-sub").textContent = cfg.sub;
     $("bm-hash").textContent = M.fmtHash(cfg.ghs);
@@ -325,7 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (Number(cuGhs.value) > hi) cuGhs.value = hi;
     const g = Number(cuGhs.value), d = Number(cuDays.value);
     const price = A.priceCustom(view, g, d);
-    const daily = A.dailyUsd(view, g);
+    const daily = A.dailyUsd(view, g, price);
     $("cu-ghs-out").textContent = g;
     $("cu-days-out").textContent = d;
     $("cu-hash-lbl").textContent = M.fmtHash(g);
@@ -439,6 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderAll() {
     $("rate-line").textContent = view.config.pointsPerUsdt + " points = $1.00";
+    $("mining-rate").textContent = "$" + Number(view.config.netRate || 0).toFixed(6) + "/GH/s/day";
     $("maint-pct").textContent = view.config.maintenancePct;
     $("how-boost").textContent = view.config.boostPct;
     $("how-boost-h").textContent = view.config.boostHours;
