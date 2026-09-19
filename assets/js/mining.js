@@ -28,8 +28,13 @@
        Rates are tuned so a contract returns roughly 1.15x - 1.5x of its
        price across the full term (longer contracts return a bit more).
        Change usdPerGhsDay to make mining faster or slower globally. */
-    usdPerGhsDay: 0.000826,    // gross mining output per 1 GH/s per day
+    usdPerGhsDay: 0.00095,     // gross mining output per 1 GH/s per day
     maintenancePct: 8,         // electricity + pool fee, deducted from the gross rate
+
+    /* Invest boost: any contract bought for at least investBoostMinUsd gets a
+       permanent +investBoostPct% on its mining rate, for the whole term. */
+    investBoostMinUsd: 10,     // min purchase price (USD) that unlocks the boost
+    investBoostPct: 20,        // permanent rate bump on qualifying contracts
 
     /* custom rig builder: price of 1 GH/s for a 30 day term, with volume tiers */
     customTiers: [
@@ -52,6 +57,11 @@
   function netRate() { return CFG.usdPerGhsDay * (1 - CFG.maintenancePct / 100); }
   function pointsPerUsdt() { return W.CFG.pointsPerUsdt || 1000; }
 
+  /* Permanent invest boost: contracts bought for $10+ mine at +20% for their
+     whole term. Free / cheap contracts get the plain rate. */
+  function investBoosted(c) { return Number((c && c.priceUsd) || 0) >= CFG.investBoostMinUsd; }
+  function investMult(c) { return investBoosted(c) ? 1 + CFG.investBoostPct / 100 : 1; }
+
   /* ---------- plans ---------- */
   const PLANS = [
     {
@@ -61,23 +71,23 @@
     },
     {
       key: "bronze", name: "Bronze Miner", tag: "STARTER",
-      ghs: 250, days: 30, priceUsd: 5, color: "#ff8a3d",
-      perks: ["250 GH/s dedicated hashrate", "30 day contract", "Pay with points or USDT"],
+      ghs: 260, days: 30, priceUsd: 5, color: "#ff8a3d",
+      perks: ["260 GH/s dedicated hashrate", "30 day contract", "Pay with points or USDT"],
     },
     {
       key: "silver", name: "Silver Rig", tag: "POPULAR",
-      ghs: 550, days: 60, priceUsd: 20, color: "#22d3ee", featured: true,
-      perks: ["10% cheaper per GH/s than Bronze", "60 day contract", "Daily boost stacks on top"],
+      ghs: 620, days: 60, priceUsd: 20, color: "#22d3ee", featured: true,
+      perks: ["620 GH/s hashrate — cheaper per GH/s than Bronze", "60 day contract", "+20% invest boost (locked in for the full term)"],
     },
     {
       key: "gold", name: "Gold Farm", tag: "PRO",
-      ghs: 975, days: 90, priceUsd: 50, color: "#ffd166",
-      perks: ["Best mid-tier rate per GH/s", "90 day contract", "Priority payout queue"],
+      ghs: 1100, days: 90, priceUsd: 50, color: "#ffd166",
+      perks: ["1,100 GH/s hashrate", "90 day contract + priority payout queue", "+20% invest boost (locked in for the full term)"],
     },
     {
       key: "titan", name: "Titan Data Center", tag: "WHALE",
-      ghs: 1700, days: 180, priceUsd: 150, color: "#a970ff",
-      perks: ["Lowest rate per GH/s on the pool", "180 day contract", "Highest lifetime output"],
+      ghs: 2000, days: 180, priceUsd: 150, color: "#a970ff",
+      perks: ["2,000 GH/s — lowest rate per GH/s on the pool", "180 day contract + highest lifetime output", "+20% invest boost (locked in for the full term)"],
     },
   ];
 
@@ -134,7 +144,7 @@
         const from = Math.max(last, c.startedAt);
         const to = Math.min(now, c.endsAt);
         if (to > from) {
-          const perMs = (c.ghs * netRate()) / 86400000;
+          const perMs = (c.ghs * netRate() * investMult(c)) / 86400000;
           let amt = (to - from) * perMs;
           const bTo = Math.min(to, s.boostUntil || 0);
           if (bTo > from) amt += (bTo - from) * perMs * (CFG.boostPct / 100);
@@ -166,7 +176,9 @@
     const s = state(email);
     const ghs = hashrate(email);
     const boosted = boostActive(email);
-    const perDay = dailyUsd(ghs) * (boosted ? 1 + CFG.boostPct / 100 : 1);
+    /* Per-contract base output so the permanent +20% invest boost is counted. */
+    const baseDay = activeContracts(email).reduce((n, c) => n + dailyUsd(c.ghs) * investMult(c), 0);
+    const perDay = baseDay * (boosted ? 1 + CFG.boostPct / 100 : 1);
     return {
       ghs, perDay, perHour: perDay / 24, perSecond: perDay / 86400,
       unclaimed: s.unclaimed, claimed: s.claimed,
@@ -360,6 +372,7 @@
       config: {
         minClaimUsdt: CFG.minClaimUsdt, pointsBonusPct: CFG.pointsBonusPct,
         boostPct: CFG.boostPct, boostHours: CFG.boostHours,
+        investBoostPct: CFG.investBoostPct, investBoostMinUsd: CFG.investBoostMinUsd,
         maintenancePct: CFG.maintenancePct, pointsPerUsdt: pointsPerUsdt(),
         customMinGhs: CFG.customMinGhs, customMaxGhs: CFG.customMaxGhs,
         netRate: netRate(),
@@ -406,6 +419,8 @@
         pointsBonusPct: Number(cfg.points_bonus_pct != null ? cfg.points_bonus_pct : CFG.pointsBonusPct),
         boostPct: Number(cfg.boost_pct != null ? cfg.boost_pct : CFG.boostPct),
         boostHours: Number(cfg.boost_hours != null ? cfg.boost_hours : CFG.boostHours),
+        investBoostPct: Number(cfg.invest_boost_pct != null ? cfg.invest_boost_pct : CFG.investBoostPct),
+        investBoostMinUsd: Number(cfg.invest_boost_min_usd != null ? cfg.invest_boost_min_usd : CFG.investBoostMinUsd),
         maintenancePct: Number(cfg.maintenance_pct != null ? cfg.maintenance_pct : CFG.maintenancePct),
         pointsPerUsdt: Number(cfg.points_per_usdt || pointsPerUsdt()),
         customMinGhs: Number(cfg.custom_min_ghs || CFG.customMinGhs),
@@ -573,7 +588,7 @@
 
   FF.M = {
     CFG, PLANS, plan, RIG_SVG,
-    netRate, customRate, pointsPrice, dailyUsd, totalUsd, roi, customPrice,
+    netRate, customRate, pointsPrice, dailyUsd, totalUsd, roi, customPrice, investBoosted,
     state, stats, accrue, hashrate, activeContracts, boostActive, boostReadyIn,
     buyPlan, buyCustom, claim, activateBoost,
     fmtHash, fmtDur, fmtUsd6, networkStats, syncMiningPills,
