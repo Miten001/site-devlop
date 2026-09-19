@@ -26,3 +26,15 @@ update public.mining_config
    set usd_per_ghs_day = 0.00105, updated_at = now()
  where id = 1 and usd_per_ghs_day in (0.000826, 0.00095);
 ```
+
+---
+
+## Admin panel: member coin activity + payments (2026-09 update)
+
+`admin.html` ab in-panel **payments approve/reject**, har member ke **coins**, aur email click karke **coin activity + coin editor** dikhata hai. Ye sab server RPCs (`wallet_admin_queue`, `wallet_admin_settle`, `mining_admin_adjust`) aur admin read policies par chalta hai. Naye feature use karne se pehle migrations ko latest version par lao:
+
+1. [`supabase.sql`](supabase.sql) (#1) — pehle se run hai to skip kar sakte ho
+2. [`supabase-mining.sql`](supabase-mining.sql) (#2) — **dobara run karo** (naye `admins read all mining accounts` / `admins read all mining logs` policies add karta hai)
+3. [`supabase-wallet.sql`](supabase-wallet.sql) (#3) — **dobara run karo** (payment queue + settle RPCs)
+
+Saari files idempotent hain — dobara run karne se data delete nahi hota. Agar in-panel kisi section me "run the migration" wala warning dikhe, iska matlab corresponding file abhi run nahi hui.
