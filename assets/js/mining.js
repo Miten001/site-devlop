@@ -25,10 +25,9 @@
 
   const CFG = {
     /* Economics ---------------------------------------------------
-       Rates are tuned so a contract returns roughly 1.15x - 1.5x of its
-       price across the full term (longer contracts return a bit more).
+       Catalog output increases with hashrate, term and qualifying boosts.
        Change usdPerGhsDay to make mining faster or slower globally. */
-    usdPerGhsDay: 0.00095,     // gross mining output per 1 GH/s per day
+    usdPerGhsDay: 0.00105,     // gross mining output per 1 GH/s per day
     maintenancePct: 8,         // electricity + pool fee, deducted from the gross rate
 
     /* Invest boost: any contract bought for at least investBoostMinUsd gets a
@@ -75,6 +74,11 @@
       perks: ["260 GH/s dedicated hashrate", "30 day contract", "Pay with points or USDT"],
     },
     {
+      key: "emerald", name: "Emerald Miner", tag: "GROWTH",
+      ghs: 450, days: 45, priceUsd: 10, color: "#10b981",
+      perks: ["450 GH/s dedicated hashrate", "45 day contract", "+20% invest boost (locked in for the full term)"],
+    },
+    {
       key: "silver", name: "Silver Rig", tag: "POPULAR",
       ghs: 620, days: 60, priceUsd: 20, color: "#22d3ee", featured: true,
       perks: ["620 GH/s hashrate — cheaper per GH/s than Bronze", "60 day contract", "+20% invest boost (locked in for the full term)"],
@@ -87,7 +91,17 @@
     {
       key: "titan", name: "Titan Data Center", tag: "WHALE",
       ghs: 2000, days: 180, priceUsd: 150, color: "#a970ff",
-      perks: ["2,000 GH/s — lowest rate per GH/s on the pool", "180 day contract + highest lifetime output", "+20% invest boost (locked in for the full term)"],
+      perks: ["2,000 GH/s high-output hashrate", "180 day contract", "+20% invest boost (locked in for the full term)"],
+    },
+    {
+      key: "diamond", name: "Diamond Mining Farm", tag: "$5+ DAILY",
+      ghs: 6000, days: 120, priceUsd: 300, color: "#3b82f6",
+      perks: ["6 TH/s premium hashrate", "Estimated earnings above $5/day", "+20% invest boost (locked in for the full term)"],
+    },
+    {
+      key: "quantum", name: "Quantum Data Center", tag: "MAX POWER",
+      ghs: 12000, days: 180, priceUsd: 750, color: "#ec4899",
+      perks: ["12 TH/s — highest catalog hashrate", "Estimated earnings above $10/day", "+20% invest boost (locked in for the full term)"],
     },
   ];
 
@@ -560,9 +574,15 @@
       return Math.ceil(Number(usd || 0) * rate);
     },
 
-    dailyUsd(view, ghs) {
-      const rate = (view && view.config && view.config.netRate) || netRate();
-      return ghs * rate;
+    /* Projected output shown before purchase. Include the permanent invest
+       boost whenever this plan/custom rig meets the configured price floor. */
+    dailyUsd(view, ghs, priceUsd) {
+      const cfg = (view && view.config) || {};
+      const rate = cfg.netRate || netRate();
+      const min = Number(cfg.investBoostMinUsd != null ? cfg.investBoostMinUsd : CFG.investBoostMinUsd);
+      const pct = Number(cfg.investBoostPct != null ? cfg.investBoostPct : CFG.investBoostPct);
+      const mult = Number(priceUsd || 0) >= min ? 1 + pct / 100 : 1;
+      return ghs * rate * mult;
     },
   };
 

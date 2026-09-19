@@ -226,6 +226,19 @@ async function main() {
   check("signup-created member exists", !!fresh, fresh);
   check("signup-created member has the +25 welcome bonus", fresh && fresh.credits === 25, fresh && fresh.credits);
 
+  /* ============ SCENARIO 10: expanded mining economy ============ */
+  console.log("\n[10] mining catalog has higher rate and $5+/day plans");
+  FF.store.set("ff_session", "signup@test.dev");
+  const economy = FF.M.api.view();
+  const emerald = FF.M.plan("emerald");
+  const diamond = FF.M.plan("diamond");
+  const quantum = FF.M.plan("quantum");
+  check("gross rate raised to 0.00105", FF.M.CFG.usdPerGhsDay === 0.00105, FF.M.CFG.usdPerGhsDay);
+  check("catalog expanded to 8 plans", FF.M.PLANS.length === 8, FF.M.PLANS.length);
+  check("new $10 Emerald step exists", emerald && emerald.priceUsd === 10, emerald);
+  check("Diamond estimate is above $5/day", diamond && FF.M.api.dailyUsd(economy, diamond.ghs, diamond.priceUsd) > 5, diamond);
+  check("Quantum estimate is above $10/day", quantum && FF.M.api.dailyUsd(economy, quantum.ghs, quantum.priceUsd) > 10, quantum);
+
   console.log("\nRESULT: " + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 }
