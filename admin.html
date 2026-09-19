@@ -38,7 +38,7 @@
   .scroll-box { max-height: 430px; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .member-panel { margin-top: 16px; }
   .member-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 14px; }
-  .member-table { min-width: 760px; }
+  .member-table { min-width: 900px; }
   .member-id { color: var(--cyan); font-size: 12px; font-weight: 800; white-space: nowrap; }
   .member-email { color: var(--ink) !important; white-space: nowrap; }
   .member-date { white-space: nowrap; }
@@ -53,6 +53,39 @@
     .scroll-box { max-height: 360px; }
   }
   @media (max-width: 420px) { .admin-grid { grid-template-columns: 1fr; } }
+
+  /* show/hide password eye on the admin login form */
+  .pass-wrap { position: relative; }
+  .pass-wrap input { padding-right: 46px; }
+  .pass-eye { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 33px; height: 33px; border-radius: 9px; border: 1px solid transparent; background: transparent; color: var(--ink-mute); display: grid; place-items: center; cursor: pointer; transition: color .15s, background .15s, border-color .15s; }
+  .pass-eye:hover { color: var(--ink); background: var(--glass-2); border-color: var(--line); }
+  .pass-eye .eye-off { display: none; }
+  .pass-eye.on .eye-off { display: block; }
+  .pass-eye.on .eye-on { display: none; }
+
+  /* payments approve / reject panel */
+  .pay-panel { margin-top: 16px; }
+  .pay-sub-head { margin: 20px 0 10px; font-size: 12px; font-weight: 800; color: var(--ink-mute); letter-spacing: .07em; text-transform: uppercase; }
+  .pay-panel .mini-stats { margin-bottom: 14px; }
+
+  /* clickable member email → coin activity modal */
+  .mail-link { background: none; border: none; padding: 0; font: inherit; font-weight: 600; color: var(--blue); cursor: pointer; white-space: nowrap; text-decoration: underline dotted; text-underline-offset: 3px; }
+  .mail-link:hover { color: var(--cyan); }
+  .member-modal { width: min(690px, 100%); text-align: left; }
+  .member-modal .coin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 6px; }
+  .member-modal .mini-stat { padding: 12px 13px; }
+  .member-modal .mini-stat b { font-size: 18px; }
+  .mm-h { font-size: 12px; font-weight: 800; color: var(--ink-mute); letter-spacing: .07em; text-transform: uppercase; margin: 20px 0 10px; }
+  .mm-edit { border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 4px; background: var(--glass-2); }
+  .mm-edit .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mm-edit .row .field { flex: 1; min-width: 150px; margin-bottom: 12px; }
+  .mm-edit .field { margin-bottom: 12px; }
+  .mm-activity { max-height: 250px; border: 1px solid var(--line); border-radius: 12px; }
+  .amt-pos { color: var(--green); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .amt-neg { color: var(--danger); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ev-pill.wallet { color: var(--blue); border-color: rgba(47,111,237,.35); }
+  .ev-pill.mining { color: var(--amber); border-color: rgba(154,100,16,.3); }
+
   .hidden { display: none !important; }
 </style>
 </head>
@@ -100,7 +133,13 @@
       </div>
       <div class="field">
         <label for="a-pass">Password</label>
-        <input type="password" id="a-pass" placeholder="••••••••" required autocomplete="current-password" />
+        <div class="pass-wrap">
+          <input type="password" id="a-pass" placeholder="••••••••" required autocomplete="current-password" />
+          <button type="button" class="pass-eye" id="btn-eye" aria-label="Show password" tabindex="-1">
+            <svg class="eye-on" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-off" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+          </button>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary btn-block btn-lg" id="btn-login">Login to Admin</button>
     </form>
@@ -127,17 +166,6 @@
       </div>
     </div>
 
-    <section class="panel member-panel" aria-labelledby="members-title">
-      <div class="panel-head"><h3 id="members-title">Registered accounts</h3><span class="status-pill on" id="member-count">0 members</span></div>
-      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
-      <div class="member-table-wrap">
-        <table class="ff-table member-table">
-          <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Password</th></tr></thead>
-          <tbody id="t-members"><tr><td colspan="5">Loading registered accounts…</td></tr></tbody>
-        </table>
-      </div>
-    </section>
-
     <div class="admin-grid">
       <div class="dash-stat" style="--c:#22d3ee"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span><div class="ds-num" id="k-views">—</div><div class="ds-lbl">Total views</div></div>
       <div class="dash-stat" style="--c:#ffd166"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><div class="ds-num" id="k-today">—</div><div class="ds-lbl">Today's views</div></div>
@@ -148,7 +176,40 @@
       <div class="dash-stat" style="--c:#e0489f"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg></span><div class="ds-num" id="k-members">—</div><div class="ds-lbl">Registered members</div></div>
     </div>
 
+    <section class="panel member-panel" aria-labelledby="members-title">
+      <div class="panel-head"><h3 id="members-title">Registered accounts</h3><span class="status-pill on" id="member-count">0 members</span></div>
+      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. <b>Click an email</b> to open that member's coin balance, full coin activity and coin/USDT editor. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
+      <div class="member-table-wrap">
+        <table class="ff-table member-table">
+          <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Coins</th><th>Password</th></tr></thead>
+          <tbody id="t-members"><tr><td colspan="6">Loading registered accounts…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
 
+    <section class="panel pay-panel" aria-labelledby="pay-title">
+      <div class="panel-head">
+        <div><h3 id="pay-title">Payments — approve / reject</h3><p class="panel-sub">Verify the on-chain transaction before approving a deposit; rejecting returns the member's funds.</p></div>
+        <span class="status-pill on" id="pay-count">0 pending</span>
+      </div>
+      <div class="fee-hint warn hidden" id="pay-warn" style="margin-bottom:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span id="pay-warn-text"></span>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat"><b id="a-dep">0</b><span>Pending deposits</span></div>
+        <div class="mini-stat"><b id="a-wd">0</b><span>Pending withdrawals</span></div>
+        <div class="mini-stat"><b id="a-depv">$0.00</b><span>Deposit value</span></div>
+        <div class="mini-stat"><b id="a-wdv">$0.00</b><span>Payout value</span></div>
+      </div>
+      <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>User</th><th>Type</th><th>Network</th><th>TXID / Address</th><th>Amount</th><th>Action</th></tr></thead><tbody id="a-pending"></tbody></table></div>
+      <div class="empty-mini hidden" id="a-pending-empty"><b>Queue is clear</b>No pending deposits or withdrawals.</div>
+
+      <h4 class="pay-sub-head">Settled history</h4>
+      <div class="scroll-box" style="max-height:280px">
+        <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>User</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody id="a-history"></tbody></table></div>
+      </div>
+    </section>
 
     <div class="admin-cols">
       <div>
@@ -185,6 +246,51 @@
   </div>
 </main>
 
+<!-- MEMBER DETAIL — coin activity + coin editor (opens on email click) -->
+<div class="modal-veil" id="member-modal" aria-hidden="true">
+  <div class="modal modal-pos member-modal" role="dialog" aria-modal="true" aria-labelledby="mm-name" tabindex="-1">
+    <button class="m-close" data-close-modal type="button" aria-label="Close member details"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3 id="mm-name">Member</h3>
+    <p class="m-sub" id="mm-sub"></p>
+
+    <div class="coin-grid">
+      <div class="mini-stat"><b id="mm-points">…</b><span>Coins (points)</span></div>
+      <div class="mini-stat"><b id="mm-usdt">…</b><span>USDT available</span></div>
+      <div class="mini-stat"><b id="mm-locked">…</b><span>USDT locked</span></div>
+      <div class="mini-stat"><b id="mm-mined">…</b><span>Mining unclaimed</span></div>
+    </div>
+
+    <div class="fee-hint warn hidden" id="mm-warn" style="margin:10px 0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span id="mm-warn-text"></span>
+    </div>
+
+    <h4 class="mm-h">Edit coins / balance</h4>
+    <div class="mm-edit">
+      <div class="row">
+        <div class="field">
+          <label>Coins / points (+/−)</label>
+          <input type="text" inputmode="numeric" id="mm-points-in" placeholder="e.g. 500 or -200" />
+        </div>
+        <div class="field">
+          <label>USDT (+/−)</label>
+          <input type="text" inputmode="decimal" id="mm-usdt-in" placeholder="e.g. 10 or -5.50" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Note for the member's log</label>
+        <input type="text" id="mm-note-in" placeholder="Reason the member will see, e.g. Bonus for Telegram promo" />
+      </div>
+      <button class="btn btn-primary btn-sm" id="mm-apply" style="margin-bottom:12px">Apply &amp; save</button>
+    </div>
+
+    <h4 class="mm-h">Coin activity</h4>
+    <div class="scroll-box mm-activity">
+      <table class="ff-table"><thead><tr><th>Time</th><th>Source</th><th>Detail</th><th style="text-align:right">Amount</th></tr></thead><tbody id="mm-activity"></tbody></table>
+    </div>
+  </div>
+</div>
+
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script>
 /* FlexFam admin — Supabase Auth + analytics over plain REST (fetch). */
@@ -198,7 +304,19 @@
   var last = [];
   var members = [];
   var session = null;
+  var balanceMap = {};
+  var lastQueue = null;
+  var currentMember = null;
   var SKEY = "ff_admin_session";
+
+  function fmtUsd(n) {
+    return "$" + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtPts(n) { return Number(n || 0).toLocaleString("en-IN"); }
+  function fdateMs(ms) {
+    return new Date(Number(ms || 0)).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function rpc(fn, args) { return api("/rest/v1/rpc/" + fn, { method: "POST", body: args || {} }); }
 
   function show(n) {
     Object.keys(views).forEach(function (k) { views[k].classList.toggle("hidden", k !== n); });
@@ -277,10 +395,14 @@
       .catch(function (error) { eventsError = error; return null; });
     var membersRequest = api("/rest/v1/profiles?select=id,email,display_name,created_at&order=created_at.desc&limit=500")
       .catch(function (error) { membersError = error; return null; });
+    var balancesRequest = api("/rest/v1/balances?select=user_id,usdt,points&limit=2000")
+      .catch(function () { return null; });
 
-    Promise.all([eventsRequest, membersRequest]).then(function (results) {
+    Promise.all([eventsRequest, membersRequest, balancesRequest]).then(function (results) {
       var eventRows = results[0];
       var memberRows = results[1];
+      balanceMap = {};
+      (results[2] || []).forEach(function (b) { balanceMap[b.user_id] = b; });
       if (eventRows) {
         last = eventRows;
         render(last);
@@ -295,6 +417,8 @@
         reportLoadError(membersError, "members");
       }
     });
+
+    loadPayments();
   }
 
   function render(es) {
@@ -342,26 +466,146 @@
       members = [];
       $("k-members").textContent = "—";
       $("member-count").textContent = "Setup needed";
-      body.innerHTML = '<tr><td colspan="5">Run the updated <code>supabase.sql</code> once, then refresh to load registered accounts.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6">Run the updated <code>supabase.sql</code> once, then refresh to load registered accounts.</td></tr>';
       return;
     }
     members = rows || [];
     $("k-members").textContent = members.length.toLocaleString("en-IN");
     $("member-count").textContent = members.length.toLocaleString("en-IN") + (members.length === 1 ? " member" : " members");
     if (!members.length) {
-      body.innerHTML = '<tr><td colspan="5">No registered accounts yet.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6">No registered accounts yet.</td></tr>';
       return;
     }
     body.innerHTML = members.map(function (member) {
       var rawId = String(member.id || "");
       var accountId = rawId ? "FF-" + rawId.replace(/-/g, "").slice(0, 8).toUpperCase() : "—";
       var joined = member.created_at ? new Date(member.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
+      var bal = balanceMap[rawId];
+      var coinsCell = bal
+        ? '<td class="num" title="USDT balance: ' + esc(fmtUsd(bal.usdt)) + '">' + esc(fmtPts(bal.points)) + '<br><span style="font-size:11px;color:var(--ink-mute);font-weight:600">' + esc(fmtUsd(bal.usdt)) + '</span></td>'
+        : '<td class="num" style="color:var(--ink-mute);font-weight:600">—</td>';
       return '<tr><td><code class="member-id" title="' + esc(rawId) + '">' + esc(accountId) + '</code></td>' +
         '<td class="k">' + esc(member.display_name || "Member") + '</td>' +
-        '<td class="member-email">' + esc(member.email || "—") + '</td>' +
+        '<td><button type="button" class="mail-link" data-member="' + esc(rawId) + '" title="Open coin activity &amp; coin editor">' + esc(member.email || "—") + '</button></td>' +
         '<td class="member-date">' + esc(joined) + '</td>' +
-        '<td><span class="password-protected">Protected</span></td></tr>';
+        coinsCell +
+        '<td><span class="password-protected">Protected 🔒</span></td></tr>';
     }).join("");
+  }
+
+  /* ==================== payments — approve / reject ==================== */
+
+  function loadPayments() {
+    rpc("wallet_admin_queue").then(renderPayments).catch(function (err) {
+      lastQueue = null;
+      var m = (err && err.message) || "";
+      $("pay-warn-text").textContent = /wallet_admin_queue|does not exist|could not find|function|relation|42P01|PGRST/i.test(m)
+        ? "Payments need the server migration — run supabase-mining.sql and supabase-wallet.sql once (each as one script) in the Supabase SQL editor, then hit Refresh."
+        : "Could not load payments: " + m;
+      $("pay-warn").classList.remove("hidden");
+      $("pay-count").textContent = "Setup needed";
+      $("a-pending").innerHTML = "";
+      $("a-history").innerHTML = "";
+      $("a-pending-empty").classList.remove("hidden");
+    });
+  }
+
+  function renderPayments(q) {
+    lastQueue = q || null;
+    q = q || {};
+    $("pay-warn").classList.add("hidden");
+    var pending = q.pending || [];
+    var settled = q.history || [];
+    var deps = pending.filter(function (r) { return r.kind === "deposit"; });
+    var wds = pending.filter(function (r) { return r.kind === "withdraw"; });
+    $("a-dep").textContent = deps.length;
+    $("a-wd").textContent = wds.length;
+    $("a-depv").textContent = fmtUsd(deps.reduce(function (n, r) { return n + Number(r.amount || 0); }, 0));
+    $("a-wdv").textContent = fmtUsd(wds.reduce(function (n, r) { return n + Number(r.amount || 0); }, 0));
+    $("pay-count").textContent = pending.length + (pending.length === 1 ? " pending" : " pending");
+
+    $("a-pending-empty").classList.toggle("hidden", pending.length > 0);
+    $("a-pending").innerHTML = pending.map(function (r) {
+      return "<tr><td>" + esc(fdateMs(r.at)) + "</td><td><b>" + esc(r.name) + "</b><br><span style='font-size:11.5px;color:var(--ink-mute)'>" + esc(r.email) + "</span></td>" +
+        "<td>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") + "</td><td>" + esc(r.network) + "</td>" +
+        '<td><span class="mono-cut" title="' + esc(r.txid || r.address) + '">' + esc(r.txid || r.address) + "</span></td>" +
+        '<td class="num">' + esc(fmtUsd(r.amount)) + (r.fee ? "<br><span style='font-size:11px;color:var(--ink-mute)'>net " + esc(fmtUsd(r.receive)) + "</span>" : "") + "</td>" +
+        '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-ok="' + esc(r.id) + '">Approve</button> <button class="btn btn-ghost btn-sm" data-no="' + esc(r.id) + '">Reject</button></td></tr>';
+    }).join("");
+
+    $("a-history").innerHTML = settled.map(function (r) {
+      return "<tr><td>" + esc(fdateMs(r.settledAt || r.at)) + "</td><td>" + esc(r.email) + "</td><td>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") +
+        '</td><td class="num">' + esc(fmtUsd(r.amount)) + '</td><td><span class="badge ' + esc(r.status) + '">' + esc(r.status) + "</span></td></tr>";
+    }).join("") || '<tr><td colspan="5">Nothing settled yet.</td></tr>';
+  }
+
+  /* ==================== member modal — coin activity + editor ==================== */
+
+  function closeMember() {
+    $("member-modal").classList.remove("open");
+    document.body.classList.remove("modal-open");
+    currentMember = null;
+  }
+
+  function openMember(id) {
+    var member = null;
+    members.forEach(function (m) { if (String(m.id) === String(id)) member = m; });
+    if (!member) return;
+    currentMember = member;
+    var rawId = String(member.id || "");
+    var accountId = rawId ? "FF-" + rawId.replace(/-/g, "").slice(0, 8).toUpperCase() : "—";
+    var joined = member.created_at ? new Date(member.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
+    $("mm-name").textContent = member.display_name || "Member";
+    $("mm-sub").innerHTML = "<b>" + esc(member.email || "") + "</b> · " + esc(accountId) + " · Joined " + esc(joined);
+    ["mm-points", "mm-usdt", "mm-locked", "mm-mined"].forEach(function (k) { $(k).textContent = "…"; });
+    $("mm-warn").classList.add("hidden");
+    $("mm-activity").innerHTML = '<tr><td colspan="4">Loading coin activity…</td></tr>';
+    $("member-modal").classList.add("open");
+    document.body.classList.add("modal-open");
+    loadMemberDetail(member);
+  }
+
+  function loadMemberDetail(member) {
+    var id = encodeURIComponent(String(member.id));
+    var fails = [];
+    function grab(path, tag) {
+      return api(path).catch(function () { fails.push(tag); return null; });
+    }
+    var qBal = grab("/rest/v1/balances?user_id=eq." + id + "&select=*", "balance");
+    var qAcc = grab("/rest/v1/mining_accounts?user_id=eq." + id + "&select=unclaimed,claimed", "mining stats");
+    var qTx = grab("/rest/v1/wallet_txns?user_id=eq." + id + "&select=type,amount,note,status,at&order=at.desc&limit=40", "wallet log");
+    var qLed = grab("/rest/v1/mining_ledger?user_id=eq." + id + "&select=type,detail,amount,at&order=at.desc&limit=40", "mining log");
+    Promise.all([qBal, qAcc, qTx, qLed]).then(function (rs) {
+      if (currentMember !== member) return;
+      var bal = (rs[0] || [])[0] || null;
+      var acc = (rs[1] || [])[0] || null;
+      $("mm-points").textContent = bal ? fmtPts(bal.points) : "0";
+      $("mm-usdt").textContent = fmtUsd(bal ? bal.usdt : 0);
+      $("mm-locked").textContent = fmtUsd(bal ? bal.locked : 0);
+      $("mm-mined").textContent = fmtUsd(acc ? acc.unclaimed : 0);
+
+      var rows = [];
+      (rs[2] || []).forEach(function (t) {
+        rows.push({ at: t.at, src: "wallet", type: t.type, note: (t.note || "") + (t.status && t.status !== "completed" ? " (" + t.status + ")" : ""), amt: Number(t.amount || 0) });
+      });
+      (rs[3] || []).forEach(function (l) {
+        rows.push({ at: l.at, src: "mining", type: l.type, note: l.detail || "", amt: Number(l.amount || 0) });
+      });
+      rows.sort(function (a, b) { return new Date(b.at) - new Date(a.at); });
+      $("mm-activity").innerHTML = rows.slice(0, 60).map(function (r) {
+        var amt = r.amt > 0 ? '<td class="num"><span class="amt-pos">+' + esc(fmtUsd(r.amt)) + "</span></td>"
+          : r.amt < 0 ? '<td class="num"><span class="amt-neg">−' + esc(fmtUsd(-r.amt)) + "</span></td>"
+          : '<td class="num" style="color:var(--ink-mute)">—</td>';
+        return "<tr><td style='white-space:nowrap'>" + esc(new Date(r.at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })) + "</td>" +
+          '<td><span class="ev-pill ' + esc(r.src) + '">' + esc(r.src + " · " + r.type) + "</span></td>" +
+          '<td class="k" style="max-width:230px">' + esc(r.note || "—") + "</td>" + amt + "</tr>";
+      }).join("") || '<tr><td colspan="4">No coin activity recorded yet.</td></tr>';
+
+      if (fails.length) {
+        $("mm-warn-text").textContent = "Could not read " + fails.join(", ") + " — run the updated supabase-mining.sql (it adds the admin read policies) and supabase-wallet.sql once, then refresh.";
+        $("mm-warn").classList.remove("hidden");
+      }
+    });
   }
 
   function applySession(s) {
@@ -411,10 +655,88 @@
 
     $("btn-logout").onclick = function () { saveSession(null); show("login"); };
     $("btn-refresh").onclick = load;
+
+    /* show / hide the admin login password */
+    $("btn-eye").addEventListener("click", function () {
+      var p = $("a-pass");
+      var reveal = p.type === "password";
+      p.type = reveal ? "text" : "password";
+      this.classList.toggle("on", reveal);
+      this.setAttribute("aria-label", reveal ? "Hide password" : "Show password");
+      p.focus();
+    });
+
+    /* click a member email → coin activity + coin editor modal */
+    $("t-members").addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-member]");
+      if (btn) openMember(btn.getAttribute("data-member"));
+    });
+    document.querySelectorAll("#member-modal [data-close-modal]").forEach(function (b) {
+      b.addEventListener("click", closeMember);
+    });
+    $("member-modal").addEventListener("click", function (e) { if (e.target === this) closeMember(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && $("member-modal").classList.contains("open")) closeMember();
+    });
+
+    /* edit coins / balance from the member modal */
+    $("mm-apply").addEventListener("click", function () {
+      if (!currentMember) return;
+      var pts = Math.round(Number($("mm-points-in").value || 0));
+      var usd = Number($("mm-usdt-in").value || 0);
+      if (isNaN(pts) || isNaN(usd)) { toast("Amounts must be numbers", true); return; }
+      if (!pts && !usd) { toast("Enter a coins or USDT amount first", true); return; }
+      var btn = this;
+      btn.disabled = true;
+      rpc("mining_admin_adjust", {
+        p_email: currentMember.email,
+        p_usdt: usd,
+        p_points: pts,
+        p_note: $("mm-note-in").value.trim()
+      }).then(function (r) {
+        toast(currentMember.email + " → " + fmtPts(r.points) + " coins · " + fmtUsd(r.usdt));
+        $("mm-points-in").value = "";
+        $("mm-usdt-in").value = "";
+        $("mm-note-in").value = "";
+        loadMemberDetail(currentMember);
+        api("/rest/v1/balances?select=user_id,usdt,points&limit=2000").then(function (rows) {
+          balanceMap = {};
+          (rows || []).forEach(function (b) { balanceMap[b.user_id] = b; });
+          renderMembers(members);
+        }).catch(function () {});
+      }).catch(function (err) {
+        var m = (err && err.message) || "";
+        if (/mining_admin_adjust|does not exist|could not find|function|PGRST/i.test(m)) m = "Coin editor needs the server migration — run supabase-mining.sql once in the Supabase SQL editor.";
+        toast(m, true);
+      }).then(function () { btn.disabled = false; });
+    });
+
+    /* approve / reject payment requests */
+    document.addEventListener("click", function (e) {
+      var ok = e.target.closest("[data-ok]");
+      var no = e.target.closest("[data-no]");
+      if (!ok && !no) return;
+      var btn = ok || no;
+      var id = btn.getAttribute(ok ? "data-ok" : "data-no");
+      var note = ok ? "" : (window.prompt("Reason for rejecting (optional):") || "");
+      btn.disabled = true;
+      btn.style.opacity = ".6";
+      rpc("wallet_admin_settle", { p_request: id, p_approve: Boolean(ok), p_note: note })
+        .then(function (q) {
+          toast(ok ? "Request approved." : "Request rejected and refunded.", !ok);
+          renderPayments(q);
+        })
+        .catch(function (err) {
+          toast("Settle failed: " + ((err && err.message) || "unknown error"), true);
+          btn.disabled = false;
+          btn.style.opacity = "";
+        });
+    });
+
     $("btn-export").onclick = function () {
       var a = document.createElement("a");
       a.href = URL.createObjectURL(new Blob(
-        [JSON.stringify({ exportedAt: new Date(), events: last, members: members }, null, 2)],
+        [JSON.stringify({ exportedAt: new Date(), events: last, members: members, payments: lastQueue }, null, 2)],
         { type: "application/json" }
       ));
       a.download = "flexfam-admin-export.json";

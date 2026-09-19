@@ -612,6 +612,8 @@ drop policy if exists "members read own contracts"     on public.mining_contract
 drop policy if exists "members read own mining log"    on public.mining_ledger;
 drop policy if exists "admins read all balances"       on public.balances;
 drop policy if exists "admins read all contracts"      on public.mining_contracts;
+drop policy if exists "admins read all mining accounts" on public.mining_accounts;
+drop policy if exists "admins read all mining logs"    on public.mining_ledger;
 
 -- The catalog is public so the pricing page works for logged-out visitors.
 create policy "anyone can read mining config" on public.mining_config
@@ -634,6 +636,13 @@ create policy "members read own mining log" on public.mining_ledger
 create policy "admins read all balances" on public.balances
   for select to authenticated using (public.is_admin());
 create policy "admins read all contracts" on public.mining_contracts
+  for select to authenticated using (public.is_admin());
+
+-- The admin panel's per-member view (click an email on admin.html) reads the
+-- member's mining stats and coin activity feed, so admins see those too.
+create policy "admins read all mining accounts" on public.mining_accounts
+  for select to authenticated using (public.is_admin());
+create policy "admins read all mining logs" on public.mining_ledger
   for select to authenticated using (public.is_admin());
 
 -- Deliberately NO insert / update / delete policy on any mining table:
