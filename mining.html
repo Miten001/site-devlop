@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/css/style.css" />
+<link rel="stylesheet" href="assets/css/style.css?v=2.0" />
 </head>
 <body class="app-body" data-requires-auth>
 
@@ -180,8 +180,9 @@
           <div class="m-steps" style="margin-bottom:22px">
             <div><span class="n">1</span> <b>Get hashrate.</b>&nbsp;Start the free starter rig, or buy a plan with USDT from your wallet or with points earned from tasks and campaigns.</div>
             <div><span class="n">2</span> <b>The rig mines 24/7.</b>&nbsp;Rewards accrue every second in real time and keep accumulating while you are offline or the tab is closed.</div>
-            <div><span class="n">3</span> <b>Boost it daily.</b>&nbsp;One free +<span id="how-boost">25</span>% speed boost every 24 hours, active for <span id="how-boost-h">8</span> hours.</div>
-            <div><span class="n">4</span> <b>Claim your rewards.</b>&nbsp;Send the mined balance to your USDT wallet, or take it as points with a +<span id="how-bonus">10</span>% bonus.</div>
+            <div><span class="n">3</span> <b>Invest boost.</b>&nbsp;Any rig you buy for <b>$<span id="how-invest-min">10</span> or more</b> mines <b>+<span id="how-invest">20</span>% faster for its entire term</b> — the boost is locked in the moment you purchase.</div>
+            <div><span class="n">4</span> <b>Boost it daily.</b>&nbsp;One free +<span id="how-boost">25</span>% speed boost every 24 hours, active for <span id="how-boost-h">8</span> hours — it stacks on top of the invest boost.</div>
+            <div><span class="n">5</span> <b>Claim your rewards.</b>&nbsp;Send the mined balance to your USDT wallet, or take it as points with a +<span id="how-bonus">10</span>% bonus.</div>
           </div>
           <div class="fee-hint warn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
@@ -214,11 +215,11 @@
   </div>
 </div>
 
-<script src="assets/js/supabase-config.js"></script>
-<script src="assets/js/ff-analytics.js"></script>
-<script src="assets/js/main.js"></script>
-<script src="assets/js/wallet.js"></script>
-<script src="assets/js/mining.js"></script>
+<script src="assets/js/supabase-config.js?v=2.0"></script>
+<script src="assets/js/ff-analytics.js?v=2.0"></script>
+<script src="assets/js/main.js?v=2.0"></script>
+<script src="assets/js/wallet.js?v=2.0"></script>
+<script src="assets/js/mining.js?v=2.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
@@ -442,6 +443,8 @@ document.addEventListener("DOMContentLoaded", () => {
     $("how-boost").textContent = view.config.boostPct;
     $("how-boost-h").textContent = view.config.boostHours;
     $("how-bonus").textContent = view.config.pointsBonusPct;
+    if (view.config.investBoostPct != null) $("how-invest").textContent = view.config.investBoostPct;
+    if (view.config.investBoostMinUsd != null) $("how-invest-min").textContent = view.config.investBoostMinUsd;
     renderPlans(); renderRigs(); renderLog(); paintCustom(); paintStats();
   }
 

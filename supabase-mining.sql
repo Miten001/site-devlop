@@ -38,8 +38,10 @@ $$;
 
 create table if not exists public.mining_config (
   id                 int primary key default 1 check (id = 1),
-  usd_per_ghs_day    numeric not null default 0.000826,  -- gross output per GH/s per day
+  usd_per_ghs_day    numeric not null default 0.00095,   -- gross output per GH/s per day
   maintenance_pct    numeric not null default 8,         -- electricity + pool fee
+  invest_boost_min_usd numeric not null default 10,      -- min purchase price that unlocks the permanent boost
+  invest_boost_pct   numeric not null default 20,        -- permanent +% on qualifying ($10+) contracts
   custom_min_ghs     int     not null default 100,
   custom_max_ghs     int     not null default 20000,
   custom_min_days    int     not null default 7,
@@ -55,6 +57,12 @@ create table if not exists public.mining_config (
 );
 
 insert into public.mining_config (id) values (1) on conflict (id) do nothing;
+
+-- Keep older installs in sync: add the invest-boost tunables if missing and
+-- bump the global rate to the current default.
+alter table public.mining_config add column if not exists invest_boost_min_usd numeric not null default 10;
+alter table public.mining_config add column if not exists invest_boost_pct     numeric not null default 20;
+update public.mining_config set usd_per_ghs_day = 0.00095 where id = 1 and usd_per_ghs_day = 0.000826;
 
 create table if not exists public.mining_plans (
   key        text primary key,
@@ -74,14 +82,14 @@ create table if not exists public.mining_plans (
 insert into public.mining_plans (key, name, tag, ghs, days, price_usd, color, is_free, featured, perks, sort) values
   ('free',   'Free Starter Rig',    'FREE',    30,   7,   0,   '#34e5a5', true,  false,
      array['No payment needed','Renewable when it expires','Mined rewards land in your wallet'], 1),
-  ('bronze', 'Bronze Miner',        'STARTER', 250,  30,  5,   '#ff8a3d', false, false,
-     array['250 GH/s dedicated hashrate','30 day contract','Pay with points or USDT'], 2),
-  ('silver', 'Silver Rig',          'POPULAR', 550,  60,  20,  '#22d3ee', false, true,
-     array['10% cheaper per GH/s than Bronze','60 day contract','Daily boost stacks on top'], 3),
-  ('gold',   'Gold Farm',           'PRO',     975,  90,  50,  '#ffd166', false, false,
-     array['Best mid-tier rate per GH/s','90 day contract','Priority payout queue'], 4),
-  ('titan',  'Titan Data Center',   'WHALE',   1700, 180, 150, '#a970ff', false, false,
-     array['Lowest rate per GH/s on the pool','180 day contract','Highest lifetime output'], 5)
+  ('bronze', 'Bronze Miner',        'STARTER', 260,  30,  5,   '#ff8a3d', false, false,
+     array['260 GH/s dedicated hashrate','30 day contract','Pay with points or USDT'], 2),
+  ('silver', 'Silver Rig',          'POPULAR', 620,  60,  20,  '#22d3ee', false, true,
+     array['620 GH/s hashrate — cheaper per GH/s than Bronze','60 day contract','+20% invest boost (locked in for the full term)'], 3),
+  ('gold',   'Gold Farm',           'PRO',     1100, 90,  50,  '#ffd166', false, false,
+     array['1,100 GH/s hashrate','90 day contract + priority payout queue','+20% invest boost (locked in for the full term)'], 4),
+  ('titan',  'Titan Data Center',   'WHALE',   2000, 180, 150, '#a970ff', false, false,
+     array['2,000 GH/s — lowest rate per GH/s on the pool','180 day contract + highest lifetime output','+20% invest boost (locked in for the full term)'], 5)
 on conflict (key) do update set
   name = excluded.name, tag = excluded.tag, ghs = excluded.ghs, days = excluded.days,
   price_usd = excluded.price_usd, color = excluded.color, is_free = excluded.is_free,
@@ -183,6 +191,7 @@ declare
   c    public.mining_contracts;
   v_now  timestamptz := now();
   v_rate numeric;
+  v_c_rate numeric;
   v_from timestamptz;
   v_to   timestamptz;
   v_boost_to timestamptz;
@@ -197,14 +206,17 @@ begin
 
   for c in select * from public.mining_contracts
            where user_id = p_user and status = 'active' for update loop
+    -- permanent +invest_boost_pct% for contracts bought for $invest_boost_min_usd+
+    v_c_rate := v_rate * (case when c.price_usd >= cfg.invest_boost_min_usd
+                               then 1 + cfg.invest_boost_pct / 100.0 else 1 end);
     v_from := greatest(acc.last_accrue, c.started_at);
     v_to   := least(v_now, c.ends_at);
     if v_to > v_from then
-      v_amt := (extract(epoch from (v_to - v_from)) / 86400.0) * c.ghs * v_rate;
+      v_amt := (extract(epoch from (v_to - v_from)) / 86400.0) * c.ghs * v_c_rate;
       v_boost_to := least(v_to, coalesce(acc.boost_until, to_timestamp(0)));
       if v_boost_to > v_from then
         v_amt := v_amt + (extract(epoch from (v_boost_to - v_from)) / 86400.0)
-                         * c.ghs * v_rate * (cfg.boost_pct / 100.0);
+                         * c.ghs * v_c_rate * (cfg.boost_pct / 100.0);
       end if;
       v_amt := round(v_amt, 8);
       update public.mining_contracts set earned = earned + v_amt where id = c.id;
@@ -293,6 +305,7 @@ declare
   bal public.balances;
   v_ghs bigint;
   v_rate numeric;
+  v_base_day numeric;
   v_boosted boolean;
 begin
   perform public.mining_accrue(v_user);
@@ -307,6 +320,12 @@ begin
 
   v_rate := cfg.usd_per_ghs_day * (1 - cfg.maintenance_pct / 100.0);
   v_boosted := coalesce(acc.boost_until, to_timestamp(0)) > now();
+
+  -- base daily output including the permanent +20% invest boost per contract
+  select coalesce(sum(ghs * v_rate * (case when price_usd >= cfg.invest_boost_min_usd
+                                           then 1 + cfg.invest_boost_pct / 100.0 else 1 end)), 0)
+    into v_base_day from public.mining_contracts
+    where user_id = v_user and status = 'active' and ends_at > now();
 
   return jsonb_build_object(
     'server', true,
@@ -329,7 +348,7 @@ begin
       'lastBoost', coalesce(extract(epoch from acc.last_boost) * 1000, 0),
       'boosted', v_boosted,
       'ghs', v_ghs,
-      'perDay', v_ghs * v_rate * (case when v_boosted then 1 + cfg.boost_pct / 100.0 else 1 end)
+      'perDay', v_base_day * (case when v_boosted then 1 + cfg.boost_pct / 100.0 else 1 end)
     ),
     'contracts', (select coalesce(jsonb_agg(jsonb_build_object(
                     'id', id, 'plan', plan, 'name', name, 'ghs', ghs, 'days', days,

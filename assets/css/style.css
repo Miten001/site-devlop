@@ -531,13 +531,15 @@ h1, h2, h3, h4, h5, h6 {
 .hero-visual {
   position: relative;
   width: 100%;
+  max-width: 470px;
+  margin-left: auto;
 }
 .hero-card {
   position: relative;
   border-radius: var(--radius-lg);
   border: 1px solid var(--line-2);
   background: #fff;
-  padding: 24px;
+  padding: 20px;
   box-shadow: var(--shadow-lg);
   transform-style: preserve-3d;
   transition: transform 0.3s ease-out;
@@ -547,7 +549,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   gap: 12px;
 }
 .hc-top .hc-user { display: flex; align-items: center; gap: 12px; }
@@ -1913,8 +1915,7 @@ body.modal-open { overflow: hidden; }
   .burger { display: flex; }
 
   .hero { padding: 130px 0 20px; }
-  .hero-grid { grid-template-columns: 1fr; gap: 36px; }
-  .hero-visual { max-width: 520px; margin: 20px auto 0; }
+  .hero-grid { gap: 28px; }
 
   .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .pf-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
@@ -1942,6 +1943,14 @@ body.modal-open { overflow: hidden; }
   .task-list { grid-template-columns: 1fr; }
   .bonus-grid { grid-template-columns: repeat(2, 1fr); }
   .foot-grid { grid-template-columns: 1fr 1fr; gap: 30px; }
+}
+
+/* Hero stacks only below 960px so the two-column layout holds on
+   laptops/tablets down to 960px (previously it broke at 1024px, pushing
+   the right-hand card below the copy on small laptops). */
+@media (max-width: 960px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 36px; }
+  .hero-visual { max-width: 480px; margin: 20px auto 0; }
 }
 
 /* Mobile Devices (768px and down) */
@@ -2535,7 +2544,7 @@ body.modal-open { overflow: hidden; }
 }
 
 /* ---- responsive ---- */
-@media (max-width: 1024px) {
+@media (max-width: 960px) {
   .payout-feed { right: 4px; bottom: -16px; }
 }
 @media (max-width: 560px) {
