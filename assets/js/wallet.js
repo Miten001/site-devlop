@@ -13,13 +13,13 @@
 
   const CFG = {
     minDeposit: 10,
-    minWithdraw: 5,
+    minWithdraw: 10,
     withdrawFeePct: 1,        // network + processing fee
     platformFeePct: 5,        // charged to task creators on escrow
     /* Only networks with a real, verified receiving wallet are listed here.
        Add more entries to depositAddress (and to this list) once you have a
        confirmed address for that chain — never ship a placeholder. */
-    networks: ["BEP20 (BSC)"],
+    networks: ["BEP20 (BSC)", "UPI"],
     depositAddress: {
       "BEP20 (BSC)": "0xe85d1b6b330219de89e826f314a9bc2bcd595e53",
     },
@@ -29,8 +29,8 @@
     networkNote: {
       "BEP20 (BSC)": "BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.",
     },
-    /* Withdrawals are also BEP20 (BSC) only, same network as deposits. */
-    withdrawNetworks: ["BEP20 (BSC)"],
+    /* Withdraw to USDT on BEP20 or receive the INR equivalent via UPI. */
+    withdrawNetworks: ["BEP20 (BSC)", "UPI"],
     pointsPerUsdt: 1000,       // points -> USDT conversion rate
     minPointsConvert: 1000,
   };
@@ -102,14 +102,19 @@
     const w = wallet(email);
     if (!(amount >= CFG.minWithdraw)) throw new Error("Minimum withdrawal is " + usd(CFG.minWithdraw) + " USDT");
     if (amount > w.available) throw new Error("Not enough available balance");
-    if (!network || CFG.withdrawNetworks.indexOf(network) < 0) throw new Error("Select a network");
-    if (!address || address.trim().length < 15) throw new Error("Enter a valid USDT wallet address");
+    if (!network || CFG.withdrawNetworks.indexOf(network) < 0) throw new Error("Select a payout method");
+    const destination = String(address || "").trim();
+    if (network === "UPI") {
+      if (!/^[A-Za-z0-9._-]{2,256}@[A-Za-z0-9.-]{2,64}$/.test(destination)) throw new Error("Enter a valid UPI ID (for example, name@bank)");
+    } else if (destination.length < 15) {
+      throw new Error("Enter a valid USDT wallet address");
+    }
     const fee = Math.round(amount * CFG.withdrawFeePct) / 100;
     patchWallet(email, (acc) => { acc.available -= amount; acc.locked += amount; });
     const req = {
       id: uid("wd"), kind: "withdraw", email, name: name || email, amount, fee,
       receive: Math.round((amount - fee) * 100) / 100,
-      network, address: address.trim(), status: "pending", at: Date.now(),
+      network, address: destination, status: "pending", at: Date.now(),
     };
     const all = requests(); all.unshift(req); saveRequests(all);
     tx(email, "withdraw", -amount, "Withdrawal to " + network + " (fee " + usd(fee) + ")", "pending", { refId: req.id });
@@ -536,8 +541,8 @@
       },
       networks: CFG.networks.map((n) => ({
         network: n, address: CFG.depositAddress[n], qr: CFG.depositQr[n],
-        note: CFG.networkNote[n],
-        deposit: true, withdraw: CFG.withdrawNetworks.indexOf(n) > -1,
+        note: CFG.networkNote[n] || (n === "UPI" ? "INR equivalent paid to your UPI ID after manual review." : ""),
+        deposit: !!CFG.depositAddress[n], withdraw: CFG.withdrawNetworks.indexOf(n) > -1,
       })),
       categories: CATEGORIES,
       wallet: {

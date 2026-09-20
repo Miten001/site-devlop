@@ -67,7 +67,7 @@
         <div>
           <span class="eyebrow"><span class="dot"></span> Wallet</span>
           <h1>USDT <span class="grad-text-cool">wallet</span></h1>
-          <p class="sub">Deposit USDT, get paid for completed tasks, and withdraw to any TRC20 / BEP20 / Polygon / TON address.</p>
+          <p class="sub">Deposit USDT, get paid for completed tasks, and withdraw through USDT (BEP20) or UPI.</p>
           <p class="sub" style="margin-top:8px">Balance mode: <span class="status-pill off" id="w-mode-pill">checking…</span> <span id="w-mode-note" style="font-size:12.5px;color:var(--ink-mute)"></span></p>
         </div>
       </div>
@@ -166,26 +166,27 @@
             <div>
               <b>Double-check your payout address</b>
               <ul>
-                <li>The address must match the network you select — a wrong pair means <b>lost funds</b>, and we cannot recover them.</li>
-                <li>Paste the address from your own wallet app, then compare the <b>first and last 6 characters</b>.</li>
-                <li>Withdrawals are reviewed manually and paid within 24 hours on business days.</li>
+                <li>For USDT, the wallet address must match BEP20 — a wrong address means <b>lost funds</b>.</li>
+                <li>For UPI, enter your exact UPI ID (for example, <b>name@bank</b>). The INR equivalent is calculated when the payout is processed.</li>
+                <li>Minimum withdrawal is <b>$10.00</b>. Requests are reviewed manually and paid within 24 hours on business days.</li>
               </ul>
             </div>
           </div>
 
           <form id="wd-form" novalidate>
             <div class="field">
-              <label>Network</label>
+              <label>Payout method</label>
               <div class="net-picker" id="wd-nets"></div>
+              <p class="panel-sub" id="wd-method-note" style="margin-top:8px"></p>
             </div>
             <div class="field">
-              <label>Your USDT wallet address</label>
-              <input type="text" id="wd-address" placeholder="TJ9... / 0x..." />
+              <label id="wd-address-label">Your USDT wallet address</label>
+              <input type="text" id="wd-address" placeholder="0x..." autocomplete="off" />
             </div>
             <div class="field">
               <label>Amount (USDT)</label>
-              <input type="text" inputmode="decimal" id="wd-amount" placeholder="5.00" />
-              <p class="panel-sub" style="margin-top:7px">Available: <b id="wd-avail">$0.00</b> · Minimum: <b id="wd-min">$5.00</b> · <button type="button" class="btn btn-ghost btn-sm" id="wd-max" style="padding:3px 10px;font-size:12px">Max</button></p>
+              <input type="text" inputmode="decimal" id="wd-amount" placeholder="10.00" />
+              <p class="panel-sub" style="margin-top:7px">Available: <b id="wd-avail">$0.00</b> · Minimum: <b id="wd-min">$10.00</b> · <button type="button" class="btn btn-ghost btn-sm" id="wd-max" style="padding:3px 10px;font-size:12px">Max</button></p>
             </div>
             <div class="summary-rows">
               <div class="row"><span>Withdrawal amount</span><b id="wd-s1">$0.00</b></div>
@@ -210,6 +211,7 @@
               <label>Points to convert</label>
               <input type="text" inputmode="numeric" id="cv-points" placeholder="1000" />
               <p class="panel-sub" style="margin-top:7px">You have <b data-credits>0</b> points · You get <b id="cv-out" style="color:var(--green)">$0.00</b></p>
+              <p class="panel-sub" id="cv-sync-note" style="margin-top:7px"></p>
             </div>
             <button class="btn btn-primary btn-block" type="submit">Convert to USDT</button>
           </form>
@@ -337,7 +339,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function paintWdNets() {
-    netButtons($("wd-nets"), withdrawNets(), wdNet, (n) => { wdNet = n; paintWdNets(); });
+    const list = withdrawNets();
+    netButtons($("wd-nets"), list, wdNet, (n) => { wdNet = n; paintWdNets(); });
+    const selected = net(list, wdNet) || {};
+    const isUpi = selected.network === "UPI";
+    $("wd-address-label").textContent = isUpi ? "Your UPI ID" : "Your USDT wallet address";
+    $("wd-address").placeholder = isUpi ? "name@bank" : "0x...";
+    $("wd-address").setAttribute("inputmode", isUpi ? "email" : "text");
+    $("wd-method-note").textContent = selected.note || (isUpi ? "INR equivalent paid to your UPI ID after manual review." : "USDT payout on BEP20.");
   }
 
   ["dep-copy", "dep-copy2"].forEach((id) => $(id).addEventListener("click", () => {
@@ -373,7 +382,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("wd-form").addEventListener("submit", (e) => {
     e.preventDefault();
     if (!wdNet) return FF.toast("No withdrawal network is available right now", "err");
-    if (!window.confirm("Send " + W.usd(Number($("wd-amount").value) || 0) + " on " + wdNet + " to:\n\n" + $("wd-address").value.trim() + "\n\nIs this address correct? Payouts to a wrong address cannot be recovered.")) return;
+    const destinationLabel = wdNet === "UPI" ? "UPI ID" : "wallet address";
+    if (!window.confirm("Withdraw " + W.usd(Number($("wd-amount").value) || 0) + " via " + wdNet + " to:\n\n" + $("wd-address").value.trim() + "\n\nIs this " + destinationLabel + " correct? Incorrect payout details cannot be recovered.")) return;
     busy($("wd-form"), true);
     A.createWithdraw($("wd-amount").value, wdNet, $("wd-address").value).then((v) => {
       FF.toast("Withdrawal requested — payout within 24 hours.", "ok");

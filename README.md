@@ -12,7 +12,7 @@
 - 📈 **Admin panel** — `admin.html` with Supabase Auth login + permanent Postgres analytics and a protected registered-accounts list (account ID, display name, email, signup time, JSON export; never passwords). Also in-panel: payment approve/reject queue, per-member coins, and clicking any member email opens their coin balance, coin activity feed and a coin/USDT editor (`wallet_admin_queue`, `wallet_admin_settle`, `mining_admin_adjust`)
 - 🤖 **Telegram Sub4Sub Bot** — real, fully-working bot: users join each other's Telegram groups to earn points, then spend them to grow their own groups (SQLite, auto join-verification, anti-leave refunds, referrals, admin panel). See [`telegram-bot/`](telegram-bot/)
 - 💵 **USDT Task Marketplace** — `tasks.html` (browse & work), `post-task.html` (publish jobs with escrow), `my-tasks.html` (review proofs, release payments, cancel & refund). 8 categories, per-task rewards, worker slots, proof review workflow. **No sample listings — the market only shows real, user-posted and escrow-funded tasks**
-- 🏦 **USDT Wallet** — `wallet.html` with deposit (USDT on BEP20, min $10, live QR code + TXID submission), withdrawal requests (BEP20 only, min $5, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger. Wallet, escrow and the marketplace all run on a **server-authoritative Postgres backend** ([`supabase-wallet.sql`](supabase-wallet.sql))
+- 🏦 **USDT Wallet** — `wallet.html` with deposit (USDT on BEP20, min $10, live QR code + TXID submission), withdrawal requests (BEP20 or UPI, min $10, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger. Wallet, escrow and the marketplace all run on a **server-authoritative Postgres backend** ([`supabase-wallet.sql`](supabase-wallet.sql))
 - ⛏️ **Cloud Mining** — `mining.html`: rent hashrate with **points or USDT**, rigs mine 24/7 (rewards accrue even while offline), free daily +25% boost, claim mined USDT to the wallet or as points with a +10% bonus. Ships with a **server-authoritative Postgres backend** ([`supabase-mining.sql`](supabase-mining.sql)) so balances cannot be edited from the browser console
 - 🛡️ **Payments admin** — `admin-payments.html` for allowlisted admins to approve/reject deposits and withdrawals
 - 🎨 Premium dark UI — aurora gradients, glassmorphism, 3D tilt, scroll reveals
@@ -53,13 +53,13 @@ In server mode the settings below come from the `public.wallet_config`, `public.
 | Setting | Value | Browser mode | Server mode |
 | --- | --- | --- | --- |
 | Min deposit | $10 | `FF.W.CFG.minDeposit` | `wallet_config.min_deposit` |
-| Min withdrawal | $5 | `FF.W.CFG.minWithdraw` | `wallet_config.min_withdraw` |
+| Min withdrawal | $10 | `FF.W.CFG.minWithdraw` | `wallet_config.min_withdraw` |
 | Withdrawal fee | 1% | `FF.W.CFG.withdrawFeePct` | `wallet_config.withdraw_fee_pct` |
 | Platform fee (task creators) | 5% | `FF.W.CFG.platformFeePct` | `wallet_config.platform_fee_pct` |
 | Min task reward | $0.02 per worker | hard-coded | `wallet_config.min_job_reward` |
 | Points → USDT | 1000 pts = $1 | `FF.W.CFG.pointsPerUsdt` | `mining_config.points_per_usdt` |
 | Min points to convert | 1000 | `FF.W.CFG.minPointsConvert` | `wallet_config.min_points_convert` |
-| Deposit / withdrawal network | BEP20 (BNB Smart Chain) only | `FF.W.CFG.networks` | `wallet_networks` |
+| Deposit / withdrawal methods | Deposit: BEP20 · Withdraw: BEP20 or UPI | `FF.W.CFG.networks` | `wallet_networks` |
 | Deposit address | `0xe85d1b6b330219de89e826f314a9bc2bcd595e53` | `FF.W.CFG.depositAddress` | `wallet_networks.address` |
 | Task categories | 8 | `FF.W.CATEGORIES` | `job_categories` |
 

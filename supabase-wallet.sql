@@ -55,7 +55,7 @@ $$;
 create table if not exists public.wallet_config (
   id                 int primary key default 1 check (id = 1),
   min_deposit        numeric not null default 10,
-  min_withdraw       numeric not null default 5,
+  min_withdraw       numeric not null default 10,
   withdraw_fee_pct   numeric not null default 1,
   platform_fee_pct   numeric not null default 5,
   min_points_convert int     not null default 1000,
@@ -64,6 +64,8 @@ create table if not exists public.wallet_config (
 );
 
 insert into public.wallet_config (id) values (1) on conflict (id) do nothing;
+-- Keep existing installations aligned with the advertised $10 minimum.
+update public.wallet_config set min_withdraw = 10, updated_at = now() where id = 1 and min_withdraw <> 10;
 
 -- Only chains with a real, verified receiving wallet belong here.
 create table if not exists public.wallet_networks (
@@ -80,7 +82,9 @@ insert into public.wallet_networks (network, deposit, withdraw, address, qr, not
   ('BEP20 (BSC)', true, true,
    '0xe85d1b6b330219de89e826f314a9bc2bcd595e53',
    'assets/img/deposit-bep20-qr.png',
-   'BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.', 1)
+   'BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.', 1),
+  ('UPI', false, true, null, null,
+   'INR equivalent paid to your UPI ID after manual review. Minimum withdrawal is $10.', 2)
 on conflict (network) do update set
   deposit = excluded.deposit, withdraw = excluded.withdraw,
   address = excluded.address, qr = excluded.qr, note = excluded.note, sort = excluded.sort;
@@ -322,9 +326,13 @@ begin
     raise exception 'Not enough available balance — you have $%', round(bal.usdt, 2) using errcode = 'P0001';
   end if;
   if not exists (select 1 from public.wallet_networks where network = p_network and withdraw) then
-    raise exception 'Select a supported payout network' using errcode = 'P0001';
+    raise exception 'Select a supported payout method' using errcode = 'P0001';
   end if;
-  if p_address is null or length(trim(p_address)) < 15 then
+  if p_network = 'UPI' then
+    if p_address is null or trim(p_address) !~* '^[A-Z0-9._-]{2,256}@[A-Z0-9.-]{2,64}$' then
+      raise exception 'Enter a valid UPI ID (for example, name@bank)' using errcode = 'P0001';
+    end if;
+  elsif p_address is null or length(trim(p_address)) < 15 then
     raise exception 'Enter a valid USDT wallet address' using errcode = 'P0001';
   end if;
 

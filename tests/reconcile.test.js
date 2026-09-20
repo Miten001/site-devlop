@@ -89,7 +89,7 @@ function setAuth(email) {
 function walletStatePayload(points, available, locked) {
   return {
     server: true, now: Date.now(),
-    config: { minDeposit: 10, minWithdraw: 5, withdrawFeePct: 1, platformFeePct: 5, minPointsConvert: 1000, minJobReward: 0.02, pointsPerUsdt: 1000 },
+    config: { minDeposit: 10, minWithdraw: 10, withdrawFeePct: 1, platformFeePct: 5, minPointsConvert: 1000, minJobReward: 0.02, pointsPerUsdt: 1000 },
     networks: [], categories: [],
     wallet: { available, locked: locked || 0, points, totalEarned: 0, totalDeposited: 0, totalWithdrawn: 0 },
     txns: [], requests: [],
