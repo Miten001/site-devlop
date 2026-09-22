@@ -464,6 +464,17 @@
   function call(fn, args) {
     return FF.rpc(fn, args).catch((err) => {
       if (err && err.offline) { serverDown = true; throw Object.assign(err, { fellBack: true }); }
+
+      /* PostgREST's raw schema-cache error is confusing to members. This
+         happens when the site was updated but the matching DB migration was
+         not run. Keep server mode authoritative and show an actionable error
+         rather than silently changing a browser-only balance. */
+      const message = String((err && err.message) || "");
+      if (fn === "wallet_convert_usdt" && /wallet_convert_usdt|schema cache/i.test(message)) {
+        const setup = new Error("USDT → Points is not enabled on the server yet. Admin: run supabase-wallet-convert-usdt-fix.sql in Supabase SQL Editor.");
+        setup.code = "WALLET_MIGRATION_REQUIRED";
+        throw setup;
+      }
       throw err;
     });
   }
