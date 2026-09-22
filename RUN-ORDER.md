@@ -99,3 +99,5 @@ Wallet ka "Points → USDT" tab ab **"Convert"** hai, jisme dono direction ka to
 * **USDT → Points** — naya. Same rate, koi fee nahi, minimum $1. Isse member apne USDT se campaigns fund kar sakta hai, task workers ko pay kar sakta hai ya mining hashrate khareed sakta hai.
 
 Run karo: [`supabase-wallet.sql`](supabase-wallet.sql) **dobara** (naya `wallet_convert_usdt()` RPC + `min_usdt_convert` config column).
+
+Agar sirf ye exact error aa raha ho — **“Could not find the function public.wallet_convert_usdt(p_amount) in the schema cache”** — to chhota focused hotfix [`supabase-wallet-convert-usdt-fix.sql`](supabase-wallet-convert-usdt-fix.sql) SQL Editor me poora run kar sakte ho. Ye missing function + permission install karke PostgREST schema cache turant reload karta hai; balances ya transaction data reset nahi hota.

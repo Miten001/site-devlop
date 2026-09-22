@@ -12,7 +12,7 @@ button, input, select, textarea { max-width: 100%; }
   input, select, textarea { min-height: 44px; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   body { overflow-wrap: anywhere; }
   .container { width: calc(100% - 28px); }
 
@@ -20,12 +20,57 @@ button, input, select, textarea { max-width: 100%; }
   .site-head .bar { gap: 8px; }
   .head-actions { min-width: 0; }
   .head-actions .credit-chip { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
-  .mobile-menu { max-height: calc(100dvh - 70px); overflow-y: auto; overscroll-behavior: contain; }
 
-  /* App navigation is a thumb-friendly horizontal strip. */
+  /* Keep the hamburger menu compact. The old full-screen menu used oversized
+     links and felt like a second page on phones. This is a short side drawer. */
+  .mobile-nav {
+    inset: 0 0 0 auto;
+    width: min(86vw, 340px);
+    max-height: none;
+    padding: max(78px, calc(env(safe-area-inset-top) + 68px)) 16px max(22px, env(safe-area-inset-bottom));
+    gap: 2px;
+    align-items: stretch;
+    justify-content: flex-start;
+    background: #fff;
+    border-left: 1px solid var(--line);
+    box-shadow: -100vw 0 0 100vw rgba(16, 27, 48, .42), -14px 0 34px rgba(16, 27, 48, .13);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    opacity: 1;
+    visibility: hidden;
+    transform: translateX(105%);
+    transition: transform .24s ease, visibility 0s linear .24s;
+  }
+  .mobile-nav.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition: transform .24s ease;
+  }
+  .mobile-nav a,
+  .mobile-nav .btn {
+    width: 100%;
+    max-width: none;
+    min-height: 42px;
+    margin-top: 0;
+    padding: 10px 13px;
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.35;
+    text-align: left;
+  }
+  .mobile-nav a[data-logout] {
+    margin-top: 6px !important;
+    font-size: 15px !important;
+    border-top: 1px solid var(--line);
+    border-radius: 0 0 10px 10px;
+  }
+
+  /* The horizontal sidebar duplicated the hamburger menu and became a large
+     swipe strip above every mobile page. Hide it on phones. */
   .app-shell { gap: 14px; }
-  .side-nav { margin-inline: -14px; padding-inline: 14px; border-radius: 0; scroll-snap-type: x proximity; }
-  .side-nav a { flex: 0 0 auto; scroll-snap-align: start; }
+  .side-nav { display: none; }
   .app-head { align-items: flex-start; gap: 12px; }
   .app-head h1 { font-size: clamp(25px, 7vw, 34px); }
 
@@ -49,6 +94,9 @@ button, input, select, textarea { max-width: 100%; }
 @media (max-width: 560px) {
   .container { width: calc(100% - 24px); }
   .app-main { padding-top: 76px; }
+  /* On narrow phones keep only the points balance and menu trigger in the
+     header. USDT remains available in Wallet and inside the menu. */
+  .site-head .usdt-chip { display: none; }
   .panel, .form-card, .bal-card, .job-card, .plan-card, .rig-hero { padding: 16px 14px; }
 
   .section-head { margin-bottom: 30px; }

@@ -735,10 +735,15 @@
     const burger = document.querySelector(".burger");
     const mnav = document.querySelector(".mobile-nav");
     if (burger && mnav) {
+      burger.setAttribute("aria-expanded", "false");
+      mnav.setAttribute("aria-hidden", "true");
+
       const toggleNav = (forceState) => {
         const isOpen = forceState !== undefined ? forceState : !mnav.classList.contains("open");
         burger.classList.toggle("open", isOpen);
         mnav.classList.toggle("open", isOpen);
+        burger.setAttribute("aria-expanded", String(isOpen));
+        mnav.setAttribute("aria-hidden", String(!isOpen));
         document.body.style.overflow = isOpen ? "hidden" : "";
       };
       burger.addEventListener("click", () => toggleNav());
@@ -747,8 +752,16 @@
           toggleNav(false);
         })
       );
+      document.addEventListener("click", (e) => {
+        if (mnav.classList.contains("open") && !mnav.contains(e.target) && !burger.contains(e.target)) {
+          toggleNav(false);
+        }
+      });
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && mnav.classList.contains("open")) toggleNav(false);
+        if (e.key === "Escape" && mnav.classList.contains("open")) {
+          toggleNav(false);
+          burger.focus();
+        }
       });
       window.addEventListener("resize", () => {
         if (window.innerWidth > 1024 && mnav.classList.contains("open")) {
