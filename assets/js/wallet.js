@@ -36,6 +36,7 @@
     withdrawNetworks: ["BEP20 (BSC)", "UPI"],
     pointsPerUsdt: 1000,       // points -> USDT conversion rate
     minPointsConvert: 1000,
+    minUsdtConvert: 1,         // minimum USDT you may turn back into points
   };
 
   /* ---------- low level ---------- */
@@ -287,6 +288,23 @@
     return j;
   }
 
+  /* ---------- USDT -> points ----------
+     The reverse of convertPoints(). Same 1:pointsPerUsdt rate, no fee, so a
+     member can move value back into points to pay for campaigns or rigs. */
+  function convertUsdt(email, amount) {
+    amount = Math.round(Number(amount) * 10000) / 10000;
+    const w = wallet(email);
+    if (!FF.currentUser()) throw new Error("Please log in");
+    if (!(amount >= CFG.minUsdtConvert)) throw new Error("Minimum " + usd(CFG.minUsdtConvert) + " USDT to convert");
+    if (amount > w.available) throw new Error("Not enough available USDT — you have " + usd(w.available));
+    const points = Math.floor(amount * CFG.pointsPerUsdt);
+    if (points < 1) throw new Error("That amount is too small to convert");
+    patchWallet(email, (acc) => { acc.available = Math.round((acc.available - amount) * 1e8) / 1e8; });
+    FF.awardCredits(email, points, "Converted " + usd(amount) + " USDT to " + points + " points");
+    tx(email, "convert", -amount, usd(amount) + " USDT converted to " + points + " points", "completed");
+    return points;
+  }
+
   /* ---------- points -> USDT ---------- */
   function convertPoints(email, points) {
     points = parseInt(points, 10);
@@ -471,6 +489,7 @@
         withdrawFeePct: num(cfg.withdrawFeePct),
         platformFeePct: num(cfg.platformFeePct),
         minPointsConvert: num(cfg.minPointsConvert) || CFG.minPointsConvert,
+        minUsdtConvert: num(cfg.minUsdtConvert) || CFG.minUsdtConvert,
         minJobReward: num(cfg.minJobReward) || 0.02,
         pointsPerUsdt: num(cfg.pointsPerUsdt) || CFG.pointsPerUsdt,
       },
@@ -543,7 +562,7 @@
       config: {
         minDeposit: CFG.minDeposit, minWithdraw: CFG.minWithdraw,
         withdrawFeePct: CFG.withdrawFeePct, platformFeePct: CFG.platformFeePct,
-        minPointsConvert: CFG.minPointsConvert, minJobReward: 0.02,
+        minPointsConvert: CFG.minPointsConvert, minUsdtConvert: CFG.minUsdtConvert, minJobReward: 0.02,
         pointsPerUsdt: CFG.pointsPerUsdt,
       },
       networks: CFG.networks.map((n) => ({
@@ -618,6 +637,11 @@
         (u) => convertPoints(u.email, points), "wallet");
     },
 
+    convertUsdt(amount) {
+      return remote("wallet_convert_usdt", { p_amount: Number(amount) },
+        (u) => convertUsdt(u.email, amount), "wallet");
+    },
+
     /* --- marketplace --- */
     feed() { return remote("jobs_feed", null, null, "feed"); },
 
@@ -687,7 +711,7 @@
     jobs, openJobs, myJobs, postJob, cancelJob,
     subs, jobSubs, mySubs, submitProof, reviewSub,
     adminCancelJob, adminSetJobStatus,
-    convertPoints, syncWalletPills, purgeDemoData, USDT_SVG,
+    convertPoints, convertUsdt, syncWalletPills, purgeDemoData, USDT_SVG,
     reconcileServer, maybeImportPoints, setSrvMark, localView: localWalletView,
     api, serverReady,
   };

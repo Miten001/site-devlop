@@ -79,3 +79,23 @@ UPI ab **deposit aur withdraw dono** me enabled hai.
 * Withdraw pehle se UPI support karta tha — wahan member apni khud ki UPI ID daalta hai
 
 Server pe live karne ke liye [`supabase-wallet.sql`](supabase-wallet.sql) **ek baar dobara run karo** (`wallet_networks` ka UPI row update ho jayega + UTR wala error message).
+
+---
+
+## Admin "kaun activity kar raha hai" + USDT → Points (2026-09)
+
+### 1. Recent events me member ka naam
+`events` table me ab do naye columns hain — `email` aur `user_name`. Logged-in member ka event uske naam/email ke saath record hota hai; signed-out visitor sirf anonymous visitor id dikhata hai (privacy same rehti hai).
+
+Admin panel me:
+* **Recent events** table me naya **"Who"** column — member ka naam click karke seedha uska coin activity + coin editor modal khul jata hai
+* **Referrers** panel (jo khali tha) ki jagah ab **"Most active members"** — kaun sabse zyada use kar raha hai, event count ke saath
+
+Run karo: [`supabase.sql`](supabase.sql) **dobara** (sirf `alter table ... add column if not exists` add karta hai, data safe).
+
+### 2. USDT → Points (reverse convert)
+Wallet ka "Points → USDT" tab ab **"Convert"** hai, jisme dono direction ka toggle hai:
+* **Points → USDT** (pehle wala)
+* **USDT → Points** — naya. Same rate, koi fee nahi, minimum $1. Isse member apne USDT se campaigns fund kar sakta hai, task workers ko pay kar sakta hai ya mining hashrate khareed sakta hai.
+
+Run karo: [`supabase-wallet.sql`](supabase-wallet.sql) **dobara** (naya `wallet_convert_usdt()` RPC + `min_usdt_convert` config column).

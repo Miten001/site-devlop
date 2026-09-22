@@ -266,9 +266,9 @@
           </div>
         </div>
         <div class="panel mt-16">
-          <div class="panel-head"><h3>Referrers</h3></div>
+          <div class="panel-head"><div><h3>Most active members</h3><p class="panel-sub">Who is actually using the site, by recorded events.</p></div></div>
           <div class="table-responsive">
-            <table class="ff-table"><thead><tr><th>Source</th><th style="text-align:right">Visits</th></tr></thead><tbody id="t-refs"></tbody></table>
+            <table class="ff-table"><thead><tr><th>Member</th><th style="text-align:right">Events</th></tr></thead><tbody id="t-actives"></tbody></table>
           </div>
         </div>
         <div class="panel mt-16">
@@ -282,7 +282,7 @@
         <div class="panel">
           <div class="panel-head"><h3>Recent events</h3><span class="status-pill on" id="recent-count">0</span></div>
           <div class="scroll-box">
-            <table class="ff-table"><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="t-recent"></tbody></table>
+            <table class="ff-table"><thead><tr><th>Time</th><th>Who</th><th>Event</th><th>Detail</th></tr></thead><tbody id="t-recent"></tbody></table>
           </div>
         </div>
       </div>
@@ -355,6 +355,7 @@
   var members = [];
   var session = null;
   var balanceMap = {};
+  var emailToId = {};
   var lastQueue = null;
   var currentMember = null;
   var balMode = "adjust";
@@ -467,6 +468,7 @@
       }
       if (memberRows) {
         renderMembers(memberRows);
+        if (last.length) render(last);   // re-paint so member links resolve
         $("msg-emails").innerHTML = memberRows.map(function (m) {
           return '<option value="' + esc(m.email || "") + '"></option>';
         }).join("");
@@ -478,6 +480,22 @@
 
     loadPayments();
     loadMessages();
+  }
+
+  /* Renders the actor behind an event: a member (clickable → coin modal)
+     or an anonymous visitor identified only by their rotating visitor id. */
+  function whoCell(e) {
+    if (e.email) {
+      var label = e.user_name ? e.user_name : e.email;
+      var id = emailToId[String(e.email).toLowerCase()];
+      var inner = '<b>' + esc(label) + "</b>" +
+        (e.user_name ? '<br><span style="font-size:11px;color:var(--ink-mute)">' + esc(e.email) + "</span>" : "");
+      return id
+        ? '<button type="button" class="mail-link" data-member="' + esc(id) + '" title="Open coin activity &amp; editor" style="text-align:left">' + inner + "</button>"
+        : '<span class="k">' + inner + "</span>";
+    }
+    return '<span style="color:var(--ink-mute);font-size:12px" title="Not signed in">👤 ' +
+      esc(String(e.vid || "anonymous").slice(0, 14)) + "</span>";
   }
 
   function render(es) {
@@ -510,10 +528,29 @@
     table("t-pages", pages);
     table("t-types", types);
 
-    $("t-refs").innerHTML = '<tr><td colspan="2">Referrers are available in exported data</td></tr>';
+    /* Most active members — anonymous visitors are grouped separately. */
+    var actors = {};
+    es.forEach(function (e) {
+      if (!e.email) return;
+      var k = String(e.email).toLowerCase();
+      if (!actors[k]) actors[k] = { email: k, name: e.user_name || "", n: 0 };
+      actors[k].n += 1;
+      if (!actors[k].name && e.user_name) actors[k].name = e.user_name;
+    });
+    var actList = Object.keys(actors).map(function (k) { return actors[k]; })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, 12);
+    var anon = es.filter(function (e) { return !e.email; }).length;
+    $("t-actives").innerHTML = (actList.map(function (a) {
+      return '<tr><td class="k">' + (a.name ? "<b>" + esc(a.name) + "</b><br>" : "") +
+        '<span style="font-size:11.5px;color:var(--ink-mute)">' + esc(a.email) + "</span></td>" +
+        '<td class="num">' + a.n + "</td></tr>";
+    }).join("") || '<tr><td colspan="2">No signed-in activity recorded yet</td></tr>') +
+      (anon ? '<tr><td class="k" style="color:var(--ink-mute)">Signed-out visitors</td><td class="num" style="color:var(--ink-mute)">' + anon + "</td></tr>" : "");
+
     $("recent-count").textContent = Math.min(es.length, 80) + " shown";
     $("t-recent").innerHTML = es.slice(0, 80).map(function (e) {
-      return "<tr><td>" + (e.ts_client ? new Date(e.ts_client).toLocaleString("en-IN") : "") +
+      return "<tr><td style='white-space:nowrap'>" + (e.ts_client ? new Date(e.ts_client).toLocaleString("en-IN") : "") +
+        "</td><td>" + whoCell(e) +
         '</td><td><span class="ev-pill ' + esc(e.type) + '">' + esc(e.type) +
         '</span></td><td class="k">' + esc(e.label || e.url || e.page || "") + "</td></tr>";
     }).join("");
@@ -529,6 +566,8 @@
       return;
     }
     members = rows || [];
+    emailToId = {};
+    members.forEach(function (m) { if (m.email) emailToId[String(m.email).toLowerCase()] = m.id; });
     $("k-members").textContent = members.length.toLocaleString("en-IN");
     $("member-count").textContent = members.length.toLocaleString("en-IN") + (members.length === 1 ? " member" : " members");
     if (!members.length) {

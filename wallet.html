@@ -98,7 +98,7 @@
       <div class="tabs" id="w-tabs">
         <button class="tab-btn active" data-tab="deposit">Deposit</button>
         <button class="tab-btn" data-tab="withdraw">Withdraw</button>
-        <button class="tab-btn" data-tab="convert">Points → USDT</button>
+        <button class="tab-btn" data-tab="convert">Convert</button>
         <button class="tab-btn" data-tab="history">History</button>
         <button class="tab-btn" data-tab="requests">My requests</button>
       </div>
@@ -195,19 +195,37 @@
       <!-- CONVERT -->
       <div class="tab-pane" id="pane-convert">
         <div class="panel">
-          <div class="panel-head"><div><h3>Convert points to USDT</h3><p class="panel-sub">Turn the points you earned from social campaigns into real USDT balance.</p></div></div>
+          <div class="panel-head"><div><h3>Convert balance</h3><p class="panel-sub">Move value between your points and your USDT balance, both ways, at the same rate.</p></div></div>
           <div class="fee-hint">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-            <span>Rate: <b id="cv-rate">1000 points = $1.00 USDT</b> · Minimum conversion <b id="cv-min">1000</b> points.</span>
+            <span>Rate: <b id="cv-rate">1000 points = $1.00 USDT</b> · No conversion fee, either direction.</span>
           </div>
-          <form id="cv-form" novalidate style="margin-top:18px">
+
+          <div class="msg-modes" style="margin:18px 0 4px">
+            <button type="button" class="seg on" data-cv-dir="p2u">Points → USDT</button>
+            <button type="button" class="seg" data-cv-dir="u2p">USDT → Points</button>
+          </div>
+
+          <!-- points -> usdt -->
+          <form id="cv-form" novalidate style="margin-top:14px">
             <div class="field">
               <label>Points to convert</label>
               <input type="text" inputmode="numeric" id="cv-points" placeholder="1000" />
-              <p class="panel-sub" style="margin-top:7px">You have <b data-credits>0</b> points · You get <b id="cv-out" style="color:var(--green)">$0.00</b></p>
+              <p class="panel-sub" style="margin-top:7px">You have <b data-credits>0</b> points · Minimum <b id="cv-min">1000</b> · You get <b id="cv-out" style="color:var(--green)">$0.00</b></p>
               <p class="panel-sub" id="cv-sync-note" style="margin-top:7px"></p>
             </div>
             <button class="btn btn-primary btn-block" type="submit">Convert to USDT</button>
+          </form>
+
+          <!-- usdt -> points -->
+          <form id="cu-form" novalidate style="margin-top:14px;display:none">
+            <div class="field">
+              <label>USDT to convert</label>
+              <input type="text" inputmode="decimal" id="cu-usdt" placeholder="1.00" />
+              <p class="panel-sub" style="margin-top:7px">You have <b id="cu-have">$0.00</b> available · Minimum <b id="cu-min">$1.00</b> · You get <b id="cu-out" style="color:var(--amber)">0 points</b></p>
+              <p class="panel-sub" style="margin-top:7px">Use points to fund campaigns, pay task workers or buy cloud mining hashrate.</p>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">Convert to points</button>
           </form>
         </div>
       </div>
@@ -419,12 +437,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }).catch(fail).then(() => busy($("wd-form"), false));
   });
 
-  /* ---------- convert ---------- */
+  /* ---------- convert (both directions) ---------- */
+  let cvDir = "p2u";
+
+  function setCvDir(dir) {
+    cvDir = dir === "u2p" ? "u2p" : "p2u";
+    document.querySelectorAll("[data-cv-dir]").forEach((b) => {
+      b.classList.toggle("on", b.getAttribute("data-cv-dir") === cvDir);
+    });
+    $("cv-form").style.display = cvDir === "p2u" ? "" : "none";
+    $("cu-form").style.display = cvDir === "u2p" ? "" : "none";
+  }
+  document.querySelectorAll("[data-cv-dir]").forEach((b) => {
+    b.addEventListener("click", () => setCvDir(b.getAttribute("data-cv-dir")));
+  });
+
   function cvSummary() {
+    const rate = view.config.pointsPerUsdt || 1000;
     const p = parseInt($("cv-points").value, 10) || 0;
-    $("cv-out").textContent = W.usd(p / view.config.pointsPerUsdt);
+    $("cv-out").textContent = W.usd(p / rate);
+
+    const u = Math.max(0, Number($("cu-usdt").value) || 0);
+    $("cu-out").textContent = Math.floor(u * rate).toLocaleString("en-IN") + " points";
+    $("cu-have").textContent = W.usd(view.wallet.available);
+    $("cu-min").textContent = W.usd(view.config.minUsdtConvert || 1);
   }
   $("cv-points").addEventListener("input", cvSummary);
+  $("cu-usdt").addEventListener("input", cvSummary);
+
   $("cv-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const before = view.wallet.available;
@@ -438,9 +478,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }).catch(fail).then(() => busy($("cv-form"), false));
   });
 
+  $("cu-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const beforePts = Number(view.wallet.points || 0);
+    busy($("cu-form"), true);
+    A.convertUsdt($("cu-usdt").value).then((v) => {
+      user = FF.currentUser() || user;
+      const gained = Math.max(0, Number(v.wallet.points || 0) - beforePts);
+      FF.toast("Converted to " + gained.toLocaleString("en-IN") + " points!", "ok");
+      $("cu-usdt").value = "";
+      paint(v); cvSummary();
+    }).catch(fail).then(() => busy($("cu-form"), false));
+  });
+
   /* ---------- tables ---------- */
   const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Points conversion", mining: "Cloud mining", adjust: "Admin adjustment" };
+  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Conversion", mining: "Cloud mining", adjust: "Admin adjustment" };
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 
   function renderTx() {
