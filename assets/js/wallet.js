@@ -105,7 +105,7 @@
     if (!network || CFG.withdrawNetworks.indexOf(network) < 0) throw new Error("Select a payout method");
     const destination = String(address || "").trim();
     if (network === "UPI") {
-      if (!/^[A-Za-z0-9._-]{2,256}@[A-Za-z0-9.-]{2,64}$/.test(destination)) throw new Error("Enter a valid UPI ID (for example, name@bank)");
+      if (!/^[A-Za-z0-9._-]{2,255}@[A-Za-z0-9.-]{2,64}$/.test(destination)) throw new Error("Enter a valid UPI ID (for example, name@bank)");
     } else if (destination.length < 15) {
       throw new Error("Enter a valid USDT wallet address");
     }

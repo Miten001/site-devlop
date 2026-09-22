@@ -58,3 +58,11 @@ Kya badla:
 * Dashboard se **Quick earning modes** panel hata diya, **Recent activity** ab points + wallet + mining sab merge karke dikhata hai, aur **"Site today — real data"** card page ke sabse neeche chala gaya hai.
 
 > Bina Supabase ke bhi sab kaam karta hai (browser-only fallback): referrals `ff_referrals` me, messages `ff_messages` me local store hote hain.
+
+---
+
+## Fix: UPI withdraw — "invalid regular expression: invalid repetition count(s)"
+
+`wallet_request_withdraw()` me UPI ID validate karne wala regex `{2,256}` use kar raha tha. **Postgres regex me repetition count 255 se zyada nahi ho sakta**, isliye har UPI withdrawal pe ye error aata tha. Ab wo `{2,255}` hai (UPI ID waise bhi itni lambi hoti hi nahi).
+
+Fix live karne ke liye [`supabase-wallet.sql`](supabase-wallet.sql) ko **ek baar dobara run karo** (idempotent hai, data safe rehta hai).

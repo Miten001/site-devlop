@@ -329,7 +329,10 @@ begin
     raise exception 'Select a supported payout method' using errcode = 'P0001';
   end if;
   if p_network = 'UPI' then
-    if p_address is null or trim(p_address) !~* '^[A-Z0-9._-]{2,256}@[A-Z0-9.-]{2,64}$' then
+    -- NOTE: a Postgres regex repetition count may not exceed 255, so the
+    -- local part is capped at 255 here (a UPI ID is far shorter anyway).
+    -- Using {2,256} raises: invalid regular expression: invalid repetition count(s)
+    if p_address is null or trim(p_address) !~* '^[A-Z0-9._-]{2,255}@[A-Z0-9.-]{2,64}$' then
       raise exception 'Enter a valid UPI ID (for example, name@bank)' using errcode = 'P0001';
     end if;
   elsif p_address is null or length(trim(p_address)) < 15 then
