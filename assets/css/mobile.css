@@ -71,7 +71,6 @@ button, input, select, textarea { max-width: 100%; }
 
   .rig-row .rr-earn { width: 100%; text-align: left; padding-left: 56px; }
   .warn-banner { padding: 14px 12px; }
-  .global-support { max-width: calc(100% - 24px); }
 }
 
 @media (max-width: 390px) {
@@ -86,6 +85,5 @@ button, input, select, textarea { max-width: 100%; }
 /* Respect notches and browser safe areas on modern phones. */
 @supports (padding: max(0px)) {
   .site-head .bar { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
-  .global-support { bottom: max(12px, env(safe-area-inset-bottom)); }
   .toast-root { bottom: max(16px, env(safe-area-inset-bottom)); }
 }

@@ -1701,7 +1701,7 @@ body.modal-open { overflow: hidden; }
 .modal-veil {
   position: fixed;
   inset: 0;
-  /* Above the support chip (250); notifications intentionally stay above it. */
+  /* Notifications stay above the page content and modal veil. */
   z-index: 300;
   background: rgba(27, 35, 48, 0.46);
   -webkit-backdrop-filter: blur(4px);
@@ -2361,10 +2361,6 @@ body.modal-open { overflow: hidden; }
 .coin-btc { top: 4px; left: 12px; color: #7b4600; background: linear-gradient(145deg,#ffd166,#f7931a); }
 .coin-usdt { right: 8px; bottom: 8px; color: #075e49; background: linear-gradient(145deg,#9af5d0,#26a17b); animation-delay: -1.25s !important; }
 @keyframes coin-float { 0%,100% { transform: translateY(0) rotate(-7deg); } 50% { transform: translateY(-9px) rotate(7deg); } }
-
-.global-support { position: fixed; left: 16px; bottom: 16px; z-index: 250; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 999px; background: rgba(255,255,255,.94); color: var(--violet); box-shadow: 0 6px 18px rgba(16,27,48,.1); font-size: 11px; font-weight: 800; }
-.global-support:hover { color: var(--pink); transform: translateY(-1px); }
-@media (max-width: 560px) { .global-support { bottom: 12px; left: 12px; } }
 
 /* ============================================================
    HERO v2 — first-look conversion polish
