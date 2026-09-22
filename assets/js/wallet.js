@@ -22,17 +22,21 @@
     networks: ["BEP20 (BSC)", "UPI"],
     depositAddress: {
       "BEP20 (BSC)": "0xe85d1b6b330219de89e826f314a9bc2bcd595e53",
+      "UPI": "ravanyt001-2@okaxis",
     },
     depositQr: {
       "BEP20 (BSC)": "assets/img/deposit-bep20-qr.png",
+      "UPI": "assets/img/deposit-upi-qr.png",
     },
     networkNote: {
       "BEP20 (BSC)": "BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.",
+      "UPI": "Pay the INR equivalent to this UPI ID, then submit your 12-digit UTR / reference number. Credited after manual review.",
     },
     /* Withdraw to USDT on BEP20 or receive the INR equivalent via UPI. */
     withdrawNetworks: ["BEP20 (BSC)", "UPI"],
     pointsPerUsdt: 1000,       // points -> USDT conversion rate
     minPointsConvert: 1000,
+    minUsdtConvert: 1,         // minimum USDT you may turn back into points
   };
 
   /* ---------- low level ---------- */
@@ -87,7 +91,11 @@
     amount = Number(amount);
     if (!(amount >= CFG.minDeposit)) throw new Error("Minimum deposit is " + usd(CFG.minDeposit) + " USDT");
     if (!network || !CFG.depositAddress[network]) throw new Error("Select a supported deposit network");
-    if (!txid || txid.trim().length < 8) throw new Error("Paste the transaction hash (TXID) from your wallet");
+    if (!txid || txid.trim().length < 8) {
+      throw new Error(network === "UPI"
+        ? "Enter the UPI reference / UTR number from your payment app"
+        : "Paste the transaction hash (TXID) from your wallet");
+    }
     const req = {
       id: uid("dep"), kind: "deposit", email, name: name || email, amount,
       network, txid: txid.trim(), status: "pending", at: Date.now(),
@@ -105,7 +113,7 @@
     if (!network || CFG.withdrawNetworks.indexOf(network) < 0) throw new Error("Select a payout method");
     const destination = String(address || "").trim();
     if (network === "UPI") {
-      if (!/^[A-Za-z0-9._-]{2,256}@[A-Za-z0-9.-]{2,64}$/.test(destination)) throw new Error("Enter a valid UPI ID (for example, name@bank)");
+      if (!/^[A-Za-z0-9._-]{2,255}@[A-Za-z0-9.-]{2,64}$/.test(destination)) throw new Error("Enter a valid UPI ID (for example, name@bank)");
     } else if (destination.length < 15) {
       throw new Error("Enter a valid USDT wallet address");
     }
@@ -278,6 +286,23 @@
     j.status = status;
     saveJobs(list);
     return j;
+  }
+
+  /* ---------- USDT -> points ----------
+     The reverse of convertPoints(). Same 1:pointsPerUsdt rate, no fee, so a
+     member can move value back into points to pay for campaigns or rigs. */
+  function convertUsdt(email, amount) {
+    amount = Math.round(Number(amount) * 10000) / 10000;
+    const w = wallet(email);
+    if (!FF.currentUser()) throw new Error("Please log in");
+    if (!(amount >= CFG.minUsdtConvert)) throw new Error("Minimum " + usd(CFG.minUsdtConvert) + " USDT to convert");
+    if (amount > w.available) throw new Error("Not enough available USDT — you have " + usd(w.available));
+    const points = Math.floor(amount * CFG.pointsPerUsdt);
+    if (points < 1) throw new Error("That amount is too small to convert");
+    patchWallet(email, (acc) => { acc.available = Math.round((acc.available - amount) * 1e8) / 1e8; });
+    FF.awardCredits(email, points, "Converted " + usd(amount) + " USDT to " + points + " points");
+    tx(email, "convert", -amount, usd(amount) + " USDT converted to " + points + " points", "completed");
+    return points;
   }
 
   /* ---------- points -> USDT ---------- */
@@ -464,6 +489,7 @@
         withdrawFeePct: num(cfg.withdrawFeePct),
         platformFeePct: num(cfg.platformFeePct),
         minPointsConvert: num(cfg.minPointsConvert) || CFG.minPointsConvert,
+        minUsdtConvert: num(cfg.minUsdtConvert) || CFG.minUsdtConvert,
         minJobReward: num(cfg.minJobReward) || 0.02,
         pointsPerUsdt: num(cfg.pointsPerUsdt) || CFG.pointsPerUsdt,
       },
@@ -536,12 +562,12 @@
       config: {
         minDeposit: CFG.minDeposit, minWithdraw: CFG.minWithdraw,
         withdrawFeePct: CFG.withdrawFeePct, platformFeePct: CFG.platformFeePct,
-        minPointsConvert: CFG.minPointsConvert, minJobReward: 0.02,
+        minPointsConvert: CFG.minPointsConvert, minUsdtConvert: CFG.minUsdtConvert, minJobReward: 0.02,
         pointsPerUsdt: CFG.pointsPerUsdt,
       },
       networks: CFG.networks.map((n) => ({
         network: n, address: CFG.depositAddress[n], qr: CFG.depositQr[n],
-        note: CFG.networkNote[n] || (n === "UPI" ? "INR equivalent paid to your UPI ID after manual review." : ""),
+        note: CFG.networkNote[n] || "",
         deposit: !!CFG.depositAddress[n], withdraw: CFG.withdrawNetworks.indexOf(n) > -1,
       })),
       categories: CATEGORIES,
@@ -609,6 +635,11 @@
     convertPoints(points) {
       return remote("wallet_convert_points", { p_points: parseInt(points, 10) },
         (u) => convertPoints(u.email, points), "wallet");
+    },
+
+    convertUsdt(amount) {
+      return remote("wallet_convert_usdt", { p_amount: Number(amount) },
+        (u) => convertUsdt(u.email, amount), "wallet");
     },
 
     /* --- marketplace --- */
@@ -680,7 +711,7 @@
     jobs, openJobs, myJobs, postJob, cancelJob,
     subs, jobSubs, mySubs, submitProof, reviewSub,
     adminCancelJob, adminSetJobStatus,
-    convertPoints, syncWalletPills, purgeDemoData, USDT_SVG,
+    convertPoints, convertUsdt, syncWalletPills, purgeDemoData, USDT_SVG,
     reconcileServer, maybeImportPoints, setSrvMark, localView: localWalletView,
     api, serverReady,
   };

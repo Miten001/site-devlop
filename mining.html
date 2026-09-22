@@ -122,6 +122,19 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
           <span>Pay with <b>USDT</b> from your wallet or with <b>points</b> you earned from tasks — <b id="rate-line">1000 points = $1.00</b>. Current net output: <b id="mining-rate">$0.000966/GH/s/day</b>. Maintenance &amp; pool fee (<b id="maint-pct">8</b>%) is already deducted, and estimates include any permanent invest boost.</span>
         </div>
+        <div class="free-ref" id="free-ref-box">
+          <div class="fr-head">
+            <h4>🎁 Free Starter Rig — unlocked by referrals</h4>
+            <span class="status-pill on"><b id="free-ref-count">0</b>&nbsp;referral signups</span>
+          </div>
+          <p class="fr-note" id="free-ref-state">Locked — share your link, the free rig unlocks on the next signup.</p>
+          <div class="ref-box">
+            <code id="free-ref-link">—</code>
+            <button class="btn btn-primary btn-sm" id="free-ref-copy">Copy link</button>
+          </div>
+          <p class="fr-small">One free rig per friend who <b>creates an account</b> with your link. Just clicking it does not count.</p>
+        </div>
+
         <div class="plan-grid" id="plan-grid"></div>
       </div>
 
@@ -232,6 +245,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let view = A.view();          // latest normalised state (server or local)
   let busy = false;
+  let refStats = FF.referralStats ? FF.referralStats() : { code: "", link: "", count: 0 };
+  let freeUnlocked = false;
+
+  /* The free starter rig only unlocks after somebody signs up with your
+     referral link — one free rig per successful referral. */
+  function freeUsed() {
+    return (view.contracts || []).filter((c) => c.plan === "free").length;
+  }
+  function refreshFree() {
+    freeUnlocked = Number(refStats.count || 0) > freeUsed();
+    const box = $("free-ref-box");
+    if (!box) return;
+    $("free-ref-count").textContent = Number(refStats.count || 0).toLocaleString("en-IN");
+    $("free-ref-link").textContent = refStats.link || "—";
+    box.classList.toggle("ok", freeUnlocked);
+    $("free-ref-state").textContent = freeUnlocked
+      ? "Unlocked — start your free rig from the Buy hashrate tab ✅"
+      : "Locked — share your link, the free rig unlocks on the next signup.";
+  }
+  function loadRef() {
+    if (!FF.loadReferralStats) return;
+    FF.loadReferralStats().then((r) => { refStats = r; refreshFree(); renderPlans(); });
+  }
 
   /* tabs */
   $("m-tabs").addEventListener("click", (e) => {
@@ -274,7 +310,14 @@ document.addEventListener("DOMContentLoaded", () => {
         '<div class="p-price"><b>' + price + "</b>" + (p.priceUsd > 0 ? "<span>or " + ptsPrice + "</span>" : "<span>starter rig</span>") + "</div>" +
         '<ul class="p-perks">' + (p.perks || []).map((x) => "<li>" + esc(x) + "</li>").join("") + "</ul>" +
         '<div class="p-stats"><div><b>' + W.usd(daily) + "</b><span>per day</span></div><div><b>" + p.days + "</b><span>days</span></div><div><b>" + W.usd(total) + "</b><span>total est.</span></div></div>" +
-        '<button class="btn ' + (p.featured ? "btn-primary" : "btn-ghost") + ' btn-block" data-plan="' + esc(p.key) + '">' + (p.free ? "Start free rig" : "Start mining") + "</button>" +
+        (p.free
+          ? '<p class="p-lock">' + (freeUnlocked
+              ? "Referral unlocked — start it now 🎉"
+              : "Locked · invite a friend to unlock (" + Number(refStats.count || 0) + " referral" + (Number(refStats.count || 0) === 1 ? "" : "s") + " so far)") + "</p>"
+          : "") +
+        '<button class="btn ' + (p.featured ? "btn-primary" : "btn-ghost") + ' btn-block" data-plan="' + esc(p.key) + '"' +
+          (p.free && !freeUnlocked ? " disabled" : "") + ">" +
+          (p.free ? (freeUnlocked ? "Start free rig" : "🔒 Invite to unlock") : "Start mining") + "</button>" +
         "</div>";
     }).join("");
   }
@@ -447,10 +490,17 @@ document.addEventListener("DOMContentLoaded", () => {
     $("how-bonus").textContent = view.config.pointsBonusPct;
     if (view.config.investBoostPct != null) $("how-invest").textContent = view.config.investBoostPct;
     if (view.config.investBoostMinUsd != null) $("how-invest-min").textContent = view.config.investBoostMinUsd;
+    refreshFree();
     renderPlans(); renderRigs(); renderLog(); paintCustom(); paintStats();
   }
 
   renderAll();
+  loadRef();
+  $("free-ref-copy").addEventListener("click", () => {
+    navigator.clipboard.writeText(refStats.link || "")
+      .then(() => FF.toast("Referral link copied — share it to unlock your free rig!", "ok"))
+      .catch(() => FF.toast("Couldn't copy — select the link manually", "err"));
+  });
   /* pull authoritative state, then keep it fresh */
   A.load().then((v) => { if (v) { view = v; renderAll(); } });
   setInterval(paintStats, 1000);

@@ -11,6 +11,24 @@
   var flushing = false;
   var baseUrl = enabled ? String(cfg.url).replace(/\/+$/, "") + "/rest/v1/" : "";
 
+  /* Who is doing this? Anonymous visitors stay anonymous (vid only); a
+     logged-in member's email is attached so the admin panel can show the
+     actual person behind each event instead of an opaque visitor id. */
+  function actor() {
+    try {
+      var email = JSON.parse(localStorage.getItem("ff_session") || "null");
+      if (!email || typeof email !== "string") return { email: null, name: null };
+      var users = JSON.parse(localStorage.getItem("ff_users") || "[]");
+      var me = null;
+      for (var i = 0; i < users.length; i++) {
+        if (users[i] && users[i].email === email) { me = users[i]; break; }
+      }
+      return { email: String(email).slice(0, 160), name: me && me.name ? String(me.name).slice(0, 80) : null };
+    } catch (e) {
+      return { email: null, name: null };
+    }
+  }
+
   function visitorId() {
     try {
       var value = localStorage.getItem("ff_vid");
@@ -28,8 +46,11 @@
     data = data || {};
     /* Keep the payload in sync with supabase.sql. Do not spread arbitrary
        browser data into a PostgREST insert: unknown columns reject a batch. */
+    var who = actor();
     return {
       type: String(type || "event").slice(0, 80),
+      email: who.email,
+      user_name: who.name,
       page: (location.pathname.split("/").pop() || "index.html").slice(0, 160),
       path: String(location.pathname || "").slice(0, 400),
       title: String(document.title || "").slice(0, 140),
@@ -125,6 +146,7 @@
 
   window.FFA = {
     track: track,
+    actor: actor,
     saveCampaign: saveCampaign,
     visitorId: visitorId,
     get enabled() { return enabled; },

@@ -38,3 +38,64 @@ update public.mining_config
 3. [`supabase-wallet.sql`](supabase-wallet.sql) (#3) — **dobara run karo** (payment queue + settle RPCs)
 
 Saari files idempotent hain — dobara run karne se data delete nahi hota. Agar in-panel kisi section me "run the migration" wala warning dikhe, iska matlab corresponding file abhi run nahi hui.
+
+---
+
+## Referral free rig + messages + coin editor (2026-09 update)
+
+Naya file: [`supabase-community.sql`](supabase-community.sql) — ise **#4 ke baad, sabse aakhir me** ek baar run karo (idempotent hai).
+
+| # | File | Kya add karta hai |
+|---|------|-------------------|
+| 5 | [`supabase-community.sql`](supabase-community.sql) | `referral_codes` / `referrals` + `referral_stats()`, free rig ka referral gate (`mining_buy_plan` update), `messages` + `message_reads` (`messages_admin_send`, `messages_admin_recent`, `messages_inbox`, `messages_mark_read`), aur `mining_admin_set()` (exact coin/USDT value) |
+
+Kya badla:
+
+* **Free Starter Rig ab referral se unlock hota hai.** Pehle sabko milta tha; ab har **successful signup** (koi aapke `signup.html?ref=FF-XXXXXXXX` link se account banata hai) ek free rig unlock karta hai. Sirf link click karne se kuch nahi hota.
+* Free rig ka output thoda badha diya: **30 GH/s / 7 din → 60 GH/s / 10 din**.
+* **Messages:** admin panel se poore members ko **broadcast** ya kisi ek member ko **direct message** bhejo. Member ko wo dashboard ke "Messages" panel me dikhta hai, unread badge ke saath.
+* **Admin coin editor:** ab `± Add / subtract` ke saath `= Set exact value` mode bhi hai, aur coins pe galat `$` sign nahi lagta (coins = coins, USDT = USDT alag dikhte hain).
+* Dashboard se **Quick earning modes** panel hata diya, **Recent activity** ab points + wallet + mining sab merge karke dikhata hai, aur **"Site today — real data"** card page ke sabse neeche chala gaya hai.
+
+> Bina Supabase ke bhi sab kaam karta hai (browser-only fallback): referrals `ff_referrals` me, messages `ff_messages` me local store hote hain.
+
+---
+
+## Fix: UPI withdraw — "invalid regular expression: invalid repetition count(s)"
+
+`wallet_request_withdraw()` me UPI ID validate karne wala regex `{2,256}` use kar raha tha. **Postgres regex me repetition count 255 se zyada nahi ho sakta**, isliye har UPI withdrawal pe ye error aata tha. Ab wo `{2,255}` hai (UPI ID waise bhi itni lambi hoti hi nahi).
+
+Fix live karne ke liye [`supabase-wallet.sql`](supabase-wallet.sql) ko **ek baar dobara run karo** (idempotent hai, data safe rehta hai).
+
+---
+
+## UPI deposit + withdraw live (2026-09)
+
+UPI ab **deposit aur withdraw dono** me enabled hai.
+
+* **Deposit UPI ID:** `ravanyt001-2@okaxis`
+* **QR:** `assets/img/deposit-upi-qr.png` — standard UPI intent URI (`upi://pay?pa=ravanyt001-2@okaxis&pn=FlexFam&cu=INR`), GPay / PhonePe / Paytm / BHIM sab me scan hota hai
+* Deposit form UPI choose karne par TXID ki jagah **UTR / reference number** maangta hai, aur warning list bhi UPI wali dikhati hai
+* Withdraw pehle se UPI support karta tha — wahan member apni khud ki UPI ID daalta hai
+
+Server pe live karne ke liye [`supabase-wallet.sql`](supabase-wallet.sql) **ek baar dobara run karo** (`wallet_networks` ka UPI row update ho jayega + UTR wala error message).
+
+---
+
+## Admin "kaun activity kar raha hai" + USDT → Points (2026-09)
+
+### 1. Recent events me member ka naam
+`events` table me ab do naye columns hain — `email` aur `user_name`. Logged-in member ka event uske naam/email ke saath record hota hai; signed-out visitor sirf anonymous visitor id dikhata hai (privacy same rehti hai).
+
+Admin panel me:
+* **Recent events** table me naya **"Who"** column — member ka naam click karke seedha uska coin activity + coin editor modal khul jata hai
+* **Referrers** panel (jo khali tha) ki jagah ab **"Most active members"** — kaun sabse zyada use kar raha hai, event count ke saath
+
+Run karo: [`supabase.sql`](supabase.sql) **dobara** (sirf `alter table ... add column if not exists` add karta hai, data safe).
+
+### 2. USDT → Points (reverse convert)
+Wallet ka "Points → USDT" tab ab **"Convert"** hai, jisme dono direction ka toggle hai:
+* **Points → USDT** (pehle wala)
+* **USDT → Points** — naya. Same rate, koi fee nahi, minimum $1. Isse member apne USDT se campaigns fund kar sakta hai, task workers ko pay kar sakta hai ya mining hashrate khareed sakta hai.
+
+Run karo: [`supabase-wallet.sql`](supabase-wallet.sql) **dobara** (naya `wallet_convert_usdt()` RPC + `min_usdt_convert` config column).

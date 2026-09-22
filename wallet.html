@@ -67,7 +67,7 @@
         <div>
           <span class="eyebrow"><span class="dot"></span> Wallet</span>
           <h1>USDT <span class="grad-text-cool">wallet</span></h1>
-          <p class="sub">Deposit USDT, get paid for completed tasks, and withdraw through USDT (BEP20) or UPI.</p>
+          <p class="sub">Deposit with USDT (BEP20) or UPI, get paid for completed tasks, and withdraw the same way.</p>
           <p class="sub" style="margin-top:8px">Balance mode: <span class="status-pill off" id="w-mode-pill">checking…</span> <span id="w-mode-note" style="font-size:12.5px;color:var(--ink-mute)"></span></p>
         </div>
       </div>
@@ -98,7 +98,7 @@
       <div class="tabs" id="w-tabs">
         <button class="tab-btn active" data-tab="deposit">Deposit</button>
         <button class="tab-btn" data-tab="withdraw">Withdraw</button>
-        <button class="tab-btn" data-tab="convert">Points → USDT</button>
+        <button class="tab-btn" data-tab="convert">Convert</button>
         <button class="tab-btn" data-tab="history">History</button>
         <button class="tab-btn" data-tab="requests">My requests</button>
       </div>
@@ -106,38 +106,32 @@
       <!-- DEPOSIT -->
       <div class="tab-pane active" id="pane-deposit">
         <div class="panel">
-          <div class="panel-head"><div><h3>Deposit USDT</h3><p class="panel-sub">Send USDT to the address below, then submit the transaction hash for confirmation.</p></div></div>
+          <div class="panel-head"><div><h3 id="dep-heading">Deposit funds</h3><p class="panel-sub" id="dep-sub">Pay to the address below, then submit the reference for confirmation.</p></div></div>
 
           <div class="warn-banner">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
             <div>
               <b>Read before you send — transfers cannot be reversed</b>
-              <ul>
-                <li>Send <b>USDT only</b> on <b>BNB Smart Chain (BEP20)</b>. Any other network or token is <b>permanently lost</b>.</li>
-                <li>Do <b>not</b> send NFTs to this address.</li>
-                <li>Always <b>verify the full address</b> character by character — malware can swap a copied address.</li>
-                <li>Minimum deposit is <b id="dep-min">$10.00</b>. Smaller amounts may not be credited.</li>
-                <li>Your balance is credited only <b>after</b> you submit the TXID below and it is confirmed on-chain.</li>
-              </ul>
+              <ul id="dep-warn-list"></ul>
             </div>
           </div>
 
           <div class="field">
-            <label>1. Choose network</label>
+            <label>1. Choose payment method</label>
             <div class="net-picker" id="dep-nets"></div>
             <p class="panel-sub" style="margin-top:8px" id="dep-note"></p>
           </div>
 
           <div class="field">
-            <label>2. Scan the QR or copy the address</label>
+            <label id="dep-step2">2. Scan the QR or copy the address</label>
             <div class="qr-block">
               <div class="qr-shell"><img id="dep-qr" src="assets/img/deposit-bep20-qr.png" alt="USDT BEP20 deposit address QR code" width="220" height="220" /></div>
               <div class="qr-side">
                 <span class="qr-net" id="dep-qr-net">BNB Smart Chain (BEP20)</span>
-                <p class="qr-lbl">Wallet address</p>
+                <p class="qr-lbl" id="dep-qr-lbl">Wallet address</p>
                 <p class="qr-addr" id="dep-addr-full">—</p>
                 <button class="btn btn-primary btn-sm" id="dep-copy" type="button">Copy address</button>
-                <p class="qr-warn">Only USDT · BEP20 · No NFTs</p>
+                <p class="qr-warn" id="dep-qr-warn">Only USDT · BEP20 · No NFTs</p>
               </div>
             </div>
             <div class="addr-box"><code id="dep-addr">—</code><button class="btn btn-ghost btn-sm" id="dep-copy2" type="button">Copy</button></div>
@@ -145,11 +139,11 @@
 
           <form id="dep-form" novalidate>
             <div class="field">
-              <label>3. Amount sent (USDT)</label>
+              <label id="dep-amt-lbl">3. Amount sent (USDT)</label>
               <input type="text" inputmode="decimal" id="dep-amount" placeholder="10.00" />
             </div>
             <div class="field">
-              <label>4. Transaction hash (TXID)</label>
+              <label id="dep-ref-lbl">4. Transaction hash (TXID)</label>
               <input type="text" id="dep-txid" placeholder="e.g. 9f2c1a...e84b" />
             </div>
             <button class="btn btn-primary btn-block" type="submit">Submit deposit for confirmation</button>
@@ -201,19 +195,37 @@
       <!-- CONVERT -->
       <div class="tab-pane" id="pane-convert">
         <div class="panel">
-          <div class="panel-head"><div><h3>Convert points to USDT</h3><p class="panel-sub">Turn the points you earned from social campaigns into real USDT balance.</p></div></div>
+          <div class="panel-head"><div><h3>Convert balance</h3><p class="panel-sub">Move value between your points and your USDT balance, both ways, at the same rate.</p></div></div>
           <div class="fee-hint">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-            <span>Rate: <b id="cv-rate">1000 points = $1.00 USDT</b> · Minimum conversion <b id="cv-min">1000</b> points.</span>
+            <span>Rate: <b id="cv-rate">1000 points = $1.00 USDT</b> · No conversion fee, either direction.</span>
           </div>
-          <form id="cv-form" novalidate style="margin-top:18px">
+
+          <div class="msg-modes" style="margin:18px 0 4px">
+            <button type="button" class="seg on" data-cv-dir="p2u">Points → USDT</button>
+            <button type="button" class="seg" data-cv-dir="u2p">USDT → Points</button>
+          </div>
+
+          <!-- points -> usdt -->
+          <form id="cv-form" novalidate style="margin-top:14px">
             <div class="field">
               <label>Points to convert</label>
               <input type="text" inputmode="numeric" id="cv-points" placeholder="1000" />
-              <p class="panel-sub" style="margin-top:7px">You have <b data-credits>0</b> points · You get <b id="cv-out" style="color:var(--green)">$0.00</b></p>
+              <p class="panel-sub" style="margin-top:7px">You have <b data-credits>0</b> points · Minimum <b id="cv-min">1000</b> · You get <b id="cv-out" style="color:var(--green)">$0.00</b></p>
               <p class="panel-sub" id="cv-sync-note" style="margin-top:7px"></p>
             </div>
             <button class="btn btn-primary btn-block" type="submit">Convert to USDT</button>
+          </form>
+
+          <!-- usdt -> points -->
+          <form id="cu-form" novalidate style="margin-top:14px;display:none">
+            <div class="field">
+              <label>USDT to convert</label>
+              <input type="text" inputmode="decimal" id="cu-usdt" placeholder="1.00" />
+              <p class="panel-sub" style="margin-top:7px">You have <b id="cu-have">$0.00</b> available · Minimum <b id="cu-min">$1.00</b> · You get <b id="cu-out" style="color:var(--amber)">0 points</b></p>
+              <p class="panel-sub" style="margin-top:7px">Use points to fund campaigns, pay task workers or buy cloud mining hashrate.</p>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">Convert to points</button>
           </form>
         </div>
       </div>
@@ -298,7 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ? "Balances, escrow and payouts are held in Postgres — nothing here can be changed from your browser."
       : "Supabase is not configured (or you signed in with the local fallback), so this wallet is a browser-only simulation.";
 
-    $("dep-min").textContent = W.usd(cfg.minDeposit);
+    if ($("dep-min")) $("dep-min").textContent = W.usd(cfg.minDeposit);
     $("wd-min").textContent = W.usd(cfg.minWithdraw);
     $("wd-fee-pct").textContent = cfg.withdrawFeePct;
     $("cv-rate").textContent = cfg.pointsPerUsdt + " points = $1.00 USDT";
@@ -330,12 +342,40 @@ document.addEventListener("DOMContentLoaded", () => {
     netButtons($("dep-nets"), list, depNet, (n) => { depNet = n; paintDepNets(); });
     const n = net(list, depNet) || {};
     const addr = n.address || "—";
+    const isUpi = n.network === "UPI";
     $("dep-addr").textContent = addr;
     $("dep-addr-full").textContent = addr;
     $("dep-qr-net").textContent = n.network || "—";
     $("dep-note").textContent = n.note || "";
     $("dep-qr").src = n.qr || "";
     $("dep-qr").style.display = n.qr ? "" : "none";
+    $("dep-qr").alt = isUpi ? "UPI deposit QR code" : "USDT BEP20 deposit address QR code";
+
+    /* UPI and on-chain deposits need very different instructions. */
+    $("dep-heading").textContent = isUpi ? "Deposit via UPI" : "Deposit USDT";
+    $("dep-sub").textContent = isUpi
+      ? "Pay the INR equivalent to the UPI ID below, then submit your UTR / reference number."
+      : "Send USDT to the address below, then submit the transaction hash for confirmation.";
+    $("dep-step2").textContent = isUpi ? "2. Scan the QR or copy the UPI ID" : "2. Scan the QR or copy the address";
+    $("dep-qr-lbl").textContent = isUpi ? "UPI ID" : "Wallet address";
+    $("dep-qr-warn").textContent = isUpi ? "Scan with any UPI app · GPay, PhonePe, Paytm" : "Only USDT · BEP20 · No NFTs";
+    $("dep-amt-lbl").textContent = isUpi ? "3. Amount paid (USDT value)" : "3. Amount sent (USDT)";
+    $("dep-ref-lbl").textContent = isUpi ? "4. UPI reference / UTR number" : "4. Transaction hash (TXID)";
+    $("dep-txid").placeholder = isUpi ? "e.g. 412345678901" : "e.g. 9f2c1a...e84b";
+    $("dep-copy").textContent = isUpi ? "Copy UPI ID" : "Copy address";
+
+    const warn = isUpi
+      ? ["Pay from <b>any UPI app</b> (GPay, PhonePe, Paytm, BHIM) to the exact UPI ID shown below.",
+         "After paying, copy the <b>12-digit UTR / reference number</b> from your UPI app and submit it here.",
+         "Minimum deposit is <b id='dep-min'>$10.00</b> worth of INR. Smaller amounts may not be credited.",
+         "Your balance is credited only <b>after</b> an admin verifies the payment — usually within 24 hours."]
+      : ["Send <b>USDT only</b> on <b>BNB Smart Chain (BEP20)</b>. Any other network or token is <b>permanently lost</b>.",
+         "Do <b>not</b> send NFTs to this address.",
+         "Always <b>verify the full address</b> character by character — malware can swap a copied address.",
+         "Minimum deposit is <b id='dep-min'>$10.00</b>. Smaller amounts may not be credited.",
+         "Your balance is credited only <b>after</b> you submit the TXID below and it is confirmed on-chain."];
+    $("dep-warn-list").innerHTML = warn.map((t) => "<li>" + t + "</li>").join("");
+    $("dep-min").textContent = W.usd(view.config.minDeposit);
   }
 
   function paintWdNets() {
@@ -352,15 +392,20 @@ document.addEventListener("DOMContentLoaded", () => {
   ["dep-copy", "dep-copy2"].forEach((id) => $(id).addEventListener("click", () => {
     const t = $("dep-addr").textContent;
     (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
-      .then(() => FF.toast("Address copied — verify it in your wallet before sending!", "ok"))
-      .catch(() => FF.toast("Copy failed — select the address manually", "err"));
+      .then(() => FF.toast(depNet === "UPI"
+        ? "UPI ID copied — verify it in your UPI app before paying!"
+        : "Address copied — verify it in your wallet before sending!", "ok"))
+      .catch(() => FF.toast("Copy failed — select it manually", "err"));
   }));
 
   /* ---------- deposit ---------- */
   $("dep-form").addEventListener("submit", (e) => {
     e.preventDefault();
     if (!depNet) return FF.toast("No deposit network is available right now", "err");
-    if (!window.confirm("Confirm you sent USDT on " + depNet + " to:\n\n" + $("dep-addr").textContent + "\n\nFunds sent on any other network cannot be recovered.")) return;
+    const depMsg = depNet === "UPI"
+      ? "Confirm you paid the INR equivalent via UPI to:\n\n" + $("dep-addr").textContent + "\n\nSubmit the correct UTR — a wrong reference delays your credit."
+      : "Confirm you sent USDT on " + depNet + " to:\n\n" + $("dep-addr").textContent + "\n\nFunds sent on any other network cannot be recovered.";
+    if (!window.confirm(depMsg)) return;
     busy($("dep-form"), true);
     A.createDeposit($("dep-amount").value, depNet, $("dep-txid").value).then((v) => {
       FF.toast("Deposit submitted! It will be credited after confirmation.", "ok");
@@ -392,12 +437,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }).catch(fail).then(() => busy($("wd-form"), false));
   });
 
-  /* ---------- convert ---------- */
+  /* ---------- convert (both directions) ---------- */
+  let cvDir = "p2u";
+
+  function setCvDir(dir) {
+    cvDir = dir === "u2p" ? "u2p" : "p2u";
+    document.querySelectorAll("[data-cv-dir]").forEach((b) => {
+      b.classList.toggle("on", b.getAttribute("data-cv-dir") === cvDir);
+    });
+    $("cv-form").style.display = cvDir === "p2u" ? "" : "none";
+    $("cu-form").style.display = cvDir === "u2p" ? "" : "none";
+  }
+  document.querySelectorAll("[data-cv-dir]").forEach((b) => {
+    b.addEventListener("click", () => setCvDir(b.getAttribute("data-cv-dir")));
+  });
+
   function cvSummary() {
+    const rate = view.config.pointsPerUsdt || 1000;
     const p = parseInt($("cv-points").value, 10) || 0;
-    $("cv-out").textContent = W.usd(p / view.config.pointsPerUsdt);
+    $("cv-out").textContent = W.usd(p / rate);
+
+    const u = Math.max(0, Number($("cu-usdt").value) || 0);
+    $("cu-out").textContent = Math.floor(u * rate).toLocaleString("en-IN") + " points";
+    $("cu-have").textContent = W.usd(view.wallet.available);
+    $("cu-min").textContent = W.usd(view.config.minUsdtConvert || 1);
   }
   $("cv-points").addEventListener("input", cvSummary);
+  $("cu-usdt").addEventListener("input", cvSummary);
+
   $("cv-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const before = view.wallet.available;
@@ -411,9 +478,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }).catch(fail).then(() => busy($("cv-form"), false));
   });
 
+  $("cu-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const beforePts = Number(view.wallet.points || 0);
+    busy($("cu-form"), true);
+    A.convertUsdt($("cu-usdt").value).then((v) => {
+      user = FF.currentUser() || user;
+      const gained = Math.max(0, Number(v.wallet.points || 0) - beforePts);
+      FF.toast("Converted to " + gained.toLocaleString("en-IN") + " points!", "ok");
+      $("cu-usdt").value = "";
+      paint(v); cvSummary();
+    }).catch(fail).then(() => busy($("cu-form"), false));
+  });
+
   /* ---------- tables ---------- */
   const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Points conversion", mining: "Cloud mining", adjust: "Admin adjustment" };
+  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Conversion", mining: "Cloud mining", adjust: "Admin adjustment" };
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 
   function renderTx() {

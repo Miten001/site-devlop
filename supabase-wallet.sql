@@ -59,11 +59,14 @@ create table if not exists public.wallet_config (
   withdraw_fee_pct   numeric not null default 1,
   platform_fee_pct   numeric not null default 5,
   min_points_convert int     not null default 1000,
+  min_usdt_convert   numeric not null default 1,
   min_job_reward     numeric not null default 0.02,
   updated_at         timestamptz not null default now()
 );
 
 insert into public.wallet_config (id) values (1) on conflict (id) do nothing;
+-- Older installs: the reverse (USDT -> points) conversion floor.
+alter table public.wallet_config add column if not exists min_usdt_convert numeric not null default 1;
 -- Keep existing installations aligned with the advertised $10 minimum.
 update public.wallet_config set min_withdraw = 10, updated_at = now() where id = 1 and min_withdraw <> 10;
 
@@ -83,8 +86,10 @@ insert into public.wallet_networks (network, deposit, withdraw, address, qr, not
    '0xe85d1b6b330219de89e826f314a9bc2bcd595e53',
    'assets/img/deposit-bep20-qr.png',
    'BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.', 1),
-  ('UPI', false, true, null, null,
-   'INR equivalent paid to your UPI ID after manual review. Minimum withdrawal is $10.', 2)
+  ('UPI', true, true,
+   'ravanyt001-2@okaxis',
+   'assets/img/deposit-upi-qr.png',
+   'Pay the INR equivalent to this UPI ID, then submit your 12-digit UTR / reference number. Credited after manual review.', 2)
 on conflict (network) do update set
   deposit = excluded.deposit, withdraw = excluded.withdraw,
   address = excluded.address, qr = excluded.qr, note = excluded.note, sort = excluded.sort;
@@ -246,6 +251,7 @@ begin
     'config', jsonb_build_object(
       'minDeposit', cfg.min_deposit, 'minWithdraw', cfg.min_withdraw,
       'withdrawFeePct', cfg.withdraw_fee_pct, 'platformFeePct', cfg.platform_fee_pct,
+      'minUsdtConvert', cfg.min_usdt_convert,
       'minPointsConvert', cfg.min_points_convert, 'minJobReward', cfg.min_job_reward,
       'pointsPerUsdt', (select points_per_usdt from public.mining_config where id = 1)
     ),
@@ -289,6 +295,9 @@ begin
     raise exception 'Select a supported deposit network' using errcode = 'P0001';
   end if;
   if p_txid is null or length(trim(p_txid)) < 8 then
+    if p_network = 'UPI' then
+      raise exception 'Enter the UPI reference / UTR number from your payment app' using errcode = 'P0001';
+    end if;
     raise exception 'Paste the transaction hash (TXID) from your wallet' using errcode = 'P0001';
   end if;
   if exists (select 1 from public.pay_requests where lower(txid) = lower(trim(p_txid))) then
@@ -329,7 +338,10 @@ begin
     raise exception 'Select a supported payout method' using errcode = 'P0001';
   end if;
   if p_network = 'UPI' then
-    if p_address is null or trim(p_address) !~* '^[A-Z0-9._-]{2,256}@[A-Z0-9.-]{2,64}$' then
+    -- NOTE: a Postgres regex repetition count may not exceed 255, so the
+    -- local part is capped at 255 here (a UPI ID is far shorter anyway).
+    -- Using {2,256} raises: invalid regular expression: invalid repetition count(s)
+    if p_address is null or trim(p_address) !~* '^[A-Z0-9._-]{2,255}@[A-Z0-9.-]{2,64}$' then
       raise exception 'Enter a valid UPI ID (for example, name@bank)' using errcode = 'P0001';
     end if;
   elsif p_address is null or length(trim(p_address)) < 15 then
@@ -386,6 +398,50 @@ begin
 
   perform public.wallet_tx(v_user, 'convert', v_amount,
     p_points || ' points converted to USDT', 'completed', null, null);
+
+  return public.wallet_state();
+end;
+$$;
+
+-- The reverse: turn USDT back into points at the same rate, no fee. Lets a
+-- member fund campaigns, task rewards or mining rigs from a USDT balance.
+create or replace function public.wallet_convert_usdt(p_amount numeric)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_user uuid := public.wallet_require_user();
+  cfg public.wallet_config;
+  bal public.balances;
+  v_rate int;
+  v_points bigint;
+  v_amount numeric;
+begin
+  select * into cfg from public.wallet_config where id = 1;
+  select points_per_usdt into v_rate from public.mining_config where id = 1;
+  insert into public.balances (user_id) values (v_user) on conflict (user_id) do nothing;
+  select * into bal from public.balances where user_id = v_user for update;
+
+  v_amount := round(coalesce(p_amount, 0), 4);
+
+  if v_amount < cfg.min_usdt_convert then
+    raise exception 'Minimum $% USDT to convert', cfg.min_usdt_convert using errcode = 'P0001';
+  end if;
+  if v_amount > bal.usdt then
+    raise exception 'Not enough available USDT — you have $%', round(bal.usdt, 2) using errcode = 'P0001';
+  end if;
+
+  v_points := floor(v_amount * v_rate);
+  if v_points < 1 then
+    raise exception 'That amount is too small to convert' using errcode = 'P0001';
+  end if;
+
+  update public.balances
+     set usdt = round(usdt - v_amount, 8),
+         points = points + v_points,
+         updated_at = now()
+   where user_id = v_user;
+
+  perform public.wallet_tx(v_user, 'convert', -v_amount,
+    '$' || v_amount || ' USDT converted to ' || v_points || ' points', 'completed', null, null);
 
   return public.wallet_state();
 end;
@@ -829,6 +885,7 @@ revoke all on function public.wallet_state()                                  fr
 revoke all on function public.wallet_create_deposit(numeric, text, text)      from public, anon;
 revoke all on function public.wallet_create_withdraw(numeric, text, text)     from public, anon;
 revoke all on function public.wallet_convert_points(bigint)                   from public, anon;
+revoke all on function public.wallet_convert_usdt(numeric)                    from public, anon;
 revoke all on function public.jobs_feed()                                     from public, anon;
 revoke all on function public.jobs_post(text, text, text, text, text, numeric, int) from public, anon;
 revoke all on function public.jobs_submit_proof(uuid, text, text)             from public, anon;
@@ -844,6 +901,7 @@ grant execute on function public.wallet_state()                                 
 grant execute on function public.wallet_create_deposit(numeric, text, text)      to authenticated;
 grant execute on function public.wallet_create_withdraw(numeric, text, text)     to authenticated;
 grant execute on function public.wallet_convert_points(bigint)                   to authenticated;
+grant execute on function public.wallet_convert_usdt(numeric)                    to authenticated;
 grant execute on function public.jobs_feed()                                     to authenticated;
 grant execute on function public.jobs_post(text, text, text, text, text, numeric, int) to authenticated;
 grant execute on function public.jobs_submit_proof(uuid, text, text)             to authenticated;

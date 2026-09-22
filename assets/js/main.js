@@ -247,14 +247,15 @@
   }
 
   function defaultMember(name, email, memberId) {
+    const id = memberId || makeLocalMemberId();
     return {
       name,
       email,
-      memberId: memberId || makeLocalMemberId(),
+      memberId: id,
       credits: 25,
       earned: 25,
       spent: 0,
-      refCode: "FF-" + name.replace(/\s+/g, "").slice(0, 4).toUpperCase() + "-" + Math.floor(1000 + Math.random() * 9000),
+      refCode: "FF-" + (String(id).replace(/[^a-z0-9]/gi, "").toUpperCase() + "FLEXFAM").slice(0, 8),
       joined: Date.now(),
       activity: [{ type: "earn", text: "Welcome bonus — glad to have you on FlexFam!", amount: 25, at: Date.now() }],
       campaigns: [],
@@ -357,6 +358,8 @@
       users.push(member);
       DB.saveUsers(users);
       DB.setSession(email);
+      const ref = pendingRefCode();
+      if (ref) { recordLocalReferral(ref, email, name); clearPendingRef(); }
       return { member, confirmationRequired: false, localOnly: true };
     });
   }
@@ -385,11 +388,13 @@
   function signupMember(name, email, password) {
     const cfg = memberConfig();
     if (!cfg) return localSignup(name, email, password);
+    const refCode = pendingRefCode();
     return authRequest("/auth/v1/signup", {
-      body: { email, password, data: { display_name: name } },
+      body: { email, password, data: { display_name: name, ref_code: refCode || null } },
     }).then((result) => {
       if (!result.user || !result.user.id) throw new Error("The account could not be created. Please try again.");
       const member = rememberMember(name, email, result.user.id);
+      if (refCode) { recordLocalReferral(refCode, email, name); clearPendingRef(); }
       if (result.session) {
         DB.setAuth(result.session); DB.setSession(email);
         return { member, confirmationRequired: false, localOnly: false };
@@ -509,6 +514,121 @@
     store.set("ff_demo_campaigns_purged", 1);
   }
 
+
+  /* ---------- referrals ----------
+     A referral only counts when somebody SIGNS UP through the link. The
+     pending code is captured from ?ref= / #r/CODE on any page and consumed
+     by signupMember(). In server mode the database records it (see
+     supabase-community.sql); locally we keep a mirror in ff_referrals. */
+  const REF_PENDING = "ff_ref_pending";
+
+  function refCodeFor(user) {
+    if (!user) return "";
+    if (user.refCode && /^FF-/.test(user.refCode)) return user.refCode;
+    const seed = String(user.memberId || user.email || "member").replace(/[^a-z0-9]/gi, "").toUpperCase();
+    return "FF-" + (seed + "FLEXFAM").slice(0, 8);
+  }
+
+  function refLink(user) {
+    const base = location.origin && location.origin !== "null"
+      ? location.origin + location.pathname.replace(/[^/]*$/, "")
+      : "https://flexfam.io/";
+    return base + "signup.html?ref=" + encodeURIComponent(refCodeFor(user));
+  }
+
+  function captureRefCode() {
+    let code = "";
+    try {
+      const p = new URLSearchParams(location.search);
+      code = p.get("ref") || p.get("r") || "";
+      if (!code) {
+        const m = /(?:^#\/?r\/|^#ref=)([A-Za-z0-9-]+)/.exec(location.hash || "");
+        if (m) code = m[1];
+      }
+    } catch (e) {}
+    code = String(code || "").trim().toUpperCase();
+    if (code) store.set(REF_PENDING, code);
+    return store.get(REF_PENDING, "");
+  }
+
+  function pendingRefCode() { return String(store.get(REF_PENDING, "") || "").toUpperCase(); }
+  function clearPendingRef() { store.set(REF_PENDING, ""); }
+
+  function localReferrals() { return store.get("ff_referrals", []); }
+
+  function recordLocalReferral(code, newEmail, newName) {
+    if (!code) return;
+    const owner = DB.users().find((u) => refCodeFor(u).toUpperCase() === code.toUpperCase());
+    if (!owner || owner.email === newEmail) return;
+    const all = localReferrals();
+    if (all.some((r) => r.referred === newEmail)) return;
+    all.unshift({ code: code.toUpperCase(), owner: owner.email, referred: newEmail, name: newName || newEmail.split("@")[0], at: Date.now() });
+    store.set("ff_referrals", all);
+  }
+
+  /* { code, link, count, recent[] } for the current member. */
+  function referralStats() {
+    const u = currentUser();
+    if (!u) return { code: "", link: "", count: 0, recent: [] };
+    const mine = localReferrals().filter((r) => r.owner === u.email);
+    return {
+      code: refCodeFor(u),
+      link: refLink(u),
+      count: mine.length,
+      recent: mine.slice(0, 20),
+    };
+  }
+
+  /* Pull the authoritative referral stats when Supabase is configured. */
+  function loadReferralStats() {
+    const local = referralStats();
+    if (!hasServer()) return Promise.resolve(local);
+    return rpc("referral_stats").then((r) => {
+      if (!r) return local;
+      const code = r.code || local.code;
+      return {
+        code,
+        link: local.link.replace(/ref=[^&]*/, "ref=" + encodeURIComponent(code)),
+        count: Number(r.count || 0),
+        recent: (r.recent || []).map((x) => ({ name: x.name, at: Number(x.at) })),
+      };
+    }).catch(() => local);
+  }
+
+  /* ---------- member messages (admin broadcast / DM) ---------- */
+  function localMessages() { return store.get("ff_messages", []); }
+
+  function inboxMessages() {
+    const u = currentUser();
+    if (!u) return [];
+    const reads = store.get("ff_msg_reads", {})[u.email] || [];
+    return localMessages()
+      .filter((m) => m.audience === "all" || String(m.to || "").toLowerCase() === u.email)
+      .map((m) => Object.assign({}, m, { read: reads.indexOf(m.id) > -1 }))
+      .sort((a, b) => b.at - a.at);
+  }
+
+  function loadInbox() {
+    if (!hasServer()) return Promise.resolve(inboxMessages());
+    return rpc("messages_inbox").then((rows) => (rows || []).map((m) => ({
+      id: m.id, title: m.title, body: m.body, audience: m.audience,
+      at: Number(m.at), read: !!m.read,
+    }))).catch(() => inboxMessages());
+  }
+
+  function markInboxRead() {
+    const u = currentUser();
+    if (u) {
+      const all = store.get("ff_msg_reads", {});
+      all[u.email] = inboxMessages().map((m) => m.id);
+      store.set("ff_msg_reads", all);
+    }
+    if (!hasServer()) return Promise.resolve(inboxMessages());
+    return rpc("messages_mark_read").then((rows) => (rows || []).map((m) => ({
+      id: m.id, title: m.title, body: m.body, audience: m.audience,
+      at: Number(m.at), read: !!m.read,
+    }))).catch(() => inboxMessages());
+  }
 
   /* ---------- credits engine ---------- */
   function addActivity(user, type, text, amount) {
@@ -881,6 +1001,7 @@
   /* ---------- boot ---------- */
   document.addEventListener("DOMContentLoaded", () => {
     purgeSeedCampaigns();
+    captureRefCode();
     guard();
     initHeader();
     if (!document.querySelector(".global-support")) {
@@ -917,6 +1038,8 @@
     loginMember, signupMember,
     addCampaign, updateCampaign, deleteCampaign,
     awardCredits, spendCredits, syncCreditPills,
+    refCodeFor, refLink, referralStats, loadReferralStats, pendingRefCode, captureRefCode,
+    inboxMessages, loadInbox, markInboxRead,
     campSubsFor, myCampSubs, submitCampaignProof, reviewCampaignSub,
     toast, avatarColor, initials,
   };

@@ -95,14 +95,6 @@
         </div>
       </div>
 
-      <div class="panel reveal site-today" style="margin-bottom:16px">
-        <div class="panel-head"><div><h3>Site today</h3><p class="panel-sub">Live counts from the analytics database, updated for your timezone.</p></div><span class="status-pill on">Real data</span></div>
-        <div class="mini-stats" style="margin:0">
-          <div class="mini-stat"><b id="site-visitors">—</b><span>Visitors</span></div>
-          <div class="mini-stat"><b id="site-registered">—</b><span>Registered today</span></div>
-        </div>
-      </div>
-
       <div class="dash-grid">
         <div class="dash-stat reveal" style="--c:#ffd166">
           <span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.2c-.5-1-1.6-1.6-3-1.6-1.8 0-3 1-3 2.4 0 3.4 6 1.8 6 4.7 0 1.5-1.3 2.6-3.2 2.6-1.5 0-2.7-.7-3.2-1.8"/></svg></span>
@@ -154,10 +146,14 @@
         <div>
           <div class="panel reveal">
             <div class="panel-head"><h3>Refer &amp; earn</h3></div>
-            <p class="text-mute" style="font-size:13.5px;line-height:1.5">When a friend joins FlexFam, you get <b style="color:var(--green)">10% of their earnings for life</b> — automatically.</p>
+            <p class="text-mute" style="font-size:13.5px;line-height:1.5">Every friend who <b>signs up</b> with your link unlocks a <b style="color:var(--green)">free cloud mining rig</b> for you — plus 10% of their earnings for life.</p>
             <div class="ref-box">
-              <code id="ref-link">flexfam.io/r/—</code>
+              <code id="ref-link">—</code>
               <button class="btn btn-primary btn-sm" id="copy-ref">Copy</button>
+            </div>
+            <div class="rig-ticks" style="grid-template-columns:repeat(2,1fr);margin-top:12px">
+              <div><b id="ref-count">0</b><span>Referral signups</span></div>
+              <div><b id="ref-free">0</b><span>Free rigs unlocked</span></div>
             </div>
           </div>
 
@@ -170,31 +166,24 @@
             <a href="mining.html" class="btn btn-primary btn-sm btn-block" id="db-mine-cta">Start mining</a>
           </div>
 
-          <div class="panel reveal mt-16">
-            <div class="panel-head"><h3>Quick earning modes</h3><a href="earn.html">Try now</a></div>
-            <div class="mode-list">
-              <a class="mode-row" href="earn.html" style="--pf:#2aabee">
-                <span class="mode-ico" data-icon="telegram"></span>
-                <div><h5>Telegram Bot Start</h5><p>Bot start karke one-time bonus claim karo.</p></div>
-                <b>+15</b>
-              </a>
-              <a class="mode-row" href="earn.html" style="--pf:#34e5a5">
-                <span class="mode-ico" data-icon="website"></span>
-                <div><h5>Website Visit</h5><p>Website visit karke instant points grab karo.</p></div>
-                <b>+6</b>
-              </a>
-              <a class="mode-row" href="earn.html" style="--pf:#ffd166">
-                <span class="mode-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg></span>
-                <div><h5>Daily Check-in</h5><p>Roz login karke free daily reward collect karo.</p></div>
-                <b>+8</b>
-              </a>
-            </div>
+          <div class="panel reveal mt-16" id="msg-panel">
+            <div class="panel-head"><div><h3>Messages <span class="msg-badge hidden" id="msg-unread">0</span></h3><p class="panel-sub">Announcements and personal notes from the FlexFam team.</p></div><button class="btn btn-ghost btn-sm" id="msg-read-all">Mark all read</button></div>
+            <div class="msg-list" id="msg-list"></div>
+            <div class="empty-mini hidden" id="msg-empty"><b>No messages yet</b>Updates from the team will land here.</div>
           </div>
 
           <div class="panel reveal mt-16">
-            <div class="panel-head"><h3>Recent activity</h3><a href="earn.html">Earn more</a></div>
+            <div class="panel-head"><div><h3>Recent activity</h3><p class="panel-sub">Your latest points, mining and wallet movements.</p></div><a href="earn.html">Earn more</a></div>
             <div class="act-list" id="act-list"></div>
           </div>
+        </div>
+      </div>
+
+      <div class="panel reveal site-today mt-16">
+        <div class="panel-head"><div><h3>Site today — real data</h3><p class="panel-sub">Live counts straight from the analytics database, in your timezone.</p></div><span class="status-pill on">Real data</span></div>
+        <div class="mini-stats" style="margin:0">
+          <div class="mini-stat"><b id="site-visitors">—</b><span>Visitors</span></div>
+          <div class="mini-stat"><b id="site-registered">—</b><span>Registered today</span></div>
         </div>
       </div>
 
@@ -330,20 +319,56 @@ document.addEventListener("DOMContentLoaded", () => {
   const sum = weekly.reduce((a, b) => a + b, 0);
   document.getElementById("week-delta").textContent = sum.toLocaleString("en-IN") + " pts";
 
-  /* referral */
-  const refLink = document.getElementById("ref-link");
+  /* referral — a signup through the link unlocks a free mining rig */
+  const refLinkEl = document.getElementById("ref-link");
   const copyBtn = document.getElementById("copy-ref");
-  const code = user.refCode || "FLEXER";
-  refLink.textContent = "flexfam.io/r/" + code;
+  let refs = FF.referralStats();
+
+  function paintRef() {
+    refLinkEl.textContent = refs.link || "—";
+    document.getElementById("ref-count").textContent = Number(refs.count || 0).toLocaleString("en-IN");
+    const used = FF.M && FF.M.api.view()
+      ? (FF.M.api.view().contracts || []).filter((c) => c.plan === "free").length
+      : 0;
+    document.getElementById("ref-free").textContent = Math.max(0, Number(refs.count || 0) - used);
+  }
+  paintRef();
+  FF.loadReferralStats().then((r) => { refs = r; paintRef(); });
+
   copyBtn.addEventListener("click", async () => {
     try {
-      await navigator.clipboard.writeText("https://flexfam.io/r/" + code);
+      await navigator.clipboard.writeText(refs.link || "");
       copyBtn.textContent = "Copied! ✓";
-      FF.toast("Referral link copied!", "ok");
+      FF.toast("Referral link copied — a signup unlocks your free rig!", "ok");
       setTimeout(() => { copyBtn.textContent = "Copy"; }, 2000);
     } catch (err) {
       FF.toast("Couldn't copy — select the link manually", "err");
     }
+  });
+
+  /* messages — admin broadcasts and personal notes */
+  const msgList = document.getElementById("msg-list");
+  const msgEmpty = document.getElementById("msg-empty");
+  const msgBadge = document.getElementById("msg-unread");
+  const escMsg = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+
+  function renderMessages(list) {
+    const msgs = list || [];
+    const unread = msgs.filter((m) => !m.read).length;
+    msgBadge.textContent = unread;
+    msgBadge.classList.toggle("hidden", unread === 0);
+    msgEmpty.classList.toggle("hidden", msgs.length > 0);
+    msgList.innerHTML = msgs.slice(0, 12).map((m) => (
+      '<div class="msg-row' + (m.read ? "" : " unread") + '">' +
+        "<h5>" + (m.read ? "" : '<span class="msg-dot"></span>') + escMsg(m.title || (m.audience === "user" ? "Message for you" : "Announcement")) + "</h5>" +
+        "<p>" + escMsg(m.body) + "</p>" +
+        '<span class="msg-meta">' + (m.audience === "user" ? "Direct message" : "Broadcast") + " · " + timeAgo(Number(m.at)) + "</span>" +
+      "</div>"
+    )).join("");
+  }
+  FF.loadInbox().then(renderMessages);
+  document.getElementById("msg-read-all").addEventListener("click", () => {
+    FF.markInboxRead().then(renderMessages);
   });
 
   /* activity */
@@ -355,13 +380,43 @@ document.addEventListener("DOMContentLoaded", () => {
     if (s < 86400) return Math.floor(s / 3600) + " hr ago";
     return Math.floor(s / 86400) + "d ago";
   }
+  /* Points activity + USDT wallet + mining log, newest first. */
+  function collectActivity() {
+    const rows = (user.activity || []).map((a) => ({
+      text: a.text, at: Number(a.at), amount: Number(a.amount || 0), unit: "pts",
+    }));
+    try {
+      if (FF.W && FF.W.wallet) {
+        (FF.W.wallet(user.email).txns || []).slice(0, 15).forEach((t) => {
+          rows.push({ text: t.note || t.type, at: Number(t.at), amount: Number(t.amount || 0), unit: "USDT" });
+        });
+      }
+    } catch (e) {}
+    try {
+      const mv = FF.M && FF.M.api.view();
+      (mv && mv.log ? mv.log : []).slice(0, 15).forEach((l) => {
+        rows.push({ text: l.text, at: Number(l.at), amount: Number(l.amount || 0), unit: "USDT" });
+      });
+    } catch (e) {}
+    return rows.filter((r) => r.at).sort((a, b) => b.at - a.at);
+  }
+
+  function fmtAmount(r) {
+    if (!r.amount) return "—";
+    const sign = r.amount < 0 ? "−" : "+";
+    const abs = Math.abs(r.amount);
+    return r.unit === "USDT"
+      ? sign + "$" + abs.toFixed(abs < 1 ? 4 : 2)
+      : sign + Math.round(abs).toLocaleString("en-IN");
+  }
+
   function renderActivity() {
-    const acts = user.activity || [];
+    const acts = collectActivity();
     if (!acts.length) {
       actList.innerHTML = '<div class="empty-state" style="padding:28px 10px"><p>No activity yet — earn some points on the Earn page!</p></div>';
       return;
     }
-    actList.innerHTML = acts.slice(0, 10).map((a) => {
+    actList.innerHTML = acts.slice(0, 12).map((a) => {
       const minus = a.amount < 0;
       return `
       <div class="act-row">
@@ -370,8 +425,8 @@ document.addEventListener("DOMContentLoaded", () => {
             ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>'
             : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>'}
         </span>
-        <p>${a.text}<small>${timeAgo(a.at)}</small></p>
-        <span class="a-amount ${minus ? "minus" : "plus"}">${minus ? "" : "+"}${a.amount}</span>
+        <p>${escMsg(a.text)}<small>${timeAgo(a.at)} · ${a.unit}</small></p>
+        <span class="a-amount ${minus ? "minus" : a.amount ? "plus" : ""}">${fmtAmount(a)}</span>
       </div>`;
     }).join("");
   }
@@ -420,6 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderCamps();
   renderActivity();
+  setInterval(renderActivity, 20000);
   renderCampReviews();
   paintStats();
 });

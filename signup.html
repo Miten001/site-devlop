@@ -28,6 +28,10 @@
   <div class="auth-card reveal in">
     <h1>Join the <span class="grad-text">Fam</span> 🎉</h1>
     <p class="sub">Set up your account in 2 minutes — get <b style="color:var(--green)">+25 bonus points</b> today.</p>
+    <div class="fee-hint hidden" id="ref-hint" style="margin-bottom:16px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+      <span>You were invited by <b id="ref-hint-code">a friend</b> — your signup unlocks a free cloud mining rig for them. 🎁</span>
+    </div>
     <form id="signup-form">
       <div class="field">
         <label for="name">Display name</label>
@@ -57,5 +61,13 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.0"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var code = FF.captureRefCode();
+  if (!code) return;
+  document.getElementById("ref-hint-code").textContent = code;
+  document.getElementById("ref-hint").classList.remove("hidden");
+});
+</script>
 </body>
 </html>
