@@ -64,9 +64,13 @@
   /* ---------- plans ---------- */
   const PLANS = [
     {
-      key: "free", name: "Free Starter Rig", tag: "FREE",
-      ghs: 30, days: 7, priceUsd: 0, color: "#34e5a5", free: true,
-      perks: ["No payment needed", "Renewable when it expires", "Mined rewards land in your wallet"],
+      key: "free", name: "Free Starter Rig", tag: "REFERRAL FREE",
+      ghs: 60, days: 10, priceUsd: 0, color: "#34e5a5", free: true,
+      perks: [
+        "Unlocks when a friend signs up with your referral link",
+        "60 GH/s for 10 days — no payment needed",
+        "Mined rewards land straight in your wallet",
+      ],
     },
     {
       key: "bronze", name: "Bronze Miner", tag: "STARTER",
@@ -244,6 +248,12 @@
     if (p.free) {
       const running = state(email).contracts.some((c) => c.plan === "free" && c.status === "active" && Date.now() < c.endsAt);
       if (running) throw new Error("Your free starter rig is already running — renew it when it expires");
+      /* One free rig per successful referral signup — no invites, no rig. */
+      const refs = FF.referralStats ? FF.referralStats().count : 0;
+      const used = state(email).contracts.filter((c) => c.plan === "free").length;
+      if (refs <= used) {
+        throw new Error("Invite a friend first — the free rig unlocks when someone signs up with your referral link");
+      }
     }
 
     const paid = charge(email, p.priceUsd, currency, "Hashrate purchase — " + p.name + " (" + fmtHash(p.ghs) + ")");

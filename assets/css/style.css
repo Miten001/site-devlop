@@ -2562,3 +2562,37 @@ body.modal-open { overflow: hidden; }
   .btn-hot, .btn-hot::before, .float-chip, .eyebrow.pulse .dot, .pf-live i { animation: none !important; }
   .rw { transition: none; }
 }
+
+/* ============================================================
+   Referral-gated free rig + member message inbox (2026-09)
+   ============================================================ */
+.free-ref {
+  border: 1px solid rgba(52, 229, 165, .28);
+  background: linear-gradient(180deg, rgba(52, 229, 165, .07), rgba(52, 229, 165, .02));
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.free-ref.ok { border-color: rgba(52, 229, 165, .55); box-shadow: 0 0 0 1px rgba(52, 229, 165, .12) inset; }
+.free-ref .fr-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.free-ref .fr-head h4 { margin: 0; font-size: 15.5px; }
+.free-ref .fr-note { margin: 0 0 12px; font-size: 13.5px; color: var(--ink-dim); }
+.free-ref .fr-small { margin: 10px 0 0; font-size: 12px; color: var(--ink-mute); line-height: 1.5; }
+.plan-card .p-lock { margin: 0 0 8px; font-size: 12px; color: var(--ink-mute); text-align: center; line-height: 1.45; }
+.plan-card .btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* message inbox */
+.msg-list { display: flex; flex-direction: column; gap: 10px; }
+.msg-row {
+  border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+  background: var(--glass-2); position: relative;
+}
+.msg-row.unread { border-color: rgba(124, 92, 255, .5); background: rgba(124, 92, 255, .07); }
+.msg-row h5 { margin: 0 0 4px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.msg-row p { margin: 0; font-size: 13px; color: var(--ink-dim); line-height: 1.55; white-space: pre-wrap; }
+.msg-row .msg-meta { display: block; margin-top: 7px; font-size: 11.5px; color: var(--ink-mute); }
+.msg-row .msg-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fuchsia); flex: none; }
+.msg-badge {
+  display: inline-block; min-width: 18px; padding: 1px 6px; border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 11px; font-weight: 800; text-align: center;
+}

@@ -87,6 +87,21 @@
   .ev-pill.wallet { color: var(--blue); border-color: rgba(47,111,237,.35); }
   .ev-pill.mining { color: var(--amber); border-color: rgba(154,100,16,.3); }
 
+  /* broadcast / direct message composer */
+  .msg-panel { margin-top: 16px; }
+  .msg-panel textarea { width: 100%; min-height: 110px; resize: vertical; }
+  .msg-modes { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .msg-modes .seg {
+    border: 1px solid var(--line); background: var(--glass-2); color: var(--ink-dim);
+    padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .msg-modes .seg.on { border-color: var(--fuchsia); color: var(--ink); background: rgba(224,72,159,.12); }
+  .msg-sent { max-height: 240px; }
+  .msg-audience { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; border: 1px solid var(--line); color: var(--ink-dim); }
+  .msg-audience.all { color: var(--green); border-color: rgba(52,229,165,.35); }
+  .msg-audience.user { color: var(--blue); border-color: rgba(47,111,237,.35); }
+  .coin-unit { font-size: 11px; color: var(--ink-mute); font-weight: 600; }
+
   .hidden { display: none !important; }
 </style>
 </head>
@@ -212,6 +227,36 @@
       </div>
     </section>
 
+    <section class="panel msg-panel" aria-labelledby="msg-title">
+      <div class="panel-head">
+        <div><h3 id="msg-title">Messages — broadcast or direct</h3><p class="panel-sub">Send an announcement to every member, or a private note to one account. Members see it on their dashboard.</p></div>
+        <span class="status-pill on" id="msg-count">0 sent</span>
+      </div>
+      <div class="msg-modes">
+        <button type="button" class="seg on" data-msg-mode="all">📢 Broadcast to everyone</button>
+        <button type="button" class="seg" data-msg-mode="user">✉️ Direct message</button>
+      </div>
+      <div class="field hidden" id="msg-to-field">
+        <label for="msg-to">Member email</label>
+        <input type="email" id="msg-to" placeholder="member@example.com" list="msg-emails" />
+        <datalist id="msg-emails"></datalist>
+      </div>
+      <div class="field">
+        <label for="msg-title-in">Title (optional)</label>
+        <input type="text" id="msg-title-in" placeholder="e.g. New mining plans are live" maxlength="120" />
+      </div>
+      <div class="field">
+        <label for="msg-body">Message</label>
+        <textarea id="msg-body" placeholder="Write what your members should see…"></textarea>
+      </div>
+      <button class="btn btn-primary btn-sm" id="msg-send">Send message</button>
+
+      <h4 class="pay-sub-head">Recently sent</h4>
+      <div class="scroll-box msg-sent">
+        <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Sent</th><th>Audience</th><th>Message</th></tr></thead><tbody id="msg-sent-body"><tr><td colspan="3">Loading…</td></tr></tbody></table></div>
+      </div>
+    </section>
+
     <div class="admin-cols">
       <div>
         <div class="panel">
@@ -266,15 +311,19 @@
       <span id="mm-warn-text"></span>
     </div>
 
-    <h4 class="mm-h">Edit coins / balance</h4>
+    <h4 class="mm-h">Edit coins / USDT</h4>
     <div class="mm-edit">
+      <div class="msg-modes" style="margin-bottom:12px">
+        <button type="button" class="seg on" data-bal-mode="adjust">± Add / subtract</button>
+        <button type="button" class="seg" data-bal-mode="set">= Set exact value</button>
+      </div>
       <div class="row">
         <div class="field">
-          <label>Coins / points (+/−)</label>
+          <label id="mm-points-lbl">Coins / points (+/−)</label>
           <input type="text" inputmode="numeric" id="mm-points-in" placeholder="e.g. 500 or -200" />
         </div>
         <div class="field">
-          <label>USDT (+/−)</label>
+          <label id="mm-usdt-lbl">USDT (+/−)</label>
           <input type="text" inputmode="decimal" id="mm-usdt-in" placeholder="e.g. 10 or -5.50" />
         </div>
       </div>
@@ -308,12 +357,17 @@
   var balanceMap = {};
   var lastQueue = null;
   var currentMember = null;
+  var balMode = "adjust";
+  var msgMode = "all";
   var SKEY = "ff_admin_session";
 
   function fmtUsd(n) {
     return "$" + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   function fmtPts(n) { return Number(n || 0).toLocaleString("en-IN"); }
+  /* Coins are points, not dollars — they must never render with a $ sign. */
+  function fmtCoins(n) { return fmtPts(Math.round(Number(n || 0))) + " coins"; }
+  function fmtUsdt(n) { return fmtUsd(n) + " USDT"; }
   function fdateMs(ms) {
     return new Date(Number(ms || 0)).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
   }
@@ -413,6 +467,9 @@
       }
       if (memberRows) {
         renderMembers(memberRows);
+        $("msg-emails").innerHTML = memberRows.map(function (m) {
+          return '<option value="' + esc(m.email || "") + '"></option>';
+        }).join("");
       } else {
         renderMembers([], membersError);
         reportLoadError(membersError, "members");
@@ -420,6 +477,7 @@
     });
 
     loadPayments();
+    loadMessages();
   }
 
   function render(es) {
@@ -483,7 +541,7 @@
       var joined = member.created_at ? new Date(member.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
       var bal = balanceMap[rawId];
       var coinsCell = bal
-        ? '<td class="num" title="USDT balance: ' + esc(fmtUsd(bal.usdt)) + '">' + esc(fmtPts(bal.points)) + '<br><span style="font-size:11px;color:var(--ink-mute);font-weight:600">' + esc(fmtUsd(bal.usdt)) + '</span></td>'
+        ? '<td class="num" title="Coins and USDT are separate balances">' + esc(fmtPts(bal.points)) + ' <span class="coin-unit">coins</span><br><span class="coin-unit">' + esc(fmtUsdt(bal.usdt)) + '</span></td>'
         : '<td class="num" style="color:var(--ink-mute);font-weight:600">—</td>';
       return '<tr><td><code class="member-id" title="' + esc(rawId) + '">' + esc(accountId) + '</code></td>' +
         '<td class="k">' + esc(member.display_name || "Member") + '</td>' +
@@ -584,18 +642,23 @@
       $("mm-usdt").textContent = fmtUsd(bal ? bal.usdt : 0);
       $("mm-locked").textContent = fmtUsd(bal ? bal.locked : 0);
       $("mm-mined").textContent = fmtUsd(acc ? acc.unclaimed : 0);
+      /* prefill the "set exact" inputs with the live values */
+      $("mm-points-in").dataset.current = bal ? bal.points : 0;
+      $("mm-usdt-in").dataset.current = bal ? Number(bal.usdt || 0).toFixed(4) : "0";
+      if (balMode === "set") fillExact();
 
       var rows = [];
       (rs[2] || []).forEach(function (t) {
-        rows.push({ at: t.at, src: "wallet", type: t.type, note: (t.note || "") + (t.status && t.status !== "completed" ? " (" + t.status + ")" : ""), amt: Number(t.amount || 0) });
+        rows.push({ at: t.at, src: "wallet", type: t.type, unit: "usdt", note: (t.note || "") + (t.status && t.status !== "completed" ? " (" + t.status + ")" : ""), amt: Number(t.amount || 0) });
       });
       (rs[3] || []).forEach(function (l) {
-        rows.push({ at: l.at, src: "mining", type: l.type, note: l.detail || "", amt: Number(l.amount || 0) });
+        rows.push({ at: l.at, src: "mining", type: l.type, unit: "usdt", note: l.detail || "", amt: Number(l.amount || 0) });
       });
       rows.sort(function (a, b) { return new Date(b.at) - new Date(a.at); });
       $("mm-activity").innerHTML = rows.slice(0, 60).map(function (r) {
-        var amt = r.amt > 0 ? '<td class="num"><span class="amt-pos">+' + esc(fmtUsd(r.amt)) + "</span></td>"
-          : r.amt < 0 ? '<td class="num"><span class="amt-neg">−' + esc(fmtUsd(-r.amt)) + "</span></td>"
+        var show = function (n) { return r.unit === "coins" ? fmtCoins(n) : fmtUsdt(n); };
+        var amt = r.amt > 0 ? '<td class="num"><span class="amt-pos">+' + esc(show(r.amt)) + "</span></td>"
+          : r.amt < 0 ? '<td class="num"><span class="amt-neg">−' + esc(show(-r.amt)) + "</span></td>"
           : '<td class="num" style="color:var(--ink-mute)">—</td>';
         return "<tr><td style='white-space:nowrap'>" + esc(new Date(r.at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })) + "</td>" +
           '<td><span class="ev-pill ' + esc(r.src) + '">' + esc(r.src + " · " + r.type) + "</span></td>" +
@@ -606,6 +669,54 @@
         $("mm-warn-text").textContent = "Could not read " + fails.join(", ") + " — run the updated supabase-mining.sql (it adds the admin read policies) and supabase-wallet.sql once, then refresh.";
         $("mm-warn").classList.remove("hidden");
       }
+    });
+  }
+
+  /* ---------- balance editor mode ---------- */
+  function fillExact() {
+    var p = $("mm-points-in"), u = $("mm-usdt-in");
+    p.value = p.dataset.current != null ? p.dataset.current : "";
+    u.value = u.dataset.current != null ? u.dataset.current : "";
+  }
+
+  function setBalMode(mode) {
+    balMode = mode === "set" ? "set" : "adjust";
+    document.querySelectorAll("[data-bal-mode]").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-bal-mode") === balMode);
+    });
+    var exact = balMode === "set";
+    $("mm-points-lbl").textContent = exact ? "Coins / points — exact value" : "Coins / points (+/−)";
+    $("mm-usdt-lbl").textContent = exact ? "USDT — exact value" : "USDT (+/−)";
+    $("mm-points-in").placeholder = exact ? "e.g. 2500" : "e.g. 500 or -200";
+    $("mm-usdt-in").placeholder = exact ? "e.g. 12.50" : "e.g. 10 or -5.50";
+    $("mm-apply").textContent = exact ? "Set balance & save" : "Apply & save";
+    if (exact) fillExact(); else { $("mm-points-in").value = ""; $("mm-usdt-in").value = ""; }
+  }
+
+  /* ---------- messages ---------- */
+  function setMsgMode(mode) {
+    msgMode = mode === "user" ? "user" : "all";
+    document.querySelectorAll("[data-msg-mode]").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-msg-mode") === msgMode);
+    });
+    $("msg-to-field").classList.toggle("hidden", msgMode !== "user");
+  }
+
+  function loadMessages() {
+    rpc("messages_admin_recent").then(function (rows) {
+      rows = rows || [];
+      $("msg-count").textContent = rows.length + (rows.length === 1 ? " sent" : " sent");
+      $("msg-sent-body").innerHTML = rows.map(function (m) {
+        var who = m.audience === "user" ? esc(m.to || "member") : "Everyone";
+        return "<tr><td style='white-space:nowrap'>" + esc(fdateMs(m.at)) + "</td>" +
+          '<td><span class="msg-audience ' + esc(m.audience) + '">' + who + "</span></td>" +
+          '<td class="k" style="max-width:420px;white-space:normal">' +
+            (m.title ? "<b>" + esc(m.title) + "</b><br>" : "") + esc(m.body) + "</td></tr>";
+      }).join("") || '<tr><td colspan="3">No messages sent yet.</td></tr>';
+    }).catch(function (err) {
+      var m = (err && err.message) || "";
+      $("msg-count").textContent = "Setup needed";
+      $("msg-sent-body").innerHTML = '<tr><td colspan="3">Run <code>supabase-community.sql</code> once in the Supabase SQL editor to enable messages.</td></tr>';
     });
   }
 
@@ -680,25 +791,39 @@
       if (e.key === "Escape" && $("member-modal").classList.contains("open")) closeMember();
     });
 
-    /* edit coins / balance from the member modal */
+    /* edit coins / balance from the member modal — adjust or set exact */
+    document.querySelectorAll("[data-bal-mode]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        setBalMode(b.getAttribute("data-bal-mode"));
+      });
+    });
+
     $("mm-apply").addEventListener("click", function () {
       if (!currentMember) return;
-      var pts = Math.round(Number($("mm-points-in").value || 0));
-      var usd = Number($("mm-usdt-in").value || 0);
-      if (isNaN(pts) || isNaN(usd)) { toast("Amounts must be numbers", true); return; }
-      if (!pts && !usd) { toast("Enter a coins or USDT amount first", true); return; }
+      var rawP = String($("mm-points-in").value).trim();
+      var rawU = String($("mm-usdt-in").value).trim();
+      var pts = rawP === "" ? null : Math.round(Number(rawP));
+      var usd = rawU === "" ? null : Number(rawU);
+      if ((pts !== null && isNaN(pts)) || (usd !== null && isNaN(usd))) { toast("Amounts must be numbers", true); return; }
+      if (pts === null && usd === null) { toast("Enter a coins or USDT amount first", true); return; }
+
+      var exact = balMode === "set";
+      if (!exact && !pts && !usd) { toast("Enter a coins or USDT amount first", true); return; }
+      if (exact && ((pts !== null && pts < 0) || (usd !== null && usd < 0))) {
+        toast("An exact balance cannot be negative", true); return;
+      }
+
       var btn = this;
       btn.disabled = true;
-      rpc("mining_admin_adjust", {
+      rpc(exact ? "mining_admin_set" : "mining_admin_adjust", {
         p_email: currentMember.email,
         p_usdt: usd,
         p_points: pts,
         p_note: $("mm-note-in").value.trim()
       }).then(function (r) {
-        toast(currentMember.email + " → " + fmtPts(r.points) + " coins · " + fmtUsd(r.usdt));
-        $("mm-points-in").value = "";
-        $("mm-usdt-in").value = "";
+        toast(currentMember.email + " → " + fmtCoins(r.points) + " · " + fmtUsdt(r.usdt));
         $("mm-note-in").value = "";
+        if (!exact) { $("mm-points-in").value = ""; $("mm-usdt-in").value = ""; }
         loadMemberDetail(currentMember);
         api("/rest/v1/balances?select=user_id,usdt,points&limit=2000").then(function (rows) {
           balanceMap = {};
@@ -707,9 +832,42 @@
         }).catch(function () {});
       }).catch(function (err) {
         var m = (err && err.message) || "";
-        if (/mining_admin_adjust|does not exist|could not find|function|PGRST/i.test(m)) m = "Coin editor needs the server migration — run supabase-mining.sql once in the Supabase SQL editor.";
+        if (/mining_admin_set|mining_admin_adjust|does not exist|could not find|function|PGRST/i.test(m)) {
+          m = exact
+            ? "\"Set exact\" needs the new migration — run supabase-community.sql once in the Supabase SQL editor."
+            : "Coin editor needs the server migration — run supabase-mining.sql once in the Supabase SQL editor.";
+        }
         toast(m, true);
       }).then(function () { btn.disabled = false; });
+    });
+
+    /* messages — broadcast to all or a direct note to one member */
+    document.querySelectorAll("[data-msg-mode]").forEach(function (b) {
+      b.addEventListener("click", function () { setMsgMode(b.getAttribute("data-msg-mode")); });
+    });
+
+    $("msg-send").addEventListener("click", function () {
+      var body = $("msg-body").value.trim();
+      var to = msgMode === "user" ? $("msg-to").value.trim().toLowerCase() : "";
+      if (!body) { toast("Write a message first", true); return; }
+      if (msgMode === "user" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { toast("Enter the member's email", true); return; }
+      var btn = this, label = btn.textContent;
+      btn.disabled = true; btn.textContent = "Sending…";
+      rpc("messages_admin_send", { p_email: to, p_title: $("msg-title-in").value.trim(), p_body: body })
+        .then(function (r) {
+          toast(r && r.audience === "user" ? "Message sent to " + r.to : "Broadcast sent to every member");
+          $("msg-body").value = "";
+          $("msg-title-in").value = "";
+          loadMessages();
+        })
+        .catch(function (err) {
+          var m = (err && err.message) || "unknown error";
+          if (/messages_admin_send|does not exist|could not find|PGRST/i.test(m)) {
+            m = "Messages need the new migration — run supabase-community.sql once in the Supabase SQL editor.";
+          }
+          toast(m, true);
+        })
+        .then(function () { btn.disabled = false; btn.textContent = label; });
     });
 
     /* approve / reject payment requests */

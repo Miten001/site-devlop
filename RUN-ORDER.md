@@ -38,3 +38,23 @@ update public.mining_config
 3. [`supabase-wallet.sql`](supabase-wallet.sql) (#3) — **dobara run karo** (payment queue + settle RPCs)
 
 Saari files idempotent hain — dobara run karne se data delete nahi hota. Agar in-panel kisi section me "run the migration" wala warning dikhe, iska matlab corresponding file abhi run nahi hui.
+
+---
+
+## Referral free rig + messages + coin editor (2026-09 update)
+
+Naya file: [`supabase-community.sql`](supabase-community.sql) — ise **#4 ke baad, sabse aakhir me** ek baar run karo (idempotent hai).
+
+| # | File | Kya add karta hai |
+|---|------|-------------------|
+| 5 | [`supabase-community.sql`](supabase-community.sql) | `referral_codes` / `referrals` + `referral_stats()`, free rig ka referral gate (`mining_buy_plan` update), `messages` + `message_reads` (`messages_admin_send`, `messages_admin_recent`, `messages_inbox`, `messages_mark_read`), aur `mining_admin_set()` (exact coin/USDT value) |
+
+Kya badla:
+
+* **Free Starter Rig ab referral se unlock hota hai.** Pehle sabko milta tha; ab har **successful signup** (koi aapke `signup.html?ref=FF-XXXXXXXX` link se account banata hai) ek free rig unlock karta hai. Sirf link click karne se kuch nahi hota.
+* Free rig ka output thoda badha diya: **30 GH/s / 7 din → 60 GH/s / 10 din**.
+* **Messages:** admin panel se poore members ko **broadcast** ya kisi ek member ko **direct message** bhejo. Member ko wo dashboard ke "Messages" panel me dikhta hai, unread badge ke saath.
+* **Admin coin editor:** ab `± Add / subtract` ke saath `= Set exact value` mode bhi hai, aur coins pe galat `$` sign nahi lagta (coins = coins, USDT = USDT alag dikhte hain).
+* Dashboard se **Quick earning modes** panel hata diya, **Recent activity** ab points + wallet + mining sab merge karke dikhata hai, aur **"Site today — real data"** card page ke sabse neeche chala gaya hai.
+
+> Bina Supabase ke bhi sab kaam karta hai (browser-only fallback): referrals `ff_referrals` me, messages `ff_messages` me local store hote hain.
