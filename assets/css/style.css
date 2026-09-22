@@ -2597,6 +2597,18 @@ body.modal-open { overflow: hidden; }
   background: var(--danger); color: #fff; font-size: 11px; font-weight: 800; text-align: center;
 }
 
+/* Sidebar shortcuts for inbox and activity drawer */
+.side-panel-link { width: 100%; display: flex; align-items: center; gap: 10px; border: 0; background: transparent; color: var(--ink-dim); font: inherit; text-align: left; padding: 11px 14px; border-radius: 10px; cursor: pointer; }
+.side-panel-link:hover { color: var(--ink); background: var(--glass-2); }
+.side-panel-link svg { width: 19px; height: 19px; flex: none; }
+.side-msg-badge { margin-left: auto; min-width: 18px; padding: 1px 6px; border-radius: 999px; background: var(--danger); color: white; font-size: 11px; font-weight: 800; text-align: center; }
+#msg-panel, #activity-panel { display: none; }
+.side-panel-overlay { position: fixed; inset: 0; z-index: 100; display: flex; justify-content: flex-end; background: rgba(3, 6, 20, .62); backdrop-filter: blur(4px); }
+.side-panel-overlay.hidden { display: none; }
+.side-panel-drawer { position: relative; width: min(520px, 94vw); height: 100%; overflow-y: auto; padding: 62px 22px 24px; background: var(--bg, #101225); box-shadow: -12px 0 40px rgba(0,0,0,.3); }
+.side-panel-drawer #msg-panel, .side-panel-drawer #activity-panel { display: block; margin: 0; }
+.side-panel-close { position: absolute; top: 16px; right: 20px; border: 0; background: transparent; color: var(--ink); font-size: 32px; line-height: 1; cursor: pointer; }
+
 /* segmented toggle — used by the wallet convert directions and admin panels */
 .msg-modes { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .msg-modes .seg {
