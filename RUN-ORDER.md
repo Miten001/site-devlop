@@ -66,3 +66,16 @@ Kya badla:
 `wallet_request_withdraw()` me UPI ID validate karne wala regex `{2,256}` use kar raha tha. **Postgres regex me repetition count 255 se zyada nahi ho sakta**, isliye har UPI withdrawal pe ye error aata tha. Ab wo `{2,255}` hai (UPI ID waise bhi itni lambi hoti hi nahi).
 
 Fix live karne ke liye [`supabase-wallet.sql`](supabase-wallet.sql) ko **ek baar dobara run karo** (idempotent hai, data safe rehta hai).
+
+---
+
+## UPI deposit + withdraw live (2026-09)
+
+UPI ab **deposit aur withdraw dono** me enabled hai.
+
+* **Deposit UPI ID:** `ravanyt001-2@okaxis`
+* **QR:** `assets/img/deposit-upi-qr.png` — standard UPI intent URI (`upi://pay?pa=ravanyt001-2@okaxis&pn=FlexFam&cu=INR`), GPay / PhonePe / Paytm / BHIM sab me scan hota hai
+* Deposit form UPI choose karne par TXID ki jagah **UTR / reference number** maangta hai, aur warning list bhi UPI wali dikhati hai
+* Withdraw pehle se UPI support karta tha — wahan member apni khud ki UPI ID daalta hai
+
+Server pe live karne ke liye [`supabase-wallet.sql`](supabase-wallet.sql) **ek baar dobara run karo** (`wallet_networks` ka UPI row update ho jayega + UTR wala error message).

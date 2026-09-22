@@ -83,8 +83,10 @@ insert into public.wallet_networks (network, deposit, withdraw, address, qr, not
    '0xe85d1b6b330219de89e826f314a9bc2bcd595e53',
    'assets/img/deposit-bep20-qr.png',
    'BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.', 1),
-  ('UPI', false, true, null, null,
-   'INR equivalent paid to your UPI ID after manual review. Minimum withdrawal is $10.', 2)
+  ('UPI', true, true,
+   'ravanyt001-2@okaxis',
+   'assets/img/deposit-upi-qr.png',
+   'Pay the INR equivalent to this UPI ID, then submit your 12-digit UTR / reference number. Credited after manual review.', 2)
 on conflict (network) do update set
   deposit = excluded.deposit, withdraw = excluded.withdraw,
   address = excluded.address, qr = excluded.qr, note = excluded.note, sort = excluded.sort;
@@ -289,6 +291,9 @@ begin
     raise exception 'Select a supported deposit network' using errcode = 'P0001';
   end if;
   if p_txid is null or length(trim(p_txid)) < 8 then
+    if p_network = 'UPI' then
+      raise exception 'Enter the UPI reference / UTR number from your payment app' using errcode = 'P0001';
+    end if;
     raise exception 'Paste the transaction hash (TXID) from your wallet' using errcode = 'P0001';
   end if;
   if exists (select 1 from public.pay_requests where lower(txid) = lower(trim(p_txid))) then

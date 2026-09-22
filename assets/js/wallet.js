@@ -22,12 +22,15 @@
     networks: ["BEP20 (BSC)", "UPI"],
     depositAddress: {
       "BEP20 (BSC)": "0xe85d1b6b330219de89e826f314a9bc2bcd595e53",
+      "UPI": "ravanyt001-2@okaxis",
     },
     depositQr: {
       "BEP20 (BSC)": "assets/img/deposit-bep20-qr.png",
+      "UPI": "assets/img/deposit-upi-qr.png",
     },
     networkNote: {
       "BEP20 (BSC)": "BNB Smart Chain (BEP20) only. Do not send NFTs or any other token to this address.",
+      "UPI": "Pay the INR equivalent to this UPI ID, then submit your 12-digit UTR / reference number. Credited after manual review.",
     },
     /* Withdraw to USDT on BEP20 or receive the INR equivalent via UPI. */
     withdrawNetworks: ["BEP20 (BSC)", "UPI"],
@@ -87,7 +90,11 @@
     amount = Number(amount);
     if (!(amount >= CFG.minDeposit)) throw new Error("Minimum deposit is " + usd(CFG.minDeposit) + " USDT");
     if (!network || !CFG.depositAddress[network]) throw new Error("Select a supported deposit network");
-    if (!txid || txid.trim().length < 8) throw new Error("Paste the transaction hash (TXID) from your wallet");
+    if (!txid || txid.trim().length < 8) {
+      throw new Error(network === "UPI"
+        ? "Enter the UPI reference / UTR number from your payment app"
+        : "Paste the transaction hash (TXID) from your wallet");
+    }
     const req = {
       id: uid("dep"), kind: "deposit", email, name: name || email, amount,
       network, txid: txid.trim(), status: "pending", at: Date.now(),
@@ -541,7 +548,7 @@
       },
       networks: CFG.networks.map((n) => ({
         network: n, address: CFG.depositAddress[n], qr: CFG.depositQr[n],
-        note: CFG.networkNote[n] || (n === "UPI" ? "INR equivalent paid to your UPI ID after manual review." : ""),
+        note: CFG.networkNote[n] || "",
         deposit: !!CFG.depositAddress[n], withdraw: CFG.withdrawNetworks.indexOf(n) > -1,
       })),
       categories: CATEGORIES,
