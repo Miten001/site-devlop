@@ -24,6 +24,7 @@
       <li><a href="earn.html">Earn Points</a></li>
       <li><a href="mining.html">Mining</a></li>
       <li><a href="wallet.html">Wallet</a></li>
+      <li><a href="refer.html">Refer &amp; Earn</a></li>
     </ul>
     <div class="head-actions">
       <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
@@ -42,6 +43,7 @@
   <a href="earn.html">Earn Points</a>
   <a href="mining.html">Cloud Mining</a>
   <a href="wallet.html">Wallet</a>
+  <a href="refer.html">Refer &amp; Earn</a>
   <a href="add.html">Add Page</a>
   <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
 </nav>
@@ -58,6 +60,7 @@
       <a href="mining.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg> Cloud Mining</a>
       <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
       <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
+      <a href="refer.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg> Refer &amp; Earn</a>
       <div class="side-support">Support <a href="https://t.me/codex_here" target="_blank" rel="noopener">@codex_here</a></div>
       <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
     </aside>
@@ -94,6 +97,25 @@
   </div>
 </main>
 
+<div class="modal-veil" id="sub-modal" aria-hidden="true">
+  <div class="modal" id="sub-modal-card" role="dialog" aria-modal="true" aria-labelledby="sm-title" tabindex="-1">
+    <button class="m-close" data-close-submodal type="button" aria-label="Close submission"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3 id="sm-title">Submission</h3>
+    <p class="m-sub" id="sm-sub"></p>
+    <div style="text-align:left;margin:14px 0">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:6px">Worker ka proof</div>
+      <div id="sm-proof-text" style="font-size:13.6px;line-height:1.6;color:var(--ink-dim);word-break:break-word"></div>
+      <a id="sm-proof-link" class="btn btn-ghost btn-sm" style="margin-top:10px" target="_blank" rel="noopener">Proof link kholo ↗</a>
+      <div id="sm-proof-note" class="fee-hint" style="text-align:left;margin-top:10px"></div>
+      <div id="sm-shot-wrap" style="margin-top:12px"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-primary" id="sm-approve" style="flex:1">✓ Approve &amp; pay</button>
+      <button class="btn btn-ghost" id="sm-reject" style="flex:1">✗ Reject</button>
+    </div>
+  </div>
+</div>
+
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.1"></script>
@@ -129,9 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
     $("rev-empty").classList.toggle("hidden", pending.length > 0);
     $("rev-body").innerHTML = pending.map((s) => (
       "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.workerName) + "</b></td><td>" + esc(s.jobTitle) + "</td>" +
-      '<td><span class="mono-cut" title="' + esc(s.proof) + '">' + esc(s.proof) + "</span>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s.note) + "</span>" : "") + "</td>" +
+      '<td><span class="mono-cut" title="' + esc(s.proof) + '">' + esc(s.proof) + "</span> <b style=\"color:var(--green)\">" + (isImageProof(s.proof) ? "📷" : "") + "</b>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s.note) + "</span>" : "") + "</td>" +
       '<td class="num pos">' + W.usd(s.reward) + "</td>" +
-      '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-ok="' + s.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-no="' + s.id + '">Reject</button></td></tr>'
+      '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-view="' + s.id + '">View</button> <button class="btn btn-primary btn-sm" data-ok="' + s.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-no="' + s.id + '">Reject</button></td></tr>'
     )).join("");
 
     $("mine-empty").classList.toggle("hidden", jobs.length > 0);
@@ -150,9 +172,77 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function lock(el, on) { if (el) { el.disabled = on; el.style.opacity = on ? ".6" : ""; } }
 
+  /* ---------- submission detail modal: proof + screenshot dekho, phir decide ---------- */
+  function isImageProof(proof) {
+    const p = String(proof || "");
+    return /^https?:\/\//i.test(p) && (/\.(png|jpe?g|webp|gif)(\?|$)/i.test(p) || /\/object\/public\//i.test(p));
+  }
+  window.isImageProof = isImageProof;
+
+  const subModal = document.getElementById("sub-modal");
+  let currentSub = null;
+
+  function openSubModal(sub) {
+    currentSub = sub;
+    document.getElementById("sm-title").textContent = sub.jobTitle || "Task submission";
+    document.getElementById("sm-sub").innerHTML =
+      '<b style="color:var(--green)">' + W.usd(sub.reward) + " USDT</b> · worker: <b>" + esc(sub.workerName) + "</b> · " + fdate(sub.at);
+    const proof = String(sub.proof || "");
+    document.getElementById("sm-proof-text").textContent = proof;
+    const linkEl = document.getElementById("sm-proof-link");
+    if (/^https?:\/\//i.test(proof)) { linkEl.href = proof; linkEl.classList.remove("hidden"); }
+    else linkEl.classList.add("hidden");
+    const noteEl = document.getElementById("sm-proof-note");
+    if (sub.note) { noteEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span><b>Note:</b> ' + esc(sub.note) + "</span>"; noteEl.classList.remove("hidden"); }
+    else noteEl.classList.add("hidden");
+    const shotWrap = document.getElementById("sm-shot-wrap");
+    if (isImageProof(proof)) {
+      shotWrap.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:6px">Screenshot</div>' +
+        '<a href="' + esc(proof) + '" target="_blank" rel="noopener"><img src="' + esc(proof) + '" alt="proof screenshot" style="max-width:100%;border-radius:12px;border:1px solid var(--line,#e5e7eb)" onerror="this.parentNode.innerHTML=\'(image load nahi hui — link kholo upar)\'" /></a>';
+    } else shotWrap.innerHTML = "";
+    subModal.classList.add("open");
+    subModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+  }
+
+  function closeSubModal() {
+    subModal.classList.remove("open");
+    subModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+    currentSub = null;
+  }
+
+  document.querySelectorAll("[data-close-submodal]").forEach((b) => b.addEventListener("click", closeSubModal));
+  subModal.addEventListener("click", (e) => { if (e.target === subModal) closeSubModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && subModal.classList.contains("open")) closeSubModal(); });
+
+  document.getElementById("sm-approve").addEventListener("click", () => {
+    if (!currentSub) return;
+    const btn = document.getElementById("sm-approve");
+    lock(btn, true);
+    A.reviewSub(currentSub.id, true).then((f) => {
+      FF.toast("Approved — USDT released to the worker.", "ok");
+      closeSubModal(); render(f);
+    }).catch((err) => { fail(err); lock(btn, false); });
+  });
+
+  document.getElementById("sm-reject").addEventListener("click", () => {
+    if (!currentSub) return;
+    const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
+    const btn = document.getElementById("sm-reject");
+    lock(btn, true);
+    A.reviewSub(currentSub.id, false, reason).then((f) => {
+      FF.toast("Submission rejected.", "info");
+      closeSubModal(); render(f);
+    }).catch((err) => { fail(err); lock(btn, false); });
+  });
+
   document.addEventListener("click", (e) => {
-    const ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]"), cn = e.target.closest("[data-cancel]");
-    if (ok) {
+    const view = e.target.closest("[data-view]"), ok = e.target.closest("[data-ok]"), no = e.target.closest("[data-no]"), cn = e.target.closest("[data-cancel]");
+    if (view) {
+      const sub = (feed ? feed.inbox : []).find((s) => s.id === view.dataset.view);
+      if (sub) openSubModal(sub);
+    } else if (ok) {
       lock(ok, true);
       A.reviewSub(ok.dataset.ok, true).then((f) => { FF.toast("Approved — USDT released to the worker.", "ok"); render(f); })
         .catch((err) => { fail(err); lock(ok, false); });

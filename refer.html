@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Refer &amp; Earn — FlexFam</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css?v=2.0" />
+<link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="tasks.html">Task Market</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="mining.html">Mining</a></li>
+      <li><a href="wallet.html">Wallet</a></li>
+      <li><a href="refer.html" class="active">Refer &amp; Earn</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
+      <a href="dashboard.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="mining.html">Cloud Mining</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="refer.html" class="active">Refer &amp; Earn</a>
+  <a href="add.html">Add Page</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+    <aside class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Add Page</a>
+      <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
+      <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="mining.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg> Cloud Mining</a>
+      <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
+      <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
+      <a href="refer.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg> Refer &amp; Earn</a>
+      <div class="side-support">Support <a href="https://t.me/codex_here" target="_blank" rel="noopener">@codex_here</a></div>
+      <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Invite friends</span>
+          <h1>Refer &amp; <span class="grad-text">earn</span></h1>
+          <p class="sub">Apna link share karo — har friend jo signup karega, uske liye <b>tumhe free cloud mining rig</b> milegi, plus unki earnings ka 10% lifetime.</p>
+        </div>
+        <a href="dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
+      </div>
+
+      <div class="mini-stats">
+        <div class="mini-stat"><b id="ref-count">0</b><span>Referral signups</span></div>
+        <div class="mini-stat"><b id="ref-rigs">0</b><span>Free rigs unlocked</span></div>
+        <div class="mini-stat"><b id="ref-code">FF-…</b><span>Your referral code</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>Apna referral link</h3><p class="panel-sub">Is link se friend signup karega to referral turant count hoga.</p></div></div>
+        <div class="ref-box">
+          <code id="ref-link">—</code>
+          <button class="btn btn-primary btn-sm" id="copy-ref">Copy</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <a class="btn btn-ghost btn-sm" id="share-wa" target="_blank" rel="noopener" style="--pf:#25D366">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.14-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.89 1.22 3.09.15.2 2.1 3.2 5.1 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.76-.72 2-1.42.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35zM12.05 21.79h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.83 9.83 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.9-9.88a9.8 9.8 0 0 1 6.99 2.9 9.82 9.82 0 0 1 2.9 7c0 5.45-4.45 9.87-9.9 9.87zm8.42-18.29A11.79 11.79 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.15 1.6 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.68 1.45h.01c6.55 0 11.89-5.34 11.89-11.9 0-3.18-1.24-6.16-3.47-8.4z"/></svg>
+            WhatsApp par share karo
+          </a>
+          <a class="btn btn-ghost btn-sm" id="share-tg" target="_blank" rel="noopener" style="--pf:#2aabee">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9.04 15.31l-.38 5.32c.54 0 .77-.23 1.05-.5l2.52-2.41 5.22 3.83c.96.53 1.64.25 1.9-.88L21.9 4.6c.34-1.4-.5-1.94-1.44-1.6L2.2 9.92c-1.36.53-1.34 1.28-.23 1.62l4.62 1.44L17.3 6.1c.5-.33.96-.15.58.18L9.04 15.3z"/></svg>
+            Telegram par share karo
+          </a>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><div><h3>Kaise kaam karta hai?</h3></div></div>
+        <div class="rig-ticks" style="grid-template-columns:repeat(3,1fr)">
+          <div><span class="n" style="font-size:20px;font-weight:800;color:var(--green)">1</span><b>Link copy karo</b><span>Upar apna referral link copy karo</span></div>
+          <div><span style="font-size:20px;font-weight:800;color:var(--green)">2</span><b>Friend ko bhejo</b><span>WhatsApp / Telegram / kahin bhi share karo</span></div>
+          <div><span style="font-size:20px;font-weight:800;color:var(--green)">3</span><b>Reward pao</b><span>Signup par free rig + 10% lifetime earnings</span></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><div><h3>Recent referrals</h3><p class="panel-sub">Tumhare link se join hue members.</p></div></div>
+        <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Member</th><th>Join date</th></tr></thead><tbody id="ref-recent-body"></tbody></table></div>
+        <div class="empty-mini hidden" id="ref-empty"><b>Abhi koi referral nahi</b>Link share karke pehla referral lao!</div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/supabase-config.js?v=2.0"></script>
+<script src="assets/js/ff-analytics.js?v=2.0"></script>
+<script src="assets/js/main.js?v=2.1"></script>
+<script src="assets/js/wallet.js?v=2.1"></script>
+<script src="assets/js/mining.js?v=2.1"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const user = FF.currentUser();
+  if (!user) return;
+
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const fdate = (t) => t ? new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+  let refs = FF.referralStats();
+  function paint() {
+    document.getElementById("ref-code").textContent = refs.code || "FF-…";
+    document.getElementById("ref-link").textContent = refs.link || "—";
+    document.getElementById("ref-count").textContent = Number(refs.count || 0);
+    document.getElementById("ref-rigs").textContent = Number(refs.count || 0);
+    const shareText = encodeURIComponent("FlexFam join karo — tasks complete karke USDT kamao. Mera referral link: " + (refs.link || ""));
+    const wa = document.getElementById("share-wa");
+    if (refs.link) wa.href = "https://wa.me/?text=" + shareText; else wa.style.display = "none";
+    const tg = document.getElementById("share-tg");
+    if (refs.link) tg.href = "https://t.me/share/url?url=" + encodeURIComponent(refs.link) + "&text=" + shareText; else tg.style.display = "none";
+
+    const recent = refs.recent || [];
+    document.getElementById("ref-empty").classList.toggle("hidden", recent.length > 0);
+    document.getElementById("ref-recent-body").innerHTML = recent.map((r) =>
+      "<tr><td><b>" + esc(r.name || "Member") + "</b></td><td>" + fdate(r.at) + "</td></tr>"
+    ).join("");
+  }
+  paint();
+
+  FF.loadReferralStats().then((r) => { refs = r; paint(); });
+
+  document.getElementById("copy-ref").addEventListener("click", () => {
+    if (!refs.link) return;
+    const done = () => FF.toast("Referral link copy ho gaya! 🎉", "ok");
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(refs.link).then(done).catch(() => {});
+    else {
+      const ta = document.createElement("textarea");
+      ta.value = refs.link; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  });
+});
+</script>
+
+</body>
+</html>

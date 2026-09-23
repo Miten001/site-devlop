@@ -105,6 +105,26 @@
     } catch (e) { /* ignore */ }
   }
 
+  /* Browser me kamaye points (welcome bonus, daily missions, campaigns)
+     server ledger me NHI hote — aur campaigns_post/review SERVER balance
+     check karte hain. Isliye campaign banane/approve karne se PEHLE jo
+     points is browser me kamae gaye the (server snapshot se upar wale)
+     unhe wallet_import_points se server par bhej do. warna naya user
+     "Not enough points — you have 0 on the server" error par atak jaata hai. */
+  function ensurePointsImported() {
+    if (!FF.hasServer() || !FF.W || !FF.W.api) return Promise.resolve();
+    const u = FF.currentUser();
+    if (!u) return Promise.resolve();
+    const marks = FF.store.get("ff_srv_sync", {});
+    const mark = Object.assign({ pts: 0, usdt: 0 }, marks[u.email]);
+    const excess = Math.max(0, Math.floor(Number(u.credits || 0)) - Number(mark.pts || 0));
+    if (excess < 1) return Promise.resolve();
+    return FF.rpc("wallet_import_points", { p_points: excess })
+      .then(() => FF.W.api.wallet().catch(() => {}))
+      .catch(() => { /* import SQL installed nahi / daily cap — aage baro, server
+                        apna clear error de dega agar points kam hain */ });
+  }
+
   function refresh() {
     if (!FF.hasServer()) return Promise.resolve(false);
     return FF.rpc("campaigns_feed")
@@ -117,10 +137,10 @@
   const localAdd = FF.addCampaign;
   FF.addCampaign = function (camp) {
     if (!FF.hasServer()) return localAdd(camp);
-    return FF.rpc("campaigns_post", {
+    return ensurePointsImported().then(() => FF.rpc("campaigns_post", {
       p_id: camp.id, p_platform: camp.platform, p_action: camp.action,
       p_title: camp.title, p_url: camp.url, p_payout: Number(camp.payout || 0),
-    }).then((feed) => { adopt(feed); return camp; });
+    }).then((feed) => { adopt(feed); return camp; }));
   };
 
   const localSubmit = FF.submitCampaignProof;
@@ -134,9 +154,9 @@
   const localReview = FF.reviewCampaignSub;
   FF.reviewCampaignSub = function (subId, approve, reason) {
     if (!FF.hasServer()) return localReview(subId, approve, reason);
-    return FF.rpc("campaigns_review", {
+    return ensurePointsImported().then(() => FF.rpc("campaigns_review", {
       p_sub: subId, p_approve: !!approve, p_reason: reason || "",
-    }).then((feed) => { adopt(feed); syncWallet(); });
+    }).then((feed) => { adopt(feed); syncWallet(); }));
   };
 
   const localUpdate = FF.updateCampaign;
