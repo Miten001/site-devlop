@@ -103,9 +103,9 @@
     <h3 id="sm-title">Submission</h3>
     <p class="m-sub" id="sm-sub"></p>
     <div style="text-align:left;margin:14px 0">
-      <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:6px">Worker ka proof</div>
+      <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:6px">Worker's proof</div>
       <div id="sm-proof-text" style="font-size:13.6px;line-height:1.6;color:var(--ink-dim);word-break:break-word"></div>
-      <a id="sm-proof-link" class="btn btn-ghost btn-sm" style="margin-top:10px" target="_blank" rel="noopener">Proof link kholo ↗</a>
+      <a id="sm-proof-link" class="btn btn-ghost btn-sm" style="margin-top:10px" target="_blank" rel="noopener">Open proof link ↗</a>
       <div id="sm-proof-note" class="fee-hint" style="text-align:left;margin-top:10px"></div>
       <div id="sm-shot-wrap" style="margin-top:12px"></div>
     </div>
@@ -118,9 +118,10 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
-<script src="assets/js/main.js?v=2.1"></script>
+<script src="assets/js/main.js?v=2.2"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
+<script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
@@ -198,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const shotWrap = document.getElementById("sm-shot-wrap");
     if (isImageProof(proof)) {
       shotWrap.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:6px">Screenshot</div>' +
-        '<a href="' + esc(proof) + '" target="_blank" rel="noopener"><img src="' + esc(proof) + '" alt="proof screenshot" style="max-width:100%;border-radius:12px;border:1px solid var(--line,#e5e7eb)" onerror="this.parentNode.innerHTML=\'(image load nahi hui — link kholo upar)\'" /></a>';
+        '<a href="' + esc(proof) + '" target="_blank" rel="noopener"><img src="' + esc(proof) + '" alt="proof screenshot" style="max-width:100%;border-radius:12px;border:1px solid var(--line,#e5e7eb)" onerror="this.parentNode.innerHTML=\'(image failed to load — use the link above)\'" /></a>';
     } else shotWrap.innerHTML = "";
     subModal.classList.add("open");
     subModal.setAttribute("aria-hidden", "false");

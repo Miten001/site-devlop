@@ -129,7 +129,13 @@
     if (!FF.hasServer()) return Promise.resolve(false);
     return FF.rpc("campaigns_feed")
       .then((feed) => adopt(feed))
-      .catch(() => false);
+      .catch((err) => {
+        /* Silent failure chupana nahi — member ko batado ki campaigns server
+           se load nahi hui, warna lagta hai campaigns "gayab" ho gayi. */
+        if (err && err.offline) return false;
+        try { FF.toast("Campaigns could not load from the server — refresh the page or log in again.", "err"); } catch (e) {}
+        return false;
+      });
   }
 
   /* ---------- FF API wrap: server mode = Postgres, warna local ---------- */

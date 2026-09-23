@@ -10,6 +10,7 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 4 | [`supabase-points-import.sql`](supabase-points-import.sql) | *Optional:* `wallet_import_points()` — browser points ko server ledger me import | 1, 2, 3 |
 | 5 | [`supabase-campaigns.sql`](supabase-campaigns.sql) | Point campaigns (Add Page → Earn page) server-sync — `market_campaigns` tables + `campaigns_*` RPCs. Iske bina user-posted campaigns sirf poster ke browser me dikhte the | 1, 2, 3 |
 | 6 | [`supabase-proof-storage.sql`](supabase-proof-storage.sql) | Proof **screenshot attach** ke liye Storage bucket (`proofs`) + policies — task proof me file upload, owner "View" me screenshot dekh sakta hai | — |
+| 7 | [`supabase-member-messages.sql`](supabase-member-messages.sql) | **Support message box** — member admin ko message bhej sake (site par 💬 button). Reply member ke dashboard inbox me aata hai. Depends on 1 + `supabase-community.sql` (messages tables) | — |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
 

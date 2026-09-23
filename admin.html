@@ -746,7 +746,17 @@
       rows = rows || [];
       $("msg-count").textContent = rows.length + (rows.length === 1 ? " sent" : " sent");
       $("msg-sent-body").innerHTML = rows.map(function (m) {
-        var who = m.audience === "user" ? esc(m.to || "member") : "Everyone";
+        /* Support messages from members are DMs addressed TO the admin
+           (m.to = admin email) — show who sent them. */
+        var me = emails[0] || "";
+        var who;
+        if (m.audience === "user" && me && String(m.to || "").toLowerCase() === me) {
+          who = "From: " + esc(m.sentBy || "member");
+        } else if (m.audience === "user") {
+          who = "To: " + esc(m.to || "member");
+        } else {
+          who = "Everyone";
+        }
         return "<tr><td style='white-space:nowrap'>" + esc(fdateMs(m.at)) + "</td>" +
           '<td><span class="msg-audience ' + esc(m.audience) + '">' + who + "</span></td>" +
           '<td class="k" style="max-width:420px;white-space:normal">' +

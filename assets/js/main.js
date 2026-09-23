@@ -434,17 +434,59 @@
      signed in with the local fallback, hasServer() is false and the caller
      falls back to the browser-only simulation. */
 
-  function refreshAuth() {
+  /* Each browser tab gets an id so cross-tab refresh locking works. */
+  const AUTH_TAB_ID = "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+  /* Supabase refresh tokens are single-use (they rotate on every refresh).
+     When two tabs refreshed at the same moment, one tab received the new
+     token while the other got "refresh token already used" — and that tab
+     silently wiped the session, dropping the member into local mode where
+     campaigns, tasks and the wallet stop syncing. The losing tab now waits
+     and reuses the winner's fresh session. */
+  function waitForAuthRefresh(oldAuth) {
+    return new Promise((resolve) => {
+      let tries = 0;
+      const timer = setInterval(() => {
+        tries += 1;
+        const fresh = DB.auth();
+        const lock = store.get("ff_auth_refresh", null);
+        const lockActive = lock && lock.by !== AUTH_TAB_ID && (Date.now() - (lock.at || 0)) < 8000;
+        if (fresh && fresh.accessToken && fresh.accessToken !== oldAuth.accessToken) {
+          clearInterval(timer); resolve(fresh);
+        } else if (!lockActive || tries >= 45) {
+          clearInterval(timer); resolve(refreshAuth(true));
+        }
+      }, 200);
+    });
+  }
+
+  function refreshAuth(skipLock) {
     const auth = DB.auth();
     const cfg = memberConfig();
     if (!cfg || !auth || !auth.refreshToken) return Promise.resolve(null);
+    if (!skipLock) {
+      const lock = store.get("ff_auth_refresh", null);
+      if (lock && lock.by !== AUTH_TAB_ID && Date.now() - (lock.at || 0) < 8000) {
+        return waitForAuthRefresh(auth);
+      }
+    }
+    store.set("ff_auth_refresh", { at: Date.now(), by: AUTH_TAB_ID });
     return authRequest("/auth/v1/token?grant_type=refresh_token", {
       body: { refresh_token: auth.refreshToken },
     }).then((result) => {
+      store.set("ff_auth_refresh", null);
       if (!result || !result.access_token) throw new Error("Session expired — please log in again");
       DB.setAuth(result);
       return DB.auth();
-    }).catch(() => { DB.setAuth(null); return null; });
+    }).catch(() => {
+      store.set("ff_auth_refresh", null);
+      /* Another tab may have rotated the token a heartbeat ago — reuse its
+         session instead of logging the member out. */
+      const fresh = DB.auth();
+      if (fresh && fresh.accessToken && fresh.accessToken !== auth.accessToken) return fresh;
+      DB.setAuth(null);
+      return null;
+    });
   }
 
   function accessToken() {

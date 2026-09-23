@@ -111,7 +111,7 @@
       <input type="text" id="jm-proof" placeholder="https://... or @username" />
     </div>
     <div class="field hidden" style="text-align:left" id="jm-attach-field">
-      <label>Ya screenshot attach karo (optional, max 5 MB)</label>
+      <label>Or attach a screenshot (optional, max 5 MB)</label>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <label class="btn btn-ghost btn-sm" for="jm-file" style="cursor:pointer" id="jm-attach-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
@@ -134,9 +134,10 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
-<script src="assets/js/main.js?v=2.1"></script>
+<script src="assets/js/main.js?v=2.2"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
+<script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
@@ -255,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
     proofFile = null;
     if (!f) { $("jm-file-name").textContent = ""; return; }
     if (f.size > 5 * 1024 * 1024) {
-      FF.toast("File 5 MB se badi hai — chhoti screenshot lagao", "err");
+      FF.toast("File is larger than 5 MB — attach a smaller screenshot", "err");
       $("jm-file").value = ""; $("jm-file-name").textContent = "";
       return;
     }
@@ -266,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function uploadProofFile(file) {
     const cfg = window.FF_SUPABASE_CONFIG;
     return FF.accessToken().then((token) => {
-      if (!token) throw new Error("Login session khatam — dobara login karein");
+      if (!token) throw new Error("Your session expired — please log in again");
       const exts = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" };
       const ext = exts[file.type] || "png";
       const uid = (FF.DB && FF.DB.auth && FF.DB.auth() && FF.DB.auth().userId) ? FF.DB.auth().userId : "user";
@@ -281,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: file,
       }).then((res) => res.text().then((text) => {
         if (!res.ok) {
-          throw new Error("Screenshot upload nahi hua (admin: supabase-proof-storage.sql run karein) — link option use karein");
+          throw new Error("Screenshot upload failed — use the link option instead (admin: run supabase-proof-storage.sql)");
         }
         return String(cfg.url).replace(/\/+$/, "") + "/storage/v1/object/public/proofs/" + path;
       }));
@@ -294,19 +295,19 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.disabled = true; btn.style.opacity = ".6";
     const proofText = $("jm-proof").value;
     if (!proofText.trim() && !proofFile) {
-      FF.toast("Proof link daalo ya screenshot attach karo", "err");
+      FF.toast("Enter a proof link or attach a screenshot", "err");
       btn.disabled = false; btn.style.opacity = "";
       return;
     }
     const send = (proof) => {
-      if (!current) { FF.toast("Modal band ho gaya — dobara try karein", "err"); return Promise.resolve(); }
+      if (!current) { FF.toast("The dialog was closed — please try again", "err"); return Promise.resolve(); }
       return A.submitProof(current.id, proof, $("jm-note").value).then((f) => {
         FF.toast("Proof submitted! The buyer will review it shortly.", "ok");
         close(); render(f);
       }).catch(fail).then(() => { btn.disabled = false; btn.style.opacity = ""; });
     };
     if (proofFile) {
-      FF.toast("Screenshot upload ho raha hai…", "info");
+      FF.toast("Uploading screenshot…", "info");
       uploadProofFile(proofFile)
         .then((url) => { proofFile = null; $("jm-file").value = ""; $("jm-file-name").textContent = ""; return send(proofText.trim() ? proofText.trim() + " | " + url : url); })
         .catch((err) => { fail(err); btn.disabled = false; btn.style.opacity = ""; });
