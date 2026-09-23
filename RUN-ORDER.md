@@ -11,6 +11,7 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 5 | [`supabase-campaigns.sql`](supabase-campaigns.sql) | Point campaigns (Add Page → Earn page) server-sync — `market_campaigns` tables + `campaigns_*` RPCs. Iske bina user-posted campaigns sirf poster ke browser me dikhte the | 1, 2, 3 |
 | 6 | [`supabase-proof-storage.sql`](supabase-proof-storage.sql) | Proof **screenshot attach** ke liye Storage bucket (`proofs`) + policies — task proof me file upload, owner "View" me screenshot dekh sakta hai | — |
 | 8 | [`supabase-campaigns-public.sql`](supabase-campaigns-public.sql) | **Public campaign listing** — demo/offline members ko bhi campaigns dikhti hain (bina login ke read-only listing). Complete karne ke liye real account | 5 |
+| 9  | supabase-admin-member-detail.sql | Admin panel: member pe click → uski campaigns + completed tasks (proofs) | admin.html |
 | 7 | [`supabase-member-messages.sql`](supabase-member-messages.sql) | **Support message box** — member admin ko message bhej sake (site par 💬 button). Reply member ke dashboard inbox me aata hai. Depends on 1 + `supabase-community.sql` (messages tables) | — |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.

@@ -72,7 +72,13 @@
   /* clickable member email → coin activity modal */
   .mail-link { background: none; border: none; padding: 0; font: inherit; font-weight: 600; color: var(--blue); cursor: pointer; white-space: nowrap; text-decoration: underline dotted; text-underline-offset: 3px; }
   .mail-link:hover { color: var(--cyan); }
-  .member-modal { width: min(690px, 100%); text-align: left; }
+  .member-modal { width: min(880px, 100%); text-align: left; max-height: 92vh; overflow-y: auto; }
+  .st-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+  .st-approved, .st-active { background: rgba(34,197,94,.14); color: #16a34a; }
+  .st-pending { background: rgba(245,158,11,.16); color: #d97706; }
+  .st-rejected { background: rgba(239,68,68,.12); color: #dc2626; }
+  .st-paused { background: rgba(100,116,139,.14); color: #64748b; }
+  .mm-proof-link { color: var(--brand, #7c5cff); font-weight: 700; text-decoration: underline; word-break: break-all; }
   .member-modal .coin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 6px; }
   .member-modal .mini-stat { padding: 12px 13px; }
   .member-modal .mini-stat b { font-size: 18px; }
@@ -194,7 +200,7 @@
 
     <section class="panel member-panel" aria-labelledby="members-title">
       <div class="panel-head"><h3 id="members-title">Registered accounts</h3><span class="status-pill on" id="member-count">0 members</span></div>
-      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. <b>Click an email</b> to open that member's coin balance, full coin activity and coin/USDT editor. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
+      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. <b>Click an email</b> to open that member's <b>coins &amp; USDT</b>, <b>campaigns they run</b>, <b>tasks they completed</b> (with proofs), recent site activity and the coin/USDT editor. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
       <div class="member-table-wrap">
         <table class="ff-table member-table">
           <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Coins</th><th>Password</th></tr></thead>
@@ -229,7 +235,7 @@
 
     <section class="panel msg-panel" aria-labelledby="msg-title">
       <div class="panel-head">
-        <div><h3 id="msg-title">Messages — broadcast or direct</h3><p class="panel-sub">Send an announcement to every member, or a private note to one account. Members see it on their dashboard.</p></div>
+        <div><h3 id="msg-title">Messages — broadcast or direct</h3><p class="panel-sub">Send an announcement to every member, or a private note to one account. Member support messages arrive in <b>Inbox</b>; everything you send is under <b>Sent</b>.</p></div>
         <span class="status-pill on" id="msg-count">0 sent</span>
       </div>
       <div class="msg-modes">
@@ -251,8 +257,15 @@
       </div>
       <button class="btn btn-primary btn-sm" id="msg-send">Send message</button>
 
-      <h4 class="pay-sub-head">Recently sent</h4>
-      <div class="scroll-box msg-sent">
+      <h4 class="pay-sub-head">Message log</h4>
+      <div class="msg-modes" style="margin-bottom:12px">
+        <button type="button" class="seg on" data-inbox-mode="in">📥 Inbox — from members (<span id="msg-in-count">0</span>)</button>
+        <button type="button" class="seg" data-inbox-mode="sent">📤 Sent by me (<span id="msg-out-count">0</span>)</button>
+      </div>
+      <div class="scroll-box msg-sent" id="msg-pane-in">
+        <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>From</th><th>Message</th><th>Received</th></tr></thead><tbody id="msg-in-body"><tr><td colspan="3">Loading…</td></tr></tbody></table></div>
+      </div>
+      <div class="scroll-box msg-sent hidden" id="msg-pane-sent">
         <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Sent</th><th>Audience</th><th>Message</th></tr></thead><tbody id="msg-sent-body"><tr><td colspan="3">Loading…</td></tr></tbody></table></div>
       </div>
     </section>
@@ -304,11 +317,23 @@
       <div class="mini-stat"><b id="mm-usdt">…</b><span>USDT available</span></div>
       <div class="mini-stat"><b id="mm-locked">…</b><span>USDT locked</span></div>
       <div class="mini-stat"><b id="mm-mined">…</b><span>Mining unclaimed</span></div>
+      <div class="mini-stat"><b id="mm-camps">…</b><span>Campaigns run</span></div>
+      <div class="mini-stat"><b id="mm-tasks">…</b><span>Tasks done</span></div>
     </div>
 
     <div class="fee-hint warn hidden" id="mm-warn" style="margin:10px 0">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
       <span id="mm-warn-text"></span>
+    </div>
+
+    <h4 class="mm-h">🚀 Campaigns this member runs</h4>
+    <div class="scroll-box mm-activity">
+      <table class="ff-table"><thead><tr><th>Campaign</th><th>Payout</th><th>Completions</th><th>Spent</th><th>Status</th></tr></thead><tbody id="mm-campaigns"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+    </div>
+
+    <h4 class="mm-h">✅ Tasks completed (proofs sent)</h4>
+    <div class="scroll-box mm-activity">
+      <table class="ff-table"><thead><tr><th>Campaign</th><th>Payout</th><th>Status</th><th>Proof</th><th>When</th></tr></thead><tbody id="mm-subs"><tr><td colspan="5">Loading…</td></tr></tbody></table>
     </div>
 
     <h4 class="mm-h">Edit coins / USDT</h4>
@@ -337,6 +362,11 @@
     <h4 class="mm-h">Coin activity</h4>
     <div class="scroll-box mm-activity">
       <table class="ff-table"><thead><tr><th>Time</th><th>Source</th><th>Detail</th><th style="text-align:right">Amount</th></tr></thead><tbody id="mm-activity"></tbody></table>
+    </div>
+
+    <h4 class="mm-h">🕒 Recent site activity</h4>
+    <div class="scroll-box mm-activity">
+      <table class="ff-table"><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="mm-events"></tbody></table>
     </div>
   </div>
 </div>
@@ -655,9 +685,12 @@
     var joined = member.created_at ? new Date(member.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
     $("mm-name").textContent = member.display_name || "Member";
     $("mm-sub").innerHTML = "<b>" + esc(member.email || "") + "</b> · " + esc(accountId) + " · Joined " + esc(joined);
-    ["mm-points", "mm-usdt", "mm-locked", "mm-mined"].forEach(function (k) { $(k).textContent = "…"; });
+    ["mm-points", "mm-usdt", "mm-locked", "mm-mined", "mm-camps", "mm-tasks"].forEach(function (k) { $(k).textContent = "…"; });
     $("mm-warn").classList.add("hidden");
     $("mm-activity").innerHTML = '<tr><td colspan="4">Loading coin activity…</td></tr>';
+    $("mm-campaigns").innerHTML = '<tr><td colspan="5">Loading campaigns…</td></tr>';
+    $("mm-subs").innerHTML = '<tr><td colspan="5">Loading tasks…</td></tr>';
+    $("mm-events").innerHTML = '<tr><td colspan="3">Loading activity…</td></tr>';
     $("member-modal").classList.add("open");
     document.body.classList.add("modal-open");
     loadMemberDetail(member);
@@ -673,7 +706,10 @@
     var qAcc = grab("/rest/v1/mining_accounts?user_id=eq." + id + "&select=unclaimed,claimed", "mining stats");
     var qTx = grab("/rest/v1/wallet_txns?user_id=eq." + id + "&select=type,amount,note,status,at&order=at.desc&limit=40", "wallet log");
     var qLed = grab("/rest/v1/mining_ledger?user_id=eq." + id + "&select=type,detail,amount,at&order=at.desc&limit=40", "mining log");
-    Promise.all([qBal, qAcc, qTx, qLed]).then(function (rs) {
+    /* campaigns + tasks is member ke — admin_member_detail RPC se.
+       (SQL nahi chala to null — hint dikha denge, panel crash nahi hoga.) */
+    var qDetail = rpc("admin_member_detail", { p_user: member.id }).catch(function () { return null; });
+    Promise.all([qBal, qAcc, qTx, qLed, qDetail]).then(function (rs) {
       if (currentMember !== member) return;
       var bal = (rs[0] || [])[0] || null;
       var acc = (rs[1] || [])[0] || null;
@@ -708,6 +744,69 @@
         $("mm-warn-text").textContent = "Could not read " + fails.join(", ") + " — run the updated supabase-mining.sql (it adds the admin read policies) and supabase-wallet.sql once, then refresh.";
         $("mm-warn").classList.remove("hidden");
       }
+
+      /* ---- campaigns run + tasks done (admin_member_detail) ---- */
+      var det = rs[4];
+      var camps = det && det.campaigns ? det.campaigns : null;
+      var subs = det && det.subs ? det.subs : null;
+
+      if (camps) {
+        $("mm-camps").textContent = camps.length;
+        $("mm-campaigns").innerHTML = camps.map(function (c) {
+          return "<tr><td class='k'><b>" + esc(c.title || "—") + "</b><br>" +
+            '<span style="font-size:11px;color:var(--ink-mute)">' + esc(c.platform + " · " + c.action) + "</span></td>" +
+            '<td class="num">' + esc(fmtCoins(c.payout)) + "</td>" +
+            '<td class="num">' + esc(fmtPts(c.actions)) + "</td>" +
+            '<td class="num">' + esc(fmtPts(c.spent)) + "</td>" +
+            "<td>" + (c.active
+              ? '<span class="st-pill st-active">Active</span>'
+              : '<span class="st-pill st-paused">Paused</span>') +
+            '<br><span style="font-size:11px;color:var(--ink-mute)" title="' + esc(String(c.id)) + '">' + esc(fdateMs(c.created)) + "</span></td></tr>";
+        }).join("") || '<tr><td colspan="5" style="color:var(--ink-mute)">This member has not created any campaigns.</td></tr>';
+      } else {
+        $("mm-camps").textContent = "—";
+        $("mm-campaigns").innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute)">Run <code>supabase-admin-member-detail.sql</code> once in the Supabase SQL editor to load this member\'s campaigns.</td></tr>';
+      }
+
+      if (subs) {
+        var done = 0, pend = 0, rej = 0;
+        subs.forEach(function (x) {
+          if (x.status === "approved") done++; else if (x.status === "pending") pend++; else rej++;
+        });
+        var tk = $("mm-tasks");
+        tk.textContent = String(done);
+        tk.title = done + " approved · " + pend + " pending · " + rej + " rejected";
+        $("mm-subs").innerHTML = subs.map(function (x) {
+          var pill = x.status === "approved" ? '<span class="st-pill st-approved">Approved ✓</span>'
+            : x.status === "pending" ? '<span class="st-pill st-pending">Pending</span>'
+            : '<span class="st-pill st-rejected">Rejected</span>';
+          var proof = String(x.proof || "");
+          var proofCell = /^https?:\/\//i.test(proof)
+            ? '<a class="mm-proof-link" href="' + esc(proof) + '" target="_blank" rel="noopener">View proof ↗</a>'
+            : '<span class="k">' + esc(proof.slice(0, 40) || "—") + "</span>";
+          return "<tr><td class='k'><b>" + esc(x.campaignTitle || "—") + "</b><br>" +
+            '<span style="font-size:11px;color:var(--ink-mute)">' + esc((x.platform || "") + (x.note ? " · " + x.note : "")) + "</span></td>" +
+            '<td class="num">' + esc(fmtCoins(x.payout)) + "</td>" +
+            "<td>" + pill + (x.status === "rejected" && x.reason ? '<br><span style="font-size:11px;color:#dc2626">' + esc(x.reason) + "</span>" : "") + "</td>" +
+            "<td>" + proofCell + "</td>" +
+            "<td style='white-space:nowrap'>" + esc(fdateMs(x.at)) + "</td></tr>";
+        }).join("") || '<tr><td colspan="5" style="color:var(--ink-mute)">This member has not completed any campaigns yet.</td></tr>';
+      } else {
+        $("mm-tasks").textContent = "—";
+        $("mm-subs").innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute)">Run <code>supabase-admin-member-detail.sql</code> once in the Supabase SQL editor to load this member\'s tasks.</td></tr>';
+      }
+
+      /* ---- recent site activity (events, admin panel pehle se load hoti hain) ---- */
+      var memEmail = String(member.email || "").toLowerCase();
+      var evs = memEmail
+        ? (last || []).filter(function (e) { return e.email && String(e.email).toLowerCase() === memEmail; }).slice(0, 15)
+        : [];
+      $("mm-events").innerHTML = evs.map(function (e) {
+        var t = e.ts_client ? new Date(e.ts_client) : null;
+        return "<tr><td style='white-space:nowrap'>" + esc(t ? fdateMs(t.getTime()) : "—") + "</td>" +
+          '<td><span class="ev-pill">' + esc(e.type || "event") + "</span></td>" +
+          '<td class="k">' + esc(e.label || e.task_title || e.title || e.page || e.url || "—") + "</td></tr>";
+      }).join("") || '<tr><td colspan="3" style="color:var(--ink-mute)">No recorded site activity for this member yet.</td></tr>';
     });
   }
 
@@ -744,24 +843,37 @@
   function loadMessages() {
     rpc("messages_admin_recent").then(function (rows) {
       rows = rows || [];
-      $("msg-count").textContent = rows.length + (rows.length === 1 ? " sent" : " sent");
-      $("msg-sent-body").innerHTML = rows.map(function (m) {
-        /* Support messages from members are DMs addressed TO the admin
-           (m.to = admin email) — show who sent them. */
-        var me = emails[0] || "";
-        var who;
-        if (m.audience === "user" && me && String(m.to || "").toLowerCase() === me) {
-          who = "From: " + esc(m.sentBy || "member");
-        } else if (m.audience === "user") {
-          who = "To: " + esc(m.to || "member");
-        } else {
-          who = "Everyone";
-        }
+      /* Inbox = members ka support messages (mere naam pe aaye DMs).
+         Sent = jo maine bheje (broadcast sabko + DM kisi member ko).
+         "me" = is admin session ka email. */
+      var me = String((session && session.user && session.user.email) || emails[0] || "").toLowerCase();
+      var isInbox = function (m) {
+        return m.audience === "user" &&
+          String(m.to || "").toLowerCase() === me &&
+          String(m.sentBy || "").toLowerCase() !== me;
+      };
+      var inbox = rows.filter(isInbox);
+      var sent = rows.filter(function (m) { return !isInbox(m); });
+      $("msg-in-count").textContent = inbox.length;
+      $("msg-out-count").textContent = sent.length;
+      $("msg-count").textContent = inbox.length + (inbox.length === 1 ? " message" : " messages");
+
+      $("msg-in-body").innerHTML = inbox.map(function (m) {
+        return "<tr><td style='white-space:nowrap'><b>" + esc(m.sentBy || "member") + "</b></td>" +
+          '<td class="k" style="max-width:420px;white-space:normal">' +
+            (m.title ? "<b>" + esc(m.title) + "</b><br>" : "") + esc(m.body) + "</td>" +
+          "<td style='white-space:nowrap'>" + esc(fdateMs(m.at)) + "</td></tr>";
+      }).join("") || '<tr><td colspan="3" style="color:var(--ink-mute)">No messages from members yet — support-box messages land here.</td></tr>';
+
+      $("msg-sent-body").innerHTML = sent.map(function (m) {
+        var who = m.audience === "user"
+          ? "To: " + esc(m.to || "member")
+          : "📢 Everyone";
         return "<tr><td style='white-space:nowrap'>" + esc(fdateMs(m.at)) + "</td>" +
           '<td><span class="msg-audience ' + esc(m.audience) + '">' + who + "</span></td>" +
           '<td class="k" style="max-width:420px;white-space:normal">' +
             (m.title ? "<b>" + esc(m.title) + "</b><br>" : "") + esc(m.body) + "</td></tr>";
-      }).join("") || '<tr><td colspan="3">No messages sent yet.</td></tr>';
+      }).join("") || '<tr><td colspan="3" style="color:var(--ink-mute)">You have not sent any messages yet.</td></tr>';
     }).catch(function (err) {
       var m = (err && err.message) || "";
       $("msg-count").textContent = "Setup needed";
@@ -893,6 +1005,18 @@
     /* messages — broadcast to all or a direct note to one member */
     document.querySelectorAll("[data-msg-mode]").forEach(function (b) {
       b.addEventListener("click", function () { setMsgMode(b.getAttribute("data-msg-mode")); });
+    });
+
+    /* Inbox / Sent tab switch — messages section */
+    document.querySelectorAll("[data-inbox-mode]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var mode = b.getAttribute("data-inbox-mode");
+        document.querySelectorAll("[data-inbox-mode]").forEach(function (x) {
+          x.classList.toggle("on", x === b);
+        });
+        $("msg-pane-in").classList.toggle("hidden", mode !== "in");
+        $("msg-pane-sent").classList.toggle("hidden", mode !== "sent");
+      });
     });
 
     $("msg-send").addEventListener("click", function () {
