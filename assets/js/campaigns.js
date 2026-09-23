@@ -41,13 +41,20 @@
     if (!u) return false;
 
     const camps = [];
-    (feed.open || []).forEach((c) => camps.push({
-      id: c.id, platform: c.platform, action: c.action,
-      user: c.user || "Member", title: c.title, url: c.url || "",
-      payout: num(c.payout), mine: !!c.mine, active: c.active !== false,
-      authorEmail: c.authorEmail || "", created: num(c.created),
-      actions: num(c.actions), spent: num(c.spent),
-    }));
+    /* Apni campaigns Earn page par NAHI dikhao — owner apni campaign
+       complete nahi kar sakta ("You cannot complete your own campaign"),
+       isliye unhe list mein dikhana sirf confusion deta tha. Task Market
+       jaisa hi behaviour: sirf dusron ki campaigns dikhti hain. */
+    (feed.open || []).forEach((c) => {
+      if (c.mine) return;
+      camps.push({
+        id: c.id, platform: c.platform, action: c.action,
+        user: c.user || "Member", title: c.title, url: c.url || "",
+        payout: num(c.payout), mine: false, active: c.active !== false,
+        authorEmail: c.authorEmail || "", created: num(c.created),
+        actions: num(c.actions), spent: num(c.spent),
+      });
+    });
     (feed.mine || []).forEach((c) => camps.push({
       id: c.id, platform: c.platform, action: c.action,
       user: c.user || u.name, title: c.title, url: c.url || "",

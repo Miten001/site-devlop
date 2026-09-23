@@ -98,8 +98,8 @@
         <div class="task-list" id="task-list"></div>
         <div class="empty-state hidden" id="empty-state">
           <span class="big-ico"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M8.5 15a3.5 3.5 0 0 0 7 0"/></svg></span>
-          <h3>All tasks complete!</h3>
-          <p>You've finished every campaign in this filter. Check other platform filters or come back soon for new campaigns.</p>
+          <h3 id="empty-title">All tasks complete!</h3>
+          <p id="empty-text">You've finished every campaign in this filter. Check other platform filters or come back soon for new campaigns.</p>
         </div>
       </div>
     </section>
@@ -326,7 +326,24 @@ document.addEventListener("DOMContentLoaded", () => {
   function render() {
     const done = doneIds();
     const items = FF.DB.campaigns().filter((c) => (c.active !== false) && (activeFilter === "all" || c.platform === activeFilter));
-    emptyEl.classList.toggle("hidden", items.some((c) => !done.has(c.id)));
+    const notDone = items.some((c) => !done.has(c.id));
+    emptyEl.classList.toggle("hidden", notDone);
+    /* Clear message for the empty state: filter me campaign hai hi nahi,
+       ya sab complete kar liye — dono alag batado. */
+    const eTitle = document.getElementById("empty-title");
+    const eText = document.getElementById("empty-text");
+    if (!notDone && eTitle && eText) {
+      if (!items.length) {
+        const p = activeFilter !== "all" ? FF.PLATFORMS[activeFilter] : null;
+        eTitle.textContent = "No campaigns here yet";
+        eText.textContent = p
+          ? "No one has posted a " + p.name + " campaign yet. Check \"All Tasks\" for other platforms, or come back soon."
+          : "No community campaigns right now. New ones appear here as soon as members post them.";
+      } else {
+        eTitle.textContent = "All tasks complete!";
+        eText.textContent = "You've finished every campaign in this filter. Check other platform filters or come back soon for new campaigns.";
+      }
+    }
     listEl.innerHTML = items.map((c) => {
       const p = FF.PLATFORMS[c.platform] || { color: "#7c3aed", icon: "", name: "Platform", hint: "Network" };
       const isDone = done.has(c.id);
