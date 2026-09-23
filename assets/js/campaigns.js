@@ -50,16 +50,14 @@
         if (c && c.mine === true && c.authorEmail && c.src !== "srv") camps.push(c);
       });
     }
-    /* Apni campaigns Earn page par NAHI dikhao — owner apni campaign
-       complete nahi kar sakta ("You cannot complete your own campaign"),
-       isliye unhe list mein dikhana sirf confusion deta tha. Task Market
-       jaisa hi behaviour: sirf dusron ki campaigns dikhti hain. */
+    /* Apni campaigns BHI Earn page par dikhti hain — "Your campaign"
+       label ke saath (earn page par disable). Owner ko apni campaign
+       ka status apni hi list me dikhna chahiye. */
     (feed.open || []).forEach((c) => {
-      if (c.mine) return;
       camps.push({
         id: c.id, platform: c.platform, action: c.action,
         user: c.user || "Member", title: c.title, url: c.url || "",
-        payout: num(c.payout), mine: false, active: c.active !== false,
+        payout: num(c.payout), mine: !!c.mine, active: c.active !== false,
         authorEmail: c.authorEmail || "", created: num(c.created),
         actions: num(c.actions), spent: num(c.spent), src: "srv",
       });
