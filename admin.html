@@ -321,6 +321,21 @@
       <div class="mini-stat"><b id="mm-tasks">…</b><span>Tasks done</span></div>
     </div>
 
+    <div style="margin:12px 0 4px; display:flex; gap:8px; flex-wrap:wrap">
+      <button type="button" class="btn btn-ghost btn-sm" id="mm-dm-toggle">✉️ Message this member</button>
+    </div>
+    <div id="mm-dm-box" class="hidden" style="border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:8px; background:var(--glass-2)">
+      <div class="field" style="margin-bottom:8px">
+        <label for="mm-dm-title">Title (optional)</label>
+        <input type="text" id="mm-dm-title" maxlength="120" placeholder="e.g. About your campaign" />
+      </div>
+      <div class="field" style="margin-bottom:10px">
+        <label for="mm-dm-body">Message — member ke dashboard par inbox me dikhega</label>
+        <textarea id="mm-dm-body" placeholder="Write your message to this member…"></textarea>
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" id="mm-dm-send">Send to member</button>
+    </div>
+
     <div class="fee-hint warn hidden" id="mm-warn" style="margin:10px 0">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
       <span id="mm-warn-text"></span>
@@ -689,6 +704,9 @@
     $("mm-warn").classList.add("hidden");
     $("mm-activity").innerHTML = '<tr><td colspan="4">Loading coin activity…</td></tr>';
     $("mm-campaigns").innerHTML = '<tr><td colspan="5">Loading campaigns…</td></tr>';
+    $("mm-dm-box").classList.add("hidden");
+    $("mm-dm-title").value = "";
+    $("mm-dm-body").value = "";
     $("mm-subs").innerHTML = '<tr><td colspan="5">Loading tasks…</td></tr>';
     $("mm-events").innerHTML = '<tr><td colspan="3">Loading activity…</td></tr>';
     $("member-modal").classList.add("open");
@@ -957,6 +975,31 @@
       b.addEventListener("click", function () {
         setBalMode(b.getAttribute("data-bal-mode"));
       });
+    });
+
+    /* Member ko seedha DM — admin panel modal se hi */
+    $("mm-dm-toggle").addEventListener("click", function () {
+      $("mm-dm-box").classList.toggle("hidden");
+    });
+    $("mm-dm-send").addEventListener("click", function () {
+      if (!currentMember) return;
+      var body = $("mm-dm-body").value.trim();
+      if (!body) { toast("Write a message first", true); return; }
+      var btn = this, label = btn.textContent;
+      btn.disabled = true; btn.textContent = "Sending…";
+      rpc("messages_admin_send", {
+        p_email: String(currentMember.email || "").toLowerCase(),
+        p_title: $("mm-dm-title").value.trim(),
+        p_body: body
+      }).then(function () {
+        toast("Message sent to " + currentMember.email);
+        $("mm-dm-title").value = "";
+        $("mm-dm-body").value = "";
+        $("mm-dm-box").classList.add("hidden");
+        loadMessages();
+      }).catch(function (err) {
+        toast("Could not send: " + ((err && err.message) || "unknown error"), true);
+      }).then(function () { btn.disabled = false; btn.textContent = label; });
     });
 
     $("mm-apply").addEventListener("click", function () {
