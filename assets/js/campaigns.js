@@ -170,9 +170,15 @@
       return FF.rpc("campaigns_feed")
         .then((feed) => adopt(feed))
         .catch((err) => {
-          /* Silent failure chupana nahi — member ko batado ki campaigns server
-             se load nahi hui, warna lagta hai campaigns "gayab" ho gayi. */
-          if (err && err.offline) return false;
+          /* Login session mara ho (401/offline) ya server ne error diya ho —
+             khali page dikhana sabse bura hai ("campaign gayab" lagti hai).
+             Public feed se read-only listing dikha do — campaign list hamesha
+             dikhegi. Proof submit karte waqt login ka message aa jayega. */
+          if (FF.memberConfig && FF.memberConfig()) {
+            return publicRpc("campaigns_public_feed")
+              .then((feed) => adopt(feed, true))
+              .catch(function () { return false; });
+          }
           try { FF.toast("Campaigns could not load from the server — refresh the page or log in again.", "err"); } catch (e) {}
           return false;
         });
