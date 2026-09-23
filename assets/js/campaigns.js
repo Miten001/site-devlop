@@ -34,13 +34,22 @@
 
   /* Server feed -> wahi shapes jo pages pehle se render karte hain
      (earn.html: FF.DB.campaigns() / myCampSubs / doneMap,
-      dashboard.html: user.campaigns / campSubsFor). */
-  function adopt(feed) {
+      dashboard.html: user.campaigns / campSubsFor).
+     isPublic = demo/offline members ke liye sirf LISTING (read-only):
+     subs/done/user state ko overwrite nahi karte. */
+  function adopt(feed, isPublic) {
     if (!feed) return false;
     const u = FF.currentUser();
     if (!u) return false;
 
     const camps = [];
+    if (isPublic) {
+      /* is browser me locally banayi gayi campaigns (demo mode) rakho,
+         baaki list server se aa rahi hai. */
+      FF.DB.campaigns().forEach((c) => {
+        if (c && c.mine === true && c.authorEmail && c.src !== "srv") camps.push(c);
+      });
+    }
     /* Apni campaigns Earn page par NAHI dikhao — owner apni campaign
        complete nahi kar sakta ("You cannot complete your own campaign"),
        isliye unhe list mein dikhana sirf confusion deta tha. Task Market
@@ -52,7 +61,7 @@
         user: c.user || "Member", title: c.title, url: c.url || "",
         payout: num(c.payout), mine: false, active: c.active !== false,
         authorEmail: c.authorEmail || "", created: num(c.created),
-        actions: num(c.actions), spent: num(c.spent),
+        actions: num(c.actions), spent: num(c.spent), src: "srv",
       });
     });
     (feed.mine || []).forEach((c) => camps.push({
@@ -63,6 +72,12 @@
       actions: num(c.actions), spent: num(c.spent),
     }));
     FF.DB.saveCampaigns(dedupeById(camps));
+    if (isPublic) {
+      /* read-only listing — member ki apni subs/done/campaigns state
+         ko haath nahi lagate. */
+      document.dispatchEvent(new CustomEvent("ff:campaigns-synced"));
+      return true;
+    }
 
     const subs = [];
     (feed.mySubs || []).forEach((s) => subs.push({
@@ -132,17 +147,46 @@
                         apna clear error de dega agar points kam hain */ });
   }
 
+  /* Bina login ke RPC (anon key se) — sirf public listing ke liye. */
+  function publicRpc(fn, args) {
+    const cfg = FF.memberConfig();
+    if (!cfg) return Promise.reject(new Error("offline"));
+    return fetch(String(cfg.url).replace(/\/+$/, "") + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: {
+        apikey: cfg.anonKey,
+        Authorization: "Bearer " + cfg.anonKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(args || {}),
+    }).then((res) => res.text().then((text) => {
+      let json = null;
+      try { json = text ? JSON.parse(text) : null; } catch (e) {}
+      if (!res.ok) throw new Error((json && json.message) || "Request failed (" + res.status + ")");
+      return json;
+    }));
+  }
+
   function refresh() {
-    if (!FF.hasServer()) return Promise.resolve(false);
-    return FF.rpc("campaigns_feed")
-      .then((feed) => adopt(feed))
-      .catch((err) => {
-        /* Silent failure chupana nahi — member ko batado ki campaigns server
-           se load nahi hui, warna lagta hai campaigns "gayab" ho gayi. */
-        if (err && err.offline) return false;
-        try { FF.toast("Campaigns could not load from the server — refresh the page or log in again.", "err"); } catch (e) {}
-        return false;
-      });
+    if (FF.hasServer()) {
+      return FF.rpc("campaigns_feed")
+        .then((feed) => adopt(feed))
+        .catch((err) => {
+          /* Silent failure chupana nahi — member ko batado ki campaigns server
+             se load nahi hui, warna lagta hai campaigns "gayab" ho gayi. */
+          if (err && err.offline) return false;
+          try { FF.toast("Campaigns could not load from the server — refresh the page or log in again.", "err"); } catch (e) {}
+          return false;
+        });
+    }
+    /* Demo/offline members ko bhi campaigns ki LISTING dikhao (read-only)
+       — bonus missions ki tarah. Complete karne ke liye real account. */
+    if (FF.memberConfig && FF.memberConfig()) {
+      return publicRpc("campaigns_public_feed")
+        .then((feed) => adopt(feed, true))
+        .catch(() => false);
+    }
+    return Promise.resolve(false);
   }
 
   /* ---------- FF API wrap: server mode = Postgres, warna local ---------- */
@@ -158,7 +202,15 @@
 
   const localSubmit = FF.submitCampaignProof;
   FF.submitCampaignProof = function (email, name, campaignId, proof, note) {
-    if (!FF.hasServer()) return localSubmit(email, name, campaignId, proof, note);
+    if (!FF.hasServer()) {
+      /* Server se aayi campaign demo/offline mode me complete nahi ho
+         sakti — proof owner tak kabhi pahunchta hi nahi. Clear bata do. */
+      const camp = FF.DB.campaigns().find((c) => c.id === campaignId);
+      if (camp && camp.src === "srv") {
+        return Promise.reject(new Error("Create a free account (or log in) to complete this campaign and earn your points."));
+      }
+      return localSubmit(email, name, campaignId, proof, note);
+    }
     return FF.rpc("campaigns_submit_proof", {
       p_campaign: campaignId, p_proof: proof, p_note: note || "",
     }).then((feed) => { adopt(feed); });
