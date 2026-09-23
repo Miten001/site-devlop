@@ -42,10 +42,10 @@
   <a href="post-task.html">Post a Task</a>
   <a href="my-tasks.html">My Tasks</a>
   <a href="earn.html" class="active">Earn Points</a>
+  <a href="add.html">Add Page</a>
   <a href="mining.html">Cloud Mining</a>
   <a href="wallet.html">Wallet</a>
   <a href="refer.html">Refer &amp; Earn</a>
-  <a href="add.html">Add Page</a>
   <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
 </nav>
 
@@ -326,7 +326,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function render() {
     const done = doneIds();
-    const items = FF.DB.campaigns().filter((c) => (c.active !== false) && (activeFilter === "all" || c.platform === activeFilter));
+    /* Apni PAUSED campaigns bhi dikhti hain (Paused badge ke saath) —
+       dusron ki paused campaigns hidden rehti hain. */
+    const items = FF.DB.campaigns().filter((c) => (c.active !== false || c.mine === true) && (activeFilter === "all" || c.platform === activeFilter));
     const notDone = items.some((c) => !done.has(c.id));
     emptyEl.classList.toggle("hidden", notDone);
     /* Clear message for the empty state: filter me campaign hai hi nahi,
@@ -353,8 +355,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const isRejected = sub && sub.status === "rejected";
       /* Apni hi campaign — complete nahi kar sakte, par status dikhna chahiye */
       const isOwn = c.mine === true || (c.authorEmail && user.email && c.authorEmail === user.email);
+      const isPaused = c.active === false && isOwn;
       const disabled = isDone || isPending || isOwn;
-      const label = isDone ? "Completed ✓" : isPending ? "Pending review" : isOwn ? "Your campaign 👑" : isRejected ? "Try again" : "Start Task";
+      const label = isDone ? "Completed ✓" : isPending ? "Pending review" : isPaused ? "Paused ⏸" : isOwn ? "Your campaign 👑" : isRejected ? "Try again" : "Start Task";
       const btnClass = isDone || isPending || isOwn ? "btn-ghost" : "btn-primary";
       return `
         <div class="task-card ${isDone ? "done" : ""}" style="--pf:${p.color}">
@@ -374,8 +377,8 @@ document.addEventListener("DOMContentLoaded", () => {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
             </a>
           </div>
-          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isPending ? "Waiting for the campaign owner to approve your proof" : "Owner reviews your proof on " + p.hint}</span>
-          ${isDone ? '<span class="done-tag">Done</span>' : ""} ${isOwn ? '<span class="done-tag" style="background:rgba(34,197,94,.15);color:var(--green,#22c55e)">Yours</span>' : ""}
+          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isPending ? "Waiting for the campaign owner to approve your proof" : "Owner reviews your proof on " + p.hint}</span>
+          ${isDone ? '<span class="done-tag">Done</span>' : ""} ${isOwn && !isPaused ? '<span class="done-tag" style="background:rgba(34,197,94,.15);color:var(--green,#22c55e)">Yours</span>' : ""} ${isPaused ? '<span class="done-tag" style="background:rgba(245,158,11,.16);color:#d97706">Paused</span>' : ""}
         </div>`;
     }).join("");
   }
