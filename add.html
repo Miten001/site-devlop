@@ -109,6 +109,7 @@
 <script src="assets/js/main.js?v=2.1"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
+<script src="assets/js/campaigns.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
@@ -205,37 +206,46 @@ document.addEventListener("DOMContentLoaded", () => {
       created: Date.now(),
     };
 
-    FF.updateUser(u.email, { campaigns: [camp].concat(u.campaigns || []) });
-    if (FF.addCampaign) {
-      FF.addCampaign({
-        id: camp.id,
-        platform: camp.platform,
-        action: camp.action,
-        user: u.name,
-        title: camp.title,
-        url: camp.url,
-        payout: camp.payout,
-        mine: true,
-        active: true,
-        authorEmail: u.email,
-        created: camp.created,
-      });
-    }
+    /* Server mode: campaign Supabase database mein jaata hai — SAB members
+       ko dikhega (campaigns.js is FF.addCampaign ko wrap karta hai).
+       Local/demo mode: pehle jaisa sirf is browser mein save hoga. */
+    const publish = FF.addCampaign ? FF.addCampaign({
+      id: camp.id,
+      platform: camp.platform,
+      action: camp.action,
+      user: u.name,
+      title: camp.title,
+      url: camp.url,
+      payout: camp.payout,
+      mine: true,
+      active: true,
+      authorEmail: u.email,
+      created: camp.created,
+    }) : null;
 
-    if (window.FFA) {
-      FFA.track("campaign_created", {
-        campaignId: String(camp.id),
-        platform: camp.platform,
-        action: camp.action,
-        taskTitle: camp.title.slice(0, 120),
-        payout: camp.payout,
-        url: camp.url.slice(0, 400),
-      });
-      FFA.saveCampaign(camp);
-    }
+    const finish = () => {
+      if (window.FFA) {
+        FFA.track("campaign_created", {
+          campaignId: String(camp.id),
+          platform: camp.platform,
+          action: camp.action,
+          taskTitle: camp.title.slice(0, 120),
+          payout: camp.payout,
+          url: camp.url.slice(0, 400),
+        });
+        FFA.saveCampaign(camp);
+      }
+      FF.toast(p.name + " campaign is live! 🚀", "ok");
+      setTimeout(() => (window.location.href = "dashboard.html"), 900);
+    };
+    const fail = (err) => FF.toast(err.message, "err");
 
-    FF.toast(p.name + " campaign is live! 🚀", "ok");
-    setTimeout(() => (window.location.href = "dashboard.html"), 900);
+    if (publish && typeof publish.then === "function") {
+      publish.then(finish).catch(fail);
+    } else {
+      FF.updateUser(u.email, { campaigns: [camp].concat(u.campaigns || []) });
+      finish();
+    }
   });
 });
 </script>

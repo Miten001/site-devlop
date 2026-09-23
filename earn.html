@@ -149,6 +149,7 @@
 <script src="assets/js/main.js?v=2.1"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
+<script src="assets/js/campaigns.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
@@ -385,13 +386,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   cmSubmit.addEventListener("click", () => {
     if (!pendingCamp) return;
-    try {
-      FF.submitCampaignProof(user.email, user.name, pendingCamp.id, cmProof.value, cmNote.value);
+    const finish = () => {
       FF.toast("Proof submitted! The campaign owner will review it shortly.", "ok");
       campModal.classList.remove("open");
       pendingCamp = null;
       render();
-    } catch (err) { FF.toast(err.message, "err"); }
+    };
+    const fail = (err) => FF.toast(err.message, "err");
+    try {
+      /* Server mode: proof database mein jaata hai (promise). Local/demo:
+         seedha localStorage mein (sync) — dono case handle hota hai. */
+      const res = FF.submitCampaignProof(user.email, user.name, pendingCamp.id, cmProof.value, cmNote.value);
+      if (res && typeof res.then === "function") res.then(finish).catch(fail);
+      else finish();
+    } catch (err) { fail(err); }
   });
 
   function stepRows(task) {
@@ -486,6 +494,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderBonuses();
   render();
+
+  /* Server se fresh campaigns aaye (login members) to list turant
+     dobara render karo — warna dusro ki nayi campaigns nahi dikhti. */
+  document.addEventListener("ff:campaigns-synced", () => {
+    user = FF.currentUser() || user;
+    render();
+  });
 });
 </script>
 </body>

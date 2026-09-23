@@ -200,6 +200,7 @@
 <script src="assets/js/main.js?v=2.1"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
+<script src="assets/js/campaigns.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
@@ -307,12 +308,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const tBtn = e.target.closest("[data-toggle-camp]");
     const dBtn = e.target.closest("[data-del-camp]");
     const camps = (user.campaigns || []).slice();
+    /* Server mode mein pause/delete database tak jaata hai (campaigns.js
+       wrap). Error aaye to dikhao, warna sync event khud re-render karega. */
+    const notify = (r) => { if (r && typeof r.then === "function") r.catch((err) => FF.toast(err.message, "err")); };
     if (tBtn) {
       const c = camps.find((x) => x.id === tBtn.dataset.toggleCamp);
       if (c) {
         c.active = !c.active;
         FF.updateUser(user.email, { campaigns: camps });
-        if (FF.updateCampaign) FF.updateCampaign(c.id, { active: c.active });
+        notify(FF.updateCampaign ? FF.updateCampaign(c.id, { active: c.active }) : null);
         FF.toast(c.active ? '"' + c.title + '" resumed' : '"' + c.title + '" paused', "info");
       }
     }
@@ -320,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const c = camps.find((x) => x.id === dBtn.dataset.delCamp);
       const rest = camps.filter((x) => x.id !== dBtn.dataset.delCamp);
       FF.updateUser(user.email, { campaigns: rest });
-      if (FF.deleteCampaign) FF.deleteCampaign(dBtn.dataset.delCamp);
+      notify(FF.deleteCampaign ? FF.deleteCampaign(dBtn.dataset.delCamp) : null);
       FF.toast('"' + (c ? c.title : "Campaign") + '" deleted', "info");
     }
     if (tBtn || dBtn) { user = FF.currentUser(); renderCamps(); paintStats(); }
@@ -481,17 +485,25 @@ document.addEventListener("DOMContentLoaded", () => {
   campRevBody.addEventListener("click", (e) => {
     const ok = e.target.closest("[data-camp-ok]"), no = e.target.closest("[data-camp-no]");
     if (!ok && !no) return;
+    const after = () => { user = FF.currentUser(); renderCampReviews(); paintStats(); };
+    const fail = (err) => FF.toast(err.message, "err");
     try {
-      if (ok) { FF.reviewCampaignSub(ok.dataset.campOk, true); FF.toast("Approved — points paid to the worker.", "ok"); }
-      else {
+      let res;
+      if (ok) {
+        /* Server mode: points owner->worker database mein move hote hain
+           (promise) — tabhi "Approved" toast dikhta hai. */
+        res = FF.reviewCampaignSub(ok.dataset.campOk, true);
+        if (res && typeof res.then === "function") {
+          res.then(() => { FF.toast("Approved — points paid to the worker.", "ok"); after(); }).catch(fail);
+        } else { FF.toast("Approved — points paid to the worker.", "ok"); after(); }
+      } else {
         const reason = window.prompt("Reason for rejecting this proof (optional):") || "";
-        FF.reviewCampaignSub(no.dataset.campNo, false, reason);
-        FF.toast("Submission rejected.", "info");
+        res = FF.reviewCampaignSub(no.dataset.campNo, false, reason);
+        if (res && typeof res.then === "function") {
+          res.then(() => { FF.toast("Submission rejected.", "info"); after(); }).catch(fail);
+        } else { FF.toast("Submission rejected.", "info"); after(); }
       }
-      user = FF.currentUser();
-      renderCampReviews();
-      paintStats();
-    } catch (err) { FF.toast(err.message, "err"); }
+    } catch (err) { fail(err); }
   });
 
   renderCamps();
@@ -499,6 +511,15 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(renderActivity, 20000);
   renderCampReviews();
   paintStats();
+
+  /* Server se fresh campaign state aaye (dusro ki campaigns, naye proofs)
+     to dashboard turant dobara render karo. */
+  document.addEventListener("ff:campaigns-synced", () => {
+    user = FF.currentUser() || user;
+    renderCamps();
+    renderCampReviews();
+    paintStats();
+  });
 });
 </script>
 </body>

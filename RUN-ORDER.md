@@ -8,6 +8,7 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 2 | [`supabase-mining.sql`](supabase-mining.sql) | `public.balances` table, cloud mining (`mining_config`, `mining_plans`, accrual, payouts) | 1 |
 | 3 | [`supabase-wallet.sql`](supabase-wallet.sql) | USDT wallet, task marketplace, escrow, `wallet_*` RPCs | 1, 2 |
 | 4 | [`supabase-points-import.sql`](supabase-points-import.sql) | *Optional:* `wallet_import_points()` — browser points ko server ledger me import | 1, 2, 3 |
+| 5 | [`supabase-campaigns.sql`](supabase-campaigns.sql) | Point campaigns (Add Page → Earn page) server-sync — `market_campaigns` tables + `campaigns_*` RPCs. Iske bina user-posted campaigns sirf poster ke browser me dikhte the | 1, 2, 3 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
 
