@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="assets/css/style.css?v=2.0" />
 <link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
 </head>
-<body class="app-body" data-requires-auth>
+<body class="app-body">
 
 <div class="aurora"><span></span><span></span><span></span></div>
 
@@ -90,7 +90,7 @@
       <div class="panel">
         <div class="fee-hint hidden" id="local-mode-warn" style="margin:0 0 14px;border-color:#f59e0b;background:rgba(245,158,11,.08)">
           <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" style="flex:none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
-          <span>You're browsing in <b>demo mode</b> — you can see every campaign, but you need a <b>real account</b> to complete them and earn points. <a href="signup.html" style="text-decoration:underline">Create a free account</a> or <a href="login.html" style="text-decoration:underline">log in</a>.</span>
+          <span>You're browsing <b>without a full account</b> — you can see every campaign, but you need a <b>real account</b> to complete them and earn points. <a href="signup.html" style="text-decoration:underline">Create a free account</a> or <a href="login.html" style="text-decoration:underline">log in</a>.</span>
         </div>
         <div class="chip-row" id="chip-row">
           <button class="chip active" data-filter="all" style="--pf:#e0489f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> All Tasks</button>
@@ -157,12 +157,13 @@
 <script src="assets/js/main.js?v=2.2"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
-<script src="assets/js/campaigns.js?v=1.4"></script>
+<script src="assets/js/campaigns.js?v=1.5"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  let user = FF.currentUser();
-  if (!user) return;
+  /* Guest (bina login) bhi campaigns ki listing dekh sakta hai — read-only.
+     Complete karne par signup ka message aata hai. */
+  let user = FF.currentUser() || { name: "Guest", email: "", guest: true };
 
   const chipRow = document.getElementById("chip-row");
   const listEl = document.getElementById("task-list");
