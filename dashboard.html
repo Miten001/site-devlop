@@ -16,11 +16,11 @@
   .streak-rank .r-ico { font-size: 15px; }
   .streak-rank .r-name { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
   .streak-rank .r-days { font-size: 10.5px; color: var(--ink-mute); font-weight: 600; }
-  .streak-days { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
-  .streak-day { text-align: center; border: 1px solid var(--line); border-radius: 9px; padding: 6px 1px 4px; background: var(--glass-2); min-width: 0; }
-  .streak-day .d { font-size: 8.5px; color: var(--ink-mute); font-weight: 800; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
-  .streak-day .r { font-size: 9.5px; font-weight: 800; color: var(--ink-dim); margin-top: 2px; white-space: nowrap; }
-  .streak-day .tick { font-size: 7.5px; font-weight: 800; margin-top: 2px; min-height: 9px; }
+  .streak-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+  .streak-day { text-align: center; border: 1px solid var(--line); border-radius: 10px; padding: 7px 2px 5px; background: var(--glass-2); min-width: 0; overflow: hidden; }
+  .streak-day .d { font-size: 9px; color: var(--ink-mute); font-weight: 800; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+  .streak-day .r { font-size: 11px; font-weight: 800; color: var(--ink-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .streak-day .tick { font-size: 8.5px; font-weight: 800; margin-top: 2px; min-height: 10px; }
   .streak-day.done { border-color: rgba(52,229,165,.4); background: rgba(52,229,165,.08); }
   .streak-day.done .r { color: var(--green, #34e5a5); }
   .streak-day.done .tick { color: var(--green, #34e5a5); }
@@ -32,7 +32,6 @@
   .streak-rankbar .rk { font-size: 12.5px; font-weight: 800; color: var(--ink); }
   .streak-rankbar .rk b { color: var(--amber, #ffd166); }
   .streak-cd { font-size: 12px; font-weight: 700; color: var(--ink-mute); font-variant-numeric: tabular-nums; }
-  @media (max-width: 520px) { .streak-days { gap: 3px; } .streak-day { padding: 4px 0 3px; border-radius: 7px; } .streak-day .d { font-size: 7.5px; } .streak-day .r { font-size: 8px; } }
 </style>
 </head>
 <body class="app-body" data-requires-auth>
