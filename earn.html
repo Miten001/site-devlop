@@ -71,7 +71,7 @@
         <div>
           <span class="eyebrow"><span class="dot"></span> Earn</span>
           <h1>Earn <span class="grad-text">points</span></h1>
-          <p class="sub">Quick bonus missions pay out instantly. Community campaigns pay once the campaign owner reviews and approves your proof.</p>
+          <p class="sub">Quick bonus missions pay out instantly. Community campaigns pay out the moment you submit your proof — no waiting for approval.</p>
         </div>
         <div class="credit-chip" style="font-size:15px;padding:10px 18px"><span data-coin></span><span data-credits>0</span>&nbsp;points</div>
       </div>
@@ -137,7 +137,7 @@
     <div class="m-steps">
       <div><span class="n">1</span> Open the page and complete the action — join / follow / subscribe / visit</div>
       <div><span class="n">2</span> Come back and paste your proof (link, username or screenshot URL)</div>
-      <div><span class="n">3</span> Submit — the campaign owner reviews it and your points land once approved</div>
+      <div><span class="n">3</span> Submit — your points are credited instantly ⚡</div>
     </div>
     <a class="btn btn-ghost btn-block hidden" id="cm-open" href="#" target="_blank" rel="noopener" style="margin-top:14px">Open task link</a>
     <div class="field" style="text-align:left;margin-top:16px">
@@ -148,7 +148,7 @@
       <label>Note to the campaign owner (optional)</label>
       <textarea id="cm-note" rows="2" placeholder="Anything the owner should know"></textarea>
     </div>
-    <button class="btn btn-primary btn-block" id="cm-submit">Submit proof &amp; wait for approval</button>
+    <button class="btn btn-primary btn-block" id="cm-submit">Submit proof &amp; earn points ⚡</button>
   </div>
 </div>
 
@@ -157,7 +157,7 @@
 <script src="assets/js/main.js?v=2.2"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
-<script src="assets/js/campaigns.js?v=1.5"></script>
+<script src="assets/js/campaigns.js?v=1.6"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -383,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
             </a>
           </div>
-          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isPending ? "Waiting for the campaign owner to approve your proof" : "Owner reviews your proof on " + p.hint}</span>
+          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isPending ? "Waiting for the campaign owner to approve your proof" : "Submit proof — points credited instantly \u26A1"}</span>
           ${isDone ? '<span class="done-tag">Done</span>' : ""} ${isOwn && !isPaused ? '<span class="done-tag" style="background:rgba(34,197,94,.15);color:var(--green,#22c55e)">Yours</span>' : ""} ${isPaused ? '<span class="done-tag" style="background:rgba(245,158,11,.16);color:#d97706">Paused</span>' : ""}
         </div>`;
     }).join("");
@@ -409,7 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cmIco.innerHTML = p.icon;
     cmIco.style.setProperty("--pf", p.color);
     cmTitle.textContent = task.action + " · " + (task.user || task.title);
-    cmSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " points</b> (paid once the owner approves)";
+    cmSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " points</b> (credited instantly \u26A1)";
     cmProof.value = ""; cmNote.value = "";
     if (task.url) { cmOpen.href = task.url; cmOpen.classList.remove("hidden"); } else cmOpen.classList.add("hidden");
     campModal.classList.add("open");
@@ -424,7 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
   cmSubmit.addEventListener("click", () => {
     if (!pendingCamp) return;
     const finish = () => {
-      FF.toast("Proof submitted! The campaign owner will review it shortly.", "ok");
+      FF.toast("Proof submitted! +" + (pendingCamp ? pendingCamp.payout : "") + " points credited \u26A1", "ok");
       campModal.classList.remove("open");
       pendingCamp = null;
       render();
