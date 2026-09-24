@@ -178,7 +178,7 @@
 <script src="assets/js/main.js?v=2.2"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
-<script src="assets/js/campaigns.js?v=1.7"></script>
+<script src="assets/js/campaigns.js?v=1.8"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -384,9 +384,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const isOwn = c.mine === true || (c.authorEmail && user.email && c.authorEmail === user.email);
       const isPaused = c.active === false && isOwn;
       const isWatch = FF.isWatchAction && FF.isWatchAction(c.action) && Number(c.watchSecs || 0) > 0;
-      const disabled = isDone || isPending || isOwn;
-      const label = isDone ? "Completed ✓" : isPending ? "Pending review" : isPaused ? "Paused ⏸" : isOwn ? "Your campaign 👑" : isRejected ? "Try again" : isWatch ? "Watch & Earn ⏱" : "Start Task";
-      const btnClass = isDone || isPending || isOwn ? "btn-ghost" : "btn-primary";
+      const maxA = Math.max(0, Math.round(Number(c.maxActions || 0)));
+      const acts = Number(c.actions || 0);
+      const isFull = maxA > 0 && acts >= maxA;
+      const disabled = isDone || isPending || isOwn || isFull;
+      const label = isDone ? "Completed ✓" : isPending ? "Pending review" : isPaused ? "Paused ⏸" : isOwn ? "Your campaign 👑" : isFull ? "Limit reached ⛔" : isRejected ? "Try again" : isWatch ? "Watch & Earn ⏱" : "Start Task";
+      const btnClass = isDone || isPending || isOwn || isFull ? "btn-ghost" : "btn-primary";
       return `
         <div class="task-card ${isDone ? "done" : ""}" style="--pf:${p.color}">
           <div class="task-top">
@@ -405,8 +408,8 @@ document.addEventListener("DOMContentLoaded", () => {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
             </a>
           </div>
-          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isPending ? "Waiting for the campaign owner to approve your proof" : isWatch ? "\u23F1\uFE0F Watch for " + (Number(c.watchSecs) || 15) + "s — points credited when the timer completes" : "Submit proof — points credited instantly \u26A1"}</span>
-          ${isDone ? '<span class="done-tag">Done</span>' : ""} ${isOwn && !isPaused ? '<span class="done-tag" style="background:rgba(34,197,94,.15);color:var(--green,#22c55e)">Yours</span>' : ""} ${isPaused ? '<span class="done-tag" style="background:rgba(245,158,11,.16);color:#d97706">Paused</span>' : ""}
+          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isFull ? "This campaign reached its engagement limit (" + acts + "/" + maxA + ") — watch for new campaigns from other members" : isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isPending ? "Waiting for the campaign owner to approve your proof" : isWatch ? "\u23F1\uFE0F Watch for " + (Number(c.watchSecs) || 15) + "s — points credited when the timer completes" : "Submit proof — points credited instantly \u26A1"}</span>
+          ${isDone ? '<span class="done-tag">Done</span>' : ""} ${isOwn && !isPaused ? '<span class="done-tag" style="background:rgba(34,197,94,.15);color:var(--green,#22c55e)">Yours</span>' : ""} ${isPaused ? '<span class="done-tag" style="background:rgba(245,158,11,.16);color:#d97706">Paused</span>' : ""} ${maxA > 0 ? (isFull ? '<span class="done-tag" style="background:rgba(239,68,68,.14);color:#ef4444">Full</span>' : '<span class="done-tag" style="background:rgba(255,209,102,.12);color:var(--amber,#ffd166)">' + acts + "/" + maxA + '</span>') : ""}
         </div>`;
     }).join("");
   }

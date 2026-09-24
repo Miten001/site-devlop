@@ -8,7 +8,8 @@
 --                                    (owner name + email), stats, status
 --   2. admin_campaigns_update(...)  → koi bhi campaign EDIT karo
 --                                    (title, link, platform, action,
---                                     payout, watch time, pause/resume)
+--                                     payout, watch time, pause/resume,
+--                                     engagement limit)
 --   3. admin_campaigns_delete(...)  → koi bhi campaign DELETE karo
 --
 -- baaps: is_admin() supabase.sql me pehle se installed hai —
@@ -43,6 +44,7 @@ begin
                  'action',   c.action,
                  'payout',   c.payout,
                  'watchSecs', c.watch_secs,
+                 'maxActions', c.max_actions,
                  'active',   c.active,
                  'actions',  c.actions,
                  'spent',    c.spent,
@@ -63,6 +65,8 @@ $$;
 -- 2. UPDATE — admin kisi bhi campaign ko edit kar sakta hai
 --    (payout 1–100, watch 0–300 s, 0 = proof mode)
 -- ------------------------------------------------------------
+drop function if exists public.admin_campaigns_update(text, text, text, text, text, numeric, int, boolean);
+
 create or replace function public.admin_campaigns_update(
   p_campaign   text,
   p_title      text,
@@ -71,7 +75,8 @@ create or replace function public.admin_campaigns_update(
   p_action     text,
   p_payout     numeric,
   p_watch_secs int default 0,
-  p_active     boolean default true
+  p_active     boolean default true,
+  p_max_actions int default 0
 )
 returns jsonb language plpgsql security definer set search_path = public as $$
 begin
@@ -88,6 +93,9 @@ begin
   if p_watch_secs is null or p_watch_secs < 0 or p_watch_secs > 300 then
     raise exception 'Watch time must be between 0 and 300 seconds' using errcode = 'P0001';
   end if;
+  if p_max_actions is null or p_max_actions < 0 or p_max_actions > 100000 then
+    raise exception 'Engagement limit must be between 0 (no limit) and 100000' using errcode = 'P0001';
+  end if;
 
   update public.market_campaigns set
     title      = trim(p_title),
@@ -96,7 +104,8 @@ begin
     action     = coalesce(nullif(trim(p_action), ''), action),
     payout     = round(p_payout::numeric, 1),
     watch_secs = p_watch_secs,
-    active     = coalesce(p_active, active)
+    active     = coalesce(p_active, active),
+    max_actions = greatest(0, coalesce(p_max_actions, 0))
   where id = p_campaign;
 
   if not found then
@@ -133,9 +142,9 @@ $$;
 --    (andar is_admin() guard hai, isliye non-admin ko error milega)
 -- ------------------------------------------------------------
 revoke all on function public.admin_campaigns_list()                                          from public, anon;
-revoke all on function public.admin_campaigns_update(text, text, text, text, text, numeric, int, boolean) from public, anon;
+revoke all on function public.admin_campaigns_update(text, text, text, text, text, numeric, int, boolean, int) from public, anon;
 revoke all on function public.admin_campaigns_delete(text)                                     from public, anon;
 
 grant execute on function public.admin_campaigns_list()                                          to authenticated;
-grant execute on function public.admin_campaigns_update(text, text, text, text, text, numeric, int, boolean) to authenticated;
+grant execute on function public.admin_campaigns_update(text, text, text, text, text, numeric, int, boolean, int) to authenticated;
 grant execute on function public.admin_campaigns_delete(text)                                     to authenticated;

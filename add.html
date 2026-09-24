@@ -100,6 +100,12 @@
           <p style="font-size:12px;color:var(--ink-mute);margin:6px 0 0">View / Watch / Read campaigns need no proof — the user must stay on the page for this many seconds to earn the reward.</p>
         </div>
 
+        <div class="field" id="limit-field" style="text-align:left;margin-top:14px">
+          <label>🎯 Engagement limit — max users who can earn (0 = no limit)</label>
+          <input type="number" id="camp-limit" min="0" max="100000" step="1" value="0" />
+          <p style="font-size:12px;color:var(--ink-mute);margin:6px 0 0">The campaign automatically stops after this many users complete it. 0 means no limit — it runs until you pause or delete it.</p>
+        </div>
+
         <div class="est"><b id="est-actions" class="grad-text">—</b><span>Est. engagements</span></div>
         <div class="est"><b id="est-budget" class="grad-text">—</b><span>Your balance</span></div>
         <div class="est"><b id="est-score" class="grad-text">—</b><span>Queue speed</span></div>
@@ -120,7 +126,7 @@
 <script src="assets/js/main.js?v=2.2"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
-<script src="assets/js/campaigns.js?v=1.7"></script>
+<script src="assets/js/campaigns.js?v=1.8"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -177,7 +183,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const max = parseInt(payoutSlider.max, 10);
     const progress = ((payout - min) / (max - min)) * 100;
     payoutSlider.style.setProperty("--range-progress", progress + "%");
-    estActions.textContent = Math.floor(credits / payout).toLocaleString("en-IN");
+    const limitVal = Math.max(0, Math.round(parseInt(document.getElementById("camp-limit").value, 10) || 0));
+    const estN = limitVal > 0 ? Math.min(Math.floor(credits / payout), limitVal) : Math.floor(credits / payout);
+    estActions.textContent = estN.toLocaleString("en-IN");
     estBudget.textContent = credits.toLocaleString("en-IN");
     estScore.textContent = payout >= 12 ? "Blazing ⚡" : payout >= 6 ? "Fast" : "Steady";
   }
@@ -199,6 +207,9 @@ document.addEventListener("DOMContentLoaded", () => {
     payoutSlider.value = v; refreshEst();
   });
   payoutSlider.addEventListener("input", () => { payoutNum.value = payoutSlider.value; });
+
+  /* engagement limit → est. engagements turant update */
+  document.getElementById("camp-limit").addEventListener("input", refreshEst);
   refreshActions();
 
   form.addEventListener("submit", (e) => {
@@ -219,6 +230,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const isWatch = typeof FF.isWatchAction === "function" && FF.isWatchAction(action);
     const watchSecs = isWatch ? Math.max(5, Math.min(300, parseInt(document.getElementById("camp-watch").value, 10) || 15)) : 0;
+    const limitRaw = document.getElementById("camp-limit").value.trim();
+    const maxActions = Math.max(0, Math.min(100000, parseInt(limitRaw, 10) || 0));
+    if (limitRaw !== "" && !/^\d+$/.test(limitRaw)) return FF.toast("Engagement limit must be a whole number (0 = no limit)", "err");
     const camp = {
       id: "m" + Date.now(),
       platform: selected,
@@ -227,6 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
       url,
       payout,
       watchSecs,
+      maxActions,
       active: true,
       actions: 0,
       spent: 0,
@@ -244,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
       title: camp.title,
       url: camp.url,
       payout: camp.payout,
+      maxActions: camp.maxActions,
       mine: true,
       active: true,
       authorEmail: u.email,
