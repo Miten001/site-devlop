@@ -10,6 +10,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/style.css?v=2.0" />
 <link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+<style>
+  /* daily streak panel */
+  .streak-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 14px 0 12px; }
+  .streak-day { text-align: center; border: 1px solid var(--line); border-radius: 12px; padding: 9px 2px 7px; background: var(--glass-2); min-width: 0; }
+  .streak-day .d { font-size: 9.5px; color: var(--ink-mute); font-weight: 800; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+  .streak-day .r { font-size: 11.5px; font-weight: 800; color: var(--ink-dim); margin-top: 3px; white-space: nowrap; }
+  .streak-day .tick { font-size: 9px; font-weight: 800; margin-top: 3px; min-height: 11px; }
+  .streak-day.done { border-color: rgba(52,229,165,.4); background: rgba(52,229,165,.08); }
+  .streak-day.done .r { color: var(--green, #34e5a5); }
+  .streak-day.done .tick { color: var(--green, #34e5a5); }
+  .streak-day.today { border-color: var(--amber, #ffd166); background: rgba(255,209,102,.1); animation: stpulse 1.7s infinite; }
+  .streak-day.today .r { color: var(--amber, #ffd166); }
+  .streak-day.today .tick { color: var(--amber, #ffd166); }
+  @keyframes stpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,209,102,.35); } 50% { box-shadow: 0 0 0 6px rgba(255,209,102,0); } }
+  @media (max-width: 480px) { .streak-days { gap: 4px; } .streak-day { padding: 7px 1px 5px; } .streak-day .r { font-size: 10px; } }
+</style>
 </head>
 <body class="app-body" data-requires-auth>
 
@@ -150,6 +166,16 @@
         </div>
 
         <div>
+          <div class="panel reveal" id="streak-panel">
+            <div class="panel-head">
+              <div><h3>Daily streak 🔥</h3><p class="panel-sub">Claim once a day — the reward grows with your streak and is paid in USDT. Miss a day and it resets.</p></div>
+              <span class="status-pill on" id="streak-pill">—</span>
+            </div>
+            <div class="streak-days" id="streak-days"></div>
+            <button type="button" class="btn btn-primary btn-block" id="streak-claim" disabled>Loading…</button>
+            <p class="text-mute" style="font-size:12px;margin:9px 0 0" id="streak-hint"></p>
+          </div>
+
           <div class="panel reveal">
             <div class="panel-head"><h3>Refer &amp; earn</h3></div>
             <p class="text-mute" style="font-size:13.5px;line-height:1.5">Every friend who <b>signs up</b> with your link unlocks a <b style="color:var(--green)">free cloud mining rig</b> for you — plus 10% of their earnings for life.</p>
@@ -518,6 +544,106 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(renderActivity, 20000);
   renderCampReviews();
   paintStats();
+
+  /* ---------- daily streak (USDT) ---------- */
+  const stPanel = document.getElementById("streak-panel");
+  const stDays  = document.getElementById("streak-days");
+  const stBtn   = document.getElementById("streak-claim");
+  const stHint  = document.getElementById("streak-hint");
+  const stPill  = document.getElementById("streak-pill");
+  const ST_REWARDS = [0.01, 0.02, 0.03, 0.05, 0.08, 0.12, 0.20];
+
+  /* claim par coin sound — Web Audio (koi file nahi chahiye) */
+  function playCoinSound() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const t0 = ctx.currentTime;
+      [[987.77, 0], [1318.51, 0.085]].forEach((n) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "square";
+        o.frequency.setValueAtTime(n[0], t0 + n[1]);
+        g.gain.setValueAtTime(0.0001, t0 + n[1]);
+        g.gain.exponentialRampToValueAtTime(0.22, t0 + n[1] + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[1] + 0.6);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t0 + n[1]); o.stop(t0 + n[1] + 0.62);
+      });
+      setTimeout(() => { try { ctx.close(); } catch (e) {} }, 1100);
+    } catch (e) { /* sound optional */ }
+  }
+
+  function streakRender(st) {
+    const rewards = (st && st.rewards && st.rewards.length) ? st.rewards : ST_REWARDS;
+    const streak = Number(st && st.streak) || 0;
+    const claimedToday = !!(st && st.claimedToday);
+    const canClaim = !!(st && st.canClaim);
+    /* cycle position: aaj claim ho chuka → chips 1..pos done;
+       warna is cycle ke pehle din done + agla claim day "TODAY" */
+    const nextDay = Math.max(1, Number(st && st.nextDay) || 1);
+    const claimedPos = claimedToday
+      ? ((Math.max(1, streak) - 1) % 7) + 1
+      : (canClaim ? (nextDay - 1) % 7 : 0);
+    const todayPos = (canClaim && !claimedToday) ? ((nextDay - 1) % 7) + 1 : 0;
+    let html = "";
+    for (let i = 1; i <= 7; i++) {
+      const done = i <= claimedPos;
+      const today = i === todayPos;
+      html += '<div class="streak-day' + (done ? " done" : "") + (today ? " today" : "") + '">' +
+        '<div class="d">Day ' + i + "</div>" +
+        '<div class="r">$' + Number(rewards[i - 1]).toFixed(2) + "</div>" +
+        '<div class="tick">' + (done ? "✓ CLAIMED" : today ? "★ TODAY" : "") + "</div>" +
+        "</div>";
+    }
+    stDays.innerHTML = html;
+    stPill.textContent = streak > 0 ? "🔥 " + streak + " day streak" : "Start today";
+
+    const nextR = Number(st && st.nextReward) || ST_REWARDS[0];
+    if (canClaim) {
+      stBtn.disabled = false;
+      stBtn.textContent = "Claim $" + nextR.toFixed(2) + " USDT";
+      stHint.textContent = "Best streak: " + (Number(st && st.best) || 0) + " days · total claims: " + (Number(st && st.claims) || 0) + " · paid straight to your wallet";
+    } else {
+      stBtn.disabled = true;
+      stBtn.textContent = claimedToday ? "✓ Claimed — come back tomorrow" : "Claim —";
+      stHint.textContent = claimedToday
+        ? "Today's $" + (Number(st && st.nextReward) || 0).toFixed(2) + " is in your wallet. Tomorrow: Day " + (streak + 1) + " → $" + ST_REWARDS[Math.min(7, streak + 1) - 1].toFixed(2)
+        : "";
+    }
+  }
+
+  function streakLoad() {
+    if (!FF.hasServer || !FF.hasServer()) { stPanel.style.display = "none"; return; }
+    FF.rpc("streak_state").then(streakRender).catch((err) => {
+      const m = (err && err.message) || "";
+      stBtn.disabled = true;
+      stBtn.textContent = "Claim —";
+      if (/streak_state|does not exist|PGRST|permission|function/i.test(m)) {
+        stPill.textContent = "Setup needed";
+        stHint.textContent = "Daily streak needs one SQL: run supabase-daily-streak.sql in the Supabase SQL editor, then reload.";
+      } else {
+        stHint.textContent = "Could not load your streak — try again in a moment.";
+      }
+    });
+  }
+
+  stBtn.addEventListener("click", () => {
+    if (stBtn.disabled) return;
+    stBtn.disabled = true;
+    stBtn.textContent = "Claiming…";
+    FF.rpc("streak_claim", {}).then((r) => {
+      playCoinSound();
+      FF.toast("+$" + Number(r.reward).toFixed(2) + " USDT added to your wallet 🎉", "ok");
+      streakRender(r);
+      if (FF.W && FF.W.api) FF.W.api.wallet().catch(() => {});
+    }).catch((err) => {
+      FF.toast((err && err.message) || "Claim failed — try again", "err");
+      streakLoad();
+    });
+  });
+
+  streakLoad();
 
   /* Server se fresh campaign state aaye (dusro ki campaigns, naye proofs)
      to dashboard turant dobara render karo. */

@@ -498,7 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- tables ---------- */
   const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Conversion", mining: "Cloud mining", adjust: "Admin adjustment" };
+  const LABEL = { deposit: "Deposit", withdraw: "Withdrawal", earning: "Task earning", payout: "Task payout", escrow: "Escrow", refund: "Refund", convert: "Conversion", mining: "Cloud mining", adjust: "Admin adjustment", streak: "Daily streak" };
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 
   function renderTx() {
