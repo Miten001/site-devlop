@@ -84,14 +84,22 @@
       </div>
 
       <div class="field">
-        <label>5. Payout per engagement</label>
+        <label>5. Payout — kitne points doge (per engagement)</label>
         <div class="range-row">
-          <input type="range" id="camp-payout" min="1" max="20" step="1" value="4" />
+          <input type="range" id="camp-payout" min="1" max="100" step="1" value="4" style="flex:1" />
+          <input type="number" id="camp-payout-num" min="1" max="100" step="1" value="4"
+                 style="width:76px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--glass-2);color:var(--ink);font-weight:700" />
           <output id="payout-out">4 pts</output>
         </div>
       </div>
 
       <div class="est-box">
+        <div class="field hidden" id="watch-field" style="text-align:left;margin-top:14px">
+          <label>⏱️ Watch time — kitne second user ko dekhna padega (5–300)</label>
+          <input type="number" id="camp-watch" min="5" max="300" step="1" value="15" />
+          <p style="font-size:12px;color:var(--ink-mute);margin:6px 0 0">View / Watch / Read type campaigns me proof nahi lagta — user ko itne second page dekhna padta hai, tabhi points milte hain.</p>
+        </div>
+
         <div class="est"><b id="est-actions" class="grad-text">—</b><span>Est. engagements</span></div>
         <div class="est"><b id="est-budget" class="grad-text">—</b><span>Your balance</span></div>
         <div class="est"><b id="est-score" class="grad-text">—</b><span>Queue speed</span></div>
@@ -112,7 +120,7 @@
 <script src="assets/js/main.js?v=2.2"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
-<script src="assets/js/campaigns.js?v=1.6"></script>
+<script src="assets/js/campaigns.js?v=1.7"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -141,6 +149,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function refreshActions() {
     const p = FF.PLATFORMS[selected] || { actions: ["Visit"], name: selected };
+    /* View/Watch type action chuna to watch-time field dikha do */
+    if (typeof FF.isWatchAction === "function") {
+      watchField.classList.toggle("hidden", !FF.isWatchAction(actionSelect.value));
+    }
     actionSelect.innerHTML = p.actions.map((a) => `<option value="${a}">${a}</option>`).join("");
     urlInput.placeholder = {
       telegram: "https://t.me/yourchannel-or-bot",
@@ -179,6 +191,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   payoutSlider.addEventListener("input", refreshEst);
+  const payoutNum = document.getElementById("camp-payout-num");
+  const watchField = document.getElementById("watch-field");
+  /* payout: slider <-> number box sync */
+  payoutNum.addEventListener("input", () => {
+    const v = Math.max(1, Math.min(100, parseInt(payoutNum.value, 10) || 1));
+    payoutSlider.value = v; refreshEst();
+  });
+  payoutSlider.addEventListener("input", () => { payoutNum.value = payoutSlider.value; });
   refreshActions();
 
   form.addEventListener("submit", (e) => {
@@ -197,6 +217,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (title.length < 3) return FF.toast("Title must be at least 3 characters", "err");
     if ((u.credits || 0) < payout) return FF.toast("Not enough points — earn some on the Earn page first!", "err");
 
+    const isWatch = typeof FF.isWatchAction === "function" && FF.isWatchAction(action);
+    const watchSecs = isWatch ? Math.max(5, Math.min(300, parseInt(document.getElementById("camp-watch").value, 10) || 15)) : 0;
     const camp = {
       id: "m" + Date.now(),
       platform: selected,
@@ -204,6 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
       title,
       url,
       payout,
+      watchSecs,
       active: true,
       actions: 0,
       spent: 0,

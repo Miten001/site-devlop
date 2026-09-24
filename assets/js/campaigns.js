@@ -37,6 +37,12 @@
       dashboard.html: user.campaigns / campSubsFor).
      isPublic = demo/offline members ke liye sirf LISTING (read-only):
      subs/done/user state ko overwrite nahi karte. */
+  /* View/Watch/Visit/Read type actions — inke liye proof nahi, TIMER hai.
+     (Watch Video, View Reel, Visit Website, Read Article, Explore Page...) */
+  FF.isWatchAction = function (action) {
+    return /^(watch|view|visit|read|explore)\b/i.test(String(action || "").trim());
+  };
+
   function adopt(feed, isPublic) {
     if (!feed) return false;
     let u = FF.currentUser();
@@ -65,6 +71,7 @@
         payout: num(c.payout), mine: !!c.mine, active: c.active !== false,
         authorEmail: c.authorEmail || "", created: num(c.created),
         actions: num(c.actions), spent: num(c.spent), src: "srv",
+        watchSecs: num(c.watchSecs),
       });
     });
     (feed.mine || []).forEach((c) => camps.push({
@@ -73,6 +80,7 @@
       payout: num(c.payout), mine: true, active: c.active !== false,
       authorEmail: c.authorEmail || u.email, created: num(c.created),
       actions: num(c.actions), spent: num(c.spent),
+      watchSecs: num(c.watchSecs),
     }));
     FF.DB.saveCampaigns(dedupeById(camps));
     if (isPublic) {
@@ -206,6 +214,7 @@
     return ensurePointsImported().then(() => FF.rpc("campaigns_post", {
       p_id: camp.id, p_platform: camp.platform, p_action: camp.action,
       p_title: camp.title, p_url: camp.url, p_payout: Number(camp.payout || 0),
+      p_watch_secs: Math.max(0, Math.min(300, Math.round(Number(camp.watchSecs || 0)))),
     }).then((feed) => { adopt(feed); return camp; }));
   };
 
