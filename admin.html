@@ -78,6 +78,21 @@
   .st-pending { background: rgba(245,158,11,.16); color: #d97706; }
   .st-rejected { background: rgba(239,68,68,.12); color: #dc2626; }
   .st-paused { background: rgba(100,116,139,.14); color: #64748b; }
+
+  /* admin campaign manager */
+  .camp-panel { margin-top: 16px; }
+  .camp-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 9px; border: 1px solid var(--line); background: var(--glass-2); color: var(--ink-dim); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .camp-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  .camp-btn.del { border-color: rgba(255,93,110,.28); color: #ff8a99; }
+  .camp-btn.del:hover { border-color: #ff5d6e; color: #ff5d6e; background: rgba(255,93,110,.06); }
+  .camp-url { display: block; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; color: var(--cyan); text-decoration: none; }
+  .camp-url:hover { text-decoration: underline; }
+  .camp-sub { font-size: 11.5px; color: var(--ink-mute); }
+  .camp-edit-modal { width: min(620px, 100%); text-align: left; max-height: 92vh; overflow-y: auto; }
+  .ce-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 560px) { .ce-grid { grid-template-columns: 1fr; } }
+  .ce-check { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--ink-dim); margin: 4px 0 14px; cursor: pointer; }
+  .ce-check input { width: 16px; height: 16px; accent-color: #34e5a5; }
   .mm-proof-link { color: var(--brand, #7c5cff); font-weight: 700; text-decoration: underline; word-break: break-all; }
   .member-modal .coin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 6px; }
   .member-modal .mini-stat { padding: 12px 13px; }
@@ -205,6 +220,19 @@
         <table class="ff-table member-table">
           <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Coins</th><th>Password</th></tr></thead>
           <tbody id="t-members"><tr><td colspan="6">Loading registered accounts…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel camp-panel" aria-labelledby="camp-title">
+      <div class="panel-head">
+        <div><h3 id="camp-title">Campaigns — view / edit / delete</h3><p class="panel-sub">Every campaign on the site, with the member who created it. <b>Edit</b> any detail (title, link, platform, action, payout, watch time), <b>pause / resume</b> or <b>delete</b> anything — no matter whose campaign it is.</p></div>
+        <span class="status-pill on" id="camp-count">0 campaigns</span>
+      </div>
+      <div class="member-table-wrap">
+        <table class="ff-table member-table camp-admin-table">
+          <thead><tr><th>Campaign</th><th>Platform / Action</th><th>Payout</th><th>Watch</th><th>Created by</th><th>Done</th><th>Spent</th><th>Status</th><th>Manage</th></tr></thead>
+          <tbody id="t-camps"><tr><td colspan="9">Loading campaigns…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -386,6 +414,47 @@
   </div>
 </div>
 
+<!-- ADMIN CAMPAIGN EDITOR — opens from the campaigns table -->
+<div class="modal-veil" id="camp-edit-modal" aria-hidden="true">
+  <div class="modal modal-pos camp-edit-modal" role="dialog" aria-modal="true" aria-labelledby="ce-head" tabindex="-1">
+    <button class="m-close" data-close-modal type="button" aria-label="Close campaign editor"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3 id="ce-head">Edit campaign</h3>
+    <p class="m-sub" id="ce-sub"></p>
+
+    <div class="field">
+      <label for="ce-name">Campaign title</label>
+      <input type="text" id="ce-name" maxlength="90" placeholder="e.g. Follow FlexFam on Instagram" />
+    </div>
+    <div class="field">
+      <label for="ce-url">Link — where people go</label>
+      <input type="text" id="ce-url" placeholder="https://…" />
+    </div>
+    <div class="ce-grid">
+      <div class="field">
+        <label for="ce-platform">Platform</label>
+        <select id="ce-platform"></select>
+      </div>
+      <div class="field">
+        <label for="ce-action">Action</label>
+        <select id="ce-action"></select>
+      </div>
+    </div>
+    <div class="ce-grid">
+      <div class="field">
+        <label for="ce-payout">Payout per engagement (1–100)</label>
+        <input type="number" id="ce-payout" min="1" max="100" step="1" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label for="ce-watch">⏱️ Watch time — seconds (0 = proof mode)</label>
+        <input type="number" id="ce-watch" min="0" max="300" step="1" inputmode="numeric" />
+      </div>
+    </div>
+    <label class="ce-check"><input type="checkbox" id="ce-active" checked /> Campaign is active — visible on the Earn page</label>
+
+    <button type="button" class="btn btn-primary btn-sm" id="ce-save">Save changes</button>
+  </div>
+</div>
+
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script>
 /* FlexFam admin — Supabase Auth + analytics over plain REST (fetch). */
@@ -525,6 +594,7 @@
 
     loadPayments();
     loadMessages();
+    loadCampaigns();
   }
 
   /* Renders the actor behind an event: a member (clickable → coin modal)
@@ -849,6 +919,139 @@
     if (exact) fillExact(); else { $("mm-points-in").value = ""; $("mm-usdt-in").value = ""; }
   }
 
+  /* ---------- campaigns (admin manager) ---------- */
+  var campRows = [];
+  var campEditId = null;
+  var CAMP_PLATFORMS = {
+    telegram:  { name: "Telegram",      color: "#2aabee", actions: ["Join Channel", "Join Group", "Start Bot", "Boost Post"] },
+    youtube:   { name: "YouTube",       color: "#ff0000", actions: ["Subscribe", "Watch Video", "Like Video"] },
+    instagram: { name: "Instagram",     color: "#e1306c", actions: ["Follow", "Like Post", "View Reel"] },
+    x:         { name: "X (Twitter)",   color: "#e7e9ea", actions: ["Follow", "Repost", "Like Post"] },
+    tiktok:    { name: "TikTok",        color: "#fe2c55", actions: ["Follow", "Like Video", "Watch Video"] },
+    facebook:  { name: "Facebook",      color: "#1877f2", actions: ["Like Page", "Follow", "Like Post"] },
+    twitch:    { name: "Twitch",        color: "#9146ff", actions: ["Follow", "Watch Stream"] },
+    pinterest: { name: "Pinterest",     color: "#e60023", actions: ["Follow", "Save Pin"] },
+    website:   { name: "Website Visit", color: "#34e5a5", actions: ["Visit Website", "Read Article", "Explore Page", "Sign Up"] }
+  };
+
+  function campPlatformInfo(key) {
+    return CAMP_PLATFORMS[key] || { name: key || "?", color: "#8b93a5", actions: [] };
+  }
+  function fmtPay(n) { n = Number(n || 0); return String(Math.round(n * 10) / 10); }
+
+  function loadCampaigns() {
+    rpc("admin_campaigns_list").then(renderCampaigns).catch(function (err) {
+      var m = (err && err.message) || "";
+      $("camp-count").textContent = "Setup needed";
+      $("t-camps").innerHTML = '<tr><td colspan="9">Run <code>supabase-admin-campaigns.sql</code> once in the Supabase SQL editor to enable campaign management.</td></tr>';
+      if (!/admin_campaigns_list|does not exist|PGRST|Admins only/i.test(m)) toast("Could not load campaigns: " + m, true);
+    });
+  }
+
+  function renderCampaigns(r) {
+    campRows = (r && r.campaigns) || [];
+    var n = campRows.length;
+    $("camp-count").textContent = n + (n === 1 ? " campaign" : " campaigns");
+    if (!n) {
+      $("t-camps").innerHTML = '<tr><td colspan="9" style="color:var(--ink-mute)">No campaigns on the site yet — they will appear here the moment a member creates one.</td></tr>';
+      return;
+    }
+    $("t-camps").innerHTML = campRows.map(function (c) {
+      var p = campPlatformInfo(c.platform);
+      var url = String(c.url || "");
+      var watch = Number(c.watchSecs || 0) > 0 ? "⏱ " + c.watchSecs + "s" : "Proof";
+      return "<tr>" +
+        '<td class="k" style="max-width:230px">' + esc(c.title) +
+          (url ? '<a class="camp-url" href="' + esc(url) + '" target="_blank" rel="noopener" title="' + esc(url) + '">' + esc(url) + "</a>" : "") +
+        "</td>" +
+        '<td style="white-space:nowrap"><b style="color:' + p.color + '">● ' + esc(p.name) + '</b><br><span class="camp-sub">' + esc(c.action) + "</span></td>" +
+        '<td class="num">+' + fmtPay(c.payout) + "</td>" +
+        '<td style="white-space:nowrap">' + watch + "</td>" +
+        '<td><b>' + esc(c.ownerName) + "</b><br><span class=\"camp-sub\">" + esc(c.ownerEmail) + "</span></td>" +
+        '<td class="num">' + fmtPts(c.actions) + "</td>" +
+        '<td class="num">' + fmtPay(c.spent) + "</td>" +
+        '<td><span class="st-pill ' + (c.active ? "st-active" : "st-paused") + '">' + (c.active ? "Active" : "Paused") + "</span></td>" +
+        '<td style="white-space:nowrap"><button type="button" class="camp-btn" data-cedit="' + esc(c.id) + '">✏️ Edit</button> <button type="button" class="camp-btn del" data-cdel="' + esc(c.id) + '" title="Delete this campaign">🗑 Delete</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  function campFillActions(key, selected) {
+    var p = campPlatformInfo(key);
+    var list = (p.actions && p.actions.length) ? p.actions.slice() : [selected || "Visit"];
+    if (selected && list.indexOf(selected) === -1) list = [selected].concat(list);
+    $("ce-action").innerHTML = list.map(function (a) {
+      return '<option value="' + esc(a) + '">' + esc(a) + "</option>";
+    }).join("");
+    if (selected) $("ce-action").value = selected;
+  }
+
+  function openCampEdit(id) {
+    var c = null;
+    campRows.forEach(function (x) { if (String(x.id) === String(id)) c = x; });
+    if (!c) return;
+    campEditId = c.id;
+    $("ce-sub").textContent = "Created by " + (c.ownerName || "member") + (c.ownerEmail ? " (" + c.ownerEmail + ")" : "") +
+      " — " + fmtPts(c.actions) + " completion(s), " + fmtPay(c.spent) + " spent.";
+    $("ce-name").value = c.title || "";
+    $("ce-url").value = c.url || "";
+    $("ce-payout").value = c.payout;
+    $("ce-watch").value = Number(c.watchSecs || 0);
+    $("ce-active").checked = c.active !== false;
+    var keys = Object.keys(CAMP_PLATFORMS);
+    if (c.platform && keys.indexOf(c.platform) === -1) keys.unshift(c.platform);
+    $("ce-platform").innerHTML = keys.map(function (k) {
+      var nm = CAMP_PLATFORMS[k] ? CAMP_PLATFORMS[k].name : k;
+      return '<option value="' + esc(k) + '">' + esc(nm) + "</option>";
+    }).join("");
+    $("ce-platform").value = c.platform || "website";
+    campFillActions(c.platform, c.action);
+    $("camp-edit-modal").classList.add("open");
+    $("ce-name").focus();
+  }
+
+  function saveCampEdit() {
+    if (!campEditId) return;
+    var title = $("ce-name").value.trim();
+    var payout = parseFloat($("ce-payout").value);
+    var watch = parseInt($("ce-watch").value, 10);
+    if (!title) { toast("Title is required", true); return; }
+    if (!(payout >= 1 && payout <= 100)) { toast("Payout must be between 1 and 100", true); return; }
+    if (isNaN(watch) || watch < 0 || watch > 300) { toast("Watch time must be 0–300 seconds", true); return; }
+    var btn = $("ce-save"), label = btn.textContent;
+    btn.disabled = true; btn.textContent = "Saving…";
+    rpc("admin_campaigns_update", {
+      p_campaign: campEditId,
+      p_title: title,
+      p_url: $("ce-url").value.trim(),
+      p_platform: $("ce-platform").value,
+      p_action: $("ce-action").value,
+      p_payout: payout,
+      p_watch_secs: watch,
+      p_active: $("ce-active").checked
+    }).then(function (r) {
+      $("camp-edit-modal").classList.remove("open");
+      renderCampaigns(r);
+      toast("Campaign updated ✓");
+    }).catch(function (err) {
+      toast("Update failed: " + ((err && err.message) || "unknown error"), true);
+    }).then(function () { btn.disabled = false; btn.textContent = label; });
+  }
+
+  function deleteCamp(id) {
+    var c = null;
+    campRows.forEach(function (x) { if (String(x.id) === String(id)) c = x; });
+    if (!c) return;
+    var who = (c.ownerName || "member") + (c.ownerEmail ? " (" + c.ownerEmail + ")" : "");
+    if (!window.confirm('Delete "' + (c.title || "campaign") + '" by ' + who + "?\n\nIts submissions and proofs are deleted too. This cannot be undone.")) return;
+    rpc("admin_campaigns_delete", { p_campaign: c.id }).then(function (r) {
+      renderCampaigns(r);
+      toast("Campaign deleted ✓");
+    }).catch(function (err) {
+      toast("Delete failed: " + ((err && err.message) || "unknown error"), true);
+    });
+  }
+
   /* ---------- messages ---------- */
   function setMsgMode(mode) {
     msgMode = mode === "user" ? "user" : "all";
@@ -1084,6 +1287,19 @@
           toast(m, true);
         })
         .then(function () { btn.disabled = false; btn.textContent = label; });
+    });
+
+    /* admin campaigns — edit / delete */
+    document.querySelectorAll("#camp-edit-modal [data-close-modal]").forEach(function (b) {
+      b.addEventListener("click", function () { $("camp-edit-modal").classList.remove("open"); });
+    });
+    $("ce-platform").addEventListener("change", function () { campFillActions(this.value, ""); });
+    $("ce-save").addEventListener("click", saveCampEdit);
+    document.addEventListener("click", function (e) {
+      var ed = e.target.closest("[data-cedit]");
+      var dl = e.target.closest("[data-cdel]");
+      if (ed) openCampEdit(ed.getAttribute("data-cedit"));
+      else if (dl) deleteCamp(dl.getAttribute("data-cdel"));
     });
 
     /* approve / reject payment requests */

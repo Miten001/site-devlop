@@ -14,6 +14,8 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 9  | supabase-admin-member-detail.sql | Admin panel: member pe click → uski campaigns + completed tasks (proofs) | admin.html |
 | 10 | supabase-campaigns-autoapprove.sql | Campaign auto-approve — proof submit karte hi points turant, owner review nahi | 5 |
 | 7 | [`supabase-member-messages.sql`](supabase-member-messages.sql) | **Support message box** — member admin ko message bhej sake (site par 💬 button). Reply member ke dashboard inbox me aata hai. Depends on 1 + `supabase-community.sql` (messages tables) | — |
+| 11 | supabase-campaigns-watch.sql | **Watch/View/Read timer earn** — `watch_secs` column + timer-mode campaigns (proof nahi, countdown → instant credit) | 5, 10 |
+| 12 | supabase-admin-campaigns.sql | **Admin campaign manager** — admin.html me SAARI campaigns (kisne banayi — name + email), koi bhi edit (title/link/platform/action/payout/watch/pause) ya delete | 1, 5 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
 
