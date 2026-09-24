@@ -71,7 +71,7 @@
         payout: num(c.payout), mine: !!c.mine, active: c.active !== false,
         authorEmail: c.authorEmail || "", created: num(c.created),
         actions: num(c.actions), spent: num(c.spent), src: "srv",
-        watchSecs: num(c.watchSecs),
+        watchSecs: num(c.watchSecs), maxActions: num(c.maxActions),
       });
     });
     (feed.mine || []).forEach((c) => camps.push({
@@ -80,7 +80,7 @@
       payout: num(c.payout), mine: true, active: c.active !== false,
       authorEmail: c.authorEmail || u.email, created: num(c.created),
       actions: num(c.actions), spent: num(c.spent),
-      watchSecs: num(c.watchSecs),
+      watchSecs: num(c.watchSecs), maxActions: num(c.maxActions),
     }));
     FF.DB.saveCampaigns(dedupeById(camps));
     if (isPublic) {
@@ -121,6 +121,7 @@
         title: c.title, url: c.url || "", payout: num(c.payout),
         active: c.active !== false, actions: num(c.actions),
         spent: num(c.spent), created: num(c.created),
+        maxActions: num(c.maxActions),
       })),
     });
 
@@ -215,6 +216,7 @@
       p_id: camp.id, p_platform: camp.platform, p_action: camp.action,
       p_title: camp.title, p_url: camp.url, p_payout: Number(camp.payout || 0),
       p_watch_secs: Math.max(0, Math.min(300, Math.round(Number(camp.watchSecs || 0)))),
+      p_max_actions: Math.max(0, Math.min(100000, Math.round(Number(camp.maxActions || 0)) || 0)),
     }).then((feed) => { adopt(feed); return camp; }));
   };
 

@@ -204,7 +204,7 @@
 <script src="assets/js/main.js?v=2.2"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
-<script src="assets/js/campaigns.js?v=1.6"></script>
+<script src="assets/js/campaigns.js?v=1.8"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -288,6 +288,8 @@ document.addEventListener("DOMContentLoaded", () => {
     campEmpty.classList.toggle("hidden", camps.length > 0);
     campList.innerHTML = camps.map((c) => {
       const p = FF.PLATFORMS[c.platform] || { color: "#7c3aed", icon: "", name: "Platform", actions: ["Engage"] };
+      const maxA = Math.max(0, Math.round(Number(c.maxActions || 0)));
+      const full = maxA > 0 && Number(c.actions || 0) >= maxA;
       return `
       <div class="camp-row" style="--pf:${p.color}">
         <span class="cr-pf">${p.icon}</span>
@@ -295,8 +297,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <h5>${escCr(c.title)}</h5>
           <p>${p.name} · ${escCr(c.action || p.actions[0])} · ${Number(c.payout || 0)} pts/action</p>
         </div>
-        <div class="cr-meta"><b>${(c.actions || 0).toLocaleString("en-IN")}</b>engagements</div>
-        <span class="status-pill ${c.active ? "on" : "off"}">${c.active ? "Live" : "Paused"}</span>
+        <div class="cr-meta"><b>${(c.actions || 0).toLocaleString("en-IN")}${maxA > 0 ? " / " + maxA.toLocaleString("en-IN") : ""}</b>engagements</div>
+        <span class="status-pill ${full ? "off" : c.active ? "on" : "off"}">${full ? "Full" : c.active ? "Live" : "Paused"}</span>
         <button class="icon-btn" data-toggle-camp="${c.id}" title="${c.active ? "Pause" : "Resume"}">
           ${c.active
             ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M10 5v14M14 5v14"/></svg>'

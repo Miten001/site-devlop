@@ -449,6 +449,16 @@
         <input type="number" id="ce-watch" min="0" max="300" step="1" inputmode="numeric" />
       </div>
     </div>
+    <div class="ce-grid">
+      <div class="field">
+        <label for="ce-limit">🎯 Engagement limit — max users (0 = no limit)</label>
+        <input type="number" id="ce-limit" min="0" max="100000" step="1" inputmode="numeric" />
+      </div>
+      <div class="field">
+        <label>Completions so far</label>
+        <input type="text" id="ce-done" disabled style="opacity:.7" />
+      </div>
+    </div>
     <label class="ce-check"><input type="checkbox" id="ce-active" checked /> Campaign is active — visible on the Earn page</label>
 
     <button type="button" class="btn btn-primary btn-sm" id="ce-save">Save changes</button>
@@ -968,9 +978,10 @@
         '<td class="num">+' + fmtPay(c.payout) + "</td>" +
         '<td style="white-space:nowrap">' + watch + "</td>" +
         '<td><b>' + esc(c.ownerName) + "</b><br><span class=\"camp-sub\">" + esc(c.ownerEmail) + "</span></td>" +
-        '<td class="num">' + fmtPts(c.actions) + "</td>" +
+        '<td class="num">' + fmtPts(c.actions) + (Number(c.maxActions || 0) > 0 ? " / " + fmtPts(c.maxActions) : "") + "</td>" +
         '<td class="num">' + fmtPay(c.spent) + "</td>" +
-        '<td><span class="st-pill ' + (c.active ? "st-active" : "st-paused") + '">' + (c.active ? "Active" : "Paused") + "</span></td>" +
+        '<td><span class="st-pill ' + (c.active ? "st-active" : "st-paused") + '">' + (c.active ? "Active" : "Paused") + "</span>" +
+          (Number(c.maxActions || 0) > 0 && Number(c.actions || 0) >= Number(c.maxActions) ? ' <span class="st-pill st-rejected">Full</span>' : "") + "</td>" +
         '<td style="white-space:nowrap"><button type="button" class="camp-btn" data-cedit="' + esc(c.id) + '">✏️ Edit</button> <button type="button" class="camp-btn del" data-cdel="' + esc(c.id) + '" title="Delete this campaign">🗑 Delete</button></td>' +
         "</tr>";
     }).join("");
@@ -997,6 +1008,8 @@
     $("ce-url").value = c.url || "";
     $("ce-payout").value = c.payout;
     $("ce-watch").value = Number(c.watchSecs || 0);
+    $("ce-limit").value = Number(c.maxActions || 0);
+    $("ce-done").value = fmtPts(c.actions) + " done" + (Number(c.maxActions || 0) > 0 ? " / " + fmtPts(c.maxActions) + " limit" : "") + " · " + fmtPay(c.spent) + " spent";
     $("ce-active").checked = c.active !== false;
     var keys = Object.keys(CAMP_PLATFORMS);
     if (c.platform && keys.indexOf(c.platform) === -1) keys.unshift(c.platform);
@@ -1015,9 +1028,11 @@
     var title = $("ce-name").value.trim();
     var payout = parseFloat($("ce-payout").value);
     var watch = parseInt($("ce-watch").value, 10);
+    var limit = parseInt($("ce-limit").value, 10);
     if (!title) { toast("Title is required", true); return; }
     if (!(payout >= 1 && payout <= 100)) { toast("Payout must be between 1 and 100", true); return; }
     if (isNaN(watch) || watch < 0 || watch > 300) { toast("Watch time must be 0–300 seconds", true); return; }
+    if (isNaN(limit) || limit < 0 || limit > 100000) { toast("Engagement limit must be 0 (no limit) to 100000", true); return; }
     var btn = $("ce-save"), label = btn.textContent;
     btn.disabled = true; btn.textContent = "Saving…";
     rpc("admin_campaigns_update", {
@@ -1028,7 +1043,8 @@
       p_action: $("ce-action").value,
       p_payout: payout,
       p_watch_secs: watch,
-      p_active: $("ce-active").checked
+      p_active: $("ce-active").checked,
+      p_max_actions: limit
     }).then(function (r) {
       $("camp-edit-modal").classList.remove("open");
       renderCampaigns(r);

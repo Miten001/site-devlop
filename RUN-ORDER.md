@@ -16,6 +16,7 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 7 | [`supabase-member-messages.sql`](supabase-member-messages.sql) | **Support message box** — member admin ko message bhej sake (site par 💬 button). Reply member ke dashboard inbox me aata hai. Depends on 1 + `supabase-community.sql` (messages tables) | — |
 | 11 | supabase-campaigns-watch.sql | **Watch/View/Read timer earn** — `watch_secs` column + timer-mode campaigns (proof nahi, countdown → instant credit) | 5, 10 |
 | 12 | supabase-admin-campaigns.sql | **Admin campaign manager** — admin.html me SAARI campaigns (kisne banayi — name + email), koi bhi edit (title/link/platform/action/payout/watch/pause) ya delete | 1, 5 |
+| 13 | supabase-campaigns-limit.sql | **Engagement limit** — "kitne user tak campaign chalegi": Add Page par limit (0 = no limit), full hone par submit reject + "Limit reached ⛔" card, progress X/Y (Earn/Dashboard/Admin). Admin edit me bhi limit | 5, 12 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
 
