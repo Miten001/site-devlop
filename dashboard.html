@@ -184,6 +184,7 @@
               <span class="streak-cd" id="streak-cd"></span>
             </div>
             <div id="streak-groups"></div>
+            <button type="button" class="btn btn-ghost btn-sm btn-block" id="streak-more" style="margin:10px 0 0">View all 90 days ▾</button>
             <button type="button" class="btn btn-primary btn-block" id="streak-claim" disabled>Loading…</button>
             <p class="text-mute" style="font-size:12px;margin:9px 0 0" id="streak-hint"></p>
           </div>
@@ -639,7 +640,13 @@ document.addEventListener("DOMContentLoaded", () => {
     stCdTimer = setInterval(tick, 1000);
   }
 
+  /* collapsed = sirf active rank row dikhti hai; "View all" se poori
+     90-day ladder khulti hai — dashboard chhota rehta hai */
+  let stExpanded = false;
+  let stLast = null;
+
   function streakRender(st) {
+    stLast = st;
     const rewards = (st && st.rewards && st.rewards.length === 90) ? st.rewards : ST_REWARDS;
     const streak = Number(st && st.streak) || 0;
     const claimedToday = !!(st && st.claimedToday);
@@ -647,6 +654,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const nextDay = Math.max(1, Number(st && st.nextDay) || 1);
     const donePos = claimedToday ? Math.min(streak, 90) : (canClaim ? Math.min(nextDay - 1, 90) : 0);
     const todayPos = (canClaim && !claimedToday) ? Math.min(nextDay, 90) : 0;
+    const focusDay = todayPos || donePos || 1;
 
     stPill.textContent = streak > 0 ? "🔥 " + streak + " day streak" : "Start today";
     const rankNow = stRankName(Math.max(streak, 1));
@@ -654,9 +662,15 @@ document.addEventListener("DOMContentLoaded", () => {
       ? " · Day 90+ — $5.50 every day!"
       : " · Day " + Math.min(Math.max(streak, 0), 90) + " of 90");
 
+    let activeIdx = 0;
+    ST_RANKS.forEach((rk, idx) => { if (focusDay >= rk.from && focusDay <= rk.to) activeIdx = idx; });
+    if (focusDay > 90) activeIdx = ST_RANKS.length - 1;
+
     let html = "";
-    ST_RANKS.forEach((rk) => {
-      html += '<div class="streak-rank"><span class="r-ico">' + rk.ico + "</span>" +
+    ST_RANKS.forEach((rk, idx) => {
+      const show = stExpanded || idx === activeIdx;
+      html += '<div class="streak-group' + (show ? "" : " hidden") + '">' +
+        '<div class="streak-rank"><span class="r-ico">' + rk.ico + "</span>" +
         '<span class="r-name">' + rk.name + '</span><span class="r-days">Day ' + rk.from + "–" + rk.to + "</span></div>" +
         '<div class="streak-days">';
       for (let i = rk.from; i <= rk.to; i++) {
@@ -668,9 +682,11 @@ document.addEventListener("DOMContentLoaded", () => {
           '<div class="tick">' + (done ? "✓" : today ? "★" : "") + "</div>" +
           "</div>";
       }
-      html += "</div>";
+      html += "</div></div>";
     });
     stGroups.innerHTML = html;
+    const moreBtn = document.getElementById("streak-more");
+    if (moreBtn) moreBtn.textContent = stExpanded ? "Show less ▴" : "View all 90 days ▾";
 
     const nextR = Number(st && st.nextReward) || ST_REWARDS[0];
     if (canClaim) {
@@ -720,6 +736,18 @@ document.addEventListener("DOMContentLoaded", () => {
       FF.toast((err && err.message) || "Claim failed — try again", "err");
       streakLoad();
     });
+  });
+
+  document.getElementById("streak-more").addEventListener("click", () => {
+    stExpanded = !stExpanded;
+    if (stLast) streakRender(stLast);
+    if (stExpanded) {
+      const dones = stGroups.querySelectorAll(".streak-day.done");
+      const target = stGroups.querySelector(".streak-day.today") || dones[dones.length - 1];
+      if (target && target.scrollIntoView) {
+        setTimeout(() => target.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+      }
+    }
   });
 
   streakLoad();
