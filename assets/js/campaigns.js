@@ -39,8 +39,13 @@
      subs/done/user state ko overwrite nahi karte. */
   function adopt(feed, isPublic) {
     if (!feed) return false;
-    const u = FF.currentUser();
-    if (!u) return false;
+    let u = FF.currentUser();
+    /* Guest (bina login) ko bhi public listing dikhti hai —Earn page
+       read-only. User object ki zaroorat sirf personal state ke liye hai. */
+    if (!u) {
+      if (!isPublic) return false;
+      u = { name: "Guest", email: "" };
+    }
 
     const camps = [];
     if (isPublic) {
