@@ -165,6 +165,11 @@ document.addEventListener("DOMContentLoaded", () => {
      Complete karne par signup ka message aata hai. */
   let user = FF.currentUser() || { name: "Guest", email: "", guest: true };
 
+  /* HTML-escape helper — campaign data ko card mein safe render karne
+     ke liye (earn page ka apna esc, pehle ye missing tha = render crash). */
+  const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
   const chipRow = document.getElementById("chip-row");
   const listEl = document.getElementById("task-list");
   const bonusEl = document.getElementById("bonus-list");
