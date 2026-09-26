@@ -269,6 +269,17 @@ footer a { color: var(--mute); }
 
 <script>
 (function () {
+  /* referral pass-through: ?ref= / ?r= from ads/reddit -> carried to signup links */
+  try {
+    var q = new URLSearchParams(location.search);
+    var rc = q.get("ref") || q.get("r");
+    if (rc) {
+      document.querySelectorAll('a[href="signup.html"]').forEach(function (a) {
+        a.href = "signup.html?ref=" + encodeURIComponent(rc);
+      });
+    }
+  } catch (e) {}
+
   /* count-up stats */
   var counted = false;
   function countUp() {
