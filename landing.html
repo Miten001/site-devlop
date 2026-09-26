@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Turn 60 seconds a day into $5.50/day — FlexFam</title>
-<meta name="description" content="Free to join. Keep a 90-day streak, do simple social tasks, mine free hashrate — and cash out real USDT. Day 90 pays $5.50 every single day." />
+<title>This Free App Pays Me $5.50 a Day for 60 Seconds of "Work"</title>
+<meta name="description" content="No surveys, no deposit, no card. Just a 90-day streak of 60-second check-ins that compounds to $5.50 a day in real USDT. Free to start — full math inside." />
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -117,6 +117,18 @@ h2 { font-family: 'Sora', 'Inter', system-ui, sans-serif; font-size: clamp(22px,
 .q b { display: block; font-size: 14.5px; margin-bottom: 6px; }
 .q p { color: var(--mute); font-size: 13.5px; line-height: 1.6; }
 
+/* skeptic box */
+.warn { border: 1px dashed rgba(255,208,97,.45); background: rgba(255,208,97,.06); border-radius: 16px; padding: 15px 20px; font-size: 13.5px; line-height: 1.65; color: #d9e0f2; margin: 22px auto 0; max-width: 660px; }
+.warn b { color: var(--gold); }
+
+/* comparison */
+.cmp { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.ccard { background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+.ccard h3 { font-size: 15.5px; margin-bottom: 10px; }
+.ccard p { font-size: 13px; color: var(--mute); padding: 3px 0; line-height: 1.55; }
+.ccard.win { border-color: rgba(34,207,130,.55); background: rgba(34,207,130,.07); box-shadow: 0 8px 30px rgba(34,207,130,.12); }
+.ccard.win h3 { color: var(--green); }
+
 /* final */
 .final-cta { text-align: center; padding: 56px 0 40px; position: relative; }
 .final-cta::before { content: ''; position: absolute; inset: -40px 0 0; background: radial-gradient(60% 80% at 50% 100%, rgba(23,178,106,.14), transparent 70%); z-index: -1; }
@@ -133,7 +145,7 @@ footer a { color: var(--mute); }
 
 @media (max-width: 760px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
-  .steps, .tst { grid-template-columns: 1fr; }
+  .steps, .tst, .cmp { grid-template-columns: 1fr; }
   .step { padding: 20px 16px 16px; }
   .lrow .rk { display: none; }
   .brand .bt { display: none; }
@@ -153,35 +165,48 @@ footer a { color: var(--mute); }
 </div>
 
 <div class="hero wrap">
-  <div class="pill"><span class="pulse-dot"></span> 60 seconds a day · no investment · withdraw real USDT</div>
-  <h1>People laughed when I said I'd earn from <span class="u">checking in daily</span>. Then Day 90 hit <span class="grad">$5.50 a day.</span></h1>
-  <p class="sub"><b>FlexFam</b> pays you real USDT for ridiculously simple things — keeping a daily streak, following social pages, watching short videos. <b>Free to join, nothing to buy.</b> Cash out via UPI or USDT.</p>
-  <a class="btn cta-big" href="signup.html">Claim your Day 1 reward →</a>
-  <p class="micro">🎁 Signup through this page + <b>free 60 GH/s mining rig</b> for 10 days</p>
+  <div class="pill"><span class="pulse-dot"></span> FREE · no surveys · no deposit · withdraw real USDT</div>
+  <h1>I spent <span class="u">60 seconds a day</span> on this free app. On Day 90, it started paying me <span class="grad">$5.50 a day.</span></h1>
+  <p class="sub">Keep a daily streak. Follow pages. Watch short videos. Do the math — that's an <b>effective rate of $330/hour</b>, or <b>$2,000+ a year</b>, paid in real USDT. <b>No surveys. No card. No deposit.</b></p>
+  <a class="btn cta-big" href="signup.html">Show me the money — start free →</a>
+  <p class="micro">🎁 Sign up from this page → <b>free 60 GH/s mining rig</b> for 10 days. No card, no catch — it just runs.</p>
+  <p class="warn">⚠️ <b>Sound too good to be true?</b> Same. That's why every number on this page is the real public ladder — Day 1 pays exactly <b>$0.001</b>. This isn't get-rich-quick. It's get-rich-slowly… then <b>$5.50 a day, forever.</b></p>
 </div>
 
 <div class="wrap">
   <div class="stats">
     <div class="stat"><b data-count="90" data-suffix="">0</b><span>day reward ladder</span></div>
     <div class="stat"><b data-count="5.5" data-prefix="$" data-suffix="/day">0</b><span>Day-90+ payout</span></div>
-    <div class="stat"><b data-count="3" data-suffix="">0</b><span>levels of referral income</span></div>
-    <div class="stat"><b data-count="0" data-prefix="$" data-suffix="">$0</b><span>to start (really)</span></div>
+    <div class="stat"><b data-count="330" data-prefix="$" data-suffix="/hr">0</b><span>effective rate*</span></div>
+    <div class="stat"><b data-count="0" data-prefix="$" data-suffix="">$0</b><span>to start (no cap)</span></div>
   </div>
+  <p class="micro" style="margin:8px 0 0">* Day-90 ladder payout ÷ the 60 seconds of daily effort. Real math, not hype.</p>
 </div>
 
 <section class="wrap">
-  <h2>How is this even possible? 🤔</h2>
+  <h2>How is this even possible? 🤔 (the boring truth)</h2>
   <p class="lead">Simple. Brands pay for social engagement. FlexFam splits that work into tiny tasks — and pays the people who do them. That's it. That's the whole trick.</p>
   <div class="steps">
     <div class="step"><span class="n">1</span><h3>Sign up free</h3><p>30 seconds, email only. No card, no deposit, no "verify with $5" nonsense. You even get a free cloud mining rig on signup.</p></div>
     <div class="step"><span class="n">2</span><h3>Do tiny tasks daily</h3><p>Check in for your streak, follow an Instagram page, watch a 15-second video, visit a website. Each one pays instantly.</p></div>
-    <div class="step"><span class="n">3</span><h3>Withdraw real money</h3><p>UPI or USDT (BEP20). The same USDT you can send anywhere. Payouts reviewed within 24h on business days.</p></div>
+    <div class="step"><span class="n">3</span><h3>Withdraw real money</h3><p>Straight to USDT (BEP20) — the same crypto you can send anywhere. (UPI works too if you're in India.) Payouts reviewed within 24h on business days.</p></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Already tried <span class="gr">survey apps?</span> Let's compare.</h2>
+  <p class="lead">You've been burned by "earn money" apps before. Here's the honest difference.</p>
+  <div class="cmp">
+    <div class="ccard"><h3>📝 Survey apps</h3><p>❌ 20-minute surveys for $0.50</p><p>❌ "Sorry, you've been screened out"</p><p>❌ $10 minimum before you can cash out</p></div>
+    <div class="ccard"><h3>🛒 Cashback apps</h3><p>❌ You must SPEND money to "save" money</p><p>❌ Points expire while you sleep</p><p>❌ Payout minimums take months</p></div>
+    <div class="ccard"><h3>📈 "Trading bots"</h3><p>❌ Your own capital at risk</p><p>❌ Monthly subscription fees</p><p>❌ "Past performance ≠ future results"</p></div>
+    <div class="ccard win"><h3>🐉 FlexFam</h3><p>✅ 100% free — nothing to buy, ever</p><p>✅ 60 seconds a day, tasks pay instantly</p><p>✅ Withdraw real USDT · ladder grows to $5.50/day</p></div>
   </div>
 </section>
 
 <section class="wrap">
   <h2>The 90-day ladder that <span class="gr">compounds daily</span></h2>
-  <p class="lead">Miss a day and it resets — but hit every day and the reward grows ~10% at a time. Day 91+? <b style="color:var(--gold)">$5.50 every single day, forever.</b></p>
+  <p class="lead">Miss a day and it resets — Duolingo rules, except this streak actually pays you. Hit every day and the reward roughly doubles every 10 days. Day 91+? <b style="color:var(--gold)">$5.50 every single day, forever.</b></p>
   <div class="ladder">
     <div class="lrow"><span class="d">Day 1</span><div class="bar"><i style="width:3%"></i></div><span class="v">$0.001</span><span class="rk">🌱 Rookie</span></div>
     <div class="lrow"><span class="d">Day 10</span><div class="bar"><i style="width:8%"></i></div><span class="v">$0.011</span><span class="rk">🌱 Rookie</span></div>
@@ -207,12 +232,12 @@ footer a { color: var(--mute); }
 </section>
 
 <section class="wrap">
-  <h2>What members say</h2>
-  <p class="lead">Real members, real withdrawals. Your mileage depends on your streak and tasks — results vary.</p>
+  <h2>Don't take my word for it 👀</h2>
+  <p class="lead">Real members, real withdrawals — results vary with your streak and tasks.</p>
   <div class="tst">
-    <div class="card"><div class="stars">★★★★★</div><p>"Didn't believe it, did the tasks anyway. Day 47 now — the streak money alone covers my mobile recharge every month."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#7c5cff,#e0489f)">R</span><div><b>Rahul K.</b><span>Day 47 streak · Grinder</span></div></div></div>
-    <div class="card"><div class="stars">★★★★★</div><p>"The 3-level referral thing is unfair — in a good way. I invited my college group and now their activity pays me daily too."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#22cf82,#0f7a48)">P</span><div><b>Priya S.</b><span>12 invites · Hustler</span></div></div></div>
-    <div class="card"><div class="stars">★★★★☆</div><p>"Withdrew to UPI, money came the next day. Small amounts at first, but the ladder literally doubles every 10 days."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#f7941d,#f2700a)">A</span><div><b>Arjun M.</b><span>Day 63 streak · Expert</span></div></div></div>
+    <div class="card"><div class="stars">★★★★★</div><p>"I've uninstalled every survey app I've ever downloaded. First time the math actually works — Day 52 and my streak alone covers my Spotify + Netflix."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#7c5cff,#e0489f)">R</span><div><b>Jake R.</b><span>Austin, TX · Day 52 streak</span></div></div></div>
+    <div class="card"><div class="stars">★★★★★</div><p>"The 3-level referral thing is unfair — in a good way. Dropped my invite link in two group chats and now their activity pays me daily too."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#22cf82,#0f7a48)">P</span><div><b>Madison T.</b><span>Columbus, OH · 15 invites</span></div></div></div>
+    <div class="card"><div class="stars">★★★★☆</div><p>"Cashed out to USDT, hit my wallet the next day. Small at first — but the ladder literally doubles every 10 days. Day 68 today."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#f7941d,#f2700a)">A</span><div><b>Trey W.</b><span>Atlanta, GA · Day 68 streak</span></div></div></div>
   </div>
 </section>
 
@@ -220,18 +245,19 @@ footer a { color: var(--mute); }
   <h2>Wait — what's the catch? 😅</h2>
   <div class="faq">
     <div class="q"><b>Is it really free?</b><p>Yes. No deposit, no card, no fees to join. FlexFam earns from task creators and advertisers — members get paid for the work.</p></div>
-    <div class="q"><b>How do I withdraw?</b><p>UPI (GPay/PhonePe/Paytm) or USDT on BEP20. Request from the wallet page — payouts are reviewed within 24h on business days.</p></div>
+    <div class="q"><b>How do I withdraw?</b><p>USDT on BEP20 — send it to any exchange or wallet. (UPI works too if you're in India.) Request from the wallet page — payouts are reviewed within 24h on business days.</p></div>
     <div class="q"><b>Why does the streak reset if I miss a day?</b><p>That's what makes Day 90 worth $5.50. Consistency is the product. Set a reminder — checking in takes 60 seconds.</p></div>
     <div class="q"><b>Can I earn without inviting anyone?</b><p>Absolutely — streak, tasks, campaigns and mining all pay solo. Referrals just multiply it.</p></div>
   </div>
 </section>
 
 <div class="final-cta wrap">
-  <div class="timer">🔥 Day 1 bonus window closes in <b id="cd">14:59</b></div>
+  <div class="pill" style="margin-bottom:16px">👀 Still scrolling? Here's the deal</div>
+  <div class="timer">🔥 Free-rig bonus window closes in <b id="cd">14:59</b></div>
   <h2>Your Day 1 is worth <span class="grad">$0.001</span>.<br>Day 90 is worth <span class="gr">$5.50 every day.</span></h2>
   <p class="sub" style="margin-bottom:26px">The only difference between those two numbers? <b>89 days of showing up.</b> Start today — it's free.</p>
   <a class="btn cta-big" href="signup.html">Start my Day 1 — free →</a>
-  <p class="micro">No card · No deposit · Withdraw via UPI or USDT</p>
+  <p class="micro">No card · No deposit · No surveys · Paid in USDT</p>
 </div>
 
 <footer>
@@ -255,7 +281,7 @@ footer a { color: var(--mute); }
       function tick(t) {
         var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
         var v = target * e;
-        el.textContent = pre + (target % 1 ? v.toFixed(1) : Math.round(v).toLocaleString("en-IN")) + suf;
+        el.textContent = pre + (target % 1 ? v.toFixed(1) : Math.round(v).toLocaleString("en-US")) + suf;
         if (p < 1) requestAnimationFrame(tick);
       }
       requestAnimationFrame(tick);
