@@ -121,6 +121,33 @@ h2 { font-family: 'Sora', 'Inter', system-ui, sans-serif; font-size: clamp(22px,
 .warn { border: 1px dashed rgba(255,208,97,.45); background: rgba(255,208,97,.06); border-radius: 16px; padding: 15px 20px; font-size: 13.5px; line-height: 1.65; color: #d9e0f2; margin: 22px auto 0; max-width: 660px; }
 .warn b { color: var(--gold); }
 
+/* earning streams + task board */
+.streams { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+.tcard { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 16px 14px; text-align: left; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.tcard:hover { transform: translateY(-4px); border-color: rgba(34,207,130,.45); box-shadow: 0 14px 34px rgba(0,0,0,.4); }
+.tcard .tico { font-size: 24px; }
+.tcard h3 { font-size: 14.5px; margin: 8px 0 5px; }
+.tcard p { font-size: 12px; color: var(--mute); line-height: 1.55; }
+.tcard .pay { display: inline-block; margin-top: 9px; font-size: 11.5px; font-weight: 800; color: var(--green); background: rgba(34,207,130,.1); border: 1px solid rgba(34,207,130,.3); border-radius: 99px; padding: 3px 10px; white-space: nowrap; }
+
+/* task board */
+.board { border: 1px solid var(--line); border-radius: 20px; overflow: hidden; max-width: 620px; margin: 0 auto; }
+.bhead { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; background: rgba(255,255,255,.03); border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--mute); }
+.bhead b { color: var(--ink); }
+.brow { display: flex; align-items: center; gap: 14px; padding: 13px 18px; border-bottom: 1px solid var(--line); background: var(--bg2); animation: rowin .5s ease backwards; }
+.brow:last-child { border-bottom: none; }
+.brow .bico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 16px; background: rgba(255,255,255,.05); border: 1px solid var(--line); flex-shrink: 0; }
+.brow .bt { flex: 1; min-width: 0; }
+.brow .bt b { font-size: 13.5px; display: block; }
+.brow .bt span { font-size: 11px; color: var(--mute); }
+.brow .bp { font-size: 13px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.brow .bnew { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #4a2c00; background: linear-gradient(135deg, var(--gold), var(--orange)); border-radius: 99px; padding: 2px 7px; animation: blink 1.4s infinite; white-space: nowrap; }
+@keyframes rowin { from { opacity: 0; transform: translateY(10px); } }
+.conv { text-align: center; font-size: 12.5px; color: var(--mute); margin-top: 14px; }
+.conv b { color: var(--gold); }
+@media (max-width: 760px) { .streams { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .streams { grid-template-columns: 1fr; } }
+
 /* comparison */
 .cmp { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .ccard { background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
@@ -227,6 +254,31 @@ input[type="range"] { width: 100%; accent-color: var(--green); height: 34px; cur
     <div class="step"><span class="n">2</span><h3>Do tiny tasks daily</h3><p>Check in for your streak, follow an Instagram page, watch a 15-second video, visit a website. Each one pays instantly.</p></div>
     <div class="step"><span class="n">3</span><h3>Withdraw real money</h3><p>Straight to USDT (BEP20) — the same crypto you can send anywhere. (UPI works too if you're in India.) Payouts reviewed within 24h on business days.</p></div>
   </div>
+</section>
+
+<section class="wrap">
+  <h2>Inside the app: <span class="gr">everything that pays you</span> 💸</h2>
+  <p class="lead">Six income streams. No skills, no resume, no interviews — just your 60 seconds a day.</p>
+  <div class="streams">
+    <div class="tcard"><div class="tico">🔥</div><h3>Daily check-in streak</h3><p>The big one. 60 seconds a day, reward grows every day. Miss a day and it resets — Duolingo rules.</p><span class="pay">up to $5.50/day</span></div>
+    <div class="tcard"><div class="tico">📸</div><h3>Social follows</h3><p>Instagram, YouTube, Telegram, TikTok, Facebook — follow a page, subscribe, join. Credited instantly.</p><span class="pay">6–12 pts each</span></div>
+    <div class="tcard"><div class="tico">🌐</div><h3>Website visits</h3><p>Open a sponsor's page for 15 seconds. That's literally the whole task. Money lands in your wallet.</p><span class="pay">6+ pts each</span></div>
+    <div class="tcard"><div class="tico">⏱️</div><h3>Watch &amp; earn zone</h3><p>Timed view/read campaigns with bonus multipliers. Watch, wait, get paid — no surveys, ever.</p><span class="pay">bonus multipliers</span></div>
+    <div class="tcard"><div class="tico">⛏️</div><h3>Free cloud mining</h3><p>Every signup gets a free 60 GH/s rig for 10 days. It mines while you sleep — zero effort, zero cost.</p><span class="pay">passive USDT</span></div>
+    <div class="tcard"><div class="tico">👥</div><h3>3-level referrals</h3><p>Invite friends: 10% of their earnings, 3% of their invites, 1% one more level down. Forever.</p><span class="pay">10% L1 · forever</span></div>
+  </div>
+
+  <h3 style="text-align:center;font-size:17px;margin:0 0 14px">📋 Fresh tasks drop daily — here's a peek at the board:</h3>
+  <div class="board">
+    <div class="bhead"><b>🔥 Live task board</b><span>new tasks daily</span></div>
+    <div class="brow" style="animation-delay:.05s"><span class="bico">✈️</span><span class="bt"><b>Join Telegram channel</b><span>@sponsor · 5 seconds</span></span><span class="bnew">NEW</span><span class="bp">+12 pts</span></div>
+    <div class="brow" style="animation-delay:.15s"><span class="bico">📸</span><span class="bt"><b>Follow on Instagram</b><span>@creator · instant credit</span></span><span class="bp">+10 pts</span></div>
+    <div class="brow" style="animation-delay:.25s"><span class="bico">▶️</span><span class="bt"><b>Subscribe on YouTube</b><span>channel · instant credit</span></span><span class="bp">+10 pts</span></div>
+    <div class="brow" style="animation-delay:.35s"><span class="bico">🎵</span><span class="bt"><b>Follow on TikTok</b><span>@creator · instant credit</span></span><span class="bp">+9 pts</span></div>
+    <div class="brow" style="animation-delay:.45s"><span class="bico">🌐</span><span class="bt"><b>Visit sponsor page</b><span>15-second timer</span></span><span class="bp">+6 pts</span></div>
+    <div class="brow" style="animation-delay:.55s"><span class="bico">👍</span><span class="bt"><b>Like Facebook page</b><span>brand page · instant</span></span><span class="bnew">NEW</span><span class="bp">+8 pts</span></div>
+  </div>
+  <p class="conv">🧮 <b>1,000 pts = $1 USDT</b> — convert &amp; withdraw via UPI or USDT (BEP20), payouts reviewed within 24h.<br><span style="font-size:11px">Sample tasks shown — rewards vary, the board refreshes daily.</span></p>
 </section>
 
 <section class="wrap">
