@@ -1077,9 +1077,57 @@
     document.querySelectorAll("[data-coin]").forEach((el) => (el.innerHTML = COIN_SVG));
   });
 
+  /* ---------- SFX: coin add + USDT collect (Web Audio — koi file nahi) ---------- */
+  const sfx = (() => {
+    let actx = null;
+    function ac() {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!actx) { try { actx = new Ctx(); } catch (e) { return null; } }
+      if (actx.state === "suspended") { try { actx.resume(); } catch (e) {} }
+      return actx;
+    }
+    /* ek bell note: wave, freq, start-offset sec, decay sec, volume */
+    function bell(c, wave, freq, at, dur, vol) {
+      const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + at;
+      o.type = wave;
+      o.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(t0); o.stop(t0 + dur + 0.05);
+    }
+    return {
+      /* points credited — bright coin "bling" (B5 → E6) */
+      coin() {
+        try {
+          const c = ac(); if (!c) return;
+          bell(c, "triangle", 987.77, 0, 0.55, 0.20);
+          bell(c, "sine", 1975.53, 0, 0.40, 0.06);
+          bell(c, "triangle", 1318.51, 0.08, 0.65, 0.20);
+          bell(c, "sine", 2637.02, 0.08, 0.48, 0.06);
+        } catch (e) { /* sound optional */ }
+      },
+      /* USDT collect — "ka-ching!" + rising win chime */
+      cash() {
+        try {
+          const c = ac(); if (!c) return;
+          bell(c, "triangle", 987.77, 0, 0.30, 0.20);   /* ka */
+          bell(c, "triangle", 1318.51, 0.09, 0.40, 0.22); /* ching */
+          bell(c, "sine", 1567.98, 0.19, 1.00, 0.11);   /* G6 bell */
+          bell(c, "sine", 2093.00, 0.26, 1.05, 0.10);   /* C7 bell */
+          bell(c, "sine", 2637.02, 0.33, 1.05, 0.07);   /* E7 bell */
+          bell(c, "sine", 3135.96, 0.40, 0.95, 0.05);   /* G7 sparkle */
+        } catch (e) { /* sound optional */ }
+      },
+    };
+  })();
+
   /* expose */
   window.FF = {
     PLATFORMS, BRAND_SVG, COIN_SVG, SPARK_SVG, CHECK_SVG,
+    sfx,
     store, DB, currentUser, updateUser, memberConfig,
     rpc, hasServer, accessToken, refreshAuth,
     loginMember, signupMember,

@@ -257,7 +257,7 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
-<script src="assets/js/main.js?v=2.2"></script>
+<script src="assets/js/main.js?v=2.3"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
 <script src="assets/js/support.js?v=1.0"></script>
@@ -477,6 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
     A.convertPoints($("cv-points").value).then((v) => {
       user = FF.currentUser() || user;
       const gained = Math.max(0, v.wallet.available - before);
+      FF.sfx.cash();
       FF.toast("Converted to " + W.usd(gained) + " USDT!", "ok");
       $("cv-points").value = "";
       paint(v); cvSummary();
@@ -490,6 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
     A.convertUsdt($("cu-usdt").value).then((v) => {
       user = FF.currentUser() || user;
       const gained = Math.max(0, Number(v.wallet.points || 0) - beforePts);
+      FF.sfx.coin();
       FF.toast("Converted to " + gained.toLocaleString("en-IN") + " points!", "ok");
       $("cu-usdt").value = "";
       paint(v); cvSummary();
