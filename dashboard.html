@@ -239,7 +239,7 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
-<script src="assets/js/main.js?v=2.2"></script>
+<script src="assets/js/main.js?v=2.3"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
 <script src="assets/js/campaigns.js?v=1.8"></script>
@@ -597,27 +597,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return v >= 1 ? "$" + v.toFixed(2) : "$" + v.toFixed(3);
   }
 
-  /* claim par coin sound — Web Audio (koi file nahi chahiye) */
-  function playCoinSound() {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      const ctx = new Ctx();
-      const t0 = ctx.currentTime;
-      [[987.77, 0], [1318.51, 0.085]].forEach((n) => {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.type = "square";
-        o.frequency.setValueAtTime(n[0], t0 + n[1]);
-        g.gain.setValueAtTime(0.0001, t0 + n[1]);
-        g.gain.exponentialRampToValueAtTime(0.22, t0 + n[1] + 0.012);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[1] + 0.6);
-        o.connect(g); g.connect(ctx.destination);
-        o.start(t0 + n[1]); o.stop(t0 + n[1] + 0.62);
-      });
-      setTimeout(() => { try { ctx.close(); } catch (e) {} }, 1100);
-    } catch (e) { /* sound optional */ }
-  }
-
   /* agle IST midnight tak ms (countdown ke liye) */
   function stMsToIstMidnight() {
     const now = new Date();
@@ -727,7 +706,7 @@ document.addEventListener("DOMContentLoaded", () => {
     stBtn.disabled = true;
     stBtn.textContent = "Claiming…";
     FF.rpc("streak_claim", {}).then((r) => {
-      playCoinSound();
+      FF.sfx.cash();
       FF.toast("+" + stFmt(r.reward) + " USDT added to your wallet 🎉", "ok");
       streakRender(r);
       if (FF.W && FF.W.api) FF.W.api.wallet().catch(() => {});

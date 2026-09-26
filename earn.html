@@ -175,7 +175,7 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
-<script src="assets/js/main.js?v=2.2"></script>
+<script src="assets/js/main.js?v=2.3"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
 <script src="assets/js/campaigns.js?v=1.8"></script>
@@ -509,6 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = FF.submitCampaignProof(user.email, user.name, pendingCamp.id,
         "Watched " + watchTotal + "s \u2713 (timer)", "");
       const done = () => {
+        FF.sfx.coin();
         FF.toast("Watched " + watchTotal + "s! +" + pendingCamp.payout + " points credited \u26A1", "ok");
         campModal.classList.remove("open"); pendingCamp = null; render();
       };
@@ -563,6 +564,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     const finish = () => {
+      FF.sfx.coin();
       FF.toast("Proof submitted! +" + (pendingCamp ? pendingCamp.payout : "") + " points credited \u26A1", "ok");
       campModal.classList.remove("open");
       pendingCamp = null;
@@ -663,6 +665,7 @@ document.addEventListener("DOMContentLoaded", () => {
     FF.awardCredits(user.email, task.payout, task.activityText || (p.name + " · " + task.action + ' "' + task.user + '"'));
     markBonusDone(task);
     user = FF.currentUser();
+    FF.sfx.coin();
     FF.toast("+" + task.payout + " bonus points earned!", "ok");
     closeModal();
     renderBonuses();
