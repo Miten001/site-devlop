@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Turn 60 seconds a day into $5.50/day — FlexFam</title>
+<meta name="description" content="Free to join. Keep a 90-day streak, do simple social tasks, mine free hashrate — and cash out real USDT. Day 90 pays $5.50 every single day." />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0f1e; --bg2: #101a30; --green: #22cf82; --green2: #0f7a48;
+  --orange: #f7941d; --gold: #ffd061; --ink: #eef2fb; --mute: #93a1c4; --line: rgba(255,255,255,.09);
+}
+html { scroll-behavior: smooth; overflow-x: clip; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+.wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+.grad { background: linear-gradient(90deg, var(--gold), var(--orange)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.gr { color: var(--green); }
+
+/* ---------- top bar ---------- */
+.topbar { position: sticky; top: 0; z-index: 50; background: rgba(10,15,30,.86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 58px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; color: #fff; text-decoration: none; }
+.brand svg { width: 26px; height: 26px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(135deg, #22cf82 0%, #0f7a48 100%);
+  color: #fff; font-weight: 700; text-decoration: none; border: none; cursor: pointer;
+  padding: 13px 22px; border-radius: 14px; font-size: 15.5px; white-space: nowrap;
+  box-shadow: 0 8px 26px rgba(18,178,106,.38), inset 0 1px 0 rgba(255,255,255,.25);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(18,178,106,.5), inset 0 1px 0 rgba(255,255,255,.25); }
+.btn.sm { padding: 9px 16px; font-size: 13.5px; border-radius: 11px; }
+
+/* ---------- hero ---------- */
+.hero { position: relative; text-align: center; padding: 64px 0 40px; }
+.hero::before, .hero::after { content: ''; position: absolute; border-radius: 50%; filter: blur(70px); z-index: -1; }
+.hero::before { width: 420px; height: 320px; background: rgba(247,148,29,.16); top: -60px; left: -120px; }
+.hero::after { width: 480px; height: 340px; background: rgba(23,178,106,.15); bottom: -80px; right: -140px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--gold);
+  border: 1px solid rgba(255,208,97,.35); background: rgba(255,208,97,.08);
+  padding: 6px 13px; border-radius: 99px; margin-bottom: 20px; letter-spacing: .3px;
+}
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: blink 1.4s infinite; }
+@keyframes blink { 50% { opacity: .3; } }
+h1 { font-family: 'Sora', 'Inter', system-ui, sans-serif; font-size: clamp(30px, 6vw, 52px); line-height: 1.12; font-weight: 800; letter-spacing: -.5px; max-width: 800px; margin: 0 auto 18px; }
+h1 .u { text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 4px; text-underline-offset: 6px; }
+.sub { color: var(--mute); font-size: clamp(15px, 2.5vw, 18px); line-height: 1.65; max-width: 620px; margin: 0 auto 28px; }
+.sub b { color: var(--ink); }
+.cta-big { font-size: 18px; padding: 17px 34px; border-radius: 16px; animation: breathe 2.2s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(1.04); } }
+.micro { color: var(--mute); font-size: 12.5px; margin-top: 12px; }
+.micro b { color: var(--green); }
+
+/* ---------- stats ---------- */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 40px 0 8px; }
+.stat { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 16px 10px; text-align: center; }
+.stat b { display: block; font-size: clamp(19px, 3vw, 26px); font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11.5px; color: var(--mute); }
+
+/* ---------- sections ---------- */
+section { padding: 46px 0; }
+h2 { font-family: 'Sora', 'Inter', system-ui, sans-serif; font-size: clamp(22px, 4vw, 32px); font-weight: 800; text-align: center; margin-bottom: 10px; letter-spacing: -.3px; }
+.lead { text-align: center; color: var(--mute); max-width: 560px; margin: 0 auto 30px; line-height: 1.6; font-size: 15.5px; }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.step { background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 22px 18px; position: relative; }
+.step .n { position: absolute; top: -14px; left: 18px; width: 30px; height: 30px; border-radius: 10px; background: linear-gradient(135deg, var(--gold), var(--orange)); color: #4a2c00; font-weight: 800; display: grid; place-items: center; font-size: 15px; box-shadow: 0 4px 12px rgba(247,148,29,.35); }
+.step h3 { font-size: 16px; margin: 8px 0 8px; }
+.step p { color: var(--mute); font-size: 13.5px; line-height: 1.6; }
+
+/* ladder */
+.ladder { border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.lrow { display: flex; align-items: center; gap: 14px; padding: 13px 18px; border-bottom: 1px solid var(--line); background: var(--bg2); }
+.lrow:last-child { border-bottom: none; }
+.lrow.final { background: linear-gradient(90deg, rgba(255,208,97,.12), rgba(247,148,29,.05)); }
+.lrow .d { width: 84px; flex-shrink: 0; font-weight: 700; font-size: 14px; }
+.lrow .bar { flex: 1; height: 9px; border-radius: 99px; background: rgba(255,255,255,.07); overflow: hidden; }
+.lrow .bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--green), var(--gold)); }
+.lrow .v { width: 78px; text-align: right; flex-shrink: 0; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; font-size: 14px; }
+.lrow .rk { font-size: 11px; color: var(--mute); width: 92px; flex-shrink: 0; }
+.lrow.final .v { font-size: 16px; }
+
+/* pyramid */
+.pyr { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.ptier { border-radius: 14px; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border: 1px solid; }
+.ptier .pc { font-size: 21px; font-weight: 800; width: 64px; flex-shrink: 0; }
+.ptier .pl { font-size: 13px; color: var(--mute); }
+.pt1 { width: min(420px, 86%); border-color: rgba(34,207,130,.4); background: rgba(34,207,130,.07); }
+.pt1 .pc { color: var(--green); }
+.pt2 { width: min(520px, 92%); border-color: rgba(47,111,237,.4); background: rgba(47,111,237,.07); }
+.pt2 .pc { color: #6f9dff; }
+.pt3 { width: min(620px, 100%); border-color: rgba(247,148,29,.4); background: rgba(247,148,29,.07); }
+.pt3 .pc { color: var(--orange); }
+
+/* testimonials */
+.tst { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.card { background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+.card .stars { color: var(--gold); letter-spacing: 2px; font-size: 13px; margin-bottom: 10px; }
+.card p { font-size: 13.5px; line-height: 1.65; color: #c7d1ea; }
+.card .who { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.card .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: #fff; }
+.card .who b { font-size: 13px; display: block; }
+.card .who span { font-size: 11px; color: var(--mute); }
+
+/* faq */
+.faq { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.q { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 15px 18px; }
+.q b { display: block; font-size: 14.5px; margin-bottom: 6px; }
+.q p { color: var(--mute); font-size: 13.5px; line-height: 1.6; }
+
+/* final */
+.final-cta { text-align: center; padding: 56px 0 40px; position: relative; }
+.final-cta::before { content: ''; position: absolute; inset: -40px 0 0; background: radial-gradient(60% 80% at 50% 100%, rgba(23,178,106,.14), transparent 70%); z-index: -1; }
+.timer { display: inline-flex; align-items: center; gap: 9px; border: 1px solid rgba(255,93,110,.4); background: rgba(255,93,110,.08); color: #ff8b9b; font-weight: 700; border-radius: 99px; padding: 8px 16px; font-size: 14px; margin-bottom: 22px; font-variant-numeric: tabular-nums; }
+.timer b { font-size: 16px; }
+
+footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--mute); font-size: 12px; text-align: center; line-height: 1.7; }
+footer a { color: var(--mute); }
+
+/* floating cta (mobile) */
+.float-cta { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: rgba(10,15,30,.92); backdrop-filter: blur(10px); border-top: 1px solid var(--line); transform: translateY(110%); transition: transform .3s ease; }
+.float-cta.show { transform: none; }
+.float-cta .btn { width: 100%; }
+
+@media (max-width: 760px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .steps, .tst { grid-template-columns: 1fr; }
+  .step { padding: 20px 16px 16px; }
+  .lrow .rk { display: none; }
+  .brand .bt { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 48 48" fill="none"><defs><linearGradient id="lg" x1="6" y1="4" x2="42" y2="46"><stop stop-color="#ffb547"/><stop offset=".55" stop-color="#f7941d"/><stop offset="1" stop-color="#f2700a"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="13" fill="url(#lg)"/><path d="M15.6 34.8V13.2A2.2 2.2 0 0 1 17.8 11h14.4a2.2 2.2 0 0 1 2.2 2.2v1.6a2.2 2.2 0 0 1-2.2 2.2h-11v4.6h8.4a2.2 2.2 0 0 1 2.2 2.2v1.6a2.2 2.2 0 0 1-2.2 2.2h-8.4v9.4a2.2 2.2 0 0 1-2.2 2.2h-1.2a2.2 2.2 0 0 1-2.2-2.2z" fill="#fff"/><circle cx="33.2" cy="33.2" r="4.4" fill="#fff"/><circle cx="33.4" cy="33" r="2" fill="#f7941d"/></svg>
+      <span class="bt">Flex<b style="color:#ffb547">Fam</b></span>
+    </a>
+    <a class="btn sm" href="signup.html">Start free →</a>
+  </div>
+</div>
+
+<div class="hero wrap">
+  <div class="pill"><span class="pulse-dot"></span> 60 seconds a day · no investment · withdraw real USDT</div>
+  <h1>People laughed when I said I'd earn from <span class="u">checking in daily</span>. Then Day 90 hit <span class="grad">$5.50 a day.</span></h1>
+  <p class="sub"><b>FlexFam</b> pays you real USDT for ridiculously simple things — keeping a daily streak, following social pages, watching short videos. <b>Free to join, nothing to buy.</b> Cash out via UPI or USDT.</p>
+  <a class="btn cta-big" href="signup.html">Claim your Day 1 reward →</a>
+  <p class="micro">🎁 Signup through this page + <b>free 60 GH/s mining rig</b> for 10 days</p>
+</div>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><b data-count="90" data-suffix="">0</b><span>day reward ladder</span></div>
+    <div class="stat"><b data-count="5.5" data-prefix="$" data-suffix="/day">0</b><span>Day-90+ payout</span></div>
+    <div class="stat"><b data-count="3" data-suffix="">0</b><span>levels of referral income</span></div>
+    <div class="stat"><b data-count="0" data-prefix="$" data-suffix="">$0</b><span>to start (really)</span></div>
+  </div>
+</div>
+
+<section class="wrap">
+  <h2>How is this even possible? 🤔</h2>
+  <p class="lead">Simple. Brands pay for social engagement. FlexFam splits that work into tiny tasks — and pays the people who do them. That's it. That's the whole trick.</p>
+  <div class="steps">
+    <div class="step"><span class="n">1</span><h3>Sign up free</h3><p>30 seconds, email only. No card, no deposit, no "verify with $5" nonsense. You even get a free cloud mining rig on signup.</p></div>
+    <div class="step"><span class="n">2</span><h3>Do tiny tasks daily</h3><p>Check in for your streak, follow an Instagram page, watch a 15-second video, visit a website. Each one pays instantly.</p></div>
+    <div class="step"><span class="n">3</span><h3>Withdraw real money</h3><p>UPI or USDT (BEP20). The same USDT you can send anywhere. Payouts reviewed within 24h on business days.</p></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>The 90-day ladder that <span class="gr">compounds daily</span></h2>
+  <p class="lead">Miss a day and it resets — but hit every day and the reward grows ~10% at a time. Day 91+? <b style="color:var(--gold)">$5.50 every single day, forever.</b></p>
+  <div class="ladder">
+    <div class="lrow"><span class="d">Day 1</span><div class="bar"><i style="width:3%"></i></div><span class="v">$0.001</span><span class="rk">🌱 Rookie</span></div>
+    <div class="lrow"><span class="d">Day 10</span><div class="bar"><i style="width:8%"></i></div><span class="v">$0.011</span><span class="rk">🌱 Rookie</span></div>
+    <div class="lrow"><span class="d">Day 20</span><div class="bar"><i style="width:14%"></i></div><span class="v">$0.024</span><span class="rk">💪 Hustler</span></div>
+    <div class="lrow"><span class="d">Day 30</span><div class="bar"><i style="width:22%"></i></div><span class="v">$0.052</span><span class="rk">🎯 Earner</span></div>
+    <div class="lrow"><span class="d">Day 40</span><div class="bar"><i style="width:32%"></i></div><span class="v">$0.11</span><span class="rk">⚙️ Grinder</span></div>
+    <div class="lrow"><span class="d">Day 50</span><div class="bar"><i style="width:45%"></i></div><span class="v">$0.24</span><span class="rk">🎖️ Veteran</span></div>
+    <div class="lrow"><span class="d">Day 60</span><div class="bar"><i style="width:60%"></i></div><span class="v">$0.53</span><span class="rk">🚀 Expert</span></div>
+    <div class="lrow"><span class="d">Day 70</span><div class="bar"><i style="width:75%"></i></div><span class="v">$1.16</span><span class="rk">🏅 Master</span></div>
+    <div class="lrow"><span class="d">Day 80</span><div class="bar"><i style="width:88%"></i></div><span class="v">$2.53</span><span class="rk">👑 Grandmaster</span></div>
+    <div class="lrow final"><span class="d">Day 90+</span><div class="bar"><i style="width:100%"></i></div><span class="v">$5.50/day</span><span class="rk">🐉⚡ Legend</span></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Invite 3 friends. Earn from <span class="gr">their friends too.</span></h2>
+  <p class="lead">Every person you invite pays you 10% of their earnings — forever. Their invites? Another 3%. And one more level below that: 1%. While you sleep.</p>
+  <div class="pyr">
+    <div class="ptier pt1"><span class="pc">10%</span><span class="pl"><b style="color:var(--ink)">Level 1</b> — your direct invites</span></div>
+    <div class="ptier pt2"><span class="pc">3%</span><span class="pl"><b style="color:var(--ink)">Level 2</b> — their invites</span></div>
+    <div class="ptier pt3"><span class="pc">1%</span><span class="pl"><b style="color:var(--ink)">Level 3</b> — their invites' invites</span></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>What members say</h2>
+  <p class="lead">Real members, real withdrawals. Your mileage depends on your streak and tasks — results vary.</p>
+  <div class="tst">
+    <div class="card"><div class="stars">★★★★★</div><p>"Didn't believe it, did the tasks anyway. Day 47 now — the streak money alone covers my mobile recharge every month."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#7c5cff,#e0489f)">R</span><div><b>Rahul K.</b><span>Day 47 streak · Grinder</span></div></div></div>
+    <div class="card"><div class="stars">★★★★★</div><p>"The 3-level referral thing is unfair — in a good way. I invited my college group and now their activity pays me daily too."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#22cf82,#0f7a48)">P</span><div><b>Priya S.</b><span>12 invites · Hustler</span></div></div></div>
+    <div class="card"><div class="stars">★★★★☆</div><p>"Withdrew to UPI, money came the next day. Small amounts at first, but the ladder literally doubles every 10 days."</p><div class="who"><span class="av" style="background:linear-gradient(135deg,#f7941d,#f2700a)">A</span><div><b>Arjun M.</b><span>Day 63 streak · Expert</span></div></div></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Wait — what's the catch? 😅</h2>
+  <div class="faq">
+    <div class="q"><b>Is it really free?</b><p>Yes. No deposit, no card, no fees to join. FlexFam earns from task creators and advertisers — members get paid for the work.</p></div>
+    <div class="q"><b>How do I withdraw?</b><p>UPI (GPay/PhonePe/Paytm) or USDT on BEP20. Request from the wallet page — payouts are reviewed within 24h on business days.</p></div>
+    <div class="q"><b>Why does the streak reset if I miss a day?</b><p>That's what makes Day 90 worth $5.50. Consistency is the product. Set a reminder — checking in takes 60 seconds.</p></div>
+    <div class="q"><b>Can I earn without inviting anyone?</b><p>Absolutely — streak, tasks, campaigns and mining all pay solo. Referrals just multiply it.</p></div>
+  </div>
+</section>
+
+<div class="final-cta wrap">
+  <div class="timer">🔥 Day 1 bonus window closes in <b id="cd">14:59</b></div>
+  <h2>Your Day 1 is worth <span class="grad">$0.001</span>.<br>Day 90 is worth <span class="gr">$5.50 every day.</span></h2>
+  <p class="sub" style="margin-bottom:26px">The only difference between those two numbers? <b>89 days of showing up.</b> Start today — it's free.</p>
+  <a class="btn cta-big" href="signup.html">Start my Day 1 — free →</a>
+  <p class="micro">No card · No deposit · Withdraw via UPI or USDT</p>
+</div>
+
+<footer>
+  <div class="wrap">FlexFam — earn USDT for simple social tasks · <a href="index.html">home</a> · <a href="login.html">login</a><br>
+  Earnings depend on your activity, streak and referrals. Rewards shown are the public 90-day ladder maximums. This is not financial advice — don't quit your job over a streak app. 🐉</div>
+</footer>
+
+<div class="float-cta"><a class="btn" href="signup.html">Start free — Day 1 →</a></div>
+
+<script>
+(function () {
+  /* count-up stats */
+  var counted = false;
+  function countUp() {
+    if (counted) return; counted = true;
+    document.querySelectorAll("[data-count]").forEach(function (el) {
+      var target = parseFloat(el.getAttribute("data-count")) || 0;
+      var pre = el.getAttribute("data-prefix") || "";
+      var suf = el.getAttribute("data-suffix") || "";
+      var t0 = performance.now(), dur = 1400;
+      function tick(t) {
+        var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+        var v = target * e;
+        el.textContent = pre + (target % 1 ? v.toFixed(1) : Math.round(v).toLocaleString("en-IN")) + suf;
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) countUp(); }); }, { threshold: .4 });
+    io.observe(document.querySelector(".stats"));
+  } else { countUp(); }
+
+  /* 15-min urgency countdown (localStorage me persist) */
+  var KEY = "ff_landing_cd";
+  var end = parseInt(localStorage.getItem(KEY) || "0", 10);
+  if (!end || end < Date.now()) { end = Date.now() + 15 * 60 * 1000; localStorage.setItem(KEY, String(end)); }
+  var cd = document.getElementById("cd");
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  setInterval(function () {
+    var left = Math.max(0, end - Date.now());
+    var m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
+    cd.textContent = pad(m) + ":" + pad(s);
+    if (left <= 0) { end = Date.now() + 15 * 60 * 1000; localStorage.setItem(KEY, String(end)); }
+  }, 1000);
+
+  /* mobile floating CTA after hero */
+  var hero = document.querySelector(".hero"), fc = document.querySelector(".float-cta");
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) { fc.classList.toggle("show", !e.isIntersecting); });
+    }, { threshold: 0 }).observe(hero);
+  }
+})();
+</script>
+
+</body>
+</html>
