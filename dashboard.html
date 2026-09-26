@@ -32,6 +32,12 @@
   .streak-rankbar .rk { font-size: 12.5px; font-weight: 800; color: var(--ink); }
   .streak-rankbar .rk b { color: var(--amber, #ffd166); }
   .streak-cd { font-size: 12px; font-weight: 700; color: var(--ink-mute); font-variant-numeric: tabular-nums; }
+.streak-group.capstone { margin-top: 8px; }
+.streak-day.cap { border-color: rgba(255,209,102,.55); background: linear-gradient(100deg, rgba(255,209,102,.16), rgba(247,148,29,.08)); }
+.streak-day.cap .r { color: var(--amber, #ffd166); }
+.streak-day.cap .tick { color: var(--amber, #ffd166); }
+.streak-day.cap.done { border-color: rgba(52,229,165,.65); background: linear-gradient(100deg, rgba(52,229,165,.18), rgba(255,209,102,.10)); }
+.streak-day.cap.done .tick, .streak-day.cap.done .r { color: var(--green, #34e5a5); }
 </style>
 </head>
 <body class="app-body" data-requires-auth>
@@ -175,7 +181,7 @@
         <div>
           <div class="panel reveal" id="streak-panel">
             <div class="panel-head">
-              <div><h3>Daily streak 🔥</h3><p class="panel-sub">Check in once a day — rewards grow for 90 days, paid in USDT. Miss a day and the streak resets.</p></div>
+              <div><h3>Daily streak 🔥</h3><p class="panel-sub">Check in once a day — rewards grow for 90 days, then $5.50 every day for life. Paid in USDT. Miss a day and the streak resets.</p></div>
               <span class="status-pill on" id="streak-pill">—</span>
             </div>
             <div class="streak-rankbar">
@@ -634,11 +640,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const todayPos = (canClaim && !claimedToday) ? Math.min(nextDay, 90) : 0;
     const focusDay = todayPos || donePos || 1;
 
-    stPill.textContent = streak > 0 ? "🔥 " + streak + " day streak" : "Start today";
+    stPill.textContent = streak >= 91
+      ? "🔥 " + streak + " days · $5.50/day"
+      : (streak > 0 ? "🔥 " + streak + " day streak" : "Start today");
     const rankNow = stRankName(Math.max(streak, 1));
-    stRank.innerHTML = "🏅 <b>" + rankNow + "</b>" + (streak >= 90
-      ? " · Day 90+ — $5.50 every day!"
-      : " · Day " + Math.min(Math.max(streak, 0), 90) + " of 90");
+    if (streak >= 91) stRank.innerHTML = "⚡ <b>Godlike</b> · Day " + streak + " — $5.50 every day, forever";
+    else if (streak === 90) stRank.innerHTML = "🐉 <b>Day 90 complete!</b> Tomorrow starts $5.50/day, forever ⚡";
+    else stRank.innerHTML = "🏅 <b>" + rankNow + "</b> · Day " + Math.max(streak, 0) + " of 90";
 
     let activeIdx = 0;
     ST_RANKS.forEach((rk, idx) => { if (focusDay >= rk.from && focusDay <= rk.to) activeIdx = idx; });
@@ -662,6 +670,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       html += "</div></div>";
     });
+    /* Day 91+ capstone — lifetime $5.50/day (always visible) */
+    const capDone = streak >= 91;
+    const capToday = canClaim && !claimedToday && nextDay >= 91;
+    html += '<div class="streak-group capstone">' +
+      '<div class="streak-rank"><span class="r-ico">⚡</span>' +
+      '<span class="r-name">Godlike</span><span class="r-days">Day 91+ · lifetime</span></div>' +
+      '<div class="streak-days"><div class="streak-day cap' + (capDone ? " done" : "") + (capToday ? " today" : "") + '" style="grid-column:1/-1">' +
+      '<div class="d">D91+</div><div class="r">$5.50/day</div>' +
+      '<div class="tick">' + (capDone ? "✓ ∞ forever" : capToday ? "★ claim today" : "∞ forever") + "</div>" +
+      "</div></div></div>";
     stGroups.innerHTML = html;
     const moreBtn = document.getElementById("streak-more");
     if (moreBtn) moreBtn.textContent = stExpanded ? "Show less ▴" : "View all 90 days ▾";
