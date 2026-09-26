@@ -63,6 +63,7 @@
       <div class="field">
         <label>1. Choose a platform</label>
         <div class="pf-picker" id="pf-picker"><!-- injected --></div>
+        <p id="pf-quota" style="font-size:12px;color:var(--ink-mute);margin:9px 0 0"></p>
       </div>
 
       <div class="field">
@@ -153,6 +154,29 @@ document.addEventListener("DOMContentLoaded", () => {
       ${p.name}
     </button>`).join("");
 
+  /* max 3 active campaigns per platform (per member) */
+  const PLATFORM_LIMIT = 3;
+  function myActiveOn(key) {
+    const u = FF.currentUser();
+    if (!u || !FF.DB || !FF.DB.campaigns) return 0;
+    return FF.DB.campaigns().filter((c) =>
+      c && c.platform === key && c.active !== false &&
+      (c.mine === true || (c.authorEmail && u.email && String(c.authorEmail).toLowerCase() === String(u.email).toLowerCase()))
+    ).length;
+  }
+  function refreshQuota() {
+    const el = document.getElementById("pf-quota");
+    if (!el) return;
+    const p = FF.PLATFORMS[selected] || { name: selected };
+    const n = myActiveOn(selected);
+    if (n >= PLATFORM_LIMIT) {
+      el.innerHTML = "\u26A0\uFE0F <b style=\"color:#ff5d6e\">" + p.name + ": " + n + "/" + PLATFORM_LIMIT + " active campaigns \u2014 limit reached!</b> Pause or delete one on your Dashboard to add a new one.";
+    } else {
+      el.textContent = p.name + ": " + n + "/" + PLATFORM_LIMIT + " active campaigns used";
+    }
+  }
+  document.addEventListener("ff:campaigns-synced", refreshQuota);
+
   function refreshActions() {
     const p = FF.PLATFORMS[selected] || { actions: ["Visit"], name: selected };
     /* View/Watch type action chuna to watch-time field dikha do */
@@ -172,6 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
       website: "https://yourwebsite.com/landing-page"
     }[selected] || "https://example.com";
     refreshEst();
+    refreshQuota();
   }
 
   function refreshEst() {
@@ -226,6 +251,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selected === "youtube" && !/(youtube\.com|youtu\.be)/i.test(url)) return FF.toast("That doesn't look like a YouTube link", "err");
     if (selected === "instagram" && !/instagram\.com/i.test(url)) return FF.toast("Please check the Instagram URL", "err");
     if (title.length < 3) return FF.toast("Title must be at least 3 characters", "err");
+    if (myActiveOn(selected) >= PLATFORM_LIMIT) {
+      return FF.toast("Limit reached: only " + PLATFORM_LIMIT + " active " + p.name + " campaigns at a time \u2014 pause or delete one on your Dashboard first", "err");
+    }
     if ((u.credits || 0) < payout) return FF.toast("Not enough points — earn some on the Earn page first!", "err");
 
     const isWatch = typeof FF.isWatchAction === "function" && FF.isWatchAction(action);

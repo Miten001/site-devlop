@@ -18,6 +18,7 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 12 | supabase-admin-campaigns.sql | **Admin campaign manager** — admin.html me SAARI campaigns (kisne banayi — name + email), koi bhi edit (title/link/platform/action/payout/watch/pause) ya delete | 1, 5 |
 | 13 | supabase-campaigns-limit.sql | **Engagement limit** — "kitne user tak campaign chalegi": Add Page par limit (0 = no limit), full hone par submit reject + "Limit reached ⛔" card, progress X/Y (Earn/Dashboard/Admin). Admin edit me bhi limit | 5, 12 |
 | 14 | supabase-daily-streak.sql | **Daily streak — 90 day (TimeBucks style)** — roz check-in → USDT (Day 1: $0.001 → Day 90: $5.50, Day 91+ $5.50/day; 9 ranks Rookie→Godlike; miss = reset). Dashboard panel + countdown + coin sound; wallet history me "Daily streak" | 3 |
+| 15 | supabase-campaign-quota.sql | **Campaign quota** — har platform par max 3 active campaigns per member (Add Page par live counter + submit block; server par post/toggle guard) | 13 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
 
