@@ -70,7 +70,7 @@
         <div>
           <span class="eyebrow"><span class="dot"></span> Invite friends</span>
           <h1>Refer &amp; <span class="grad-text">earn</span></h1>
-          <p class="sub">Share your link — every friend who signs up unlocks a <b>free cloud mining rig</b> for you, plus 10% of their earnings for life.</p>
+          <p class="sub">Share your link — every friend who signs up unlocks a <b>free cloud mining rig</b> for you, plus <b>pyramid income</b>: 10% of your invites' earnings, 3% of their invites, 1% of the third level — for life.</p>
         </div>
         <a href="dashboard.html" class="btn btn-ghost btn-sm">← Dashboard</a>
       </div>
@@ -79,6 +79,7 @@
         <div class="mini-stat"><b id="ref-count">0</b><span>Referral signups</span></div>
         <div class="mini-stat"><b id="ref-rigs">0</b><span>Free rigs unlocked</span></div>
         <div class="mini-stat"><b id="ref-code">FF-…</b><span>Your referral code</span></div>
+        <div class="mini-stat"><b id="ref-income">—</b><span>Pyramid income</span></div>
       </div>
 
       <div class="panel">
@@ -100,11 +101,17 @@
       </div>
 
       <div class="panel" style="margin-top:16px">
+        <div class="panel-head"><div><h3>Your pyramid</h3><p class="panel-sub">3 levels of income — aapke invites, unke invites, aur unke bhi.</p></div></div>
+        <div id="pyr-body" style="display:flex;flex-direction:column;gap:9px;align-items:center"></div>
+        <p class="panel-sub" id="pyr-hint" style="margin-top:12px">Levels: L1 = direct invites (10%) · L2 = unke invites (3%) · L3 = unke bhi invites (1%) — har earning par (campaigns, tasks, streak, mining).</p>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
         <div class="panel-head"><div><h3>How it works</h3></div></div>
         <div class="rig-ticks" style="grid-template-columns:repeat(3,1fr)">
           <div><span class="n" style="font-size:20px;font-weight:800;color:var(--green)">1</span><b>Copy your link</b><span>Copy your referral link above</span></div>
           <div><span style="font-size:20px;font-weight:800;color:var(--green)">2</span><b>Send it to friends</b><span>Share it anywhere — WhatsApp, Telegram and more</span></div>
-          <div><span style="font-size:20px;font-weight:800;color:var(--green)">3</span><b>Earn rewards</b><span>Free rig on signup + 10% of their earnings for life</span></div>
+          <div><span style="font-size:20px;font-weight:800;color:var(--green)">3</span><b>Earn 3 levels deep</b><span>Free rig on signup + 10% / 3% / 1% of your pyramid's earnings, for life</span></div>
         </div>
       </div>
 
@@ -152,6 +159,61 @@ document.addEventListener("DOMContentLoaded", () => {
   paint();
 
   FF.loadReferralStats().then((r) => { refs = r; paint(); });
+
+  /* ---------- pyramid ---------- */
+  const fmtU = (v) => { v = Number(v) || 0; return "$" + (v >= 1 ? v.toFixed(2) : v.toFixed(5).replace(/0+$/, "").replace(/\.$/, "")); };
+  const fmtP = (v) => (Number(v) || 0).toLocaleString("en-IN") + " pts";
+  function earnedText(l) {
+    const u = Number(l.usdt) || 0, pts = Number(l.points) || 0;
+    if (u <= 0 && pts <= 0) return "—";
+    const parts = [];
+    if (pts > 0) parts.push(fmtP(pts));
+    if (u > 0) parts.push(fmtU(u));
+    return parts.join(" + ");
+  }
+  function paintPyramid(p) {
+    const tiers = [
+      { w: "62%", c: "#17b26a", label: "Level 1 · Your direct invites", rate: "10%" },
+      { w: "81%", c: "#2f6fed", label: "Level 2 · Their invites", rate: "3%" },
+      { w: "100%", c: "#f7941d", label: "Level 3 · Their invites' invites", rate: "1%" },
+    ];
+    const lv = {};
+    ((p && p.levels) || []).forEach((l) => { lv[l.level] = l; });
+    document.getElementById("pyr-body").innerHTML = tiers.map((t, i) => {
+      const l = lv[i + 1] || { count: 0, usdt: 0, points: 0, recent: [] };
+      const names = (l.recent || []).map((r) => esc(r.name || "Member"));
+      const namesTxt = names.length === 0 ? "No members yet" :
+        names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) + " more" : "");
+      return '<div style="width:' + t.w + ';min-width:0;border:1px solid ' + t.c + '44;border-left:4px solid ' + t.c +
+        ';border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,' + t.c + '14,transparent)">' +
+        '<span style="font-size:18px;font-weight:800;color:' + t.c + ';flex-shrink:0">' + t.rate + '</span>' +
+        '<div style="flex:1;min-width:0"><b style="font-size:13.5px">' + t.label + '</b>' +
+        '<div style="font-size:11.5px;color:var(--ink-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+        namesTxt + '</div></div>' +
+        '<div style="text-align:right;flex-shrink:0"><b style="font-size:15px;color:var(--ink)">' + Number(l.count || 0) + '</b>' +
+        '<div style="font-size:10.5px;color:var(--ink-mute)">member' + (Number(l.count) === 1 ? "" : "s") + '</div></div>' +
+        '<div style="text-align:right;flex-shrink:0;min-width:86px"><b style="font-size:12.5px;color:var(--green)">' + earnedText(l) + '</b>' +
+        '<div style="font-size:10.5px;color:var(--ink-mute)">earned</div></div></div>';
+    }).join("");
+    const tt = (p && p.totals) || { usdt: 0, points: 0 };
+    const inc = [];
+    if (Number(tt.points) > 0) inc.push(fmtP(tt.points));
+    if (Number(tt.usdt) > 0) inc.push(fmtU(tt.usdt));
+    document.getElementById("ref-income").textContent = inc.length ? inc.join(" + ") : "$0";
+    const hint = document.getElementById("pyr-hint");
+    if (hint && p) hint.textContent = "Income source: campaigns (points) + tasks, daily streak & mining (USDT) — aapke 3 levels ki har earning par.";
+  }
+  if (FF.hasServer && FF.hasServer()) {
+    FF.rpc("referral_pyramid").then(paintPyramid).catch((err) => {
+      const m = (err && err.message) || "";
+      document.getElementById("pyr-hint").textContent = /referral_pyramid|does not exist|PGRST|permission/i.test(m)
+        ? "Setup needed — run supabase-referral-pyramid.sql in the Supabase SQL editor, then reload."
+        : "Could not load your pyramid — try again in a moment.";
+      paintPyramid(null);
+    });
+  } else {
+    paintPyramid(null);
+  }
 
   document.getElementById("copy-ref").addEventListener("click", () => {
     if (!refs.link) return;
