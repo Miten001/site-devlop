@@ -43,6 +43,16 @@
     return /^(watch|view|visit|read|explore)\b/i.test(String(action || "").trim());
   };
 
+  /* Website campaigns: HAMESHA timer mode — proof nahi. Click → website
+     khulti hai → timer chalta hai → points auto-credit. (Owner watch time
+     set karta hai; 0 ho to 15s default.) Baaki platforms: sirf View/Watch
+     type actions + watch time set hone par timer. */
+  FF.isTimerCampaign = function (c) {
+    if (!c) return false;
+    if (String(c.platform || "").toLowerCase() === "website") return true;
+    return FF.isWatchAction(c.action) && Number(c.watchSecs || 0) > 0;
+  };
+
   function adopt(feed, isPublic) {
     if (!feed) return false;
     let u = FF.currentUser();

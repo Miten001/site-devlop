@@ -178,7 +178,7 @@
 <script src="assets/js/main.js?v=2.3"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
-<script src="assets/js/campaigns.js?v=1.8"></script>
+<script src="assets/js/campaigns.js?v=1.9"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -383,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
       /* Apni hi campaign — complete nahi kar sakte, par status dikhna chahiye */
       const isOwn = c.mine === true || (c.authorEmail && user.email && c.authorEmail === user.email);
       const isPaused = c.active === false && isOwn;
-      const isWatch = FF.isWatchAction && FF.isWatchAction(c.action) && Number(c.watchSecs || 0) > 0;
+      const isWatch = FF.isTimerCampaign ? FF.isTimerCampaign(c) : false;
       const maxA = Math.max(0, Math.round(Number(c.maxActions || 0)));
       const acts = Number(c.actions || 0);
       const isFull = maxA > 0 && acts >= maxA;
@@ -442,17 +442,20 @@ document.addEventListener("DOMContentLoaded", () => {
     /* WATCH campaigns (View/Watch/Read): proof nahi — TIMER mode */
     const watchZone = document.getElementById("cm-watch-zone");
     const proofZone = document.getElementById("cm-proof-zone");
-    const isWatch = FF.isWatchAction && FF.isWatchAction(task.action) && Number(task.watchSecs || 0) > 0;
+    const isWatch = FF.isTimerCampaign ? FF.isTimerCampaign(task) : false;
     stopWatchTimer();
     watchZone.classList.toggle("hidden", !isWatch);
     proofZone.classList.toggle("hidden", isWatch);
     if (isWatch) {
       const secs = Math.max(5, Math.min(300, Math.round(Number(task.watchSecs) || 15)));
-      document.getElementById("cm-watch-info").innerHTML =
-        "⏱️ Watch this page for <b>" + secs + " seconds</b> — then claim <b style=\"color:var(--green)\">+" + task.payout + " points</b>. No proof needed!";
+      const isSite = String(task.platform || "").toLowerCase() === "website";
+      document.getElementById("cm-watch-info").innerHTML = isSite
+        ? "⏱️ Keep this open for <b>" + secs + " seconds</b> — <b style=\"color:var(--green)\">+" + task.payout + " points auto-credit</b> when the timer ends. No proof needed!"
+        : "⏱️ Watch this page for <b>" + secs + " seconds</b> — then claim <b style=\"color:var(--green)\">+" + task.payout + " points</b>. No proof needed!";
       const claimBtn = document.getElementById("cm-claim");
       claimBtn.textContent = "Claim +" + task.payout + " points ⚡";
       claimBtn.classList.add("hidden");
+      claimBtn.disabled = false;
       document.getElementById("cm-timer-box").classList.add("hidden");
       document.getElementById("cm-watch-start").classList.remove("hidden");
     } else {
@@ -495,12 +498,17 @@ document.addEventListener("DOMContentLoaded", () => {
         stopWatchTimer();
         watchDone = true;
         document.getElementById("cm-timer-box").classList.add("hidden");
-        document.getElementById("cm-claim").classList.remove("hidden");
+        if (pendingCamp && String(pendingCamp.platform || "").toLowerCase() === "website") {
+          /* website campaign: timer finish hote hi points auto-credit */
+          submitTimerClaim();
+        } else {
+          document.getElementById("cm-claim").classList.remove("hidden");
+        }
       }
     }, 1000);
   });
 
-  document.getElementById("cm-claim").addEventListener("click", () => {
+  function submitTimerClaim() {
     if (!pendingCamp || !watchDone) return;
     const btn = document.getElementById("cm-claim");
     btn.disabled = true;
@@ -515,7 +523,8 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       if (res && typeof res.then === "function") res.then(done).catch(fail); else done();
     } catch (err) { fail(err); }
-  });
+  }
+  document.getElementById("cm-claim").addEventListener("click", submitTimerClaim);
 
   /* ---------- PROOF: media attachment (screenshot upload) ---------- */
   let proofUpload = null;

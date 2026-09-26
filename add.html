@@ -96,9 +96,9 @@
 
       <div class="est-box">
         <div class="field hidden" id="watch-field" style="text-align:left;margin-top:14px">
-          <label>⏱️ Watch time — seconds the user must watch (5–300)</label>
+          <label id="watch-label">⏱️ Watch time — seconds the user must watch (5–300)</label>
           <input type="number" id="camp-watch" min="5" max="300" step="1" value="15" />
-          <p style="font-size:12px;color:var(--ink-mute);margin:6px 0 0">View / Watch / Read campaigns need no proof — the user must stay on the page for this many seconds to earn the reward.</p>
+          <p style="font-size:12px;color:var(--ink-mute);margin:6px 0 0">Website campaigns always run on this timer — no proof needed, points auto-credit when it ends. View / Watch / Read actions on other platforms use it too.</p>
         </div>
 
         <div class="field" id="limit-field" style="text-align:left;margin-top:14px">
@@ -127,7 +127,7 @@
 <script src="assets/js/main.js?v=2.3"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
-<script src="assets/js/campaigns.js?v=1.8"></script>
+<script src="assets/js/campaigns.js?v=1.9"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -181,7 +181,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const p = FF.PLATFORMS[selected] || { actions: ["Visit"], name: selected };
     /* View/Watch type action chuna to watch-time field dikha do */
     if (typeof FF.isWatchAction === "function") {
-      watchField.classList.toggle("hidden", !FF.isWatchAction(actionSelect.value));
+      /* Website platform: hamesha timer mode (proof nahi) */
+      const needsTimer = selected === "website" || FF.isWatchAction(actionSelect.value);
+      watchField.classList.toggle("hidden", !needsTimer);
+      const wl = document.getElementById("watch-label");
+      if (wl) wl.textContent = selected === "website"
+        ? "⏱️ Timer — seconds the visitor must stay (5–300) — points auto-credit, no proof"
+        : "⏱️ Watch time — seconds the user must watch (5–300)";
     }
     actionSelect.innerHTML = p.actions.map((a) => `<option value="${a}">${a}</option>`).join("");
     urlInput.placeholder = {
@@ -256,8 +262,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if ((u.credits || 0) < payout) return FF.toast("Not enough points — earn some on the Earn page first!", "err");
 
-    const isWatch = typeof FF.isWatchAction === "function" && FF.isWatchAction(action);
-    const watchSecs = isWatch ? Math.max(5, Math.min(300, parseInt(document.getElementById("camp-watch").value, 10) || 15)) : 0;
+    const needsTimer = selected === "website" || (typeof FF.isWatchAction === "function" && FF.isWatchAction(action));
+    const watchSecs = needsTimer ? Math.max(5, Math.min(300, parseInt(document.getElementById("camp-watch").value, 10) || 15)) : 0;
     const limitRaw = document.getElementById("camp-limit").value.trim();
     const maxActions = Math.max(0, Math.min(100000, parseInt(limitRaw, 10) || 0));
     if (limitRaw !== "" && !/^\d+$/.test(limitRaw)) return FF.toast("Engagement limit must be a whole number (0 = no limit)", "err");
@@ -287,6 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
       title: camp.title,
       url: camp.url,
       payout: camp.payout,
+      watchSecs: camp.watchSecs,
       maxActions: camp.maxActions,
       mine: true,
       active: true,
