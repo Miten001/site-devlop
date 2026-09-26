@@ -121,6 +121,14 @@ h2 { font-family: 'Sora', 'Inter', system-ui, sans-serif; font-size: clamp(22px,
 .warn { border: 1px dashed rgba(255,208,97,.45); background: rgba(255,208,97,.06); border-radius: 16px; padding: 15px 20px; font-size: 13.5px; line-height: 1.65; color: #d9e0f2; margin: 22px auto 0; max-width: 660px; }
 .warn b { color: var(--gold); }
 
+/* live stats ticker */
+.livebar { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:4px 12px; margin:16px auto 0; padding:10px 16px; max-width:660px; border:1px solid rgba(34,207,130,.28); background:rgba(34,207,130,.06); border-radius:14px; font-size:12.5px; color:var(--mute); }
+.livebar b { color:var(--green); font-weight:800; font-variant-numeric:tabular-nums; }
+.livebar .lv-live { font-weight:800; letter-spacing:1.5px; color:var(--green); font-size:11px; display:flex; align-items:center; gap:6px; margin-right:2px; }
+.livebar .ldot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 0 rgba(34,207,130,.55); animation:lpulse 1.6s infinite; }
+@keyframes lpulse { 70% { box-shadow:0 0 0 9px rgba(34,207,130,0); } 100% { box-shadow:0 0 0 0 rgba(34,207,130,0); } }
+.livebar .lv-sep { color:rgba(143,160,197,.4); }
+
 /* earning streams + task board */
 .streams { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
 .tcard { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 16px 14px; text-align: left; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
@@ -244,6 +252,17 @@ input[type="range"] { width: 100%; accent-color: var(--green); height: 34px; cur
     <div class="stat"><b data-count="0" data-prefix="$" data-suffix="">$0</b><span>to start (no cap)</span></div>
   </div>
   <p class="micro" style="margin:8px 0 0">* Day-90 ladder payout ÷ the 60 seconds of daily effort. Real math, not hype.</p>
+
+  <div class="livebar" id="livebar" hidden>
+    <span class="lv-live"><span class="ldot"></span>LIVE</span>
+    <span><b id="lv-users">—</b> members</span>
+    <span class="lv-sep">·</span>
+    <span><b id="lv-claims">—</b> check-ins (24h)</span>
+    <span class="lv-sep">·</span>
+    <span><b id="lv-paid">$—</b> rewards paid (24h)</span>
+    <span class="lv-sep">·</span>
+    <span><b id="lv-tasks">—</b> tasks approved (24h)</span>
+  </div>
 </div>
 
 <section class="wrap">
@@ -507,6 +526,33 @@ input[type="range"] { width: 100%; accent-color: var(--green); height: 34px; cur
     });
     document.getElementById("exit-close").addEventListener("click", function () { em.classList.remove("show"); });
     em.addEventListener("click", function (e) { if (e.target === em) em.classList.remove("show"); });
+  }
+
+  /* live stats ticker — real numbers from Supabase; stays hidden until first successful load */
+  var LB = document.getElementById("livebar");
+  if (LB) {
+    var lvSet = function (id, v, pre) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = (pre || "") + Number(v).toLocaleString("en-US");
+    };
+    var lvLoad = function () {
+      fetch("https://ekrqtlbwaotgdtrpqhrc.supabase.co/rest/v1/rpc/live_stats", {
+        method: "POST",
+        headers: { "apikey": "sb_publishable_Q1b_FF9Htl4j30dHashaQQ_8ydq1MU8",
+                   "Authorization": "Bearer sb_publishable_Q1b_FF9Htl4j30dHashaQQ_8ydq1MU8",
+                   "Content-Type": "application/json" },
+        body: "{}"
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+        if (!d || typeof d.claims_24h === "undefined") return;
+        lvSet("lv-users", d.users_total || 0);
+        lvSet("lv-claims", d.claims_24h || 0);
+        lvSet("lv-paid", d.paid_24h || 0, "$");
+        lvSet("lv-tasks", d.tasks_24h || 0);
+        LB.hidden = false;
+      }).catch(function () {});
+    };
+    lvLoad();
+    setInterval(lvLoad, 60000);
   }
 
   /* mobile floating CTA after hero */
