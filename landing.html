@@ -138,6 +138,39 @@ h2 { font-family: 'Sora', 'Inter', system-ui, sans-serif; font-size: clamp(22px,
 footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--mute); font-size: 12px; text-align: center; line-height: 1.7; }
 footer a { color: var(--mute); }
 
+/* scroll progress bar */
+.progress { position: fixed; top: 0; left: 0; height: 3px; width: 0%; z-index: 100; background: linear-gradient(90deg, var(--green), var(--gold)); box-shadow: 0 0 12px rgba(255,208,97,.6); }
+
+/* CTA shine sweep */
+.cta-big { position: relative; overflow: hidden; }
+.cta-big::after { content: ''; position: absolute; top: 0; left: -90%; width: 45%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.5), transparent); transform: skewX(-22deg); animation: shine 2.8s ease-in-out infinite; }
+@keyframes shine { 0% { left: -90%; } 60%, 100% { left: 140%; } }
+
+/* money rain */
+.rain { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.rain span { position: absolute; bottom: -40px; opacity: 0; animation: rise linear infinite; }
+@keyframes rise { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: .5; } 85% { opacity: .3; } 100% { transform: translateY(-560px); opacity: 0; } }
+
+/* payout calculator */
+.calc { background: var(--bg2); border: 1px solid var(--line); border-radius: 20px; padding: 26px 22px; max-width: 620px; margin: 0 auto; text-align: center; }
+.calc-day { font-size: 15px; color: var(--mute); margin-bottom: 12px; }
+.calc-day b { color: var(--gold); font-size: 17px; }
+input[type="range"] { width: 100%; accent-color: var(--green); height: 34px; cursor: grab; }
+.calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0 8px; }
+.calc-grid > div { background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 14px; padding: 12px 6px; }
+.calc-grid b { display: block; font-size: clamp(15px, 2.4vw, 20px); color: var(--green); font-weight: 800; font-variant-numeric: tabular-nums; }
+.calc-grid span { font-size: 10.5px; color: var(--mute); }
+.calc .btn { margin-top: 14px; }
+@media (max-width: 560px) { .calc-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* exit-intent modal */
+.exit-modal { position: fixed; inset: 0; z-index: 120; display: none; align-items: center; justify-content: center; background: rgba(4,7,16,.78); backdrop-filter: blur(6px); padding: 20px; }
+.exit-modal.show { display: flex; }
+.exit-card { position: relative; background: var(--bg2); border: 1px solid rgba(255,208,97,.35); border-radius: 22px; padding: 34px 26px 28px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 30px 90px rgba(0,0,0,.6); animation: pop .35s cubic-bezier(.2,1.4,.4,1); }
+@keyframes pop { from { transform: scale(.85); opacity: 0; } }
+.exit-x { position: absolute; top: 12px; right: 14px; color: var(--mute); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+.exit-x:hover { color: #fff; }
+
 /* floating cta (mobile) */
 .float-cta { position: fixed; bottom: 0; left: 0; right: 0; z-index: 60; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: rgba(10,15,30,.92); backdrop-filter: blur(10px); border-top: 1px solid var(--line); transform: translateY(110%); transition: transform .3s ease; }
 .float-cta.show { transform: none; }
@@ -154,6 +187,8 @@ footer a { color: var(--mute); }
 </head>
 <body>
 
+<div class="progress" id="prog"></div>
+
 <div class="topbar">
   <div class="wrap">
     <a class="brand" href="index.html">
@@ -165,6 +200,7 @@ footer a { color: var(--mute); }
 </div>
 
 <div class="hero wrap">
+  <div class="rain" aria-hidden="true"></div>
   <div class="pill"><span class="pulse-dot"></span> FREE · no surveys · no deposit · withdraw real USDT</div>
   <h1>I spent <span class="u">60 seconds a day</span> on this free app. On Day 90, it started paying me <span class="grad">$5.50 a day.</span></h1>
   <p class="sub">Keep a daily streak. Follow pages. Watch short videos. Do the math — that's an <b>effective rate of $330/hour</b>, or <b>$2,000+ a year</b>, paid in real USDT. <b>No surveys. No card. No deposit.</b></p>
@@ -222,6 +258,23 @@ footer a { color: var(--mute); }
 </section>
 
 <section class="wrap">
+  <h2>Don't believe it? <span class="gr">Try the math yourself</span> 🎮</h2>
+  <p class="lead">Drag the slider — see exactly what each streak day pays. Real ladder, no signup needed to check.</p>
+  <div class="calc">
+    <div class="calc-day"><b id="calc-d">Day 30</b> of your streak</div>
+    <input type="range" id="calc-slider" min="1" max="120" value="30" step="1" aria-label="Streak day" />
+    <div class="calc-grid">
+      <div><b id="calc-day-payout">$0.052</b><span>per day</span></div>
+      <div><b id="calc-week">$0.36</b><span>per week</span></div>
+      <div><b id="calc-year">$19</b><span>per year</span></div>
+      <div><b id="calc-rate">$3/hr</b><span>effective rate</span></div>
+    </div>
+    <p class="micro" id="calc-rank" style="margin:6px 0 0">🎯 Earner — Day 90+ pays $5.50/day, forever</p>
+    <a class="btn cta-big" href="signup.html">Lock in my Day 1 — free →</a>
+  </div>
+</section>
+
+<section class="wrap">
   <h2>Invite 3 friends. Earn from <span class="gr">their friends too.</span></h2>
   <p class="lead">Every person you invite pays you 10% of their earnings — forever. Their invites? Another 3%. And one more level below that: 1%. While you sleep.</p>
   <div class="pyr">
@@ -264,6 +317,17 @@ footer a { color: var(--mute); }
   <div class="wrap">FlexFam — earn USDT for simple social tasks · <a href="index.html">home</a> · <a href="login.html">login</a><br>
   Earnings depend on your activity, streak and referrals. Rewards shown are the public 90-day ladder maximums. This is not financial advice — don't quit your job over a streak app. 🐉</div>
 </footer>
+
+<div class="exit-modal" id="exit-modal">
+  <div class="exit-card">
+    <span class="exit-x" id="exit-close">✕</span>
+    <div class="pill" style="margin-bottom:14px"><span class="pulse-dot"></span> wait — one second</div>
+    <h2 style="font-size:clamp(20px,4vw,26px)">Your free <span class="grad">60 GH/s rig</span> is still on the table 🎁</h2>
+    <p class="sub" style="margin:12px auto 20px">Day 1 takes 60 seconds. Day 90 pays <b>$5.50 every day, forever.</b> Don't be the person who <i>almost</i> started.</p>
+    <a class="btn cta-big" href="signup.html">Claim my free rig now →</a>
+    <p class="micro" style="margin-top:12px">No card · No deposit · Leave anytime</p>
+  </div>
+</div>
 
 <div class="float-cta"><a class="btn" href="signup.html">Start free — Day 1 →</a></div>
 
@@ -315,6 +379,83 @@ footer a { color: var(--mute); }
     cd.textContent = pad(m) + ":" + pad(s);
     if (left <= 0) { end = Date.now() + 15 * 60 * 1000; localStorage.setItem(KEY, String(end)); }
   }, 1000);
+
+  /* money rain */
+  var rain = document.querySelector(".rain");
+  if (rain) {
+    ["💵","💰","🪙","💵","💰","🪙","💵","💰","🪙","💵","💰","🪙"].forEach(function (em) {
+      var s = document.createElement("span");
+      s.textContent = em;
+      s.style.left = (3 + Math.random() * 92) + "%";
+      s.style.animationDuration = (7 + Math.random() * 7) + "s";
+      s.style.animationDelay = (Math.random() * 9) + "s";
+      s.style.fontSize = (15 + Math.random() * 14) + "px";
+      rain.appendChild(s);
+    });
+  }
+
+  /* scroll progress bar */
+  var prog = document.getElementById("prog");
+  window.addEventListener("scroll", function () {
+    var h = document.documentElement;
+    prog.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + "%";
+  }, { passive: true });
+
+  /* ladder bars animate in */
+  var lad = document.querySelector(".ladder");
+  if (lad) {
+    var bars = lad.querySelectorAll(".bar i");
+    bars.forEach(function (b) { b.dataset.w = b.style.width; b.style.width = "0"; b.style.transition = "width 1.1s cubic-bezier(.22,1,.36,1)"; });
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (es, io) {
+        es.forEach(function (e) {
+          if (e.isIntersecting) { bars.forEach(function (b, i) { setTimeout(function () { b.style.width = b.dataset.w; }, i * 90); }); io.disconnect(); }
+        });
+      }, { threshold: .25 }).observe(lad);
+    } else bars.forEach(function (b) { b.style.width = b.dataset.w; });
+  }
+
+  /* payout calculator — real ladder math */
+  var sl = document.getElementById("calc-slider");
+  if (sl) {
+    var L = [0.001,0.002,0.003,0.004,0.006,0.007,0.008,0.009,0.010,0.011,
+             0.012,0.013,0.014,0.015,0.017,0.018,0.019,0.021,0.022,0.024,
+             0.026,0.028,0.030,0.033,0.035,0.039,0.041,0.044,0.048,0.052,
+             0.056,0.061,0.066,0.072,0.077,0.083,0.089,0.097,0.100,0.110,
+             0.12,0.13,0.14,0.15,0.16,0.18,0.19,0.21,0.22,0.24,
+             0.26,0.28,0.31,0.33,0.36,0.39,0.42,0.45,0.49,0.53,
+             0.57,0.62,0.67,0.73,0.78,0.85,0.92,0.99,1.07,1.16,
+             1.25,1.36,1.47,1.58,1.71,1.85,2.00,2.16,2.34,2.53,
+             2.73,2.95,3.19,3.45,3.73,4.03,4.36,4.71,5.09,5.50];
+    var RK = [[91,"⚡ Godlike"],[81,"🐉 Legend"],[71,"👑 Grandmaster"],[61,"🏅 Master"],[51,"🚀 Expert"],[41,"🎖️ Veteran"],[31,"⚙️ Grinder"],[21,"🎯 Earner"],[11,"💪 Hustler"],[1,"🌱 Rookie"]];
+    function fmt(v) { return "$" + (v >= 1 ? v.toFixed(2) : v.toFixed(3)); }
+    function upd() {
+      var d = parseInt(sl.value, 10);
+      var pay = d >= 91 ? 5.5 : L[d - 1];
+      var rk = ""; for (var i = 0; i < RK.length; i++) if (d >= RK[i][0]) { rk = RK[i][1]; break; }
+      document.getElementById("calc-d").textContent = "Day " + d;
+      document.getElementById("calc-day-payout").textContent = fmt(pay) + (d >= 91 ? " ∞" : "");
+      document.getElementById("calc-week").textContent = fmt(pay * 7);
+      document.getElementById("calc-year").textContent = "$" + Math.floor(pay * 365).toLocaleString("en-US");
+      document.getElementById("calc-rate").textContent = "$" + Math.round(pay * 60).toLocaleString("en-US") + "/hr";
+      document.getElementById("calc-rank").textContent = rk + (d >= 91 ? " — $5.50/day, forever 🤯" : " — keep going, Day 90+ pays $5.50/day forever");
+    }
+    sl.addEventListener("input", upd);
+    upd();
+  }
+
+  /* exit-intent (once per session) */
+  var em = document.getElementById("exit-modal");
+  if (em && !localStorage.getItem("ff_exit_shown")) {
+    document.addEventListener("mouseout", function (e) {
+      if (!e.relatedTarget && e.clientY <= 8) {
+        localStorage.setItem("ff_exit_shown", "1");
+        em.classList.add("show");
+      }
+    });
+    document.getElementById("exit-close").addEventListener("click", function () { em.classList.remove("show"); });
+    em.addEventListener("click", function (e) { if (e.target === em) em.classList.remove("show"); });
+  }
 
   /* mobile floating CTA after hero */
   var hero = document.querySelector(".hero"), fc = document.querySelector(".float-cta");
