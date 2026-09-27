@@ -2283,6 +2283,8 @@ body.modal-open { overflow: hidden; }
 .rig-amt { font-family: var(--font-display); font-size: 40px; font-weight: 800; color: #0f7a48; letter-spacing: -.02em; margin: 4px 0 16px; font-variant-numeric: tabular-nums; }
 .rig-amt small { font-size: 15px; color: var(--ink-dim); font-weight: 700; }
 .rig-ticks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.rig-ticks.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.rig-ticks.cols-2 { grid-template-columns: repeat(2, 1fr); }
 .rig-ticks div { padding: 11px 12px; border-radius: 13px; background: var(--card-2); border: 1px solid var(--line); }
 .rig-ticks b { display: block; font-family: var(--font-display); font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .rig-ticks span { font-size: 10.5px; color: var(--ink-mute); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
@@ -2341,7 +2343,10 @@ body.modal-open { overflow: hidden; }
 
 @media (max-width: 900px) {
   .rig-hero { grid-template-columns: 1fr; }
-  .rig-ticks { grid-template-columns: repeat(2, 1fr); }
+  .rig-ticks, .rig-ticks.cols-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .rig-ticks.cols-3 { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .rig-amt { font-size: 32px; }
