@@ -47,12 +47,25 @@ create policy notifications_update_own on public.notifications
   with check (auth.uid() = user_id);
 
 -- ------------------------------------------------------------
--- 2. Trigger — credit milte hi notification
---    (wallet_txns me positive completed amount = member ko paisa)
+-- 1b. Amount label helper — "10" -> "10", "5.50" -> "5.5", "0.011" -> "0.011"
+-- ------------------------------------------------------------
+create or replace function public.notify_amount_label(p_amount numeric)
+returns text language sql immutable as $$
+  select case
+           when p_amount = floor(p_amount) then p_amount::text
+           else trim(trailing '0' from p_amount::text)
+         end;
+$$;
+
+-- ------------------------------------------------------------
+-- 2. Trigger — wallet event par SAHI label wali notification
+--    (wallet_txns me amount ka matlab type se badalta hai:
+--     streak/deposit/convert/refund = USDT $, earning/adjust = POINTS)
 -- ------------------------------------------------------------
 create or replace function public.wallet_credit_notify()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
+  v_kind  text := 'credit';
   v_title text;
   v_body  text;
 begin
@@ -60,21 +73,35 @@ begin
     return new;
   end if;
 
-  v_title := '💰 You earned $' || trim(trailing '.' from trim(trailing '0' from new.amount::text));
-  v_body  := case new.type
-               when 'streak'    then 'Daily check-in reward credited to your wallet. Come back tomorrow!'
-               when 'mining'    then 'Mining rewards claimed — straight to your wallet.'
-               when 'referral'  then 'Referral income: your pyramid just paid you.'
-               when 'task'      then 'Task reward credited. Nice work!'
-               when 'campaign'  then 'Campaign task approved — reward credited.'
-               when 'deposit'   then 'Deposit confirmed. Your balance is updated.'
-               when 'convert'   then 'Points converted to USDT (with bonus).'
-               when 'bonus'     then 'Bonus credited to your wallet.'
-               else 'Reward credited to your wallet.'
-             end;
+  if new.type = 'streak' then
+    v_title := '💰 You earned $' || public.notify_amount_label(new.amount);
+    v_body  := 'Daily check-in reward credited to your USDT wallet. Come back tomorrow!';
+  elsif new.type = 'deposit' then
+    v_title := '💰 Deposit confirmed — $' || public.notify_amount_label(new.amount);
+    v_body  := 'Your balance has been updated.';
+  elsif new.type = 'convert' then
+    v_title := '💰 Points converted — $' || public.notify_amount_label(new.amount) || ' USDT';
+    v_body  := 'Points moved to your USDT wallet (bonus included).';
+  elsif new.type = 'refund' then
+    v_title := '↩️ Refund credited — $' || public.notify_amount_label(new.amount);
+    v_body  := 'Escrow returned to your wallet.';
+  elsif new.type = 'earning' then
+    -- job/task rewards POINTS me hote hain — $ claim GALAT hai
+    v_title := '🎯 Task reward: +' || public.notify_amount_label(new.amount) || ' pts';
+    v_body  := 'Task approved — points added to your balance. 1,000 pts = $1 USDT.';
+  elsif new.type = 'adjust' then
+    v_kind := 'system';
+    v_title := '⚙️ Balance adjusted: +' || public.notify_amount_label(new.amount) || ' pts';
+    v_body  := 'Your points balance was updated.';
+  else
+    -- unknown type — koi $ claim nahi
+    v_kind := 'system';
+    v_title := '✅ Wallet updated';
+    v_body  := 'A balance change was credited to your account.';
+  end if;
 
   insert into public.notifications (user_id, kind, title, body)
-  values (new.user_id, 'credit', v_title, v_body);
+  values (new.user_id, v_kind, v_title, v_body);
 
   return new;
 end;
@@ -84,6 +111,10 @@ drop trigger if exists wallet_txns_credit_notify on public.wallet_txns;
 create trigger wallet_txns_credit_notify
   after insert on public.wallet_txns
   for each row execute function public.wallet_credit_notify();
+
+-- Purani galat-labeled notifications ("$ earned" jo points the) hata do
+-- — naya trigger ab sahi labels banayega.
+delete from public.notifications where kind = 'credit';
 
 -- ------------------------------------------------------------
 -- 3. bell_feed() — bell icon ka poora data ek call me
