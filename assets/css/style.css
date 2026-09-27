@@ -2619,3 +2619,33 @@ body.modal-open { overflow: hidden; }
 }
 .msg-modes .seg:hover { color: var(--ink); }
 .msg-modes .seg.on { border-color: var(--fuchsia); color: var(--ink); background: rgba(224, 72, 159, .12); }
+
+
+/* ---------- notification bell (Round-35) ---------- */
+.bell-btn { position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--card-2); color: var(--ink-mute); cursor: pointer; transition: color .15s, border-color .15s; }
+.bell-btn:hover { color: var(--ink); border-color: rgba(16,27,48,.25); }
+.bell-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 99px; background: linear-gradient(135deg, #22cf82, #0f7a48); color: #fff;
+  font-size: 10.5px; font-weight: 800; display: grid; place-items: center; border: 2px solid var(--card); }
+.bell-badge.pop { animation: bellpop .5s ease; }
+@keyframes bellpop { 50% { transform: scale(1.35); } }
+.bell-panel { position: fixed; z-index: 130; background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; box-shadow: 0 24px 60px rgba(16,27,48,.25); overflow: hidden;
+  opacity: 0; transform: translateY(-6px); transition: opacity .18s ease, transform .18s ease; }
+.bell-panel.open { opacity: 1; transform: none; }
+.bell-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
+  border-bottom: 1px solid var(--line); font-size: 14px; }
+.bell-clear { border: none; background: none; color: var(--green); font-weight: 700; font-size: 12px; cursor: pointer; }
+.bell-list { max-height: 420px; overflow-y: auto; }
+.bell-item { display: flex; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.bell-item:last-child { border-bottom: none; }
+.bell-item.unread { background: rgba(15,122,72,.06); }
+.bi-ico { font-size: 18px; line-height: 1.2; }
+.bi-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bi-kind { font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-mute); }
+.bi-title { font-size: 13.5px; color: var(--ink); }
+.bi-body { font-size: 12px; color: var(--ink-mute); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bi-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-top: 6px; flex-shrink: 0; }
+.bell-empty { padding: 26px 14px; text-align: center; color: var(--ink-mute); font-size: 12.5px; }
