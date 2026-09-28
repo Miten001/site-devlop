@@ -38,6 +38,43 @@ body {
 .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(18,178,106,.5), inset 0 1px 0 rgba(255,255,255,.25); }
 .btn.sm { padding: 9px 16px; font-size: 13.5px; border-radius: 11px; }
 
+/* ---------- video strip: phone mockup ---------- */
+.vd-panel { display:flex; gap:30px; align-items:center; background:linear-gradient(125deg, rgba(16,24,48,.9), rgba(11,18,38,.95));
+  border:1px solid rgba(255,255,255,.09); border-radius:20px; padding:30px; margin:26px 0 8px;
+  box-shadow:0 18px 50px rgba(0,0,0,.35); overflow:hidden; }
+.vd-phonezone { position:relative; display:flex; justify-content:center; flex:0 0 300px; padding:16px 8px; }
+.phone { width:264px; border-radius:42px; background:#05070d; padding:10px;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 30px 70px rgba(0,0,0,.6), 0 0 50px rgba(124,92,255,.14); }
+.phone .screen { position:relative; border-radius:33px; overflow:hidden; aspect-ratio:9/16; background:#0b1226; }
+.phone .screen video { width:100%; height:100%; object-fit:cover; display:block; }
+.notch { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:88px; height:25px;
+  background:#05070d; border-radius:999px; z-index:3; }
+.sndbtn { position:absolute; right:10px; bottom:12px; z-index:3; width:38px; height:38px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  background:rgba(5,7,13,.75); border:1px solid rgba(255,255,255,.22); color:#fff; backdrop-filter:blur(4px); }
+.sndbtn .ic-on { display:none; }
+.sndbtn.on .ic-on { display:block; } .sndbtn.on .ic-off { display:none; }
+.vd-float { position:absolute; z-index:4; padding:9px 15px; border-radius:999px; font-weight:800; font-size:13.5px;
+  white-space:nowrap; background:rgba(13,21,34,.92); border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 12px 30px rgba(0,0,0,.5); animation:vfbob 4s ease-in-out infinite; }
+.vd-float.vf1 { color:#7ce6ae; top:26px; left:-6px; }
+.vd-float.vf2 { color:#7cc7ff; bottom:44px; left:-14px; animation-delay:1.2s; }
+.vd-float.vf3 { color:#ffd061; top:56px; right:-8px; animation-delay:2.2s; }
+@keyframes vfbob { 50% { transform:translateY(-8px); } }
+.vd-info { flex:1; min-width:0; }
+.vd-info h2 { margin:12px 0 8px; }
+.vd-info .lead { font-size:15px; }
+.vd-list { list-style:none; margin:14px 0 20px; padding:0; display:grid; gap:7px; }
+.vd-list li { font-size:14px; color:#aebadd; font-weight:600; padding-left:4px; }
+.vd-list b { color:#34e5a5; font-variant-numeric:tabular-nums; }
+@media (max-width:860px) {
+  .vd-panel { flex-direction:column; }
+  .vd-phonezone { flex:none; width:100%; }
+  .vd-info { text-align:center; }
+  .vd-list { text-align:left; }
+}
+
 /* ---------- rocket growth strip ---------- */
 .rk-panel { display:flex; gap:26px; align-items:stretch; background:linear-gradient(125deg, rgba(16,24,48,.9), rgba(11,18,38,.95));
   border:1px solid rgba(255,255,255,.09); border-radius:20px; padding:22px; margin:26px 0 8px;
@@ -372,6 +409,42 @@ input[type="range"] { width: 100%; accent-color: var(--green); height: 34px; cur
   </div>
 </section>
 
+<!-- ===== VIDEO SECTION: reel phone mockup ===== -->
+<section class="wrap" id="video-strip">
+  <div class="vd-panel">
+    <div class="vd-phonezone">
+      <div class="vd-float vf1">⏱ 60 sec a day</div>
+      <div class="vd-float vf2">⛏ free 60 GH/s rig</div>
+      <div class="vd-float vf3">💰 $5.50/day · Day 90+</div>
+      <div class="phone">
+        <div class="screen">
+          <div class="notch" aria-hidden="true"></div>
+          <video id="ff-reel" muted loop playsinline preload="metadata" poster="reel-poster.jpg">
+            <source src="reel.mp4" type="video/mp4">
+            Your browser can't play this video — <a href="signup.html">join free instead</a>.
+          </video>
+          <button type="button" id="reel-sound" class="sndbtn" aria-label="Unmute video">
+            <svg class="ic-off" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
+            <svg class="ic-on" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="vd-info">
+      <div class="rk-badge">🎬 30-SECOND TOUR</div>
+      <h2>Watch the app <span class="gr">earn while you scroll</span></h2>
+      <p class="lead">Real screens from inside FlexFam — the check-in streak, the task board, the mining rig, the wallet. No actors, no stock footage. This is the app you'll actually use every day.</p>
+      <ul class="vd-list">
+        <li><b>0:04</b> — the daily check-in that pays your streak</li>
+        <li><b>0:11</b> — live task board, fresh drops daily</li>
+        <li><b>0:19</b> — your free cloud mining rig, running 24/7</li>
+        <li><b>0:27</b> — the wallet: points → USDT, withdraw</li>
+      </ul>
+      <a class="btn cta-big" href="signup.html">Try it free — 30 seconds to join →</a>
+    </div>
+  </div>
+</section>
+
 <div class="wrap">
   <div class="stats">
     <div class="stat"><b data-count="90" data-suffix="">0</b><span>day reward ladder</span></div>
@@ -532,6 +605,33 @@ input[type="range"] { width: 100%; accent-color: var(--green); height: 34px; cur
 
 <script>
 (function () {
+  /* reel video: autoplay jab screen me ho, bahar ho to pause (data bachao) */
+  try {
+    var vid = document.getElementById("ff-reel");
+    var calm = false;
+    try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    if (vid) {
+      if (!calm && "IntersectionObserver" in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { vid.play().catch(function () {}); }
+            else { vid.pause(); }
+          });
+        }, { threshold: 0.35 });
+        io.observe(vid);
+      }
+      var btn = document.getElementById("reel-sound");
+      if (btn) {
+        btn.addEventListener("click", function () {
+          vid.muted = !vid.muted;
+          btn.classList.toggle("on", !vid.muted);
+          btn.setAttribute("aria-label", vid.muted ? "Unmute video" : "Mute video");
+          if (!vid.muted) vid.play().catch(function () {});
+        });
+      }
+    }
+  } catch (e) {}
+
   /* rocket strip: live-ticking views + paid counters (decorative momentum) */
   try {
     var v = 1248392 + Math.floor(Math.random() * 900);
