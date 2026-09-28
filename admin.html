@@ -198,7 +198,7 @@
     </div>
 
     <div class="admin-bar">
-      <span class="who">Signed in as <b id="who-email">—</b> · analysing <b id="who-count" style="color:var(--cyan)">0</b> recent events</span>
+      <span class="who">Signed in as <b id="who-email">—</b> · <b id="who-count" style="color:var(--cyan)">0</b> events tracked</span>
       <div class="flex" style="display:flex;gap:10px">
         <button class="btn btn-ghost btn-sm" id="btn-refresh">↻ Refresh</button>
         <button class="btn btn-primary btn-sm" id="btn-export">⬇ Export JSON</button>
@@ -478,6 +478,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var views = {};
   var last = [];
+  var exact = {};   /* lifetime totals from PostgREST count queries */
   var members = [];
   var session = null;
   var balanceMap = {};
@@ -555,6 +556,26 @@
     });
   }
 
+  /* Exact lifetime totals straight from PostgREST (Prefer: count=exact).
+     The stat cards must show real totals — the 2,500-row window loaded for
+     the tables below would silently cap every number once the site gets
+     busy, which made "Total views" look stuck / wrong. */
+  function apiCount(path) {
+    var headers = { apikey: cfg.anonKey };
+    headers.Authorization = "Bearer " + ((session && session.access_token) || cfg.anonKey);
+    headers.Prefer = "count=exact";
+    headers.Range = "0-0";
+    var joiner = path.indexOf("?") === -1 ? "?" : "&";
+    return fetch(cfg.url.replace(/\/+$/, "") + path + joiner + "select=type&limit=1", {
+      method: "GET",
+      headers: headers
+    }).then(function (res) {
+      /* content-range: "0-0/1234" — the number after the slash is the total. */
+      var total = (res.headers.get("content-range") || "").split("/")[1];
+      return (/^\d+$/.test(total)) ? parseInt(total, 10) : null;
+    }).catch(function () { return null; });
+  }
+
   function reportLoadError(error, area) {
     var message = (error && error.message) || "";
     if ((error && (error.status === 401 || error.status === 403)) || /permission|policy|denied|JWT/i.test(message)) {
@@ -580,7 +601,21 @@
     var balancesRequest = api("/rest/v1/balances?select=user_id,usdt,points&limit=2000")
       .catch(function () { return null; });
 
-    Promise.all([eventsRequest, membersRequest, balancesRequest]).then(function (results) {
+    /* Exact counts for the stat cards (see apiCount). Fallback = window count. */
+    var today = new Date().toISOString().slice(0, 10);
+    var countDefs = [
+      ["views", "/rest/v1/events?type=eq.page_view"],
+      ["today", "/rest/v1/events?type=eq.page_view&day=eq." + today],
+      ["bot", "/rest/v1/events?type=eq.telegram_bot_click"],
+      ["claims", "/rest/v1/events?type=eq.task_claim"],
+      ["camps", "/rest/v1/events?type=eq.campaign_created"],
+      ["events", "/rest/v1/events"]
+    ];
+    var countRequests = countDefs.map(function (d) {
+      return apiCount(d[1]).then(function (n) { exact[d[0]] = n; });
+    });
+
+    Promise.all([eventsRequest, membersRequest, balancesRequest].concat(countRequests)).then(function (results) {
       var eventRows = results[0];
       var memberRows = results[1];
       balanceMap = {};
@@ -631,14 +666,18 @@
     var uniq = {};
     es.forEach(function (e) { if (e.vid) uniq[e.vid] = 1; });
     var today = new Date().toISOString().slice(0, 10);
+    /* Prefer the exact PostgREST totals; the window counts are only a fallback. */
+    var stat = function (key, fallback) {
+      return (exact[key] != null ? exact[key] : fallback).toLocaleString("en-IN");
+    };
 
-    $("who-count").textContent = es.length.toLocaleString("en-IN");
-    $("k-views").textContent = pv.length.toLocaleString("en-IN");
-    $("k-today").textContent = pv.filter(function (e) { return e.day === today; }).length.toLocaleString("en-IN");
+    $("who-count").textContent = stat("events", es.length);
+    $("k-views").textContent = stat("views", pv.length);
+    $("k-today").textContent = stat("today", pv.filter(function (e) { return e.day === today; }).length);
     $("k-uniq").textContent = Object.keys(uniq).length.toLocaleString("en-IN");
-    $("k-bot").textContent = count("telegram_bot_click");
-    $("k-claims").textContent = count("task_claim");
-    $("k-camps").textContent = count("campaign_created");
+    $("k-bot").textContent = stat("bot", count("telegram_bot_click"));
+    $("k-claims").textContent = stat("claims", count("task_claim"));
+    $("k-camps").textContent = stat("camps", count("campaign_created"));
 
     var pages = {}, types = {};
     pv.forEach(function (e) { pages[e.page] = (pages[e.page] || 0) + 1; });
