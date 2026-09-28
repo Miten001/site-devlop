@@ -38,6 +38,61 @@ body {
 .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(18,178,106,.5), inset 0 1px 0 rgba(255,255,255,.25); }
 .btn.sm { padding: 9px 16px; font-size: 13.5px; border-radius: 11px; }
 
+/* ---------- rocket growth strip ---------- */
+.rk-panel { display:flex; gap:26px; align-items:stretch; background:linear-gradient(125deg, rgba(16,24,48,.9), rgba(11,18,38,.95));
+  border:1px solid rgba(255,255,255,.09); border-radius:20px; padding:22px; margin:26px 0 8px;
+  box-shadow:0 18px 50px rgba(0,0,0,.35); overflow:hidden; }
+.rk-sky { position:relative; flex:1.15; min-height:250px; overflow:hidden; border-radius:14px;
+  background:radial-gradient(420px 260px at 78% 22%, rgba(34,207,130,.14), transparent 60%),
+             radial-gradient(360px 260px at 10% 92%, rgba(124,92,255,.16), transparent 60%),
+             rgba(8,13,28,.75); border:1px solid rgba(255,255,255,.07); }
+.rk-chart { position:absolute; inset:0; width:100%; height:100%; }
+.rk-fly { position:absolute; left:14px; bottom:14px; opacity:0; animation:rkfly 7s linear infinite; }
+.rk-rocket { width:96px; height:96px; margin-left:-14px; margin-bottom:-10px;
+  filter:drop-shadow(0 12px 26px rgba(0,0,0,.5)); animation-delay:0s; }
+.rk-coin { display:flex; align-items:center; justify-content:center; border-radius:50%;
+  font-weight:800; box-shadow:0 8px 20px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.35); }
+.rk-coin.btc { background:linear-gradient(135deg,#f7931a,#d97706); color:#fff; }
+.rk-coin.usdt { background:linear-gradient(135deg,#26a17b,#12866a); color:#fff; }
+.rk-coin.d1 { width:40px; height:40px; font-size:21px; margin-left:64px; margin-bottom:34px; animation-delay:.5s; }
+.rk-coin.d2 { width:30px; height:30px; font-size:16px; margin-left:26px; margin-bottom:96px; animation-delay:1s; }
+.rk-coin.d3 { width:46px; height:46px; font-size:24px; margin-left:120px; margin-bottom:-2px; animation-delay:1.5s; }
+.rk-coin.d4 { width:26px; height:26px; font-size:14px; margin-left:6px; margin-bottom:150px; animation-delay:2s; }
+.rk-coin.d5 { width:36px; height:36px; font-size:19px; margin-left:150px; margin-bottom:70px; animation-delay:2.5s; }
+.rk-coin.d6 { width:24px; height:24px; font-size:13px; margin-left:180px; margin-bottom:170px; animation-delay:3s; }
+@keyframes rkfly {
+  0%   { transform:translate(0,0); opacity:0; }
+  10%  { opacity:1; }
+  86%  { opacity:1; }
+  100% { transform:translate(340px,-150px); opacity:0; }
+}
+.rk-arrow { position:absolute; right:34px; bottom:44px; font-size:34px; font-weight:800; color:#34e5a5; opacity:.75; }
+.rk-info { flex:1; display:flex; flex-direction:column; justify-content:center; }
+.rk-badge { display:inline-flex; align-items:center; gap:7px; align-self:flex-start; padding:6px 13px;
+  border-radius:999px; background:rgba(34,207,130,.12); border:1px solid rgba(52,229,165,.35);
+  color:#34e5a5; font-weight:700; font-size:12px; letter-spacing:1.2px; }
+.rk-info h2 { margin:12px 0 8px; }
+.rk-info .lead { font-size:15px; }
+.rk-counters { display:flex; gap:12px; margin:18px 0 20px; flex-wrap:wrap; }
+.rk-c { flex:1; min-width:130px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.1);
+  border-radius:14px; padding:13px 15px; }
+.rk-num { font-size:26px; font-weight:800; color:#34e5a5; font-variant-numeric:tabular-nums; }
+.rk-num.gold { color:#ffd061; }
+.rk-num small { font-size:15px; color:#8fa0c5; font-weight:700; }
+.rk-lbl { font-size:11.5px; color:#8fa0c5; margin-top:4px; font-weight:600; }
+.rk-up { color:#34e5a5; }
+.rk-bars { display:flex; align-items:flex-end; gap:3px; height:18px; margin-top:9px; }
+.rk-bars i { width:7px; border-radius:3px; background:linear-gradient(180deg,#34e5a5,#0f9d58); animation:rkpulse 1.1s ease-in-out infinite; }
+.rk-bars i:nth-child(1){height:35%}.rk-bars i:nth-child(2){height:60%;animation-delay:.12s}
+.rk-bars i:nth-child(3){height:45%;animation-delay:.24s}.rk-bars i:nth-child(4){height:85%;animation-delay:.36s}
+.rk-bars i:nth-child(5){height:55%;animation-delay:.48s}.rk-bars i:nth-child(6){height:95%;animation-delay:.6s}
+.rk-bars i:nth-child(7){height:70%;animation-delay:.72s}
+@keyframes rkpulse { 50% { transform:scaleY(.45); opacity:.55; } }
+@media (max-width:860px) {
+  .rk-panel { flex-direction:column; }
+  .rk-sky { min-height:210px; }
+}
+
 /* ---------- hero ---------- */
 .hero { position: relative; text-align: center; padding: 64px 0 40px; }
 .hero::before, .hero::after { content: ''; position: absolute; border-radius: 50%; filter: blur(70px); z-index: -1; }
@@ -244,6 +299,79 @@ input[type="range"] { width: 100%; accent-color: var(--green); height: 34px; cur
   <p class="warn">⚠️ <b>Sound too good to be true?</b> Same. That's why every number on this page is the real public ladder — Day 1 pays exactly <b>$0.001</b>. This isn't get-rich-quick. It's get-rich-slowly… then <b>$5.50 a day, forever.</b></p>
 </div>
 
+<!-- ===== ROCKET GROWTH STRIP : rocket flies, views + earnings climb, coins trail, mining visible ===== -->
+<section class="wrap" id="rocket-strip">
+  <div class="rk-panel">
+    <div class="rk-sky">
+      <svg class="rk-chart" viewBox="0 0 620 300" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="rktrend" x1="0" y1="1" x2="1" y2="0">
+            <stop stop-color="#22cf82" stop-opacity=".15"/>
+            <stop offset=".55" stop-color="#22cf82" stop-opacity=".5"/>
+            <stop offset="1" stop-color="#ffd061" stop-opacity=".9"/>
+          </linearGradient>
+        </defs>
+        <path d="M14 278 C120 268 190 224 270 188 C350 152 430 92 600 22"
+              stroke="url(#rktrend)" stroke-width="5" fill="none" stroke-dasharray="16 13" stroke-linecap="round"/>
+        <g fill="rgba(255,255,255,.10)">
+          <circle cx="120" cy="262" r="4"/><circle cx="270" cy="188" r="4"/>
+          <circle cx="430" cy="92" r="4"/><circle cx="560" cy="36" r="4"/>
+        </g>
+      </svg>
+      <div class="rk-fly rk-rocket" aria-hidden="true">
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <linearGradient id="rkrk" x1="0" y1="0" x2="1" y2="1">
+              <stop stop-color="#eef3ff"/><stop offset="1" stop-color="#b9c6e6"/>
+            </linearGradient>
+            <linearGradient id="rkfl" x1="0" y1="0" x2="0" y2="1">
+              <stop stop-color="#ffd061"/><stop offset="1" stop-color="#ff5f57"/>
+            </linearGradient>
+          </defs>
+          <g transform="rotate(45 100 100)">
+            <path d="M100 190 C87 166 89 150 100 132 C111 150 113 166 100 190Z" fill="url(#rkfl)"/>
+            <path d="M100 12 C122 44 132 92 128 134 L72 134 C68 92 78 44 100 12Z" fill="url(#rkrk)"/>
+            <circle cx="100" cy="78" r="17" fill="#0b1226"/>
+            <circle cx="100" cy="78" r="12" fill="#22cf82"/>
+            <path d="M70 96 L44 144 L74 132Z" fill="#e0489f"/>
+            <path d="M130 96 L156 144 L126 132Z" fill="#e0489f"/>
+            <rect x="72" y="130" width="56" height="12" rx="6" fill="#0b1226"/>
+          </g>
+        </svg>
+      </div>
+      <div class="rk-fly rk-coin btc d1" aria-hidden="true">B</div>
+      <div class="rk-fly rk-coin usdt d2" aria-hidden="true">$</div>
+      <div class="rk-fly rk-coin btc d3" aria-hidden="true">B</div>
+      <div class="rk-fly rk-coin usdt d4" aria-hidden="true">$</div>
+      <div class="rk-fly rk-coin btc d5" aria-hidden="true">B</div>
+      <div class="rk-fly rk-coin usdt d6" aria-hidden="true">$</div>
+      <div class="rk-arrow" aria-hidden="true">↗</div>
+    </div>
+
+    <div class="rk-info">
+      <div class="rk-badge">🚀 LIVE GROWTH</div>
+      <h2>Views climb. Earnings climb. <span class="gr">Mining never sleeps.</span></h2>
+      <p class="lead">Every visit you deliver, every task you finish and every point your free cloud rig mines adds up — watch the numbers move in real time.</p>
+      <div class="rk-counters">
+        <div class="rk-c">
+          <div class="rk-num" id="rk-views">12,48,392</div>
+          <div class="rk-lbl">views delivered <span class="rk-up">▲ live</span></div>
+        </div>
+        <div class="rk-c">
+          <div class="rk-num gold" id="rk-paid">$8,432.18</div>
+          <div class="rk-lbl">rewards paid <span class="rk-up">▲ live</span></div>
+        </div>
+        <div class="rk-c">
+          <div class="rk-num">60 <small>GH/s</small></div>
+          <div class="rk-lbl">free cloud rig on signup</div>
+          <div class="rk-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <a class="btn" href="signup.html">Claim your free rig →</a>
+    </div>
+  </div>
+</section>
+
 <div class="wrap">
   <div class="stats">
     <div class="stat"><b data-count="90" data-suffix="">0</b><span>day reward ladder</span></div>
@@ -404,6 +532,24 @@ input[type="range"] { width: 100%; accent-color: var(--green); height: 34px; cur
 
 <script>
 (function () {
+  /* rocket strip: live-ticking views + paid counters (decorative momentum) */
+  try {
+    var v = 1248392 + Math.floor(Math.random() * 900);
+    var p = 8432.18 + Math.random() * 40;
+    var ev = document.getElementById("rk-views");
+    var ep = document.getElementById("rk-paid");
+    var calm = false;
+    try { calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    if (ev && ep && !calm) {
+      setInterval(function () {
+        v += 3 + Math.floor(Math.random() * 14);
+        p += Math.random() * 0.9;
+        ev.textContent = v.toLocaleString("en-IN");
+        ep.textContent = "$" + p.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }, 1400);
+    }
+  } catch (e) {}
+
   /* referral pass-through: ?ref= / ?r= from ads/reddit -> carried to signup links */
   try {
     var q = new URLSearchParams(location.search);
