@@ -113,6 +113,17 @@
     enqueue("events", event(type, data));
   }
 
+  function trackError(msg, data) {
+    data = data || {};
+    track(data.type || "app_error", {
+      label: String(msg || "Error occurred").slice(0, 120),
+      url: data.url ? String(data.url).slice(0, 400) : (typeof location !== "undefined" && location.href ? String(location.href).slice(0, 400) : null),
+      task_title: data.taskTitle || data.task_title || null,
+      task_id: data.taskId || data.task_id || null,
+      payout: data.payout != null ? Number(data.payout) : null,
+    });
+  }
+
   function saveCampaign(campaign) {
     campaign = campaign || {};
     enqueue("campaigns", {
@@ -142,10 +153,33 @@
       label: (link.textContent || "").trim(),
     });
   }, true);
+
+  /* Global error & promise rejection capture */
+  window.addEventListener("error", function (e) {
+    if (!e) return;
+    var msg = e.message || (e.error && e.error.message) || "Script error";
+    if (/ResizeObserver loop|Script error\./i.test(msg)) return;
+    trackError(msg, {
+      type: "runtime_error",
+      url: e.filename || location.href
+    });
+  });
+
+  window.addEventListener("unhandledrejection", function (e) {
+    if (!e) return;
+    var reason = e.reason ? (e.reason.message || String(e.reason)) : "Unhandled promise rejection";
+    if (/ResizeObserver loop/i.test(reason)) return;
+    trackError(reason, {
+      type: "runtime_error",
+      url: location.href
+    });
+  });
+
   window.addEventListener("pagehide", function () { flush(true); }, { passive: true });
 
   window.FFA = {
     track: track,
+    trackError: trackError,
     actor: actor,
     saveCampaign: saveCampaign,
     visitorId: visitorId,

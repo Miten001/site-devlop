@@ -31,6 +31,7 @@
   .ev-pill.task_open { color: var(--pink); border-color: rgba(255,78,205,.35); }
   .ev-pill.task_claim { color: var(--green); border-color: rgba(52,229,165,.35); }
   .ev-pill.campaign_created { color: #7c5cff; border-color: rgba(169,112,255,.4); }
+  .ev-pill.app_error, .ev-pill.user_error, .ev-pill.campaign_error, .ev-pill.runtime_error { color: #ff5d6e; border-color: rgba(255,93,110,.4); background: rgba(255,93,110,.12); }
   .admin-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
   .admin-bar .who { font-size: 13px; color: var(--ink-mute); }
   .admin-bar .who b { color: var(--green); }
@@ -213,6 +214,7 @@
       <div class="dash-stat" style="--c:#34e5a5"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><div class="ds-num" id="k-claims">—</div><div class="ds-lbl">Task claims</div></div>
       <div class="dash-stat" style="--c:#ff8a3d"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></span><div class="ds-num" id="k-camps">—</div><div class="ds-lbl">Campaigns created</div></div>
       <div class="dash-stat" style="--c:#e0489f"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg></span><div class="ds-num" id="k-members">—</div><div class="ds-lbl">Registered members</div></div>
+      <div class="dash-stat" style="--c:#ff5d6e"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><div class="ds-num" id="k-errors">—</div><div class="ds-lbl">User errors / issues</div></div>
     </div>
 
     <section class="panel member-panel" aria-labelledby="members-title">
@@ -300,6 +302,40 @@
       </div>
     </section>
 
+    <section class="panel error-panel" id="panel-errors" aria-labelledby="errors-title" style="margin-top:16px">
+      <div class="panel-head">
+        <div>
+          <h3 id="errors-title" style="display:flex;align-items:center;gap:8px">
+            <span style="color:#ff5d6e">⚠️</span> User Errors &amp; Action Failures
+          </h3>
+          <p class="panel-sub">Live error notifications and failed user attempts (campaign validation errors, insufficient points, invalid links, proof submission failures, runtime errors) captured across the site in real time.</p>
+        </div>
+        <span class="status-pill on" id="error-badge">0 issues</span>
+      </div>
+      <div class="msg-modes" style="margin-bottom:12px;gap:6px" id="err-filter-chips">
+        <button type="button" class="seg on" data-err-filter="all">All Errors (<span id="err-all-count">0</span>)</button>
+        <button type="button" class="seg" data-err-filter="app_error">Toast Notifications</button>
+        <button type="button" class="seg" data-err-filter="campaign_error">Campaign Errors</button>
+        <button type="button" class="seg" data-err-filter="runtime_error">Runtime Exceptions</button>
+      </div>
+      <div class="member-table-wrap">
+        <table class="ff-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Member / Visitor</th>
+              <th>Page</th>
+              <th>Error Notification / Reason</th>
+              <th>Event Type</th>
+            </tr>
+          </thead>
+          <tbody id="t-errors">
+            <tr><td colspan="5">Loading error log…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <div class="admin-cols">
       <div>
         <div class="panel">
@@ -323,7 +359,17 @@
       </div>
       <div>
         <div class="panel">
-          <div class="panel-head"><h3>Recent events</h3><span class="status-pill on" id="recent-count">0</span></div>
+          <div class="panel-head">
+            <h3>Recent events</h3>
+            <span class="status-pill on" id="recent-count">0</span>
+          </div>
+          <div class="msg-modes" style="margin-bottom:10px;gap:6px" id="recent-filter-chips">
+            <button type="button" class="seg on" data-ev-filter="all" style="font-size:11.5px;padding:4px 10px">All</button>
+            <button type="button" class="seg" data-ev-filter="errors" style="font-size:11.5px;padding:4px 10px;color:#ff5d6e">⚠️ Errors only</button>
+            <button type="button" class="seg" data-ev-filter="campaigns" style="font-size:11.5px;padding:4px 10px">🚀 Campaigns</button>
+            <button type="button" class="seg" data-ev-filter="claims" style="font-size:11.5px;padding:4px 10px">⚡ Claims</button>
+            <button type="button" class="seg" data-ev-filter="views" style="font-size:11.5px;padding:4px 10px">👁️ Views</button>
+          </div>
           <div class="scroll-box">
             <table class="ff-table"><thead><tr><th>Time</th><th>Who</th><th>Event</th><th>Detail</th></tr></thead><tbody id="t-recent"></tbody></table>
           </div>
@@ -609,6 +655,7 @@
       ["bot", "/rest/v1/events?type=eq.telegram_bot_click"],
       ["claims", "/rest/v1/events?type=eq.task_claim"],
       ["camps", "/rest/v1/events?type=eq.campaign_created"],
+      ["errors", "/rest/v1/events?type=in.(app_error,user_error,campaign_error,runtime_error)"],
       ["events", "/rest/v1/events"]
     ];
     var countRequests = countDefs.map(function (d) {
@@ -660,6 +707,87 @@
       esc(String(e.vid || "anonymous").slice(0, 14)) + "</span>";
   }
 
+  var activeErrFilter = "all";
+  var activeEvFilter = "all";
+
+  function isErrorEvent(e) {
+    if (!e || !e.type) return false;
+    var t = String(e.type).toLowerCase();
+    return t === "app_error" || t === "user_error" || t === "campaign_error" || t === "runtime_error" || t.indexOf("error") !== -1 || t.indexOf("fail") !== -1;
+  }
+
+  function renderErrors(es) {
+    var allErrors = (es || []).filter(isErrorEvent);
+    var stat = function (key, fallback) {
+      return (exact[key] != null ? exact[key] : fallback).toLocaleString("en-IN");
+    };
+    if ($("k-errors")) $("k-errors").textContent = stat("errors", allErrors.length);
+    if ($("err-all-count")) $("err-all-count").textContent = allErrors.length;
+    var badge = $("error-badge");
+    if (badge) {
+      if (allErrors.length > 0) {
+        badge.className = "status-pill off";
+        badge.textContent = allErrors.length + (allErrors.length === 1 ? " issue" : " issues");
+        badge.style.background = "rgba(255,93,110,.18)";
+        badge.style.color = "#ff5d6e";
+      } else {
+        badge.className = "status-pill on";
+        badge.textContent = "0 issues (Clean ✓)";
+        badge.style.background = "";
+        badge.style.color = "";
+      }
+    }
+
+    var filtered = allErrors;
+    if (activeErrFilter !== "all") {
+      filtered = allErrors.filter(function (e) { return e.type === activeErrFilter; });
+    }
+
+    var body = $("t-errors");
+    if (!body) return;
+    if (!filtered.length) {
+      body.innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute);text-align:center;padding:18px">' +
+        (allErrors.length ? 'No errors matching this filter.' : '🎉 No user errors or action failures recorded yet — everything is running smoothly!') + '</td></tr>';
+      return;
+    }
+
+    body.innerHTML = filtered.slice(0, 100).map(function (e) {
+      var t = e.ts_client ? new Date(e.ts_client) : null;
+      var errDetail = e.label || e.task_title || "Unknown error";
+      var context = (e.url || e.task_id) ? ('<br><span style="font-size:11px;color:var(--ink-mute)">' + esc(e.url || e.task_id || "") + '</span>') : "";
+      return "<tr><td style='white-space:nowrap'>" + esc(t ? fdateMs(t.getTime()) : "—") + "</td>" +
+        "<td>" + whoCell(e) + "</td>" +
+        "<td><span style='font-size:12px;font-weight:700;color:var(--ink-dim)'>" + esc(e.page || "—") + "</span></td>" +
+        "<td class='k' style='max-width:380px'><b style='color:#ff5d6e;display:inline-block;margin-bottom:2px'>" + esc(errDetail) + "</b>" + context + "</td>" +
+        "<td><span class='ev-pill " + esc(e.type) + "'>" + esc(e.type) + "</span></td></tr>";
+    }).join("");
+  }
+
+  function renderRecentEvents(es) {
+    var filtered = es || [];
+    if (activeEvFilter === "errors") {
+      filtered = (es || []).filter(isErrorEvent);
+    } else if (activeEvFilter === "campaigns") {
+      filtered = (es || []).filter(function (e) { return e.type === "campaign_created" || e.type === "campaign_error"; });
+    } else if (activeEvFilter === "claims") {
+      filtered = (es || []).filter(function (e) { return e.type === "task_claim" || e.type === "task_open"; });
+    } else if (activeEvFilter === "views") {
+      filtered = (es || []).filter(function (e) { return e.type === "page_view"; });
+    }
+
+    if ($("recent-count")) $("recent-count").textContent = Math.min(filtered.length, 80) + " shown";
+    if ($("t-recent")) {
+      $("t-recent").innerHTML = filtered.slice(0, 80).map(function (e) {
+        var isErr = isErrorEvent(e);
+        var detail = e.label || e.task_title || e.url || e.page || "—";
+        return "<tr><td style='white-space:nowrap'>" + (e.ts_client ? new Date(e.ts_client).toLocaleString("en-IN") : "") +
+          "</td><td>" + whoCell(e) +
+          '</td><td><span class="ev-pill ' + esc(e.type) + (isErr ? ' app_error' : '') + '">' + esc(e.type) +
+          '</span></td><td class="k">' + (isErr ? '<b style="color:#ff5d6e">' + esc(detail) + '</b>' : esc(detail)) + "</td></tr>";
+      }).join("") || '<tr><td colspan="4" style="color:var(--ink-mute);text-align:center;padding:14px">No events in this filter.</td></tr>';
+    }
+  }
+
   function render(es) {
     var pv = es.filter(function (e) { return e.type === "page_view"; });
     var count = function (t) { return es.filter(function (e) { return e.type === t; }).length; };
@@ -678,6 +806,8 @@
     $("k-bot").textContent = stat("bot", count("telegram_bot_click"));
     $("k-claims").textContent = stat("claims", count("task_claim"));
     $("k-camps").textContent = stat("camps", count("campaign_created"));
+
+    renderErrors(es);
 
     var pages = {}, types = {};
     pv.forEach(function (e) { pages[e.page] = (pages[e.page] || 0) + 1; });
@@ -713,13 +843,7 @@
     }).join("") || '<tr><td colspan="2">No signed-in activity recorded yet</td></tr>') +
       (anon ? '<tr><td class="k" style="color:var(--ink-mute)">Signed-out visitors</td><td class="num" style="color:var(--ink-mute)">' + anon + "</td></tr>" : "");
 
-    $("recent-count").textContent = Math.min(es.length, 80) + " shown";
-    $("t-recent").innerHTML = es.slice(0, 80).map(function (e) {
-      return "<tr><td style='white-space:nowrap'>" + (e.ts_client ? new Date(e.ts_client).toLocaleString("en-IN") : "") +
-        "</td><td>" + whoCell(e) +
-        '</td><td><span class="ev-pill ' + esc(e.type) + '">' + esc(e.type) +
-        '</span></td><td class="k">' + esc(e.label || e.url || e.page || "") + "</td></tr>";
-    }).join("");
+    renderRecentEvents(es);
   }
 
   function renderMembers(rows, error) {
@@ -942,9 +1066,10 @@
         : [];
       $("mm-events").innerHTML = evs.map(function (e) {
         var t = e.ts_client ? new Date(e.ts_client) : null;
+        var isErr = isErrorEvent(e);
         return "<tr><td style='white-space:nowrap'>" + esc(t ? fdateMs(t.getTime()) : "—") + "</td>" +
-          '<td><span class="ev-pill">' + esc(e.type || "event") + "</span></td>" +
-          '<td class="k">' + esc(e.label || e.task_title || e.title || e.page || e.url || "—") + "</td></tr>";
+          '<td><span class="ev-pill ' + esc(e.type || "event") + (isErr ? ' app_error' : '') + '">' + esc(e.type || "event") + "</span></td>" +
+          '<td class="k">' + (isErr ? '<b style="color:#ff5d6e">' + esc(e.label || e.task_title || e.title || e.page || e.url || "—") + '</b>' : esc(e.label || e.task_title || e.title || e.page || e.url || "—")) + "</td></tr>";
       }).join("") || '<tr><td colspan="3" style="color:var(--ink-mute)">No recorded site activity for this member yet.</td></tr>';
     });
   }
@@ -1401,6 +1526,32 @@
           btn.disabled = false;
           btn.style.opacity = "";
         });
+    });
+
+    /* error & event filter switches + member clicks across all tables */
+    document.addEventListener("click", function (e) {
+      var errFilterBtn = e.target.closest("[data-err-filter]");
+      if (errFilterBtn) {
+        activeErrFilter = errFilterBtn.getAttribute("data-err-filter") || "all";
+        document.querySelectorAll("[data-err-filter]").forEach(function (b) {
+          b.classList.toggle("on", b === errFilterBtn);
+        });
+        renderErrors(last);
+        return;
+      }
+      var evFilterBtn = e.target.closest("[data-ev-filter]");
+      if (evFilterBtn) {
+        activeEvFilter = evFilterBtn.getAttribute("data-ev-filter") || "all";
+        document.querySelectorAll("[data-ev-filter]").forEach(function (b) {
+          b.classList.toggle("on", b === evFilterBtn);
+        });
+        renderRecentEvents(last);
+        return;
+      }
+      var memBtn = e.target.closest("[data-member]");
+      if (memBtn && !e.target.closest("#t-members")) {
+        openMember(memBtn.getAttribute("data-member"));
+      }
     });
 
     $("btn-export").onclick = function () {

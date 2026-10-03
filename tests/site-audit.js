@@ -467,6 +467,103 @@ async function runAudit() {
   bobFinalEarnDom.dom.window.close();
 
   /* -------------------------------------------------------------
+     SECTION 5: Error Tracking & Admin Live Issue Alerts
+     ------------------------------------------------------------- */
+  console.log("\n[SECTION 5] User Error Tracking & Admin Issue Alerts");
+
+  const errorEventsLog = [];
+  const customFetchWithEvents = (url, opts) => {
+    const u = String(url);
+    if (opts && opts.method === "POST" && u.includes("/rest/v1/events")) {
+      const rows = JSON.parse(opts.body || "[]");
+      (Array.isArray(rows) ? rows : [rows]).forEach((r) => errorEventsLog.push(r));
+      return Promise.resolve({ ok: true, status: 201, text: () => Promise.resolve("[]"), json: () => Promise.resolve([]) });
+    }
+    if (u.includes("/rest/v1/events")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: () => `0-${errorEventsLog.length}/${errorEventsLog.length}` },
+        text: () => Promise.resolve(JSON.stringify(errorEventsLog)),
+        json: () => Promise.resolve(errorEventsLog)
+      });
+    }
+    return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve("[]"), json: () => Promise.resolve([]) });
+  };
+
+  // 1. User triggers an error toast (e.g. invalid URL or form error)
+  const userErrorDom = createDOM("add.html", {
+    storage: sharedStorage,
+    userEmail: "bob@test.dev",
+    customFetch: customFetchWithEvents
+  });
+  await sleep(30);
+
+  userErrorDom.dom.window.FF.toast("Please enter a valid URL — e.g. t.me/yourchannel", "err");
+  await sleep(50);
+  userErrorDom.dom.window.close();
+
+  check("User error toast is tracked to analytics events", errorEventsLog.some((e) => e.type === "app_error" && e.label.includes("valid URL")), errorEventsLog);
+
+  // 2. Admin opens admin.html and views error panel & stat cards
+  const adminStorage = {
+    ...sharedStorage,
+    ff_admin_session: JSON.stringify({
+      access_token: "mock-admin-token-123",
+      user: { email: "ravanyt001@gmail.com" }
+    })
+  };
+
+  const adminDom = createDOM("admin.html", {
+    storage: adminStorage,
+    customFetch: (url, opts) => {
+      const u = String(url);
+      if (opts && opts.method === "POST" && u.includes("/rest/v1/events")) {
+        const rows = JSON.parse(opts.body || "[]");
+        (Array.isArray(rows) ? rows : [rows]).forEach((r) => errorEventsLog.push(r));
+        return Promise.resolve({ ok: true, status: 201, text: () => Promise.resolve("[]"), json: () => Promise.resolve([]) });
+      }
+      if (u.includes("/rest/v1/events")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: (h) => (h && h.toLowerCase() === "content-range" ? `0-0/${errorEventsLog.length}` : null) },
+          text: () => Promise.resolve(JSON.stringify(errorEventsLog)),
+          json: () => Promise.resolve(errorEventsLog)
+        });
+      }
+      if (u.includes("/rest/v1/profiles")) {
+        const profiles = [
+          { id: "usr_alice", email: "alice@test.dev", display_name: "Alice", created_at: new Date().toISOString() },
+          { id: "usr_bob", email: "bob@test.dev", display_name: "Bob", created_at: new Date().toISOString() }
+        ];
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => null },
+          text: () => Promise.resolve(JSON.stringify(profiles)),
+          json: () => Promise.resolve(profiles)
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        text: () => Promise.resolve("[]"),
+        json: () => Promise.resolve([])
+      });
+    }
+  });
+  await sleep(100);
+  const adminDoc = adminDom.dom.window.document;
+
+  const errorRows = adminDoc.getElementById("t-errors");
+  check("Admin sees the user error in the 'User Errors & Issues' panel", errorRows && errorRows.innerHTML.includes("valid URL"));
+  check("Admin error card is populated", adminDoc.getElementById("k-errors") && adminDoc.getElementById("k-errors").textContent !== "—");
+
+  adminDom.dom.window.close();
+
+  /* -------------------------------------------------------------
      AUDIT SUMMARY
      ------------------------------------------------------------- */
   console.log("\n===============================================================");
