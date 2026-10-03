@@ -200,10 +200,11 @@ document.addEventListener("DOMContentLoaded", () => {
   function myActiveOn(key) {
     const u = FF.currentUser();
     if (!u || !FF.DB || !FF.DB.campaigns) return 0;
-    return FF.DB.campaigns().filter((c) =>
-      c && c.platform === key && c.active !== false &&
-      (c.mine === true || (c.authorEmail && u.email && String(c.authorEmail).toLowerCase() === String(u.email).toLowerCase()))
-    ).length;
+    return FF.DB.campaigns().filter((c) => {
+      if (!c || c.platform !== key || c.active === false) return false;
+      if (c.authorEmail && u.email) return String(c.authorEmail).toLowerCase() === String(u.email).toLowerCase();
+      return c.mine === true;
+    }).length;
   }
   function refreshQuota() {
     const el = document.getElementById("pf-quota");
