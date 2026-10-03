@@ -717,6 +717,15 @@
     const icons = { ok: CHECK_SVG, err: WARN_SVG, info: SPARK_SVG };
     kind = icons[kind] ? kind : "info";
 
+    if (kind === "err" && window.FFA && typeof window.FFA.trackError === "function") {
+      try {
+        window.FFA.trackError(String(msg || "Error notification"), {
+          type: "app_error",
+          url: typeof window !== "undefined" && window.location ? String(window.location.href).slice(0, 400) : null,
+        });
+      } catch (_) {}
+    }
+
     let root = document.querySelector(".toast-root");
     if (!root) {
       root = document.createElement("div");

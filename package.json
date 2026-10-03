@@ -1,0 +1,11 @@
+{
+  "name": "flexfam",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node tests/reconcile.test.js && node tests/site-audit.js",
+    "test:audit": "node tests/site-audit.js"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1"
+  }
+}

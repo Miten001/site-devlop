@@ -351,11 +351,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return subs[0];
   }
 
+  function isOwnCamp(c) {
+    if (!c) return false;
+    if (c.authorEmail && user && user.email) {
+      return String(c.authorEmail).toLowerCase() === String(user.email).toLowerCase();
+    }
+    return c.mine === true;
+  }
+
   function render() {
     const done = doneIds();
     /* Apni PAUSED campaigns bhi dikhti hain (Paused badge ke saath) —
        dusron ki paused campaigns hidden rehti hain. */
-    const items = FF.DB.campaigns().filter((c) => (c.active !== false || c.mine === true) && (activeFilter === "all" || c.platform === activeFilter));
+    const items = FF.DB.campaigns().filter((c) => (c.active !== false || isOwnCamp(c)) && (activeFilter === "all" || c.platform === activeFilter));
     const notDone = items.some((c) => !done.has(c.id));
     emptyEl.classList.toggle("hidden", notDone);
     /* Clear message for the empty state: filter me campaign hai hi nahi,
@@ -381,7 +389,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const isPending = sub && sub.status === "pending";
       const isRejected = sub && sub.status === "rejected";
       /* Apni hi campaign — complete nahi kar sakte, par status dikhna chahiye */
-      const isOwn = c.mine === true || (c.authorEmail && user.email && c.authorEmail === user.email);
+      const isOwn = isOwnCamp(c);
       const isPaused = c.active === false && isOwn;
       const isWatch = FF.isTimerCampaign ? FF.isTimerCampaign(c) : false;
       const maxA = Math.max(0, Math.round(Number(c.maxActions || 0)));
