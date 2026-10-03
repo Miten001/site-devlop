@@ -76,7 +76,8 @@
 
       <div class="field">
         <label>3. Page URL</label>
-        <input type="url" id="camp-url" placeholder="https://t.me/yourchannel" required />
+        <input type="text" inputmode="url" autocomplete="url" spellcheck="false"
+               autocapitalize="off" id="camp-url" placeholder="https://t.me/yourchannel" required />
       </div>
 
       <div class="field">
@@ -137,6 +138,45 @@ document.addEventListener("DOMContentLoaded", () => {
   const picker = document.getElementById("pf-picker");
   const actionSelect = document.getElementById("action-select");
   const urlInput = document.getElementById("camp-url");
+
+  /* ---------------------------------------------------------------
+     URL ko samajhdari se saaf karo.
+     Members aksar "t.me/mychannel", "www.youtube.com/@x", ya mobile se
+     copy kiya hua link (extra space / zero-width chars / <> brackets ke
+     saath) paste karte hain — pehle ye sab "invalid URL" de deta tha.
+     Ab hum khud https:// laga dete hain aur asli parser se check karte
+     hain. Null return = genuinely invalid.
+  ----------------------------------------------------------------*/
+  function normalizeUrl(raw) {
+    let s = String(raw || "")
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ")  /* zero-width + nbsp */
+      .trim()
+      .replace(/^[<("'\s]+|[>)"'\s.,]+$/g, "");      /* wrapping brackets/quotes/trailing punctuation */
+    if (!s) return null;
+    s = s.split(/\s+/)[0];                            /* "link - mera channel" → sirf link */
+    s = s.replace(/^@+/, "");                         /* @t.me/... */
+    if (/^(https?|ftp):\/\//i.test(s)) {
+      s = s.replace(/^(\w+):\/+/i, (m, p) => p.toLowerCase() + "://");
+    } else if (/^https?:\/?[^/]/i.test(s)) {
+      s = s.replace(/^(https?):\/?/i, (m, p) => p.toLowerCase() + "://"); /* https:/x ya https:x */
+    } else {
+      if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return null; /* mailto:, javascript: etc. */
+      s = "https://" + s;
+    }
+    let u;
+    try { u = new URL(s); } catch (_) { return null; }
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    const host = u.hostname.toLowerCase();
+    /* host me kam se kam ek dot + valid TLD hona chahiye (localhost/IP nahi) */
+    if (!/^([a-z0-9-]+\.)+(xn--[a-z0-9-]{2,}|[a-z]{2,})$/i.test(host)) return null;
+    return u.href;
+  }
+
+  /* blur par field khud normalize ho jaye — member ko turant dikh jaata hai */
+  urlInput.addEventListener("blur", () => {
+    const fixed = normalizeUrl(urlInput.value);
+    if (fixed) urlInput.value = fixed;
+  });
   const payoutSlider = document.getElementById("camp-payout");
   const payoutOut = document.getElementById("payout-out");
   const estActions = document.getElementById("est-actions");
@@ -246,16 +286,22 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     const p = FF.PLATFORMS[selected] || { name: selected };
-    const url = urlInput.value.trim();
+    const url = normalizeUrl(urlInput.value);
+    if (url) urlInput.value = url;
     const title = document.getElementById("camp-title").value.trim();
     const payout = parseInt(payoutSlider.value, 10);
     const action = actionSelect.value;
     const u = FF.currentUser();
 
-    if (!/^https?:\/\/.+\..+/.test(url)) return FF.toast("Please enter a valid URL (https://...)", "err");
-    if (selected === "telegram" && !/t\.me\//i.test(url)) return FF.toast("Telegram link must be in the t.me/ format", "err");
-    if (selected === "youtube" && !/(youtube\.com|youtu\.be)/i.test(url)) return FF.toast("That doesn't look like a YouTube link", "err");
-    if (selected === "instagram" && !/instagram\.com/i.test(url)) return FF.toast("Please check the Instagram URL", "err");
+    if (!url) {
+      urlInput.focus();
+      return FF.toast("Please enter a valid URL — e.g. t.me/yourchannel or https://youtube.com/@you", "err");
+    }
+    const host = (() => { try { return new URL(url).hostname.replace(/^www\./i, "").toLowerCase(); } catch (_) { return ""; } })();
+    const hostIs = (...names) => names.some((n) => host === n || host.endsWith("." + n));
+    if (selected === "telegram" && !hostIs("t.me", "telegram.me", "telegram.dog")) return FF.toast("Telegram link must be in the t.me/ format", "err");
+    if (selected === "youtube" && !hostIs("youtube.com", "youtu.be", "youtube-nocookie.com")) return FF.toast("That doesn't look like a YouTube link", "err");
+    if (selected === "instagram" && !hostIs("instagram.com", "instagr.am")) return FF.toast("Please check the Instagram URL", "err");
     if (title.length < 3) return FF.toast("Title must be at least 3 characters", "err");
     if (myActiveOn(selected) >= PLATFORM_LIMIT) {
       return FF.toast("Limit reached: only " + PLATFORM_LIMIT + " active " + p.name + " campaigns at a time \u2014 pause or delete one on your Dashboard first", "err");
