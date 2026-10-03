@@ -1124,8 +1124,38 @@
     };
   })();
 
+  /* ---------------------------------------------------------------
+     normalizeUrl — member jo bhi paste kare use saaf karke pura
+     https:// link banao. Galat ho to null. Add page, post-task aur
+     server RPC — sab yahi use karte hain, taaki "Please enter a valid
+     URL" sirf sach-much galat link par aaye.
+  ----------------------------------------------------------------*/
+  function normalizeUrl(raw) {
+    let s = String(raw == null ? "" : raw)
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ")
+      .trim()
+      .replace(/^[<("'\s]+|[>)"'\s.,]+$/g, "");
+    if (!s) return null;
+    s = s.split(/\s+/)[0].replace(/^@+/, "");
+    if (/^(https?):\/\//i.test(s)) {
+      s = s.replace(/^(\w+):\/+/i, (m, p) => p.toLowerCase() + "://");
+    } else if (/^https?:\/?[^/]/i.test(s)) {
+      s = s.replace(/^(https?):\/?/i, (m, p) => p.toLowerCase() + "://");
+    } else {
+      if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return null;  /* mailto:, javascript: … */
+      s = "https://" + s.replace(/^\/+/, "");
+    }
+    let u;
+    try { u = new URL(s); } catch (e) { return null; }
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    const host = u.hostname.toLowerCase();
+    if (!/^([a-z0-9-]+\.)+(xn--[a-z0-9-]{2,}|[a-z]{2,})$/i.test(host)) return null;
+    return u.href;
+  }
+
   /* expose */
   window.FF = {
+    normalizeUrl,
     PLATFORMS, BRAND_SVG, COIN_SVG, SPARK_SVG, CHECK_SVG,
     sfx,
     store, DB, currentUser, updateUser, memberConfig,

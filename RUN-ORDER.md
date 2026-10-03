@@ -20,6 +20,7 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 14 | supabase-daily-streak.sql | **Daily streak — 90 day (TimeBucks style)** — roz check-in → USDT (Day 1: $0.001 → Day 90: $5.50, Day 91+ $5.50/day; 9 ranks Rookie→Godlike; miss = reset). Dashboard panel + countdown + coin sound; wallet history me "Daily streak" | 3 |
 | 15 | supabase-campaign-quota.sql | **Campaign quota** — har platform par max 3 active campaigns per member (Add Page par live counter + submit block; server par post/toggle guard) | 13 |
 | 16 | supabase-referral-pyramid.sql | **Referral pyramid** — 3-level referral income (L1 10% / L2 3% / L3 1%) har earning par (campaigns points, tasks/streak/mining USDT); Refer page par pyramid panel + income; wallet history me 'L1/L2/L3 referral income' entries | 3, 5, 13, 14, 15 (sab latest, sabse aakhir) |
+| 17 | [`supabase-campaigns-url-fix.sql`](supabase-campaigns-url-fix.sql) | **URL fix** — `ff_normalize_url()` + `campaigns_post` ab link ko khud saaf karta hai (`t.me/x`, `www.foo.com/y`, extra space/zero-width/brackets sab chalte hain). Isse Add Page ka galat "Please enter a valid URL (https://...)" error khatam | 15 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
 
