@@ -224,7 +224,11 @@
     if (!FF.hasServer()) return localAdd(camp);
     return ensurePointsImported().then(() => FF.rpc("campaigns_post", {
       p_id: camp.id, p_platform: camp.platform, p_action: camp.action,
-      p_title: camp.title, p_url: camp.url, p_payout: Number(camp.payout || 0),
+      p_title: camp.title,
+      /* server ka URL check strict hai — isliye bhejne se pehle hamesha
+         pura https:// link bana ke bhejo (t.me/x, www.foo.com/y bhi chalega) */
+      p_url: (FF.normalizeUrl && FF.normalizeUrl(camp.url)) || String(camp.url || "").trim(),
+      p_payout: Number(camp.payout || 0),
       p_watch_secs: Math.max(0, Math.min(300, Math.round(Number(camp.watchSecs || 0)))),
       p_max_actions: Math.max(0, Math.min(100000, Math.round(Number(camp.maxActions || 0)) || 0)),
     }).then((feed) => { adopt(feed); return camp; }));

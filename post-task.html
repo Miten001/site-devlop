@@ -95,7 +95,7 @@
           </div>
           <div class="field">
             <label>Task link (optional)</label>
-            <input type="url" id="j-url" placeholder="https://youtube.com/@yourchannel" />
+            <input type="text" inputmode="url" autocomplete="url" spellcheck="false" autocapitalize="off" id="j-url" placeholder="https://youtube.com/@yourchannel" />
           </div>
           <div class="field">
             <label>Proof workers must submit</label>
@@ -132,7 +132,7 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
-<script src="assets/js/main.js?v=2.3"></script>
+<script src="assets/js/main.js?v=2.4"></script>
 <script src="assets/js/wallet.js?v=2.1"></script>
 <script src="assets/js/mining.js?v=2.1"></script>
 <script src="assets/js/support.js?v=1.0"></script>
@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btn) { btn.disabled = true; btn.style.opacity = ".6"; }
     A.postJob({
       title: $("j-title").value, category: $("j-cat").value, description: $("j-desc").value,
-      url: $("j-url").value, proofNote: $("j-proof").value,
+      url: (function(v){v=String(v||"").trim().replace(/[\u200B-\u200D\uFEFF\u00A0]/g," ").trim();if(!v)return "";return /^https?:\/\//i.test(v)?v:"https://"+v.replace(/^\/+/,"");})($("j-url").value), proofNote: $("j-proof").value,
       reward: $("j-reward").value, slots: $("j-slots").value,
     }).then(() => {
       FF.toast("Task published! Workers can start right away.", "ok");
