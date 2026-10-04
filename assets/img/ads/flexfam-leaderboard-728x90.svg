@@ -1,55 +1,149 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90" role="img" aria-label="FlexFam earn USDT daily banner">
+<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90" role="img" aria-label="FlexFam Earn USDT Daily">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="l728_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#040814"/>
+      <stop offset="40%" stop-color="#091326"/>
+      <stop offset="100%" stop-color="#041a15"/>
+    </linearGradient>
 
-<defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#060b1d"/>
-    <stop offset="0.54" stop-color="#102347"/>
-    <stop offset="1" stop-color="#072b21"/>
-  </linearGradient>
-  <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#34e5a5"/>
-    <stop offset="1" stop-color="#ffd061"/>
-  </linearGradient>
-  <linearGradient id="cta" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#ffd061"/>
-    <stop offset="1" stop-color="#34e5a5"/>
-  </linearGradient>
-  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-    <stop offset="0" stop-color="#34e5a5" stop-opacity=".45"/>
-    <stop offset="1" stop-color="#34e5a5" stop-opacity="0"/>
-  </radialGradient>
-  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-    <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity=".36"/>
-  </filter>
-</defs>
-<style>
-  .brand{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-0.04em;fill:#fff}
-  .brand tspan{fill:#ffd061}
-  .eyebrow{font-family:Inter,Arial,sans-serif;font-weight:800;letter-spacing:.16em;text-transform:uppercase;fill:#8df2c4}
-  .headline{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-0.055em;fill:#fff}
-  .sub{font-family:Inter,Arial,sans-serif;font-weight:700;fill:#c9d6f4}
-  .muted{font-family:Inter,Arial,sans-serif;font-weight:650;fill:#8ea0c7}
-  .cta{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:.02em;fill:#071528}
-  .small{font-family:Inter,Arial,sans-serif;font-weight:700;fill:#dfe8ff}
-  .green{fill:#34e5a5}.gold{fill:#ffd061}.orange{fill:#ff9f2f}
-</style>
-<rect width="728" height="90" rx="10" fill="url(#bg)"/>
+    <!-- Glass Card Gradient -->
+    <linearGradient id="l728_card" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(16, 35, 71, 0.75)"/>
+      <stop offset="100%" stop-color="rgba(7, 18, 38, 0.9)"/>
+    </linearGradient>
 
-  <circle cx="597.0" cy="16.2" r="28.8" fill="url(#glow)" opacity=".75"/>
-  <circle cx="87.4" cy="66.6" r="21.6" fill="#ff9f2f" opacity=".13"/>
-  <path d="M58.2 18.0C203.8 5.4 342.2 8.1 509.6 1.8" fill="none" stroke="#34e5a5" stroke-opacity=".22" stroke-width="3"/>
-  <path d="M364.0 88.2C480.5 73.8 597.0 74.7 698.9 56.7" fill="none" stroke="#ffd061" stroke-opacity=".18" stroke-width="4"/>
-  <g opacity=".18" fill="#fff">
-    <circle cx="131.0" cy="19.8" r="3"/><circle cx="313.0" cy="70.2" r="2.5"/><circle cx="546.0" cy="52.2" r="3.5"/>
+    <!-- Border Glow Gradient -->
+    <linearGradient id="l728_borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(0, 245, 155, 0.6)"/>
+      <stop offset="50%" stop-color="rgba(255, 208, 67, 0.4)"/>
+      <stop offset="100%" stop-color="rgba(0, 229, 255, 0.2)"/>
+    </linearGradient>
+
+    <!-- Gold Text Gradient -->
+    <linearGradient id="l728_gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fff076"/>
+      <stop offset="50%" stop-color="#ffd043"/>
+      <stop offset="100%" stop-color="#ff9a00"/>
+    </linearGradient>
+
+    <!-- Emerald Text Gradient -->
+    <linearGradient id="l728_emerald" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f59b"/>
+      <stop offset="100%" stop-color="#38ef7d"/>
+    </linearGradient>
+
+    <!-- Button Gradient -->
+    <linearGradient id="l728_btn" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffd043"/>
+      <stop offset="45%" stop-color="#00f59b"/>
+      <stop offset="100%" stop-color="#00e5ff"/>
+    </linearGradient>
+
+    <!-- 3D Coin Outer Rim Gradient -->
+    <linearGradient id="l728_goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe484"/>
+      <stop offset="40%" stop-color="#ffd043"/>
+      <stop offset="70%" stop-color="#e69500"/>
+      <stop offset="100%" stop-color="#804a00"/>
+    </linearGradient>
+
+    <!-- 3D Coin Inner Face Gradient -->
+    <radialGradient id="l728_coinFace" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#3bf6ad"/>
+      <stop offset="60%" stop-color="#14966a"/>
+      <stop offset="100%" stop-color="#08523a"/>
+    </radialGradient>
+
+    <!-- Ambient Glow Filters -->
+    <radialGradient id="l728_glowGreen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f59b" stop-opacity="0.45"/>
+      <stop offset="60%" stop-color="#00f59b" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00f59b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="l728_glowGold" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd043" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#ff9a00" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#ff9a00" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="l728_shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  
+  <style>
+    .brand { font-family: Inter, system-ui, -apple-system, Roboto, 'Segoe UI', Arial, sans-serif; font-weight: 900; }
+    .title { font-family: Inter, system-ui, -apple-system, Roboto, 'Segoe UI', Arial, sans-serif; font-weight: 800; }
+    .body { font-family: Inter, system-ui, -apple-system, Roboto, 'Segoe UI', Arial, sans-serif; font-weight: 600; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700; }
+  </style>
+
+
+  <!-- Base -->
+  <rect width="728" height="90" rx="12" fill="url(#l728_bg)"/>
+  <rect width="728" height="90" rx="12" fill="none" stroke="url(#l728_borderGrad)" stroke-width="1.4"/>
+
+  <!-- Glowing Orbs -->
+  <circle cx="50" cy="45" r="75" fill="url(#l728_glowGold)"/>
+  <circle cx="360" cy="45" r="90" fill="url(#l728_glowGreen)"/>
+  <circle cx="650" cy="45" r="80" fill="url(#l728_glowGreen)"/>
+
+  <!-- Left: Brand Block -->
+  <g transform="translate(18, 15)">
+    <!-- Logo Icon Box -->
+    <rect x="0" y="3" width="40" height="40" rx="10" fill="url(#l728_card)" stroke="rgba(0,245,155,0.4)" stroke-width="1.2"/>
+    <path transform="translate(13, 11) scale(1.6)" d="M7 1L1 9h5l-2 7 8-9H7l2-7z" fill="#00f59b"/>
+    <text x="50" y="27" class="brand" font-size="25" fill="#ffffff" letter-spacing="-0.5px">Flex<tspan fill="url(#l728_gold)">Fam</tspan></text>
+    <text x="50" y="44" class="title" font-size="11" fill="#8ea5c8" letter-spacing="0.5px">EARN USDT DAILY</text>
   </g>
 
-  <text x="16" y="41" class="brand" font-size="25">Flex<tspan>Fam</tspan></text>
-  <text x="16" y="58" class="sub" font-size="14">FREE tasks • daily streak • USDT withdrawals</text>
-  <g filter="url(#shadow)">
-    <text x="342" y="50" class="headline green" font-size="30">$5.50/day</text>
-    <text x="349" y="70" class="muted" font-size="11">Day 90+ streak earning</text>
-  </g>
-  <rect x="589" y="20" width="109" height="45" rx="22" fill="url(#cta)"/>
-  <text x="643" y="50" class="cta" font-size="12" text-anchor="middle">JOIN FREE</text>
+  <!-- Center: High-Impact Payout Box -->
+  <g transform="translate(225, 11)">
+    <!-- USDT 3D Coin -->
+    
+    <g transform="translate(26, 34)" filter="url(#l728_shadow)">
+      <!-- Outer Gold Bevel -->
+      <circle cx="0" cy="0" r="25" fill="url(#l728_goldRim)"/>
+      <!-- Inner Green Face -->
+      <circle cx="0" cy="0" r="21.5" fill="url(#l728_coinFace)"/>
+      <circle cx="0" cy="0" r="21.5" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.25"/>
+      
+      <!-- Tether T & Rings Vector -->
+      <g transform="scale(1.0416666666666667) translate(-12, -12)">
+        <!-- Top Bar -->
+        <rect x="5.5" y="6" width="13" height="3" rx="1" fill="#ffffff"/>
+        <!-- Vertical Stem -->
+        <rect x="10.5" y="8" width="3" height="10" rx="0.8" fill="#ffffff"/>
+        <!-- Ring Arc Left & Right -->
+        <path d="M 6 12.5 C 6 11 8.5 10 12 10 C 15.5 10 18 11 18 12.5 C 18 14 15.5 15 12 15 C 8.5 15 6 14 6 12.5 Z" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+      </g>
+      <!-- Top Specular Highlight -->
+      <ellipse cx="-6.25" cy="-8.75" rx="8.75" ry="4.5" fill="rgba(255,255,255,0.35)"/>
+    </g>
+  
 
+    <g transform="translate(62, 2)">
+      <!-- Streak Tag -->
+      <rect x="0" y="0" width="144" height="20" rx="10" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.35)" stroke-width="1"/>
+      <path transform="translate(8, 2) scale(1.1)" d="M6 1C5.8 2.5 4.8 3.8 3.5 4.8 2 6 1.5 7.5 1.5 9.2 1.5 12 3.8 14 6.5 14S11.5 12 11.5 9.2c0-1.5-.7-2.8-1.8-3.8 0 1.2-.6 2.2-1.5 2.8 0-2-1-4-2.2-7.2z" fill="#ffd043"/>
+      <text x="26" y="14" class="title" font-size="10" fill="#00f59b" letter-spacing="0.6px">DAILY STREAK TASK</text>
+
+      <!-- Big Number -->
+      <g transform="translate(0, 44)">
+        <text x="0" y="0" class="brand" font-size="30" fill="url(#l728_emerald)" letter-spacing="-0.8px">$5.50</text>
+        <text x="96" y="-3" class="brand" font-size="18" fill="#ffffff">/ DAY</text>
+      </g>
+      <text x="0" y="60" class="body" font-size="10.5" fill="#9fb0d5">Instant Payouts • BEP20 &amp; UPI</text>
+    </g>
+  </g>
+
+  <!-- Right: CTA Button -->
+  <g transform="translate(545, 17)">
+    <rect x="0" y="0" width="164" height="42" rx="21" fill="url(#l728_btn)" filter="url(#l728_shadow)"/>
+    <!-- Gloss -->
+    <rect x="2" y="2" width="160" height="18" rx="9" fill="rgba(255,255,255,0.35)"/>
+    <text x="82" y="26" class="brand" font-size="14.5" fill="#051020" text-anchor="middle" letter-spacing="0.3px">CLAIM FREE ➔</text>
+    <text x="82" y="52" class="title" font-size="9.5" fill="#7ce6ae" text-anchor="middle">✓ 100% FREE • NO FEES</text>
+  </g>
 </svg>

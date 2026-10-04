@@ -1,64 +1,161 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="FlexFam earn USDT daily banner">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="FlexFam Social Preview">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="og1200_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#040814"/>
+      <stop offset="40%" stop-color="#091326"/>
+      <stop offset="100%" stop-color="#041a15"/>
+    </linearGradient>
 
-<defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#060b1d"/>
-    <stop offset="0.54" stop-color="#102347"/>
-    <stop offset="1" stop-color="#072b21"/>
-  </linearGradient>
-  <linearGradient id="hot" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#34e5a5"/>
-    <stop offset="1" stop-color="#ffd061"/>
-  </linearGradient>
-  <linearGradient id="cta" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#ffd061"/>
-    <stop offset="1" stop-color="#34e5a5"/>
-  </linearGradient>
-  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-    <stop offset="0" stop-color="#34e5a5" stop-opacity=".45"/>
-    <stop offset="1" stop-color="#34e5a5" stop-opacity="0"/>
-  </radialGradient>
-  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-    <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity=".36"/>
-  </filter>
-</defs>
-<style>
-  .brand{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-0.04em;fill:#fff}
-  .brand tspan{fill:#ffd061}
-  .eyebrow{font-family:Inter,Arial,sans-serif;font-weight:800;letter-spacing:.16em;text-transform:uppercase;fill:#8df2c4}
-  .headline{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:-0.055em;fill:#fff}
-  .sub{font-family:Inter,Arial,sans-serif;font-weight:700;fill:#c9d6f4}
-  .muted{font-family:Inter,Arial,sans-serif;font-weight:650;fill:#8ea0c7}
-  .cta{font-family:Inter,Arial,sans-serif;font-weight:900;letter-spacing:.02em;fill:#071528}
-  .small{font-family:Inter,Arial,sans-serif;font-weight:700;fill:#dfe8ff}
-  .green{fill:#34e5a5}.gold{fill:#ffd061}.orange{fill:#ff9f2f}
-</style>
-<rect width="1200" height="630" rx="45" fill="url(#bg)"/>
+    <!-- Glass Card Gradient -->
+    <linearGradient id="og1200_card" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(16, 35, 71, 0.75)"/>
+      <stop offset="100%" stop-color="rgba(7, 18, 38, 0.9)"/>
+    </linearGradient>
 
-  <circle cx="984.0" cy="113.4" r="201.6" fill="url(#glow)" opacity=".75"/>
-  <circle cx="144.0" cy="466.2" r="151.2" fill="#ff9f2f" opacity=".13"/>
-  <path d="M96.0 126.0C336.0 37.8 564.0 56.7 840.0 12.6" fill="none" stroke="#34e5a5" stroke-opacity=".22" stroke-width="3"/>
-  <path d="M600.0 617.4C792.0 516.6 984.0 522.9 1152.0 396.9" fill="none" stroke="#ffd061" stroke-opacity=".18" stroke-width="4"/>
-  <g opacity=".18" fill="#fff">
-    <circle cx="216.0" cy="138.6" r="3"/><circle cx="516.0" cy="491.4" r="2.5"/><circle cx="900.0" cy="365.4" r="3.5"/>
+    <!-- Border Glow Gradient -->
+    <linearGradient id="og1200_borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(0, 245, 155, 0.6)"/>
+      <stop offset="50%" stop-color="rgba(255, 208, 67, 0.4)"/>
+      <stop offset="100%" stop-color="rgba(0, 229, 255, 0.2)"/>
+    </linearGradient>
+
+    <!-- Gold Text Gradient -->
+    <linearGradient id="og1200_gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fff076"/>
+      <stop offset="50%" stop-color="#ffd043"/>
+      <stop offset="100%" stop-color="#ff9a00"/>
+    </linearGradient>
+
+    <!-- Emerald Text Gradient -->
+    <linearGradient id="og1200_emerald" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f59b"/>
+      <stop offset="100%" stop-color="#38ef7d"/>
+    </linearGradient>
+
+    <!-- Button Gradient -->
+    <linearGradient id="og1200_btn" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffd043"/>
+      <stop offset="45%" stop-color="#00f59b"/>
+      <stop offset="100%" stop-color="#00e5ff"/>
+    </linearGradient>
+
+    <!-- 3D Coin Outer Rim Gradient -->
+    <linearGradient id="og1200_goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe484"/>
+      <stop offset="40%" stop-color="#ffd043"/>
+      <stop offset="70%" stop-color="#e69500"/>
+      <stop offset="100%" stop-color="#804a00"/>
+    </linearGradient>
+
+    <!-- 3D Coin Inner Face Gradient -->
+    <radialGradient id="og1200_coinFace" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#3bf6ad"/>
+      <stop offset="60%" stop-color="#14966a"/>
+      <stop offset="100%" stop-color="#08523a"/>
+    </radialGradient>
+
+    <!-- Ambient Glow Filters -->
+    <radialGradient id="og1200_glowGreen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f59b" stop-opacity="0.45"/>
+      <stop offset="60%" stop-color="#00f59b" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00f59b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="og1200_glowGold" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd043" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#ff9a00" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#ff9a00" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="og1200_shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  
+  <style>
+    .brand { font-family: Inter, system-ui, -apple-system, Roboto, 'Segoe UI', Arial, sans-serif; font-weight: 900; }
+    .title { font-family: Inter, system-ui, -apple-system, Roboto, 'Segoe UI', Arial, sans-serif; font-weight: 800; }
+    .body { font-family: Inter, system-ui, -apple-system, Roboto, 'Segoe UI', Arial, sans-serif; font-weight: 600; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700; }
+  </style>
+
+
+  <rect width="1200" height="630" fill="url(#og1200_bg)"/>
+  <rect width="1200" height="630" fill="none" stroke="url(#og1200_borderGrad)" stroke-width="2"/>
+
+  <!-- Dramatic ambient glow spheres -->
+  <circle cx="200" cy="150" r="280" fill="url(#og1200_glowGold)"/>
+  <circle cx="950" cy="300" r="340" fill="url(#og1200_glowGreen)"/>
+  <circle cx="450" cy="500" r="260" fill="url(#og1200_glowGreen)"/>
+
+  <!-- Left Side: Copy and Branding -->
+  <g transform="translate(90, 80)">
+    <!-- Pill -->
+    <rect x="0" y="0" width="280" height="36" rx="18" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.4)" stroke-width="1.5"/>
+    <path transform="translate(16, 8) scale(1.4)" d="M7 1L1 9h5l-2 7 8-9H7l2-7z" fill="#00f59b"/>
+    <text x="148" y="23" class="title" font-size="13" fill="#00f59b" text-anchor="middle" letter-spacing="1.2px">FREE SOCIAL EXCHANGE</text>
+
+    <!-- Logo -->
+    <g transform="translate(0, 60)">
+      <rect x="0" y="8" width="64" height="64" rx="16" fill="url(#og1200_card)" stroke="rgba(0,245,155,0.4)" stroke-width="2"/>
+      <path transform="translate(20, 18) scale(2.3)" d="M7 1L1 9h5l-2 7 8-9H7l2-7z" fill="#00f59b"/>
+      <text x="80" y="56" class="brand" font-size="54" fill="#ffffff" letter-spacing="-1px">Flex<tspan fill="url(#og1200_gold)">Fam</tspan></text>
+    </g>
+
+    <!-- Main Headline -->
+    <g transform="translate(0, 160)">
+      <text x="0" y="50" class="brand" font-size="56" fill="#ffffff" letter-spacing="-1px">Earn Real USDT</text>
+      <text x="0" y="115" class="brand" font-size="56" fill="url(#og1200_emerald)" letter-spacing="-1px">Up To $5.50 / Day</text>
+      <text x="0" y="170" class="body" font-size="20" fill="#a4b8db" max-width="500">
+        Complete simple social tasks • Telegram Bot • YouTube • Free Cloud Mining
+      </text>
+    </g>
+
+    <!-- CTA Button -->
+    <g transform="translate(0, 370)">
+      <rect width="280" height="64" rx="32" fill="url(#og1200_btn)" filter="url(#og1200_shadow)"/>
+      <rect x="3" y="3" width="274" height="28" rx="14" fill="rgba(255,255,255,0.35)"/>
+      <text x="140" y="39" class="brand" font-size="20" fill="#051020" text-anchor="middle" letter-spacing="0.5px">JOIN FREE TODAY ➔</text>
+      <text x="310" y="38" class="title" font-size="16" fill="#ffd043">✓ Instant BEP20 &amp; UPI Payouts</text>
+    </g>
   </g>
 
-  <text x="72" y="118" class="brand" font-size="62">Flex<tspan>Fam</tspan></text>
-  <text x="72" y="188" class="eyebrow" font-size="24">FREE SOCIAL TASKS + USDT REWARDS</text>
-  <text x="72" y="298" class="headline" font-size="76">Earn daily from</text>
-  <text x="72" y="386" class="headline green" font-size="86">simple online tasks</text>
-  <text x="76" y="458" class="sub" font-size="30">Daily streaks, referrals and cloud-mining bonuses in one FlexFam dashboard.</text>
-  <rect x="76" y="506" width="260" height="62" rx="31" fill="url(#cta)"/>
-  <text x="206" y="546" class="cta" font-size="24" text-anchor="middle">JOIN FREE</text>
-  <g filter="url(#shadow)">
-    <circle cx="945" cy="285" r="166" fill="#0c1a34" stroke="#34e5a5" stroke-opacity=".55" stroke-width="3"/>
-    <text x="945" y="252" class="headline green" font-size="70" text-anchor="middle">$5.50</text>
-    <text x="945" y="315" class="headline" font-size="46" text-anchor="middle">per day</text>
-    <text x="945" y="366" class="muted" font-size="23" text-anchor="middle">Day 90+ streak</text>
-  </g>
-  <g class="small" font-size="24">
-    <text x="716" y="514">✓ No deposit to start</text>
-    <text x="716" y="556">✓ Withdraw with USDT</text>
-  </g>
+  <!-- Right Side: 3D Holographic Card & Coin -->
+  <g transform="translate(740, 100)">
+    <rect width="370" height="430" rx="24" fill="url(#og1200_card)" stroke="rgba(0,245,155,0.3)" stroke-width="2" filter="url(#og1200_shadow)"/>
+    
+    <!-- Big 3D Coin -->
+    
+    <g transform="translate(185, 120)" filter="url(#og1200_shadow)">
+      <!-- Outer Gold Bevel -->
+      <circle cx="0" cy="0" r="72" fill="url(#og1200_goldRim)"/>
+      <!-- Inner Green Face -->
+      <circle cx="0" cy="0" r="61.92" fill="url(#og1200_coinFace)"/>
+      <circle cx="0" cy="0" r="61.92" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="3.5999999999999996"/>
+      
+      <!-- Tether T & Rings Vector -->
+      <g transform="scale(3) translate(-12, -12)">
+        <!-- Top Bar -->
+        <rect x="5.5" y="6" width="13" height="3" rx="1" fill="#ffffff"/>
+        <!-- Vertical Stem -->
+        <rect x="10.5" y="8" width="3" height="10" rx="0.8" fill="#ffffff"/>
+        <!-- Ring Arc Left & Right -->
+        <path d="M 6 12.5 C 6 11 8.5 10 12 10 C 15.5 10 18 11 18 12.5 C 18 14 15.5 15 12 15 C 8.5 15 6 14 6 12.5 Z" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+      </g>
+      <!-- Top Specular Highlight -->
+      <ellipse cx="-18" cy="-25.2" rx="25.2" ry="12.959999999999999" fill="rgba(255,255,255,0.35)"/>
+    </g>
+  
 
+    <text x="185" y="240" class="title" font-size="16" fill="#9fb0d5" text-anchor="middle">DAILY STREAK BONUS</text>
+    <text x="185" y="295" class="brand" font-size="46" fill="url(#og1200_emerald)" text-anchor="middle" letter-spacing="-1px">$5.50</text>
+    <text x="185" y="325" class="title" font-size="18" fill="#ffffff" text-anchor="middle">USDT Withdrawals</text>
+
+    <!-- Mini perks -->
+    <g transform="translate(45, 355)">
+      <rect width="280" height="42" rx="21" fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <path transform="translate(18, 11) scale(1.2)" d="M7 1L1 9h5l-2 7 8-9H7l2-7z" fill="#ffd043"/>
+      <text x="148" y="26" class="title" font-size="13" fill="#ffd043" text-anchor="middle">9 Task Categories • 100% Free</text>
+    </g>
+  </g>
 </svg>

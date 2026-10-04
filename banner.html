@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FlexFam — Earn USDT Daily</title>
-<meta name="description" content="FlexFam — earn USDT for simple social tasks. Daily streaks up to $5.50/day. Join free.">
+<title>FlexFam — Official Ad Banners</title>
+<meta name="description" content="FlexFam official ad banner live preview and embed generator. Supports all standard sizes: 728x90, 468x60, 300x250, 250x250, 320x50, 160x600, 125x125.">
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="FlexFam" />
-<meta property="og:title" content="FlexFam — Earn USDT Daily" />
+<meta property="og:title" content="FlexFam — Earn USDT Daily Banners" />
 <meta property="og:description" content="FlexFam — earn USDT for simple social tasks. Daily streaks up to $5.50/day. Join free." />
 <meta property="og:image" content="https://miten001.github.io/site-devlop/assets/img/ads/flexfam-og-1200x630.png" />
 <meta property="og:image:width" content="1200" />
@@ -29,34 +29,138 @@
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
     color: #f5f8ff;
   }
+
+  /* Embedded / Iframe mode: absolute clean fit with exact dimensions */
+  html.is-embedded, body.is-embedded {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    background: transparent !important;
+    overflow: hidden !important;
+    display: block !important;
+  }
+  body.is-embedded .banner-wrap {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  body.is-embedded a.banner {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  body.is-embedded a.banner img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: fill !important;
+    max-width: none !important;
+  }
+  body.is-embedded .ui-only {
+    display: none !important;
+  }
+
+  /* Standalone Preview Mode */
   .banner-wrap {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
-    max-width: 100%;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
   }
+
+  .header-tag {
+    text-align: center;
+  }
+  .header-tag h1 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .header-tag h1 span {
+    color: #ffd061;
+  }
+  .header-tag p {
+    font-size: 13px;
+    color: #8fa0c5;
+    margin-top: 4px;
+  }
+
+  .size-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 800px;
+  }
+  .size-btn {
+    appearance: none;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #c9d6f4;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease;
+    text-decoration: none;
+  }
+  .size-btn:hover {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-color: rgba(52,229,165,0.4);
+  }
+  .size-btn.active {
+    background: linear-gradient(135deg, #ffd061, #34e5a5);
+    color: #071126;
+    border-color: transparent;
+    font-weight: 800;
+    box-shadow: 0 4px 14px rgba(52,229,165,0.25);
+  }
+
+  .banner-stage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 12px;
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 10px, rgba(255,255,255,.015) 10px 20px);
+    border: 1px dashed rgba(255,255,255,.14);
+    border-radius: 18px;
+    overflow: auto;
+  }
+
   a.banner {
-    display: block;
+    display: inline-block;
     line-height: 0;
-    border-radius: 12px;
+    border-radius: 10px;
     cursor: pointer;
     box-shadow: 0 14px 44px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.08);
     transition: transform .18s ease, box-shadow .18s ease;
-    max-width: 100%;
     overflow: hidden;
+    text-decoration: none;
   }
   a.banner:hover {
-    transform: translateY(-2px) scale(1.015);
+    transform: translateY(-2px) scale(1.01);
     box-shadow: 0 20px 54px rgba(0,0,0,.6), 0 0 0 1px rgba(124,230,174,.45);
   }
   a.banner img {
     display: block;
-    width: 728px;
-    height: 90px;
     max-width: 100%;
     height: auto;
   }
+
   .cap {
     color: #8fa0c5;
     font-size: 13px;
@@ -67,29 +171,299 @@
   .cap b { color: #fff; font-weight: 700; }
   .cap a { color: #34e5a5; text-decoration: none; font-weight: 600; margin: 0 4px; }
   .cap a:hover { text-decoration: underline; }
+
+  .tools-card {
+    width: 100%;
+    background: rgba(16, 35, 71, 0.7);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tools-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #9fb0d5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .code-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .code-row input {
+    flex: 1;
+    background: #050b18;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #34e5a5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    outline: none;
+  }
+  .code-row input:focus {
+    border-color: #34e5a5;
+  }
+  .btn-copy {
+    background: rgba(52,229,165,0.15);
+    color: #34e5a5;
+    border: 1px solid rgba(52,229,165,0.3);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s ease;
+  }
+  .btn-copy:hover {
+    background: #34e5a5;
+    color: #071126;
+  }
+
   .ad-meta {
     display: flex;
-    gap: 12px;
+    gap: 14px;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
     font-size: 12px;
     color: #63779e;
-    margin-top: 4px;
   }
   .ad-meta a { color: #9fb0d5; text-decoration: none; }
   .ad-meta a:hover { color: #fff; text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    body { padding: 16px 12px; }
+    .size-btn { padding: 5px 9px; font-size: 11px; }
+    .code-row { flex-direction: column; align-items: stretch; }
+  }
 </style>
 </head>
 <body>
   <div class="banner-wrap">
-    <a class="banner" href="https://miten001.github.io/site-devlop/landing.html" target="_blank" rel="noopener" title="FlexFam — $5.50/day USDT. Join free!">
-      <img src="assets/img/ads/flexfam-leaderboard-728x90.png" width="728" height="90" alt="FlexFam — Join free & earn USDT daily" />
-    </a>
-    <p class="cap"><b>FlexFam</b> · 728×90 Leaderboard · <a href="landing.html" target="_blank" rel="noopener">Open landing &rarr;</a></p>
-    <div class="ad-meta">
-      <a href="ads.html">All ad sizes</a> · <a href="download.html">Download ad kit</a>
+    <div class="header-tag ui-only">
+      <h1>Flex<b>Fam</b> <span>Ad Banners</span></h1>
+      <p>Select a banner size below to view, copy the direct image URL, or get embed code.</p>
+    </div>
+
+    <div class="size-picker ui-only" id="size-picker">
+      <button class="size-btn" data-size="728x90">728×90 Leaderboard</button>
+      <button class="size-btn" data-size="468x60">468×60 Banner</button>
+      <button class="size-btn" data-size="300x250">300×250 Rectangle</button>
+      <button class="size-btn" data-size="250x250">250×250 Square</button>
+      <button class="size-btn" data-size="320x50">320×50 Mobile</button>
+      <button class="size-btn" data-size="160x600">160×600 Skyscraper</button>
+      <button class="size-btn" data-size="125x125">125×125 Button</button>
+      <button class="size-btn" data-size="1200x630">1200×630 OG Banner</button>
+    </div>
+
+    <div class="banner-stage" id="banner-stage">
+      <a class="banner" id="banner-link" href="landing.html" target="_blank" rel="noopener" title="FlexFam — $5.50/day USDT. Join free!">
+        <img id="banner-img" src="assets/img/ads/flexfam-leaderboard-728x90.png" width="728" height="90" alt="FlexFam — Join free & earn USDT daily" />
+      </a>
+    </div>
+
+    <p class="cap ui-only" id="banner-cap">
+      <b>FlexFam</b> · <span id="cap-size">728×90 Leaderboard</span> · <a id="cap-target" href="landing.html" target="_blank" rel="noopener">Open landing &rarr;</a>
+    </p>
+
+    <div class="tools-card ui-only">
+      <div class="tools-title">
+        <span>Direct Banner Image URL (for PTC / Traffic / Ad networks)</span>
+        <span id="img-dim-badge" style="color:#ffd061;font-weight:700">728 × 90 px</span>
+      </div>
+      <div class="code-row">
+        <input type="text" id="direct-img-url" readonly />
+        <button class="btn-copy" data-target="direct-img-url">Copy Image URL</button>
+      </div>
+
+      <div class="tools-title" style="margin-top:6px">
+        <span>HTML Link &amp; Image Embed Code</span>
+      </div>
+      <div class="code-row">
+        <input type="text" id="html-snippet" readonly />
+        <button class="btn-copy" data-target="html-snippet">Copy HTML</button>
+      </div>
+
+      <div class="tools-title" style="margin-top:6px">
+        <span>Iframe Embed URL (Exact fit, no padding)</span>
+      </div>
+      <div class="code-row">
+        <input type="text" id="iframe-snippet" readonly />
+        <button class="btn-copy" data-target="iframe-snippet">Copy Iframe</button>
+      </div>
+    </div>
+
+    <div class="ad-meta ui-only">
+      <a href="ads.html">All ad sizes</a> ·
+      <a href="download.html">Download ad kit</a> ·
+      <a href="landing.html">Landing page</a>
     </div>
   </div>
+
+<script>
+(function() {
+  const SIZES = {
+    "728x90": {
+      name: "728×90 Leaderboard",
+      w: 728, h: 90,
+      img: "assets/img/ads/flexfam-leaderboard-728x90.png",
+      alt: "FlexFam — Join free & earn USDT daily"
+    },
+    "468x60": {
+      name: "468×60 Standard Banner",
+      w: 468, h: 60,
+      img: "assets/img/ads/flexfam-banner-468x60.png",
+      alt: "FlexFam — Earn USDT daily"
+    },
+    "300x250": {
+      name: "300×250 Medium Rectangle",
+      w: 300, h: 250,
+      img: "assets/img/ads/flexfam-rectangle-300x250.png",
+      alt: "FlexFam — Daily streak & USDT tasks"
+    },
+    "250x250": {
+      name: "250×250 Square Banner",
+      w: 250, h: 250,
+      img: "assets/img/ads/flexfam-square-250x250.png",
+      alt: "FlexFam — Free USDT Exchange"
+    },
+    "320x50": {
+      name: "320×50 Mobile Banner",
+      w: 320, h: 50,
+      img: "assets/img/ads/flexfam-mobile-320x50.png",
+      alt: "FlexFam — Mobile USDT Earning"
+    },
+    "160x600": {
+      name: "160×600 Skyscraper",
+      w: 160, h: 600,
+      img: "assets/img/ads/flexfam-skyscraper-160x600.png",
+      alt: "FlexFam — Social Exchange & USDT"
+    },
+    "125x125": {
+      name: "125×125 Button",
+      w: 125, h: 125,
+      img: "assets/img/ads/flexfam-button-125x125.png",
+      alt: "FlexFam — Earn USDT"
+    },
+    "1200x630": {
+      name: "1200×630 Open Graph Banner",
+      w: 1200, h: 630,
+      img: "assets/img/ads/flexfam-og-1200x630.png",
+      alt: "FlexFam — Social Earning Platform"
+    }
+  };
+
+  const ALIASES = {
+    "leaderboard": "728x90",
+    "banner": "468x60",
+    "468": "468x60",
+    "rectangle": "300x250",
+    "300": "300x250",
+    "square": "250x250",
+    "250": "250x250",
+    "mobile": "320x50",
+    "320": "320x50",
+    "skyscraper": "160x600",
+    "160": "160x600",
+    "button": "125x125",
+    "125": "125x125",
+    "og": "1200x630"
+  };
+
+  const params = new URLSearchParams(window.location.search);
+  const isEmbed = params.has("embed") || params.has("raw") || params.has("iframe") || (window.self !== window.top);
+
+  if (isEmbed) {
+    document.documentElement.classList.add("is-embedded");
+    document.body.classList.add("is-embedded");
+  }
+
+  // Parse requested size
+  let rawSize = (params.get("size") || params.get("s") || "").toLowerCase().trim();
+  if (!rawSize && params.get("w") && params.get("h")) {
+    rawSize = params.get("w") + "x" + params.get("h");
+  }
+  const sizeKey = ALIASES[rawSize] || (SIZES[rawSize] ? rawSize : "728x90");
+  const ref = params.get("ref") || params.get("r") || "";
+
+  function getBaseUrl() {
+    let href = window.location.href.split("?")[0].replace(/\/banner\.html$/, "");
+    if (!href.startsWith("http")) href = "https://miten001.github.io/site-devlop";
+    return href.replace(/\/$/, "");
+  }
+
+  function applySize(key) {
+    const config = SIZES[key] || SIZES["728x90"];
+    const base = getBaseUrl();
+    const targetUrl = base + "/landing.html" + (ref ? "?ref=" + encodeURIComponent(ref) : "");
+    const imgUrl = base + "/" + config.img;
+    const iframeUrl = base + "/banner.html?size=" + key + (ref ? "&ref=" + encodeURIComponent(ref) : "") + "&embed=1";
+
+    const linkEl = document.getElementById("banner-link");
+    const imgEl = document.getElementById("banner-img");
+    linkEl.href = targetUrl;
+    imgEl.src = config.img;
+    imgEl.width = config.w;
+    imgEl.height = config.h;
+    imgEl.alt = config.alt;
+
+    if (!isEmbed) {
+      document.getElementById("cap-size").textContent = config.name;
+      document.getElementById("cap-target").href = targetUrl;
+      document.getElementById("img-dim-badge").textContent = config.w + " × " + config.h + " px";
+      document.getElementById("direct-img-url").value = imgUrl;
+      document.getElementById("html-snippet").value = '<a href="' + targetUrl + '" target="_blank" rel="noopener"><img src="' + imgUrl + '" width="' + config.w + '" height="' + config.h + '" alt="' + config.alt + '"></a>';
+      document.getElementById("iframe-snippet").value = '<iframe src="' + iframeUrl + '" width="' + config.w + '" height="' + config.h + '" frameborder="0" scrolling="no" style="border:0;overflow:hidden;"></iframe>';
+
+      document.querySelectorAll(".size-btn").forEach(function(b) {
+        b.classList.toggle("active", b.getAttribute("data-size") === key);
+      });
+    }
+  }
+
+  applySize(sizeKey);
+
+  if (!isEmbed) {
+    document.querySelectorAll(".size-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        const s = btn.getAttribute("data-size");
+        applySize(s);
+      });
+    });
+
+    document.querySelectorAll(".btn-copy").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        const targetId = btn.getAttribute("data-target");
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        input.select();
+        const done = function() {
+          const orig = btn.textContent;
+          btn.textContent = "Copied! ✓";
+          setTimeout(function() { btn.textContent = orig; }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(input.value).then(done).catch(function() {
+            document.execCommand("copy");
+            done();
+          });
+        } else {
+          document.execCommand("copy");
+          done();
+        }
+      });
+    });
+  }
+})();
+</script>
 </body>
 </html>
