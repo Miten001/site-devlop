@@ -16,6 +16,19 @@
    money flow (localStorage). Real hashrate/payout settlement must be done
    by your backend or mining pool API.
    ============================================================ */
+
+/* Universal NodeList/HTMLCollection .forEach polyfill — older mobile
+   browsers / WebViews lack it and throw
+   "TypeError: document.querySelectorAll(...).forEach is not a function". */
+if (typeof window !== "undefined") {
+  if (window.NodeList && !NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = Array.prototype.forEach;
+  }
+  if (window.HTMLCollection && !HTMLCollection.prototype.forEach) {
+    HTMLCollection.prototype.forEach = Array.prototype.forEach;
+  }
+}
+
 (function () {
   "use strict";
 

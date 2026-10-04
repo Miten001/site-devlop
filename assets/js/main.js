@@ -4,6 +4,18 @@
    Raw passwords are never saved in browser storage or exposed in the admin area.
    ============================================================ */
 
+/* Universal NodeList/HTMLCollection .forEach polyfill — older mobile
+   browsers / WebViews lack it and throw
+   "TypeError: document.querySelectorAll(...).forEach is not a function". */
+if (typeof window !== "undefined") {
+  if (window.NodeList && !NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = Array.prototype.forEach;
+  }
+  if (window.HTMLCollection && !HTMLCollection.prototype.forEach) {
+    HTMLCollection.prototype.forEach = Array.prototype.forEach;
+  }
+}
+
 (function () {
   "use strict";
 
