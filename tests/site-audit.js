@@ -58,6 +58,8 @@ const HTML_PAGES = [
   "admin-payments.html",
   "admin-check.html",
   "banner.html",
+  "ads.html",
+  "download.html",
 ];
 
 function inlinedHtml(file) {
@@ -182,6 +184,7 @@ async function runAudit() {
     check(`${file} has DOCTYPE declaration`, /<!DOCTYPE html>/i.test(content));
     check(`${file} has <title> tag`, /<title>[^<]+<\/title>/i.test(content));
     check(`${file} has responsive meta viewport`, /name=["']viewport["']/i.test(content));
+    check(`${file} has og:image social preview meta`, /property=["']og:image["']/i.test(content));
 
     // Verify linked stylesheets exist
     const cssMatches = Array.from(content.matchAll(/<link\s+[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["']/gi));
@@ -200,6 +203,32 @@ async function runAudit() {
       if (!src.startsWith("http")) {
         const jsPath = path.join(ROOT, src);
         check(`${file} -> script ${src} exists`, fs.existsSync(jsPath), src);
+      }
+    }
+
+    // Verify local images referenced by the page exist. Data URIs and remote
+    // embeds are ignored; GitHub Pages must be able to serve every local img.
+    const imageMatches = Array.from(content.matchAll(/<img\s+[^>]*src=["']([^"']+)["']/gi));
+    for (const match of imageMatches) {
+      const src = match[1].split("?")[0];
+      if (!src.startsWith("http") && !src.startsWith("data:") && !src.startsWith("#")) {
+        const imgPath = path.join(ROOT, src);
+        check(`${file} -> image ${src} exists`, fs.existsSync(imgPath), src);
+      }
+    }
+  }
+
+  const adKitPath = path.join(ROOT, "assets/img/ads/ad-kit.json");
+  check("assets/img/ads/ad-kit.json exists", fs.existsSync(adKitPath));
+  if (fs.existsSync(adKitPath)) {
+    const adKit = JSON.parse(fs.readFileSync(adKitPath, "utf8"));
+    check("ad kit points at GitHub Pages landing URL", /miten001\.github\.io\/site-devlop\/landing\.html/.test(adKit.landingUrl), adKit.landingUrl);
+    check("ad kit includes at least 8 creative formats", Array.isArray(adKit.assets) && adKit.assets.length >= 8, adKit.assets && adKit.assets.length);
+    for (const asset of adKit.assets || []) {
+      for (const key of ["png", "svg"]) {
+        const assetPath = path.join(ROOT, "assets/img/ads", asset[key]);
+        check(`ad kit ${asset[key]} exists`, fs.existsSync(assetPath), assetPath);
+        if (fs.existsSync(assetPath)) check(`ad kit ${asset[key]} is non-empty`, fs.statSync(assetPath).size > 500);
       }
     }
   }
@@ -355,6 +384,8 @@ async function runAudit() {
   const createdCamps = addDom.dom.window.FF.DB.campaigns();
   const campaignPayload = createdCamps.find((c) => c.authorEmail === "alice@test.dev");
   check("Campaign created successfully via add.html form", !!campaignPayload);
+  check("Campaign stores Alice's authorEmail for ownership checks", campaignPayload && campaignPayload.authorEmail === "alice@test.dev", campaignPayload);
+  check("Campaign may keep creator-local mine flag for Alice only", campaignPayload && campaignPayload.mine === true, campaignPayload ? campaignPayload.mine : null);
   addDom.dom.window.close();
 
   // Step 4.3: Alice Views Dashboard (Campaign listing & Pause/Resume)
