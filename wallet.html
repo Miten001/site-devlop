@@ -266,9 +266,9 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
-<script src="assets/js/main.js?v=2.4"></script>
-<script src="assets/js/wallet.js?v=2.1"></script>
-<script src="assets/js/mining.js?v=2.1"></script>
+<script src="assets/js/main.js?v=2.5"></script>
+<script src="assets/js/wallet.js?v=2.2"></script>
+<script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -318,11 +318,14 @@ document.addEventListener("DOMContentLoaded", () => {
     $("wd-avail").textContent = W.usd(w.available);
 
     const onServer = view.mode === "server";
-    $("w-mode-pill").textContent = onServer ? "Server-synced" : "This browser only";
+    const offlineFallback = !onServer && !!view.serverUnavailable;
+    $("w-mode-pill").textContent = onServer ? "Server-synced" : (offlineFallback ? "Offline fallback" : "This browser only");
     $("w-mode-pill").className = "status-pill " + (onServer ? "on" : "off");
     $("w-mode-note").textContent = onServer
       ? "Balances, escrow and payouts are held in Postgres — nothing here can be changed from your browser."
-      : "Supabase is not configured (or you signed in with the local fallback), so this wallet is a browser-only simulation.";
+      : (offlineFallback
+        ? "The secure server could not be reached, so this page switched to browser-only mode. New wallet changes will not sync until you reconnect and reload."
+        : "Supabase is not configured (or you signed in with the local fallback), so this wallet is a browser-only simulation.");
 
     if ($("dep-min")) $("dep-min").textContent = W.usd(cfg.minDeposit);
     $("wd-min").textContent = W.usd(cfg.minWithdraw);

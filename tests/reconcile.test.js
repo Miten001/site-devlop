@@ -53,8 +53,9 @@ window.FF_SUPABASE_CONFIG = { url: "https://test-project.supabase.co", anonKey: 
 
 /* ---------- RPC stub ----------
    Unknown rpc functions return 404, exactly like PostgREST does when the
-   function is not installed — this keeps the auto-import path honest. */
-let rpcResponses = {};   // fn -> payload | {__error, status}
+   function is not installed — this keeps the auto-import path honest.
+   __network mimics browser fetch rejection before any HTTP response exists. */
+let rpcResponses = {};   // fn -> payload | {__error, status} | {__network}
 let rpcCalls = [];
 global.fetch = (url) => {
   const m = String(url).match(/\/rest\/v1\/rpc\/(\w+)/) || String(url).match(/\/auth\/v1\/(\w+)/);
@@ -64,6 +65,7 @@ global.fetch = (url) => {
   if (!resp) {
     return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve(JSON.stringify({ message: "Could not find the function " + fn })) });
   }
+  if (resp.__network) return Promise.reject(new TypeError(resp.__network));
   if (resp.__error) {
     return Promise.resolve({ ok: false, status: resp.status || 400, text: () => Promise.resolve(JSON.stringify({ message: resp.__error })) });
   }
@@ -238,6 +240,19 @@ async function main() {
   check("new $10 Emerald step exists", emerald && emerald.priceUsd === 10, emerald);
   check("Diamond estimate is above $5/day", diamond && FF.M.api.dailyUsd(economy, diamond.ghs, diamond.priceUsd) > 5, diamond);
   check("Quantum estimate is above $10/day", quantum && FF.M.api.dailyUsd(economy, quantum.ghs, quantum.priceUsd) > 10, quantum);
+
+  /* ============ SCENARIO 11: Firefox-style network fetch failure ============ */
+  console.log("\n[11] a rejected fetch falls back without exposing raw NetworkError");
+  setUser({ name: "Rohan", email: "rohan@test.dev", memberId: "FF-X1", credits: 59, earned: 59, spent: 0, activity: [], campaigns: [], refCode: "FF-ROH-1234", joined: Date.now(), weekly: [] });
+  setAuth("rohan@test.dev");
+  rpcResponses = { wallet_state: { __network: "NetworkError when attempting to fetch resource." } };
+  let networkError = null;
+  try { await FF.rpc("wallet_state"); } catch (err) { networkError = err; }
+  check("network fetch error is classified as offline", networkError && networkError.offline === true, networkError);
+  check("network fetch error has a useful message", networkError && /Unable to reach the secure server/.test(networkError.message), networkError && networkError.message);
+  const offlineWallet = await FF.W.api.wallet();
+  check("wallet safely falls back to browser mode", offlineWallet.mode === "local", offlineWallet.mode);
+  check("wallet view explains it is an offline fallback", offlineWallet.serverUnavailable === true, offlineWallet);
 
   console.log("\nRESULT: " + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);

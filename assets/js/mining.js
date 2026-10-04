@@ -406,6 +406,8 @@ if (typeof window !== "undefined") {
     const user = FF.currentUser() || {};
     return {
       mode: "local",
+      /* True only after a signed-in server request could not reach Supabase. */
+      serverUnavailable: serverDown,
       config: {
         minClaimUsdt: CFG.minClaimUsdt, pointsBonusPct: CFG.pointsBonusPct,
         boostPct: CFG.boostPct, boostHours: CFG.boostHours,

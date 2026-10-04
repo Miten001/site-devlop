@@ -307,6 +307,25 @@ if (typeof window !== "undefined") {
     return users[i];
   }
 
+  /* Browsers use different messages for a fetch that never receives an HTTP
+     response: Chrome says "Failed to fetch", Firefox says
+     "NetworkError when attempting to fetch resource", and Safari says
+     "Load failed". Keep this check narrow so a genuine API/validation error
+     is still shown exactly as returned by Supabase. */
+  function isNetworkFailure(error) {
+    const message = String((error && error.message) || error || "");
+    return /failed to fetch|networkerror|network request failed|load failed|network is unreachable|connection (?:refused|reset|timed out)|cors request/i.test(message);
+  }
+
+  function makeNetworkError(error) {
+    const err = error instanceof Error ? error : new Error(String(error || "Network request failed"));
+    err.offline = true;
+    err.network = true;
+    /* Do not surface the browser-specific low-level message to members. */
+    err.message = "Unable to reach the secure server. Check your connection and try again.";
+    return err;
+  }
+
   function authRequest(path, options) {
     const cfg = memberConfig();
     if (!cfg) return Promise.reject(new Error("Secure sign-up is not configured yet"));
@@ -324,7 +343,9 @@ if (typeof window !== "undefined") {
       try { json = text ? JSON.parse(text) : null; } catch (e) {}
       if (!res.ok) throw new Error((json && (json.msg || json.message || json.error_description || json.error)) || "Request failed (" + res.status + ")");
       return json || {};
-    }));
+    })).catch((error) => {
+      throw isNetworkFailure(error) ? makeNetworkError(error) : error;
+    });
   }
 
   function passwordDigest(password, salt) {
@@ -550,6 +571,11 @@ if (typeof window !== "undefined") {
         }
         return json;
       }));
+    }).catch((error) => {
+      /* A rejected fetch has no HTTP status at all. Mark it offline so the
+         wallet/mining callers can use their documented browser fallback
+         instead of showing Firefox's raw "NetworkError" toast. */
+      throw isNetworkFailure(error) ? makeNetworkError(error) : error;
     });
   }
 
