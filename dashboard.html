@@ -271,8 +271,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Counts come from the SECURITY DEFINER SQL function, never browser guesses.
   if (FF.rpc) FF.rpc("site_today_stats").then((stats) => {
-    const v = stats && (stats.visitors ?? stats[0]?.visitors);
-    const r = stats && (stats.registered ?? stats[0]?.registered);
+    const s0 = (Array.isArray(stats) ? stats[0] : stats) || {};
+    const v = s0.visitors != null ? s0.visitors : null;
+    const r = s0.registered != null ? s0.registered : null;
     if (v != null) document.getElementById("site-visitors").textContent = Number(v).toLocaleString("en-IN");
     if (r != null) document.getElementById("site-registered").textContent = Number(r).toLocaleString("en-IN");
   }).catch(() => {});
