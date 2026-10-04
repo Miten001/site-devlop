@@ -496,6 +496,9 @@ if (typeof window !== "undefined") {
 
   /* Server payload -> the shape the pages render, identical in both modes. */
   function adoptWallet(payload) {
+    /* A successful response wins over a transient failed parallel request
+       (wallet.js performs a small header refresh as well as the page load). */
+    serverDown = false;
     lastWallet = payload;
     const cfg = payload.config || {};
     const nets = payload.networks || [];
@@ -583,6 +586,9 @@ if (typeof window !== "undefined") {
     const user = FF.currentUser() || {};
     return {
       mode: "local",
+      /* Distinguish an intentional demo/local session from a real signed-in
+         session that temporarily lost the Supabase connection. */
+      serverUnavailable: serverDown,
       config: {
         minDeposit: CFG.minDeposit, minWithdraw: CFG.minWithdraw,
         withdrawFeePct: CFG.withdrawFeePct, platformFeePct: CFG.platformFeePct,
