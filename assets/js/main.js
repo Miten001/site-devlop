@@ -103,25 +103,77 @@ if (typeof window !== "undefined") {
   const WARN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>';
 
   /* ---------- storage helpers ---------- */
+  /* Some in-app browsers, privacy modes and embedded previews expose
+     `window.localStorage` as null (or reject reads/writes). A direct
+     `localStorage.setItem(...)` then crashes the whole page before the login
+     form can finish. Keep the app usable for the current tab in that case,
+     while returning `false` from set() so flows that require persistence can
+     explain what the member needs to enable. */
+  const volatileStorage = Object.create(null);
+  const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+
+  function browserStorage() {
+    try {
+      const candidate = window && window.localStorage;
+      return candidate && typeof candidate.getItem === "function" &&
+        typeof candidate.setItem === "function" && typeof candidate.removeItem === "function"
+        ? candidate
+        : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   const store = {
     get(key, fallback) {
-      try { const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
-      catch (e) { return fallback; }
+      let value = null;
+      if (hasOwn(volatileStorage, key)) {
+        value = volatileStorage[key];
+      } else {
+        const storage = browserStorage();
+        if (!storage) return fallback;
+        try { value = storage.getItem(key); } catch (e) { return fallback; }
+      }
+      if (value === null || typeof value === "undefined") return fallback;
+      try { return JSON.parse(value); } catch (e) { return fallback; }
     },
-    set(key, val) { localStorage.setItem(key, JSON.stringify(val)); },
+    set(key, val) {
+      let value;
+      try { value = JSON.stringify(val); } catch (e) { return false; }
+      const storage = browserStorage();
+      if (storage) {
+        try {
+          storage.setItem(key, value);
+          delete volatileStorage[key];
+          return true;
+        } catch (e) {}
+      }
+      volatileStorage[key] = value;
+      return false;
+    },
+    remove(key) {
+      delete volatileStorage[key];
+      const storage = browserStorage();
+      if (!storage) return false;
+      try { storage.removeItem(key); return true; } catch (e) { return false; }
+    },
   };
 
   const DB = {
     users() { return store.get("ff_users", []); },
-    saveUsers(u) { store.set("ff_users", u); },
+    saveUsers(u) { return store.set("ff_users", u); },
     session() { return store.get("ff_session", null); },
-    setSession(email) { store.set("ff_session", email); if (!email) store.set("ff_auth", null); },
+    setSession(email) {
+      const sessionSaved = store.set("ff_session", email);
+      const authCleared = !email ? store.set("ff_auth", null) : true;
+      return sessionSaved && authCleared;
+    },
     /* Supabase Auth tokens. Kept separate from the member cache so logging
        out always drops them, and so nothing password-like is ever stored. */
     auth() { return store.get("ff_auth", null); },
     setAuth(session) {
       if (!session || !session.access_token) return store.set("ff_auth", null);
-      store.set("ff_auth", {
+      return store.set("ff_auth", {
         accessToken: session.access_token,
         refreshToken: session.refresh_token || null,
         userId: (session.user && session.user.id) || null,
@@ -130,12 +182,20 @@ if (typeof window !== "undefined") {
       });
     },
     campaigns() { return store.get("ff_campaigns", []); },
-    saveCampaigns(c) { store.set("ff_campaigns", c); },
+    saveCampaigns(c) { return store.set("ff_campaigns", c); },
     doneMap() { return store.get("ff_done", {}); },
-    saveDoneMap(d) { store.set("ff_done", d); },
+    saveDoneMap(d) { return store.set("ff_done", d); },
     campSubs() { return store.get("ff_camp_subs", []); },
-    saveCampSubs(s) { store.set("ff_camp_subs", s); },
+    saveCampSubs(s) { return store.set("ff_camp_subs", s); },
   };
+
+  const STORAGE_ACCESS_MESSAGE = "Your browser is blocking site data. Enable cookies/site storage for FlexFam, then try again.";
+
+  function saveAuthenticatedSession(email, session) {
+    const authSaved = DB.setAuth(session);
+    const sessionSaved = DB.setSession(email);
+    if (!authSaved || !sessionSaved) throw new Error(STORAGE_ACCESS_MESSAGE);
+  }
 
   function currentUser() {
     const email = DB.session();
@@ -390,7 +450,7 @@ if (typeof window !== "undefined") {
       const member = Object.assign(defaultMember(name, email), record);
       users.push(member);
       DB.saveUsers(users);
-      DB.setSession(email);
+      if (!DB.setSession(email)) throw new Error(STORAGE_ACCESS_MESSAGE);
       const ref = pendingRefCode();
       if (ref) { recordLocalReferral(ref, email, name); clearPendingRef(); }
       return { member, confirmationRequired: false, localOnly: true };
@@ -403,7 +463,7 @@ if (typeof window !== "undefined") {
     if (user.passwordDigest && user.passwordSalt) {
       return passwordDigest(password, user.passwordSalt).then((digest) => {
         if (digest !== user.passwordDigest) throw new Error("Incorrect email or password");
-        DB.setSession(email);
+        if (!DB.setSession(email)) throw new Error(STORAGE_ACCESS_MESSAGE);
         return user;
       });
     }
@@ -411,7 +471,7 @@ if (typeof window !== "undefined") {
     if (typeof user.pass === "string" && user.pass === password) {
       return localPasswordRecord(password).then((record) => {
         replaceLegacyPassword(email, record);
-        DB.setSession(email);
+        if (!DB.setSession(email)) throw new Error(STORAGE_ACCESS_MESSAGE);
         return currentUser();
       });
     }
@@ -429,7 +489,7 @@ if (typeof window !== "undefined") {
       const member = rememberMember(name, email, result.user.id);
       if (refCode) { recordLocalReferral(refCode, email, name); clearPendingRef(); }
       if (result.session) {
-        DB.setAuth(result.session); DB.setSession(email);
+        saveAuthenticatedSession(email, result.session);
         return { member, confirmationRequired: false, localOnly: false };
       }
       // No session returned (email confirmation may be on) — log the user in
@@ -449,8 +509,7 @@ if (typeof window !== "undefined") {
       if (!result.user) throw new Error("Incorrect email or password");
       const profileName = result.user.user_metadata && result.user.user_metadata.display_name;
       const member = rememberMember(profileName || email.split("@")[0], email, result.user.id, { welcome: false });
-      DB.setAuth(result);
-      DB.setSession(email);
+      saveAuthenticatedSession(email, result);
       return member;
     }).catch((error) => {
       /* Existing demo/local accounts remain usable after this secure upgrade. */
@@ -751,11 +810,15 @@ if (typeof window !== "undefined") {
   }
 
   /* ---------- toast ---------- */
-  function toast(msg, kind) {
+  function toast(msg, kind, options) {
     const icons = { ok: CHECK_SVG, err: WARN_SVG, info: SPARK_SVG };
     kind = icons[kind] ? kind : "info";
+    options = options || {};
 
-    if (kind === "err" && window.FFA && typeof window.FFA.trackError === "function") {
+    /* Validation and bad-password messages are expected member feedback, not
+       application failures. Callers can opt out so the admin error dashboard
+       stays focused on faults that actually need a code fix. */
+    if (kind === "err" && options.report !== false && window.FFA && typeof window.FFA.trackError === "function") {
       try {
         window.FFA.trackError(String(msg || "Error notification"), {
           type: "app_error",
@@ -1023,7 +1086,11 @@ if (typeof window !== "undefined") {
           const params = new URLSearchParams(location.search);
           setTimeout(() => (window.location.href = params.get("next") || "dashboard.html"), 800);
         }).catch((error) => {
-          toast(error.message || "Incorrect email or password", "err");
+          const message = error.message || "Incorrect email or password";
+          /* A rejected password is normal user feedback, not an app error. */
+          const expected = /invalid login credentials|incorrect email or password/i.test(message) ||
+            message === STORAGE_ACCESS_MESSAGE;
+          toast(message, "err", { report: !expected });
         }).finally(() => {
           if (submit) { submit.disabled = false; submit.textContent = submit.dataset.label || "Login"; }
         });
@@ -1061,7 +1128,9 @@ if (typeof window !== "undefined") {
           delete demo.pass;
           DB.saveUsers(users);
         }
-        DB.setSession("demo@flexfam.io");
+        if (!DB.setSession("demo@flexfam.io")) {
+          return toast(STORAGE_ACCESS_MESSAGE, "err", { report: false });
+        }
         toast("Logged into the demo account!", "ok");
         setTimeout(() => (window.location.href = "dashboard.html"), 700);
       });
