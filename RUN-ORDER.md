@@ -22,6 +22,8 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 16 | supabase-referral-pyramid.sql | **Referral pyramid** — 3-level referral income (L1 10% / L2 3% / L3 1%) har earning par (campaigns points, tasks/streak/mining USDT); Refer page par pyramid panel + income; wallet history me 'L1/L2/L3 referral income' entries | 3, 5, 13, 14, 15 (sab latest, sabse aakhir) |
 | 17 | [`supabase-campaigns-url-fix.sql`](supabase-campaigns-url-fix.sql) | **URL fix** — `ff_normalize_url()` + `campaigns_post` ab link ko khud saaf karta hai (`t.me/x`, `www.foo.com/y`, extra space/zero-width/brackets sab chalte hain). Isse Add Page ka galat "Please enter a valid URL (https://...)" error khatam | 15 |
 | 18 | [`supabase-admin-task-runners.sql`](supabase-admin-task-runners.sql) | **Admin task runners list** — admin.html ka naya "⚡ Tasks" section + Members table ka "Tasks running" column: har member ka scorecard (live/paused/total campaigns, tasks approved, pending proofs, coins spent) bina click kiye dikhta hai. `admin_task_runners()` RPC | 1, 5 |
+| 19 | [`supabase-admin-proofs.sql`](supabase-admin-proofs.sql) | **Admin proof review** — USDT Task Market + point campaign proofs ka unified review, View proof, approve/reject | 1, 3, 5 |
+| 20 | [`supabase-member-warnings.sql`](supabase-member-warnings.sql) | **Member warnings** — admin warning/final warning, dashboard acknowledgement banner aur inbox message | 1 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
 
