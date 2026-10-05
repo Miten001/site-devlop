@@ -118,6 +118,33 @@
   .ev-pill.wallet { color: var(--blue); border-color: rgba(47,111,237,.35); }
   .ev-pill.mining { color: var(--amber); border-color: rgba(154,100,16,.3); }
 
+  /* ============ admin section menu — sticky quick-jump ============ */
+  html { scroll-behavior: smooth; }
+  .admin-sec-nav {
+    position: sticky; top: 72px; z-index: 41;
+    display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    padding: 9px 10px; margin: 0 0 20px;
+    border: 1px solid var(--line); border-radius: 14px;
+    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    scrollbar-width: none;
+  }
+  .admin-sec-nav::-webkit-scrollbar { display: none; }
+  .admin-sec-nav a { flex: 0 0 auto; padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--ink-dim); text-decoration: none; border: 1px solid transparent; white-space: nowrap; }
+  .admin-sec-nav a:hover { color: var(--ink); border-color: var(--line); background: var(--glass-2); }
+  .admin-sec-nav a.on { color: var(--ink); border-color: rgba(224,72,159,.45); background: rgba(224,72,159,.14); }
+  .admin-shell section[id], .admin-shell div.admin-cols[id] { scroll-margin-top: 148px; }
+  @media (max-width: 560px) {
+    .admin-sec-nav { top: 66px; }
+    .admin-shell section[id], .admin-shell div.admin-cols[id] { scroll-margin-top: 132px; }
+  }
+
+  /* ============ task runners — kaun kitna chala raha hai ============ */
+  .task-panel { margin-top: 16px; }
+  .task-panel .mini-stats { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin-bottom: 14px; }
+  .ff-table th.num, .ff-table td.num { text-align: right; }
+  .member-table { min-width: 980px; }   /* +1 column (Tasks running) */
+  .run-sub { font-size: 11px; color: var(--ink-mute); }
+
   /* broadcast / direct message composer */
   .msg-panel { margin-top: 16px; }
   .msg-panel textarea { width: 100%; min-height: 110px; resize: vertical; }
@@ -215,6 +242,17 @@
       </div>
     </div>
 
+    <!-- ADMIN SECTION MENU — sticky quick-jump, har panel tak seedha pahuncho -->
+    <nav class="admin-sec-nav" id="admin-sec-nav" aria-label="Admin menu">
+      <a href="#sec-members">👥 Members</a>
+      <a href="#sec-tasks">⚡ Tasks</a>
+      <a href="#sec-campaigns">🚀 Campaigns</a>
+      <a href="#sec-payments">💳 Payments</a>
+      <a href="#sec-messages">✉️ Messages</a>
+      <a href="#sec-errors">⚠️ Errors</a>
+      <a href="#sec-analytics">📊 Analytics</a>
+    </nav>
+
     <div class="admin-grid">
       <div class="dash-stat" style="--c:#22d3ee"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span><div class="ds-num" id="k-views">—</div><div class="ds-lbl">Total views</div></div>
       <div class="dash-stat" style="--c:#ffd166"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span><div class="ds-num" id="k-today">—</div><div class="ds-lbl">Today's views</div></div>
@@ -226,18 +264,51 @@
       <div class="dash-stat" style="--c:#ff5d6e"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><div class="ds-num" id="k-errors">—</div><div class="ds-lbl">User errors / issues</div></div>
     </div>
 
-    <section class="panel member-panel" aria-labelledby="members-title">
+    <section class="panel member-panel" id="sec-members" aria-labelledby="members-title">
       <div class="panel-head"><h3 id="members-title">Registered accounts</h3><span class="status-pill on" id="member-count">0 members</span></div>
-      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. <b>Click an email</b> to open that member's <b>coins &amp; USDT</b>, <b>campaigns they run</b>, <b>tasks they completed</b> (with proofs), recent site activity and the coin/USDT editor. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
+      <p class="member-note">Signup <b>ID, display name, email and time</b> are available to allowlisted admins. The <b>Tasks running</b> column shows — without clicking — how many live campaigns each member is running. <b>Click an email</b> to open that member's <b>coins &amp; USDT</b>, <b>campaigns they run</b>, <b>tasks they completed</b> (with proofs), recent site activity and the coin/USDT editor. Passwords are intentionally protected by Supabase Auth and can never be viewed or exported.</p>
       <div class="member-table-wrap">
         <table class="ff-table member-table">
-          <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Coins</th><th>Password</th></tr></thead>
-          <tbody id="t-members"><tr><td colspan="6">Loading registered accounts…</td></tr></tbody>
+          <thead><tr><th>Account ID</th><th>Member</th><th>Email / login ID</th><th>Joined</th><th>Coins</th><th>Tasks running</th><th>Password</th></tr></thead>
+          <tbody id="t-members"><tr><td colspan="7">Loading registered accounts…</td></tr></tbody>
         </table>
       </div>
     </section>
 
-    <section class="panel camp-panel" aria-labelledby="camp-title">
+    <!-- TASK RUNNERS — kaun kitna chala raha hai, bina click kiye counts yahin -->
+    <section class="panel task-panel" id="sec-tasks" aria-labelledby="task-title">
+      <div class="panel-head">
+        <div>
+          <h3 id="task-title">Tasks — who is running what</h3>
+          <p class="panel-sub">Har member ka task scorecard ek hi list me — <b>kitne campaigns live hain</b>, kitne paused, kitne tasks approve hue, kitne proofs review ke liye pending hain. Kisi member par <b>click</b> karo to uski poori detail (campaigns + proofs + coins) khul jaayegi.</p>
+        </div>
+        <span class="status-pill on" id="runner-count">0 members</span>
+      </div>
+      <div class="msg-modes" style="margin-bottom:12px" id="runner-filter-chips">
+        <button type="button" class="seg on" data-runner-filter="all">All task members (<span id="run-all-count">0</span>)</button>
+        <button type="button" class="seg" data-runner-filter="owners">🚀 Running campaigns (<span id="run-owners-count">0</span>)</button>
+        <button type="button" class="seg" data-runner-filter="workers">✅ Doing tasks (<span id="run-workers-count">0</span>)</button>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat"><b id="tk-camps">—</b><span>Total campaigns</span></div>
+        <div class="mini-stat"><b id="tk-active">—</b><span>Running now</span></div>
+        <div class="mini-stat"><b id="tk-paused">—</b><span>Paused</span></div>
+        <div class="mini-stat"><b id="tk-done">—</b><span>Tasks approved</span></div>
+        <div class="mini-stat"><b id="tk-pending">—</b><span>Proofs pending</span></div>
+      </div>
+      <div class="fee-hint warn hidden" id="runner-warn" style="margin-bottom:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span id="runner-warn-text"></span>
+      </div>
+      <div class="member-table-wrap">
+        <table class="ff-table member-table runner-table">
+          <thead><tr><th>Member</th><th class="num">Running now</th><th class="num">Paused</th><th class="num">Total campaigns</th><th class="num">Tasks done</th><th class="num">Pending proofs</th><th class="num">Coins spent</th><th>Status</th></tr></thead>
+          <tbody id="t-runners"><tr><td colspan="8">Loading task runners…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel camp-panel" id="sec-campaigns" aria-labelledby="camp-title">
       <div class="panel-head">
         <div><h3 id="camp-title">Campaigns — view / edit / delete</h3><p class="panel-sub">Every campaign on the site, with the member who created it. <b>Edit</b> any detail (title, link, platform, action, payout, watch time), <b>pause / resume</b> or <b>delete</b> anything — no matter whose campaign it is.</p></div>
         <span class="status-pill on" id="camp-count">0 campaigns</span>
@@ -250,7 +321,7 @@
       </div>
     </section>
 
-    <section class="panel pay-panel" aria-labelledby="pay-title">
+    <section class="panel pay-panel" id="sec-payments" aria-labelledby="pay-title">
       <div class="panel-head">
         <div><h3 id="pay-title">Payments — approve / reject</h3><p class="panel-sub">Verify the on-chain transaction before approving a deposit; rejecting returns the member's funds.</p></div>
         <span class="status-pill on" id="pay-count">0 pending</span>
@@ -274,7 +345,7 @@
       </div>
     </section>
 
-    <section class="panel msg-panel" aria-labelledby="msg-title">
+    <section class="panel msg-panel" id="sec-messages" aria-labelledby="msg-title">
       <div class="panel-head">
         <div><h3 id="msg-title">Messages — broadcast or direct</h3><p class="panel-sub">Send an announcement to every member, or a private note to one account. Member support messages arrive in <b>Inbox</b>; everything you send is under <b>Sent</b>.</p></div>
         <span class="status-pill on" id="msg-count">0 sent</span>
@@ -311,7 +382,7 @@
       </div>
     </section>
 
-    <section class="panel error-panel" id="panel-errors" aria-labelledby="errors-title" style="margin-top:16px">
+    <section class="panel error-panel" id="sec-errors" aria-labelledby="errors-title" style="margin-top:16px">
       <div class="panel-head">
         <div>
           <h3 id="errors-title" style="display:flex;align-items:center;gap:8px">
@@ -345,7 +416,7 @@
       </div>
     </section>
 
-    <div class="admin-cols">
+    <div class="admin-cols" id="sec-analytics">
       <div>
         <div class="panel">
           <div class="panel-head"><h3>Top pages</h3><span class="status-pill on">Live</span></div>
@@ -543,6 +614,12 @@
   var balMode = "adjust";
   var msgMode = "all";
   var SKEY = "ff_admin_session";
+  /* task runners — kaun kitne campaigns/tasks chala raha hai */
+  var runnerRows = [];        /* admin_task_runners() ka raw result */
+  var runnerMap = {};         /* userId → scorecard row (RPC ya campRows fallback) */
+  var runnerRpcOk = null;     /* null = loading · true = RPC · false = fallback */
+  var lastRunnerTotals = null;
+  var activeRunnerFilter = "all";
 
   function fmtUsd(n) {
     return "$" + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -698,6 +775,7 @@
     loadPayments();
     loadMessages();
     loadCampaigns();
+    loadTaskRunners();
   }
 
   /* Renders the actor behind an event: a member (clickable → coin modal)
@@ -861,7 +939,7 @@
       members = [];
       $("k-members").textContent = "—";
       $("member-count").textContent = "Setup needed";
-      body.innerHTML = '<tr><td colspan="6">Run the updated <code>supabase.sql</code> once, then refresh to load registered accounts.</td></tr>';
+      body.innerHTML = '<tr><td colspan="7">Run the updated <code>supabase.sql</code> once, then refresh to load registered accounts.</td></tr>';
       return;
     }
     members = rows || [];
@@ -870,7 +948,7 @@
     $("k-members").textContent = members.length.toLocaleString("en-IN");
     $("member-count").textContent = members.length.toLocaleString("en-IN") + (members.length === 1 ? " member" : " members");
     if (!members.length) {
-      body.innerHTML = '<tr><td colspan="6">No registered accounts yet.</td></tr>';
+      body.innerHTML = '<tr><td colspan="7">No registered accounts yet.</td></tr>';
       return;
     }
     body.innerHTML = members.map(function (member) {
@@ -881,12 +959,170 @@
       var coinsCell = bal
         ? '<td class="num" title="Coins and USDT are separate balances">' + esc(fmtPts(bal.points)) + ' <span class="coin-unit">coins</span><br><span class="coin-unit">' + esc(fmtUsdt(bal.usdt)) + '</span></td>'
         : '<td class="num" style="color:var(--ink-mute);font-weight:600">—</td>';
+      /* bina click kiye dikhna chahiye: ye member kitne tasks chala raha hai */
+      var run = runnerMap[rawId];
+      var runCell;
+      if (run && (Number(run.totalCamps) > 0 || Number(run.tasksDone || 0) + Number(run.tasksPending || 0) > 0)) {
+        var live = Number(run.active || 0);
+        runCell = '<td class="num" style="white-space:nowrap">' +
+          (live > 0
+            ? '<b style="color:var(--green)">🚀 ' + fmtPts(live) + '</b> <span class="coin-unit">live</span>'
+            : '<span style="color:var(--ink-mute)">0 live</span>') +
+          '<br><span class="coin-unit">' + fmtPts(run.totalCamps) + ' total' +
+          (run.tasksDone != null ? ' · ' + fmtPts(run.tasksDone) + ' done' : '') +
+          '</span></td>';
+      } else if (runnerRpcOk === null) {
+        runCell = '<td class="num" style="color:var(--ink-mute)">…</td>';
+      } else {
+        runCell = '<td class="num" style="color:var(--ink-mute)">—</td>';
+      }
       return '<tr><td><code class="member-id" title="' + esc(rawId) + '">' + esc(accountId) + '</code></td>' +
         '<td class="k">' + esc(member.display_name || "Member") + '</td>' +
         '<td><button type="button" class="mail-link" data-member="' + esc(rawId) + '" title="Open coin activity &amp; coin editor">' + esc(member.email || "—") + '</button></td>' +
         '<td class="member-date">' + esc(joined) + '</td>' +
         coinsCell +
+        runCell +
         '<td><span class="password-protected">Protected 🔒</span></td></tr>';
+    }).join("");
+  }
+
+  /* ==================== task runners — kaun kitna chala raha hai ====================
+     Do source se data:
+       1. admin_task_runners() RPC (supabase-admin-task-runners.sql) — full scorecard:
+          active/paused/total campaigns + tasks done + pending proofs
+       2. fallback: admin_campaigns_list ke campRows se owner-wise counts
+          (SQL nahi chala tab bhi campaign counts dikhte hain; tasks "—" aate hain) */
+  function runnerFromCamps() {
+    var map = {};
+    (campRows || []).forEach(function (c) {
+      var id = String(c.ownerId || "");
+      if (!id) return;
+      if (!map[id]) {
+        map[id] = { userId: id, name: c.ownerName || "Member", email: c.ownerEmail || "",
+                    totalCamps: 0, active: 0, paused: 0, actions: 0, spent: 0,
+                    tasksDone: null, tasksPending: null };
+      }
+      var r = map[id];
+      r.totalCamps += 1;
+      r.actions += Number(c.actions || 0);
+      r.spent += Number(c.spent || 0);
+      if (c.active) r.active += 1; else r.paused += 1;
+    });
+    return map;
+  }
+
+  function loadTaskRunners() {
+    runnerRpcOk = null;
+    rpc("admin_task_runners").then(function (r) {
+      runnerRpcOk = true;
+      runnerRows = (r && r.runners) || [];
+      lastRunnerTotals = (r && (r.totalCamps != null || r.activeCamps != null)) ? r : null;
+      renderRunners();
+    }).catch(function () {
+      runnerRpcOk = false;
+      runnerRows = [];
+      lastRunnerTotals = null;
+      renderRunners();   /* campRows fallback (agar load ho chuke hain) */
+    });
+  }
+
+  function renderRunners() {
+    var body = $("t-runners");
+    if (!body) return;
+    var map = {};
+    if (runnerRpcOk) {
+      runnerRows.forEach(function (r) { if (r && r.userId) map[String(r.userId)] = r; });
+    } else if (runnerRpcOk === false) {
+      map = runnerFromCamps();
+    }
+    runnerMap = map;
+
+    var list = Object.keys(map).map(function (k) { return map[k]; });
+    var owners = list.filter(function (r) { return Number(r.totalCamps || 0) > 0; });
+    var workers = list.filter(function (r) { return Number(r.tasksDone || 0) + Number(r.tasksPending || 0) > 0; });
+
+    /* chips ke counts */
+    if ($("run-all-count")) $("run-all-count").textContent = list.length;
+    if ($("run-owners-count")) $("run-owners-count").textContent = owners.length;
+    if ($("run-workers-count")) $("run-workers-count").textContent = workers.length;
+
+    /* mini stats */
+    var t = lastRunnerTotals;
+    var totCamps = t && t.totalCamps != null ? Number(t.totalCamps) : (campRows || []).length;
+    var actCamps = t && t.activeCamps != null ? Number(t.activeCamps)
+      : (campRows || []).filter(function (c) { return c.active; }).length;
+    var pauCamps = t && t.pausedCamps != null ? Number(t.pausedCamps)
+      : (campRows || []).filter(function (c) { return !c.active; }).length;
+    var doneKnown = runnerRpcOk === true;
+    var totDone = 0, totPending = 0;
+    list.forEach(function (r) {
+      totDone += Number(r.tasksDone || 0);
+      totPending += Number(r.tasksPending || 0);
+    });
+    if ($("tk-camps")) $("tk-camps").textContent = fmtPts(totCamps);
+    if ($("tk-active")) $("tk-active").textContent = fmtPts(actCamps);
+    if ($("tk-paused")) $("tk-paused").textContent = fmtPts(pauCamps);
+    if ($("tk-done")) $("tk-done").textContent = doneKnown ? fmtPts(totDone) : "—";
+    if ($("tk-pending")) $("tk-pending").textContent = doneKnown ? fmtPts(totPending) : "—";
+
+    /* setup hint (fallback chal raha hai to) */
+    var warn = $("runner-warn");
+    if (warn) {
+      if (runnerRpcOk === false) {
+        $("runner-warn-text").innerHTML = "Full scorecard ke liye <code>supabase-admin-task-runners.sql</code> once Supabase SQL editor me run karo — phir tasks done / pending proofs bhi yahin dikhenge. Filhaal campaign counts <code>admin_campaigns_list</code> se aa rahe hain.";
+        warn.classList.remove("hidden");
+      } else {
+        warn.classList.add("hidden");
+      }
+    }
+
+    /* filter */
+    var shown = list;
+    if (activeRunnerFilter === "owners") shown = owners;
+    else if (activeRunnerFilter === "workers") shown = workers;
+    shown = shown.slice().sort(function (a, b) {
+      return (Number(b.active || 0) - Number(a.active || 0)) ||
+             (Number(b.totalCamps || 0) - Number(a.totalCamps || 0)) ||
+             String(a.name || "").localeCompare(String(b.name || ""));
+    });
+
+    if ($("runner-count")) {
+      $("runner-count").textContent = shown.length + (shown.length === 1 ? " member" : " members");
+    }
+
+    if (!shown.length) {
+      var why = runnerRpcOk === false
+        ? 'No campaigns found yet — jo member campaign banayega wo yahan list ho jaayega.'
+        : 'No members running campaigns or tasks yet — jaise hi koi campaign banayega ya task karega, wo yahan dikhega.';
+      body.innerHTML = '<tr><td colspan="8" style="color:var(--ink-mute);text-align:center;padding:18px">' + why + '</td></tr>';
+      return;
+    }
+
+    body.innerHTML = shown.map(function (r) {
+      var rawId = String(r.userId || "");
+      var accountId = rawId ? "FF-" + rawId.replace(/-/g, "").slice(0, 8).toUpperCase() : "—";
+      var live = Number(r.active || 0), paused = Number(r.paused || 0);
+      var pending = Number(r.tasksPending || 0);
+      var doneCell = r.tasksDone == null
+        ? '<td class="num" style="color:var(--ink-mute)" title="supabase-admin-task-runners.sql run karo">—</td>'
+        : '<td class="num">' + fmtPts(r.tasksDone) + '</td>';
+      var pendCell = r.tasksPending == null
+        ? '<td class="num" style="color:var(--ink-mute)" title="supabase-admin-task-runners.sql run karo">—</td>'
+        : '<td class="num">' + (pending > 0 ? '<b style="color:var(--amber)">' + fmtPts(pending) + '</b>' : fmtPts(pending)) + '</td>';
+      var status = [];
+      if (live > 0) status.push('<span class="st-pill st-active">🚀 ' + fmtPts(live) + ' live</span>');
+      if (paused > 0) status.push('<span class="st-pill st-paused">⏸ ' + fmtPts(paused) + ' paused</span>');
+      if (pending > 0) status.push('<span class="st-pill st-pending">' + fmtPts(pending) + ' proof' + (pending === 1 ? '' : 's') + ' pending</span>');
+      if (!status.length) status.push('<span class="st-pill st-paused">Task doer</span>');
+      return '<tr>' +
+        '<td><button type="button" class="mail-link" data-member="' + esc(rawId) + '" style="white-space:normal;text-align:left" title="Is member ki poori detail kholo (campaigns + proofs + coins)"><b>' + esc(r.name || "Member") + '</b></button>' +
+          '<br><span class="run-sub">' + esc(r.email || "") + ' · ' + esc(accountId) + '</span></td>' +
+        '<td class="num">' + (live > 0 ? '<b style="color:var(--green)">' + fmtPts(live) + '</b>' : fmtPts(live)) + '</td>' +
+        '<td class="num">' + fmtPts(paused) + '</td>' +
+        '<td class="num">' + fmtPts(r.totalCamps) + '</td>' +
+        doneCell + pendCell +
+        '<td class="num">' + fmtPts(r.spent) + '</td>' +
+        '<td style="white-space:nowrap">' + status.join(" ") + '</td></tr>';
     }).join("");
   }
 
@@ -1135,6 +1371,9 @@
 
   function renderCampaigns(r) {
     campRows = (r && r.campaigns) || [];
+    /* task runners fallback mode me campRows se counts banata hai —
+       campaigns late aaye to runners table dobara paint karo */
+    if (runnerRpcOk === false) renderRunners();
     var n = campRows.length;
     $("camp-count").textContent = n + (n === 1 ? " campaign" : " campaigns");
     if (!n) {
@@ -1359,6 +1598,13 @@
     $("btn-logout").onclick = function () { saveSession(null); show("login"); };
     $("btn-refresh").onclick = load;
 
+    /* admin section menu — click par active pill, smooth scroll CSS se */
+    document.querySelectorAll("#admin-sec-nav a").forEach(function (a) {
+      a.addEventListener("click", function () {
+        document.querySelectorAll("#admin-sec-nav a").forEach(function (x) { x.classList.toggle("on", x === a); });
+      });
+    });
+
     /* show / hide the admin login password */
     $("btn-eye").addEventListener("click", function () {
       var p = $("a-pass");
@@ -1555,6 +1801,15 @@
           b.classList.toggle("on", b === evFilterBtn);
         });
         renderRecentEvents(last);
+        return;
+      }
+      var runFilterBtn = e.target.closest("[data-runner-filter]");
+      if (runFilterBtn) {
+        activeRunnerFilter = runFilterBtn.getAttribute("data-runner-filter") || "all";
+        document.querySelectorAll("[data-runner-filter]").forEach(function (b) {
+          b.classList.toggle("on", b === runFilterBtn);
+        });
+        renderRunners();
         return;
       }
       var memBtn = e.target.closest("[data-member]");
