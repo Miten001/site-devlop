@@ -47,6 +47,8 @@
 .streak-day.cap .tick { color: var(--amber, #ffd166); }
 .streak-day.cap.done { border-color: rgba(52,229,165,.65); background: linear-gradient(100deg, rgba(52,229,165,.18), rgba(255,209,102,.10)); }
 .streak-day.cap.done .tick, .streak-day.cap.done .r { color: var(--green, #34e5a5); }
+
+.admin-warn-banner{border:1px solid rgba(255,93,110,.5);border-left:5px solid #ff5d6e;background:rgba(255,93,110,.12);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start}.admin-warn-banner .aw-body{flex:1}.admin-warn-banner .aw-title{font-weight:800;color:#ff8a99}.admin-warn-banner .aw-reason{margin-top:5px;white-space:pre-wrap}.admin-warn-banner.final{border-color:#dc2626}
 </style>
 </head>
 <body class="app-body" data-requires-auth>
@@ -107,6 +109,7 @@
     </aside>
 
     <section>
+      <div id="admin-warnings"></div>
       <div class="page-head">
         <div>
           <span class="eyebrow"><span class="dot"></span> Overview</span>
@@ -759,6 +762,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   streakLoad();
+
+  /* Admin warnings: unacknowledged warnings stay visible until acknowledged. */
+  const awBox=document.getElementById("admin-warnings");
+  function awRender(list){const open=(list||[]).filter(w=>!w.acknowledged);if(!awBox)return;awBox.innerHTML=open.map(w=>'<div class="admin-warn-banner '+(w.severity==='final'?'final':'')+'" data-aw="'+escMsg(w.id)+'"><span>'+(w.severity==='final'?'🚫':'⚠️')+'</span><div class="aw-body"><div class="aw-title">'+(w.severity==='final'?'FINAL WARNING':'Warning from admin')+'</div><div class="aw-reason">'+escMsg(w.reason)+'</div></div><button class="btn btn-ghost btn-sm" data-aw-ack="'+escMsg(w.id)+'">Samajh gaya ✓</button></div>').join('');}
+  if(awBox&&FF.rpc&&FF.hasServer&&FF.hasServer()){FF.rpc("member_warnings").then(r=>awRender(r&&r.warnings)).catch(()=>{});awBox.addEventListener("click",e=>{const b=e.target.closest("[data-aw-ack]");if(!b)return;b.disabled=true;FF.rpc("member_warning_ack",{p_id:b.getAttribute("data-aw-ack")}).then(()=>{const row=b.closest("[data-aw]");if(row)row.remove();FF.toast("Warning acknowledged", "ok");}).catch(()=>{b.disabled=false;});});}
 
   /* Server se fresh campaign state aaye (dusro ki campaigns, naye proofs)
      to dashboard turant dobara render karo. */
