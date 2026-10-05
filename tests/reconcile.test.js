@@ -254,6 +254,15 @@ async function main() {
   check("wallet safely falls back to browser mode", offlineWallet.mode === "local", offlineWallet.mode);
   check("wallet view explains it is an offline fallback", offlineWallet.serverUnavailable === true, offlineWallet);
 
+  /* ============ SCENARIO 12: storage unavailable ============ */
+  console.log("\n[12] unavailable localStorage must not crash the shared engine");
+  const originalStorage = global.localStorage;
+  global.localStorage = null; // Seen in privacy-restricted embedded browsers.
+  const persisted = FF.store.set("ff_storage_unavailable_test", { usable: true });
+  check("storage write safely falls back to volatile memory", persisted === false, persisted);
+  check("storage read returns the volatile value", FF.store.get("ff_storage_unavailable_test", {}).usable === true, FF.store.get("ff_storage_unavailable_test", {}));
+  global.localStorage = originalStorage;
+
   console.log("\nRESULT: " + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 }
