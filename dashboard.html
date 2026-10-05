@@ -255,7 +255,7 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.6"></script>
-<script src="assets/js/wallet.js?v=2.2"></script>
+<script src="assets/js/wallet.js?v=2.3"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/campaigns.js?v=2.0"></script>
 <script src="assets/js/support.js?v=1.0"></script>
@@ -718,14 +718,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!FF.hasServer || !FF.hasServer()) { stPanel.style.display = "none"; return; }
     FF.rpc("streak_state").then(streakRender).catch((err) => {
       const m = (err && err.message) || "";
+      if (/streak_state|does not exist|PGRST|permission|function/i.test(m)) {
+        /* Streak migration missing — member ko setup text nahi dikhna chahiye.
+           Panel chhupa do (offline mode jaisa); owner ke liye detail console me. */
+        console.warn("[FlexFam] Daily streak not live on server yet — run supabase-daily-streak.sql once in the Supabase SQL editor, then reload.");
+        stPanel.style.display = "none";
+        return;
+      }
       stBtn.disabled = true;
       stBtn.textContent = "Check in";
-      if (/streak_state|does not exist|PGRST|permission|function/i.test(m)) {
-        stPill.textContent = "Setup needed";
-        stHint.textContent = "Daily streak needs one SQL: run supabase-daily-streak.sql in the Supabase SQL editor, then reload.";
-      } else {
-        stHint.textContent = "Could not load your streak — try again in a moment.";
-      }
+      stHint.textContent = "Could not load your streak — try again in a moment.";
     });
   }
 

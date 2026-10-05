@@ -136,7 +136,7 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.6"></script>
-<script src="assets/js/wallet.js?v=2.2"></script>
+<script src="assets/js/wallet.js?v=2.3"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
@@ -215,9 +215,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (FF.hasServer && FF.hasServer()) {
     FF.rpc("referral_pyramid").then(paintPyramid).catch((err) => {
       const m = (err && err.message) || "";
-      document.getElementById("pyr-hint").textContent = /referral_pyramid|does not exist|PGRST|permission/i.test(m)
-        ? "Setup needed — run supabase-referral-pyramid.sql in the Supabase SQL editor, then reload."
-        : "Could not load your pyramid — try again in a moment.";
+      /* Members ko setup/migration detail kabhi nahi dikhni — wo sirf admin
+         ke kaam ki hai. Owner detail console me dekh sakta hai. */
+      if (/referral_pyramid|does not exist|PGRST|permission/i.test(m)) {
+        console.warn("[FlexFam] Referral pyramid not live on server yet — run supabase-referral-pyramid.sql once in the Supabase SQL editor, then reload.");
+        paintPyramid(null);   /* hint apna default levels text rakhta hai */
+        return;
+      }
+      document.getElementById("pyr-hint").textContent = "Could not load your pyramid — try again in a moment.";
       paintPyramid(null);
     });
   } else {

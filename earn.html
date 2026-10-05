@@ -185,7 +185,7 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.6"></script>
-<script src="assets/js/wallet.js?v=2.2"></script>
+<script src="assets/js/wallet.js?v=2.3"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/campaigns.js?v=2.0"></script>
 <script src="assets/js/support.js?v=1.0"></script>
@@ -562,7 +562,10 @@ document.addEventListener("DOMContentLoaded", () => {
         headers: { apikey: cfg.anonKey, Authorization: "Bearer " + token, "Content-Type": file.type || "image/png" },
         body: file,
       }).then((res) => res.text().then(() => {
-        if (!res.ok) throw new Error("Upload failed — use the link option instead (admin: run supabase-proof-storage.sql)");
+        if (!res.ok) {
+          console.warn("[FlexFam] Proof upload not live on server yet — run supabase-proof-storage.sql once in the Supabase SQL editor.");
+          throw new Error("Upload failed — please use the link option instead.");
+        }
         return String(cfg.url).replace(/\/+$/, "") + "/storage/v1/object/public/proofs/" + path;
       }));
     });

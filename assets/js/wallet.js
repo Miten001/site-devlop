@@ -484,7 +484,9 @@ if (typeof window !== "undefined") {
          rather than silently changing a browser-only balance. */
       const message = String((err && err.message) || "");
       if (fn === "wallet_convert_usdt" && /wallet_convert_usdt|schema cache/i.test(message)) {
-        const setup = new Error("USDT → Points is not enabled on the server yet. Admin: run supabase-wallet-convert-usdt-fix.sql in Supabase SQL Editor.");
+        /* Members ko migration detail nahi — friendly message, admin hint console me. */
+        console.warn("[FlexFam] wallet_convert_usdt not live on server yet — run supabase-wallet-convert-usdt-fix.sql once in the Supabase SQL editor.");
+        const setup = new Error("USDT → Points is not available right now — please try again later.");
         setup.code = "WALLET_MIGRATION_REQUIRED";
         throw setup;
       }
