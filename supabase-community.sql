@@ -214,13 +214,21 @@ update public.mining_plans
 
 create table if not exists public.messages (
   id         uuid primary key default gen_random_uuid(),
-  audience   text not null default 'all' check (audience in ('all', 'user')),
+  /* `admin` is reserved for member → support messages. It is never part of
+     the member inbox/bell feed, so support tickets stay in the admin panel. */
+  audience   text not null default 'all' check (audience in ('all', 'user', 'admin')),
   user_id    uuid references auth.users(id) on delete cascade,
   title      text not null default '',
   body       text not null,
   sent_by    text not null default '',
   created_at timestamptz not null default now()
 );
+
+/* Existing installs had a two-value audience check. Recreate it safely so
+   the support-only `admin` audience is available after a re-run too. */
+alter table public.messages drop constraint if exists messages_audience_check;
+alter table public.messages add constraint messages_audience_check
+  check (audience in ('all', 'user', 'admin'));
 
 create index if not exists messages_created_idx on public.messages (created_at desc);
 create index if not exists messages_user_idx    on public.messages (user_id);
@@ -236,12 +244,17 @@ alter table public.messages      enable row level security;
 alter table public.message_reads enable row level security;
 revoke all on table public.messages      from anon, authenticated;
 revoke all on table public.message_reads from anon, authenticated;
-grant select on table public.messages to authenticated;
 
+/* There is deliberately no direct table SELECT grant for regular members.
+   Every browser read goes through a security-definer RPC below, where the
+   recipient is always derived from auth.uid(). This prevents a crafted REST
+   query from exposing another member's private/support message. */
 drop policy if exists "read own messages"   on public.messages;
 drop policy if exists "admins read messages" on public.messages;
 create policy "read own messages" on public.messages for select
-  to authenticated using (audience = 'all' or user_id = auth.uid());
+  to authenticated using (
+    audience = 'all' or (audience = 'user' and user_id = auth.uid())
+  );
 create policy "admins read messages" on public.messages for select
   to authenticated using (public.is_admin());
 
@@ -306,7 +319,7 @@ begin
             'at', extract(epoch from m.created_at) * 1000,
             'read', r.user_id is not null) order by m.created_at desc), '[]'::jsonb)
           from (select * from public.messages
-                 where audience = 'all' or user_id = v_user
+                 where audience = 'all' or (audience = 'user' and user_id = v_user)
                  order by created_at desc limit 50) m
           left join public.message_reads r on r.message_id = m.id and r.user_id = v_user);
 end;
@@ -322,7 +335,7 @@ begin
   if v_user is null then raise exception 'Please log in' using errcode = 'P0001'; end if;
   insert into public.message_reads (message_id, user_id)
   select m.id, v_user from public.messages m
-   where (m.audience = 'all' or m.user_id = v_user)
+   where m.audience = 'all' or (m.audience = 'user' and m.user_id = v_user)
   on conflict do nothing;
   return public.messages_inbox();
 end;

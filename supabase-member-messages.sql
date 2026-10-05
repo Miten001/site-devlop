@@ -2,9 +2,9 @@
 --
 -- KYA HAI YE: Members ab site par ek "Message" box se admin/support ko
 -- direct message bhej sakte hain (complaint, rejected proof, sawaal —
--- kuch bhi). Admin ko wo message admin panel ke Messages section me
--- dikhta hai ("From: member@email"), aur admin wahan se reply kar sakta
--- hai — reply member ke Dashboard inbox me aata hai.
+-- kuch bhi). Ye support ticket **sirf admin panel** me dikhta hai; kisi
+-- doosre member ke dashboard/bell/inbox me nahi. Admin ka reply member ke
+-- Dashboard inbox me aata hai.
 --
 -- HOW TO RUN: Supabase Dashboard -> SQL Editor -> New query -> is POORE
 -- file ko paste karo -> Run. "Success" dikhna chahiye.
@@ -41,8 +41,11 @@ begin
     raise exception 'No admin is configured yet' using errcode = 'P0001';
   end if;
 
+  /* `admin` is a support-only audience: it is intentionally excluded from
+     member inbox, dashboard and bell RPCs. Only admins can retrieve it in
+     messages_admin_recent() for the admin panel. */
   insert into public.messages (audience, user_id, title, body, sent_by)
-  values ('user', v_admin,
+  values ('admin', v_admin,
           left(coalesce(p_title, ''), 120),
           trim(p_body),
           coalesce(nullif(v_email, ''), 'member'));
@@ -69,7 +72,11 @@ begin
              order by m.at_ms desc), '[]'::jsonb)
     from (select m0.*, extract(epoch from m0.created_at) * 1000 as at_ms
             from public.messages m0
-           where lower(m0.sent_by) = v_email
+           /* A member can only see their own support-ticket history. Admin
+              broadcasts, DMs and another member's support messages never
+              match this private support-only audience. */
+           where m0.audience = 'admin'
+             and lower(m0.sent_by) = v_email
            order by m0.created_at desc
            limit 20) m
   );

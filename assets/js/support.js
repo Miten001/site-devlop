@@ -3,9 +3,10 @@
    ------------------------------------------------------------
    Har logged-in page par neeche-right ek floating 💬 button.
    Click -> member admin ko message bhej sakta hai (title +
-   body). Message public.messages table me jaata hai, admin
-   use admin panel ke Messages section me "From: ..." ke saath
-   dekhta hai, aur reply member ke dashboard inbox me aata hai.
+   body). Support ticket private `admin` audience me jaata hai:
+   sirf admin panel ke Messages Inbox me dikhta hai, kisi doosre
+   member ke dashboard, inbox ya notification bell me nahi. Admin
+   reply member ke dashboard inbox me bhej sakta hai.
 
    REQUIREMENT: supabase-member-messages.sql Supabase me run
    hona chahiye. Local/demo accounts ke liye box kaam nahi

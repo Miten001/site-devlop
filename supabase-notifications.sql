@@ -189,13 +189,16 @@ begin
      where id = v_id::uuid and user_id = v_user and not read;
     if found then v_ok := v_ok + 1; end if;
 
-    -- sirf message ids ke liye read-mark (notifications FK todenge)
-    if exists (select 1 from public.messages where id = v_id::uuid) then
-      insert into public.message_reads (message_id, user_id)
-      values (v_id::uuid, v_user)
-      on conflict (message_id, user_id) do nothing;
-      if found then v_ok := v_ok + 1; end if;
-    end if;
+    /* Only create a read receipt for a message that this member can actually
+       receive. Admin-only support tickets must not be observable from a
+       member session. */
+    insert into public.message_reads (message_id, user_id)
+    select m.id, v_user
+      from public.messages m
+     where m.id = v_id::uuid
+       and (m.audience = 'all' or (m.audience = 'user' and m.user_id = v_user))
+    on conflict (message_id, user_id) do nothing;
+    if found then v_ok := v_ok + 1; end if;
   end loop;
 
   return jsonb_build_object('ok', true, 'marked', v_ok);

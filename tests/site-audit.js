@@ -233,6 +233,20 @@ async function runAudit() {
     }
   }
 
+  /* Privacy regression: member support tickets must never enter a normal
+     member's inbox. The protected SQL migration is the production boundary;
+     these assertions stop a future UI/schema change from weakening it. */
+  const privacySqlPath = path.join(ROOT, "supabase-message-privacy.sql");
+  check("support-message privacy migration exists", fs.existsSync(privacySqlPath));
+  if (fs.existsSync(privacySqlPath)) {
+    const privacySql = fs.readFileSync(privacySqlPath, "utf8");
+    check("support tickets use the admin-only audience", /values\s*\(\s*'admin'\s*,\s*v_admin/i.test(privacySql), "messages_member_send audience");
+    check("raw messages table access is revoked from browser members", /revoke\s+all\s+on\s+table\s+public\.messages\s+from\s+anon\s*,\s*authenticated/i.test(privacySql));
+    check("member inbox only accepts broadcasts and recipient DMs", /where\s+audience\s*=\s*'all'\s+or\s+\(audience\s*=\s*'user'\s+and\s+user_id\s*=\s*v_user\)/i.test(privacySql));
+  }
+  const adminSource = fs.readFileSync(path.join(ROOT, "admin.html"), "utf8");
+  check("admin panel classifies admin-only support tickets as Inbox", /if\s*\(m\.audience\s*===\s*"admin"\)\s*return\s+true/i.test(adminSource));
+
   /* -------------------------------------------------------------
      SECTION 2: Runtime DOM Load & Initialization Check
      ------------------------------------------------------------- */

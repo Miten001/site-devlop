@@ -26,6 +26,21 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 
 ---
 
+## 🔒 Urgent: private member-support messages
+
+Agar ek user ka support message kisi doosre user ko dikh raha hai, to **abhi** Supabase Dashboard → **SQL Editor** me [`supabase-message-privacy.sql`](supabase-message-privacy.sql) ka poora content paste karke **Run** karo.
+
+Ye focused, idempotent privacy migration:
+
+* support tickets ko dedicated **`admin`** audience me store karti hai;
+* unhe member dashboard, inbox aur notification bell se exclude karti hai;
+* raw `messages` table ka browser access revoke karti hai — recipient filtering protected server RPCs me hoti hai;
+* tickets ko sirf **admin.html → Messages → Inbox** me rakhti hai.
+
+Isme koi existing message delete nahi hota. Iske liye `supabase.sql` aur `supabase-community.sql` pehle run hone chahiye. Naye install me [`supabase-community.sql`](supabase-community.sql) aur [`supabase-member-messages.sql`](supabase-member-messages.sql) bhi updated privacy rule use karte hain.
+
+---
+
 ## Cloud mining ke naye numbers live karne ke liye (2026 update)
 
 Latest mining changes — global gross rate **0.00105**, **+20% invest boost** ($10+ purchase wale contracts pe permanent), aur naye **Emerald ($10), Diamond (6 TH/s) aur Quantum (12 TH/s)** plans — front-end (`assets/js/mining.js`) me included hain. Diamond/Quantum ki estimated earning $5/day se aage jaati hai.
