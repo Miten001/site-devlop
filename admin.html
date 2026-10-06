@@ -104,6 +104,14 @@
   .ce-check { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--ink-dim); margin: 4px 0 14px; cursor: pointer; }
   .ce-check input { width: 16px; height: 16px; accent-color: #34e5a5; }
   .mm-proof-link { color: var(--brand, #7c5cff); font-weight: 700; text-decoration: underline; word-break: break-all; }
+  /* proof screenshots */
+  .proof-shot { display: block; width: 74px; height: 54px; object-fit: cover; border-radius: 9px; border: 1px solid var(--line); cursor: zoom-in; background: #0b0d14; }
+  .proof-shot:hover { border-color: var(--cyan); }
+  .proof-cell { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; max-width: 260px; }
+  .proof-cell a { font-size: 11.5px; }
+  .shot-veil .modal { width: min(880px, 100%); text-align: center; }
+  .shot-veil img { max-width: 100%; max-height: 72vh; border-radius: 14px; border: 1px solid var(--line); }
+  .shot-veil .shot-link { display: inline-block; margin-top: 12px; font-size: 12.5px; color: var(--cyan); word-break: break-all; }
   .member-modal .coin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 6px; }
   .member-modal .mini-stat { padding: 12px 13px; }
   .member-modal .mini-stat b { font-size: 18px; }
@@ -247,6 +255,7 @@
       <a href="#sec-members">👥 Members</a>
       <a href="#sec-tasks">⚡ Tasks</a>
       <a href="#sec-proofs">🧾 Proofs</a>
+      <a href="#sec-jobs">📝 Posted tasks</a>
       <a href="#sec-campaigns">🚀 Campaigns</a>
       <a href="#sec-payments">💳 Payments</a>
       <a href="#sec-messages">✉️ Messages</a>
@@ -313,6 +322,25 @@
       <div class="panel-head"><div><h3 id="proof-title">🧾 Proofs — view / approve / reject</h3><p class="panel-sub">USDT Task Market aur point campaigns ke worker proofs ek hi list me.</p></div><span class="status-pill on" id="proof-count">0 pending</span></div>
       <div class="msg-modes" id="proof-filter-chips"><button type="button" class="seg on" data-proof-filter="pending">🕐 Pending (<span id="pf-pending-count">0</span>)</button><button type="button" class="seg" data-proof-filter="approved">✅ Approved (<span id="pf-approved-count">0</span>)</button><button type="button" class="seg" data-proof-filter="rejected">❌ Rejected (<span id="pf-rejected-count">0</span>)</button><button type="button" class="seg" data-proof-filter="all">📋 All (<span id="pf-all-count">0</span>)</button></div>
       <div class="member-table-wrap"><table class="ff-table proof-table"><thead><tr><th>Type</th><th>Worker</th><th>Task / Campaign</th><th>Reward</th><th>Proof</th><th>Status</th><th>Action</th></tr></thead><tbody id="t-proofs"><tr><td colspan="7">Loading proofs…</td></tr></tbody></table></div>
+    </section>
+
+    <section class="panel camp-panel" id="sec-jobs" aria-labelledby="jobs-title">
+      <div class="panel-head">
+        <div><h3 id="jobs-title">📝 Posted tasks — view / edit / approve / delete</h3><p class="panel-sub">USDT Task Market ki har posted task, uske owner ke saath. <b>Edit</b> (title, category, instructions, link, proof note, reward, slots), <b>approve / pause</b> ya <b>delete</b> — delete par bacha hua escrow owner ko refund ho jata hai. Har member ek category me sirf <b>3 live tasks</b> rakh sakta hai.</p></div>
+        <span class="status-pill on" id="jobs-count">0 tasks</span>
+      </div>
+      <div class="msg-modes" id="job-filter-chips">
+        <button type="button" class="seg on" data-job-filter="live">🟢 Live (<span id="jf-live-count">0</span>)</button>
+        <button type="button" class="seg" data-job-filter="paused">⏸ Paused (<span id="jf-paused-count">0</span>)</button>
+        <button type="button" class="seg" data-job-filter="closed">✅ Finished / cancelled (<span id="jf-closed-count">0</span>)</button>
+        <button type="button" class="seg" data-job-filter="all">📋 All (<span id="jf-all-count">0</span>)</button>
+      </div>
+      <div class="member-table-wrap">
+        <table class="ff-table camp-table">
+          <thead><tr><th>Task</th><th>Category</th><th class="num">Reward</th><th>Posted by</th><th class="num">Filled</th><th class="num">Escrow</th><th class="num">Pending</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="t-jobs"><tr><td colspan="9">Loading posted tasks…</td></tr></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="panel camp-panel" id="sec-campaigns" aria-labelledby="camp-title">
@@ -552,6 +580,58 @@
   </div>
 </div>
 
+<!-- ADMIN POSTED-TASK EDITOR — opens from the posted tasks table -->
+<div class="modal-veil" id="job-edit-modal" aria-hidden="true">
+  <div class="modal modal-pos camp-edit-modal" role="dialog" aria-modal="true" aria-labelledby="je-head" tabindex="-1">
+    <button class="m-close" data-close-modal type="button" aria-label="Close task editor"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3 id="je-head">Edit posted task</h3>
+    <p class="m-sub" id="je-sub"></p>
+
+    <div class="field">
+      <label for="je-title">Task title</label>
+      <input type="text" id="je-title" maxlength="110" />
+    </div>
+    <div class="field">
+      <label for="je-cat">Category</label>
+      <select id="je-cat"></select>
+    </div>
+    <div class="field">
+      <label for="je-desc">Full instructions</label>
+      <textarea id="je-desc" rows="4"></textarea>
+    </div>
+    <div class="field">
+      <label for="je-url">Task link</label>
+      <input type="text" id="je-url" placeholder="https://…" />
+    </div>
+    <div class="field">
+      <label for="je-proof">Proof workers must submit</label>
+      <input type="text" id="je-proof" />
+    </div>
+    <div class="ce-grid">
+      <div class="field">
+        <label for="je-reward">Reward per worker (USDT)</label>
+        <input type="number" id="je-reward" min="0.01" step="0.01" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label for="je-slots">Number of workers</label>
+        <input type="number" id="je-slots" min="1" step="1" inputmode="numeric" />
+      </div>
+    </div>
+    <p class="m-sub" id="je-escrow" style="margin:-4px 0 14px"></p>
+    <button type="button" class="btn btn-primary btn-sm" id="je-save">Save changes</button>
+  </div>
+</div>
+
+<!-- PROOF SCREENSHOT VIEWER -->
+<div class="modal-veil shot-veil" id="shot-modal" aria-hidden="true">
+  <div class="modal modal-pos" role="dialog" aria-modal="true" aria-label="Proof screenshot" tabindex="-1">
+    <button class="m-close" data-close-modal type="button" aria-label="Close screenshot"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3 id="shot-head">Proof screenshot</h3>
+    <img id="shot-img" alt="Proof screenshot" />
+    <a id="shot-open" class="shot-link" href="#" target="_blank" rel="noopener">Open original ↗</a>
+  </div>
+</div>
+
 <!-- ADMIN CAMPAIGN EDITOR — opens from the campaigns table -->
 <div class="modal-veil" id="camp-edit-modal" aria-hidden="true">
   <div class="modal modal-pos camp-edit-modal" role="dialog" aria-modal="true" aria-labelledby="ce-head" tabindex="-1">
@@ -784,6 +864,7 @@
 
     loadPayments();
     loadProofs();
+    loadJobs();
     loadMessages();
     loadCampaigns();
     loadTaskRunners();
@@ -1141,7 +1222,7 @@
   var proofData = null, activeProofFilter = "pending";
   function loadProofs() { rpc("admin_proofs_list").then(function(r){ proofData=r||{}; renderProofs(); }).catch(function(){ proofData={}; renderProofs(); }); }
   function proofRows() { var a=[]; (proofData&&proofData.campSubs||[]).forEach(function(x){a.push({kind:"camp",id:x.id,worker:x.workerName,title:x.campaignTitle,reward:"+"+fmtPay(x.payout)+" pts",proof:x.proof,status:x.status});}); (proofData&&proofData.jobSubs||[]).forEach(function(x){a.push({kind:"job",id:x.id,worker:x.workerName,title:x.jobTitle,reward:fmtUsd(x.reward),proof:x.proof,status:x.status});}); return a; }
-  function renderProofs() { var body=$("t-proofs"); if(!body)return; var rows=proofRows(), c={pending:0,approved:0,rejected:0}; rows.forEach(function(x){if(c[x.status]!=null)c[x.status]++;}); ["pending","approved","rejected"].forEach(function(k){var e=$("pf-"+k+"-count");if(e)e.textContent=c[k];}); var all=$("pf-all-count");if(all)all.textContent=rows.length; var pill=$("proof-count");if(pill)pill.textContent=c.pending+" pending"; var shown=activeProofFilter==="all"?rows:rows.filter(function(x){return x.status===activeProofFilter;}); body.innerHTML=shown.length?shown.map(function(x){var link=/^https?:\/\//i.test(String(x.proof||""))?'<a href="'+esc(x.proof)+'" target="_blank" rel="noopener">View proof ↗</a>':esc(x.proof||"—");var action=x.status==="pending"?'<button class="camp-btn ok" data-pok="'+x.kind+':'+x.id+'">✓ Approve</button> <button class="camp-btn del" data-pno="'+x.kind+':'+x.id+'">✕ Reject</button>':'—';return '<tr><td>'+x.kind+'</td><td>'+esc(x.worker||"Member")+'</td><td>'+esc(x.title||"—")+'</td><td>'+x.reward+'</td><td>'+link+'</td><td>'+esc(x.status)+'</td><td>'+action+'</td></tr>';}).join(""): '<tr><td colspan="7">No proofs in this filter.</td></tr>'; }
+  function renderProofs() { var body=$("t-proofs"); if(!body)return; var rows=proofRows(), c={pending:0,approved:0,rejected:0}; rows.forEach(function(x){if(c[x.status]!=null)c[x.status]++;}); ["pending","approved","rejected"].forEach(function(k){var e=$("pf-"+k+"-count");if(e)e.textContent=c[k];}); var all=$("pf-all-count");if(all)all.textContent=rows.length; var pill=$("proof-count");if(pill)pill.textContent=c.pending+" pending"; var shown=activeProofFilter==="all"?rows:rows.filter(function(x){return x.status===activeProofFilter;}); body.innerHTML=shown.length?shown.map(function(x){var link=proofCell(x.proof,x.title);var action=x.status==="pending"?'<button class="camp-btn ok" data-pok="'+x.kind+':'+x.id+'">✓ Approve</button> <button class="camp-btn del" data-pno="'+x.kind+':'+x.id+'">✕ Reject</button>':'—';return '<tr><td>'+x.kind+'</td><td>'+esc(x.worker||"Member")+'</td><td>'+esc(x.title||"—")+'</td><td>'+x.reward+'</td><td>'+link+'</td><td>'+esc(x.status)+'</td><td>'+action+'</td></tr>';}).join(""): '<tr><td colspan="7">No proofs in this filter.</td></tr>'; }
   function reviewProof(kind,id,approve) { var reason=approve?"":(window.prompt("Reason for rejecting this proof (optional):")||""); return rpc(kind==="job"?"jobs_admin_review":"admin_proofs_review",kind==="job"?{p_sub:id,p_approve:approve,p_reason:reason}:{p_sub:id,p_approve:approve,p_reason:reason}).then(function(){toast(approve?"Approved — reward paid to worker.":"Proof rejected.");loadProofs();loadPayments();}); }
   function loadMemberWarnings(member) { if(!member)return; rpc("admin_member_warnings",{p_user:member.id}).then(function(r){var e=$("mm-warnings-list");if(e)e.innerHTML=(r.warnings||[]).map(function(w){return '<li>'+esc(w.reason)+' — '+esc(w.severity)+'</li>';}).join("")||"No warnings";}).catch(function(){}); }
   /* ==================== payments — approve / reject ==================== */
@@ -1308,14 +1389,12 @@
             : x.status === "pending" ? '<span class="st-pill st-pending">Pending</span>'
             : '<span class="st-pill st-rejected">Rejected</span>';
           var proof = String(x.proof || "");
-          var proofCell = /^https?:\/\//i.test(proof)
-            ? '<a class="mm-proof-link" href="' + esc(proof) + '" target="_blank" rel="noopener">View proof ↗</a>'
-            : '<span class="k">' + esc(proof.slice(0, 40) || "—") + "</span>";
+          var proofHtml = proof ? proofCell(proof, x.campaignTitle || "Proof") : '<span class="k">—</span>';
           return "<tr><td class='k'><b>" + esc(x.campaignTitle || "—") + "</b><br>" +
             '<span style="font-size:11px;color:var(--ink-mute)">' + esc((x.platform || "") + (x.note ? " · " + x.note : "")) + "</span></td>" +
             '<td class="num">' + esc(fmtCoins(x.payout)) + "</td>" +
             "<td>" + pill + (x.status === "rejected" && x.reason ? '<br><span style="font-size:11px;color:#dc2626">' + esc(x.reason) + "</span>" : "") + "</td>" +
-            "<td>" + proofCell + "</td>" +
+            "<td>" + proofHtml + "</td>" +
             "<td style='white-space:nowrap'>" + esc(fdateMs(x.at)) + "</td></tr>";
         }).join("") || '<tr><td colspan="5" style="color:var(--ink-mute)">This member has not completed any campaigns yet.</td></tr>';
       } else {
@@ -1357,6 +1436,172 @@
     $("mm-usdt-in").placeholder = exact ? "e.g. 12.50" : "e.g. 10 or -5.50";
     $("mm-apply").textContent = exact ? "Set balance & save" : "Apply & save";
     if (exact) fillExact(); else { $("mm-points-in").value = ""; $("mm-usdt-in").value = ""; }
+  }
+
+
+  /* ==================== posted tasks (USDT Task Market) ==================== */
+  var jobRows = [], jobCats = [], jobEditId = null, activeJobFilter = "live";
+
+  function jobCatName(key) {
+    var n = key || "other";
+    jobCats.forEach(function (c) { if (c.key === key) n = c.name; });
+    return n;
+  }
+
+  function loadJobs() {
+    rpc("admin_jobs_list").then(renderJobs).catch(function (err) {
+      var m = (err && err.message) || "";
+      var pill = $("jobs-count"); if (pill) pill.textContent = "Setup needed";
+      var body = $("t-jobs");
+      if (body) body.innerHTML = '<tr><td colspan="9">Run <code>supabase-post-task-admin.sql</code> once in the Supabase SQL editor to manage posted tasks here.</td></tr>';
+      if (!/admin_jobs_list|does not exist|PGRST|Admins only/i.test(m)) toast("Could not load posted tasks: " + m, true);
+    });
+  }
+
+  function jobBucket(j) {
+    if (j.status === "active") return "live";
+    if (j.status === "paused") return "paused";
+    return "closed";
+  }
+
+  function renderJobs(r) {
+    jobRows = (r && r.jobs) || [];
+    jobCats = (r && r.categories) || jobCats;
+    var body = $("t-jobs"); if (!body) return;
+    var c = { live: 0, paused: 0, closed: 0 };
+    jobRows.forEach(function (j) { c[jobBucket(j)]++; });
+    ["live", "paused", "closed"].forEach(function (k) { var e = $("jf-" + k + "-count"); if (e) e.textContent = c[k]; });
+    var all = $("jf-all-count"); if (all) all.textContent = jobRows.length;
+    var pill = $("jobs-count");
+    if (pill) pill.textContent = jobRows.length + (jobRows.length === 1 ? " task" : " tasks");
+
+    var shown = activeJobFilter === "all" ? jobRows : jobRows.filter(function (j) { return jobBucket(j) === activeJobFilter; });
+    if (!shown.length) {
+      body.innerHTML = '<tr><td colspan="9" style="color:var(--ink-mute)">No posted tasks in this filter.</td></tr>';
+      return;
+    }
+    body.innerHTML = shown.map(function (j) {
+      var url = String(j.url || "");
+      var st = j.status === "active" ? "st-active" : (j.status === "paused" ? "st-paused" : "st-rejected");
+      return "<tr>" +
+        '<td class="k" style="max-width:240px"><b>' + esc(j.title) + "</b>" +
+          (url ? '<a class="camp-url" href="' + esc(url) + '" target="_blank" rel="noopener" title="' + esc(url) + '">' + esc(url) + "</a>" : "") + "</td>" +
+        "<td>" + esc(jobCatName(j.category)) + "</td>" +
+        '<td class="num">' + fmtUsd(j.reward) + "</td>" +
+        "<td><b>" + esc(j.ownerName || "Member") + '</b><br><span class="camp-sub">' + esc(j.ownerEmail || "") + "</span></td>" +
+        '<td class="num">' + fmtPts(j.filled) + " / " + fmtPts(j.slots) + "</td>" +
+        '<td class="num">' + fmtUsd(j.escrow) + "</td>" +
+        '<td class="num">' + fmtPts(j.pending) + "</td>" +
+        '<td><span class="st-pill ' + st + '">' + esc(j.status) + "</span></td>" +
+        '<td style="white-space:nowrap">' +
+          (j.status === "active"
+            ? '<button type="button" class="camp-btn warn" data-jpause="' + esc(j.id) + '" title="Pause this task">⏸ Pause</button> '
+            : (j.status === "paused"
+              ? '<button type="button" class="camp-btn ok" data-jok="' + esc(j.id) + '" title="Approve — set this task live">✓ Approve</button> '
+              : "")) +
+          '<button type="button" class="camp-btn" data-jedit="' + esc(j.id) + '">✏️ Edit</button> ' +
+          '<button type="button" class="camp-btn del" data-jdel="' + esc(j.id) + '" title="Delete this task (escrow refunded)">🗑 Delete</button></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  function jobById(id) {
+    var found = null;
+    jobRows.forEach(function (j) { if (String(j.id) === String(id)) found = j; });
+    return found;
+  }
+
+  function setJobStatus(id, status) {
+    rpc("admin_jobs_set_status", { p_job: id, p_status: status }).then(function (r) {
+      toast(status === "active" ? "Task approved — it is live now" : "Task paused");
+      renderJobs(r);
+    }).catch(function (err) { toast((err && err.message) || "Could not update", true); });
+  }
+
+  function openJobEdit(id) {
+    var j = jobById(id); if (!j) return;
+    jobEditId = j.id;
+    $("je-sub").textContent = "Posted by " + (j.ownerName || "Member") + (j.ownerEmail ? " · " + j.ownerEmail : "") +
+      " · " + j.filled + " of " + j.slots + " slots filled";
+    $("je-title").value = j.title || "";
+    $("je-desc").value = j.description || "";
+    $("je-url").value = j.url || "";
+    $("je-proof").value = j.proofNote || "";
+    $("je-reward").value = Number(j.reward || 0);
+    $("je-slots").value = Number(j.slots || 1);
+    var cats = jobCats.length ? jobCats : [{ key: j.category, name: j.category }];
+    $("je-cat").innerHTML = cats.map(function (c) {
+      return '<option value="' + esc(c.key) + '">' + esc(c.name) + "</option>";
+    }).join("");
+    $("je-cat").value = j.category || "other";
+    $("je-escrow").textContent = "Current escrow " + fmtUsd(j.escrow) +
+      " — reward/slots badalne par bache hue slots ka escrow owner ke wallet se adjust ho jaata hai.";
+    $("job-edit-modal").classList.add("open");
+    $("je-title").focus();
+  }
+
+  function saveJobEdit() {
+    if (!jobEditId) return;
+    var title = $("je-title").value.trim();
+    var reward = parseFloat($("je-reward").value);
+    var slots = parseInt($("je-slots").value, 10);
+    if (title.length < 6) { toast("Task title must be at least 6 characters", true); return; }
+    if (!(reward > 0)) { toast("Reward must be greater than 0", true); return; }
+    if (!(slots >= 1)) { toast("At least 1 worker slot is required", true); return; }
+    var btn = $("je-save"), label = btn.textContent;
+    btn.disabled = true; btn.textContent = "Saving…";
+    rpc("admin_jobs_update", {
+      p_job: jobEditId,
+      p_title: title,
+      p_category: $("je-cat").value,
+      p_description: $("je-desc").value.trim(),
+      p_url: $("je-url").value.trim(),
+      p_proof_note: $("je-proof").value.trim(),
+      p_reward: reward,
+      p_slots: slots
+    }).then(function (r) {
+      $("job-edit-modal").classList.remove("open");
+      renderJobs(r);
+      toast("Task updated ✓");
+    }).catch(function (err) {
+      toast("Update failed: " + ((err && err.message) || "unknown error"), true);
+    }).then(function () { btn.disabled = false; btn.textContent = label; });
+  }
+
+  function deleteJob(id) {
+    var j = jobById(id); if (!j) return;
+    var who = (j.ownerName || "member") + (j.ownerEmail ? " (" + j.ownerEmail + ")" : "");
+    if (!window.confirm('Delete "' + (j.title || "task") + '" by ' + who + "?\n\nRemaining escrow " +
+      fmtUsd(j.escrow) + " is refunded to the owner and all its proofs are deleted. This cannot be undone.")) return;
+    rpc("admin_jobs_delete", { p_job: j.id }).then(function (r) {
+      renderJobs(r);
+      toast("Task deleted — escrow refunded ✓");
+      loadProofs();
+    }).catch(function (err) { toast("Delete failed: " + ((err && err.message) || "unknown error"), true); });
+  }
+
+  /* ---------- proof screenshot viewer ---------- */
+  function isImageUrl(u) {
+    u = String(u || "");
+    return /^https?:\/\//i.test(u) && (/\.(png|jpe?g|webp|gif|bmp|avif)(\?|#|$)/i.test(u) || /\/storage\/v1\/object\/public\/proofs\//i.test(u));
+  }
+  function openShot(url, title) {
+    $("shot-img").src = url;
+    $("shot-head").textContent = title || "Proof screenshot";
+    $("shot-open").href = url;
+    $("shot-modal").classList.add("open");
+  }
+  function proofCell(proof, title) {
+    var raw = String(proof || "");
+    if (!raw) return "—";
+    if (isImageUrl(raw)) {
+      return '<div class="proof-cell"><img class="proof-shot" src="' + esc(raw) + '" alt="Proof screenshot" loading="lazy" data-shot="' + esc(raw) + '" data-shot-title="' + esc(title || "") + '" />' +
+        '<a href="' + esc(raw) + '" target="_blank" rel="noopener">Open ↗</a></div>';
+    }
+    if (/^https?:\/\//i.test(raw)) {
+      return '<div class="proof-cell"><a href="' + esc(raw) + '" target="_blank" rel="noopener">View proof ↗</a></div>';
+    }
+    return '<div class="proof-cell">' + esc(raw) + "</div>";
   }
 
   /* ---------- campaigns (admin manager) ---------- */
@@ -1761,6 +2006,34 @@
           toast(m, true);
         })
         .then(function () { btn.disabled = false; btn.textContent = label; });
+    });
+
+    /* admin posted tasks — approve / pause / edit / delete */
+    document.querySelectorAll("#job-edit-modal [data-close-modal], #shot-modal [data-close-modal]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        $("job-edit-modal").classList.remove("open");
+        $("shot-modal").classList.remove("open");
+      });
+    });
+    $("je-save").addEventListener("click", saveJobEdit);
+    document.addEventListener("click", function (e) {
+      var jf = e.target.closest("[data-job-filter]");
+      if (jf) {
+        activeJobFilter = jf.getAttribute("data-job-filter") || "live";
+        document.querySelectorAll("[data-job-filter]").forEach(function (b) { b.classList.toggle("on", b === jf); });
+        renderJobs({ jobs: jobRows, categories: jobCats });
+        return;
+      }
+      var shot = e.target.closest("[data-shot]");
+      if (shot) { openShot(shot.getAttribute("data-shot"), shot.getAttribute("data-shot-title")); return; }
+      var je = e.target.closest("[data-jedit]");
+      var jd = e.target.closest("[data-jdel]");
+      var jo = e.target.closest("[data-jok]");
+      var jp = e.target.closest("[data-jpause]");
+      if (jo) setJobStatus(jo.getAttribute("data-jok"), "active");
+      else if (jp) setJobStatus(jp.getAttribute("data-jpause"), "paused");
+      else if (je) openJobEdit(je.getAttribute("data-jedit"));
+      else if (jd) deleteJob(jd.getAttribute("data-jdel"));
     });
 
     /* admin campaigns — edit / delete */

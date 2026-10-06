@@ -24,6 +24,8 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 18 | [`supabase-admin-task-runners.sql`](supabase-admin-task-runners.sql) | **Admin task runners list** — admin.html ka naya "⚡ Tasks" section + Members table ka "Tasks running" column: har member ka scorecard (live/paused/total campaigns, tasks approved, pending proofs, coins spent) bina click kiye dikhta hai. `admin_task_runners()` RPC | 1, 5 |
 | 19 | [`supabase-admin-proofs.sql`](supabase-admin-proofs.sql) | **Admin proof review** — USDT Task Market + point campaign proofs ka unified review, View proof, approve/reject | 1, 3, 5 |
 | 20 | [`supabase-member-warnings.sql`](supabase-member-warnings.sql) | **Member warnings** — admin warning/final warning, dashboard acknowledgement banner aur inbox message | 1 |
+| 21 | [`supabase-post-task-admin.sql`](supabase-post-task-admin.sql) | **Post task quota + admin task manager** — ek member ek category (type) me max **3 live tasks**; Post a Task page par live counter; admin.html ka naya "📝 Posted tasks" section: edit / approve / pause / delete (delete par bacha hua escrow owner ko refund); Task Market me jyada reward wali task pehle | 3 |
+| 22 | [`supabase-campaigns-top-bid.sql`](supabase-campaigns-top-bid.sql) | **Top bid first** — jis campaign par jyada coin/USDT bid hai wo Earn page par sabse pehle (payout desc, phir newest) | 13 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
 
