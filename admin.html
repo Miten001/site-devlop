@@ -171,6 +171,16 @@
   .hidden { display: none !important; }
   .camp-btn.ok { color: #0f7a48; border-color: rgba(15,122,72,.35); }
   .camp-btn.warn { color: #a3540c; border-color: rgba(163,84,12,.35); }
+  .list-more { display:flex; justify-content:center; padding:12px 8px 2px; }
+  .list-more button { min-width:150px; }
+  .log-details { margin-top:18px; border:1px solid var(--line); border-radius:14px; background:var(--glass-2); }
+  .log-details > summary { cursor:pointer; list-style:none; padding:13px 15px; color:var(--ink); font-size:13px; font-weight:800; }
+  .log-details > summary::-webkit-details-marker { display:none; }
+  .log-details > summary::after { content:"Show"; float:right; color:var(--cyan); font-size:12px; }
+  .log-details[open] > summary::after { content:"Hide"; }
+  .log-details .log-inner { padding:0 12px 12px; }
+  .logs-toggle { margin-left:auto; }
+  .logs-collapsed { display:none !important; }
 </style>
 </head>
 <body class="app-body">
@@ -290,7 +300,7 @@
       <div class="panel-head">
         <div>
           <h3 id="task-title">Tasks — who is running what</h3>
-          <p class="panel-sub">Har member ka task scorecard ek hi list me — <b>kitne campaigns live hain</b>, kitne paused, kitne tasks approve hue, kitne proofs review ke liye pending hain. Kisi member par <b>click</b> karo to uski poori detail (campaigns + proofs + coins) khul jaayegi.</p>
+          <p class="panel-sub">See every member’s task scorecard in one place — <b>live and paused campaigns</b>, approved tasks, and proofs awaiting review. <b>Click a member</b> to open their full details, including campaigns, tasks, proofs, and balances.</p>
         </div>
         <span class="status-pill on" id="runner-count">0 members</span>
       </div>
@@ -319,14 +329,14 @@
     </section>
 
     <section class="panel proof-panel" id="sec-proofs" aria-labelledby="proof-title">
-      <div class="panel-head"><div><h3 id="proof-title">🧾 Proofs — view / approve / reject</h3><p class="panel-sub">USDT Task Market aur point campaigns ke worker proofs ek hi list me.</p></div><span class="status-pill on" id="proof-count">0 pending</span></div>
+      <div class="panel-head"><div><h3 id="proof-title">🧾 Proofs — view / approve / reject</h3><p class="panel-sub">Review worker proofs from the USDT Task Market and points campaigns in one list.</p></div><span class="status-pill on" id="proof-count">0 pending</span></div>
       <div class="msg-modes" id="proof-filter-chips"><button type="button" class="seg on" data-proof-filter="pending">🕐 Pending (<span id="pf-pending-count">0</span>)</button><button type="button" class="seg" data-proof-filter="approved">✅ Approved (<span id="pf-approved-count">0</span>)</button><button type="button" class="seg" data-proof-filter="rejected">❌ Rejected (<span id="pf-rejected-count">0</span>)</button><button type="button" class="seg" data-proof-filter="all">📋 All (<span id="pf-all-count">0</span>)</button></div>
       <div class="member-table-wrap"><table class="ff-table proof-table"><thead><tr><th>Type</th><th>Worker</th><th>Task / Campaign</th><th>Reward</th><th>Proof</th><th>Status</th><th>Action</th></tr></thead><tbody id="t-proofs"><tr><td colspan="7">Loading proofs…</td></tr></tbody></table></div>
     </section>
 
     <section class="panel camp-panel" id="sec-jobs" aria-labelledby="jobs-title">
       <div class="panel-head">
-        <div><h3 id="jobs-title">📝 Posted tasks — view / edit / approve / delete</h3><p class="panel-sub">USDT Task Market ki har posted task, uske owner ke saath. <b>Edit</b> (title, category, instructions, link, proof note, reward, slots), <b>approve / pause</b> ya <b>delete</b> — delete par bacha hua escrow owner ko refund ho jata hai. Har member ek category me sirf <b>3 live tasks</b> rakh sakta hai.</p></div>
+        <div><h3 id="jobs-title">📝 Posted tasks — view / edit / approve / delete</h3><p class="panel-sub">View every USDT Task Market listing with its owner. <b>Edit</b> the title, category, instructions, link, proof requirements, reward, or slots; <b>approve, pause, or delete</b> it. Deleting a task refunds its remaining escrow to the owner. Each member may have up to <b>3 live tasks per category</b>.</p></div>
         <span class="status-pill on" id="jobs-count">0 tasks</span>
       </div>
       <div class="msg-modes" id="job-filter-chips">
@@ -427,6 +437,8 @@
         </div>
         <span class="status-pill on" id="error-badge">0 issues</span>
       </div>
+      <button type="button" class="btn btn-ghost btn-sm logs-toggle" id="errors-log-toggle" aria-expanded="false">Show logs</button>
+      <div id="errors-log-content" class="logs-collapsed">
       <div class="msg-modes" style="margin-bottom:12px;gap:6px" id="err-filter-chips">
         <button type="button" class="seg on" data-err-filter="all">All Errors (<span id="err-all-count">0</span>)</button>
         <button type="button" class="seg" data-err-filter="app_error">Toast Notifications</button>
@@ -448,6 +460,7 @@
             <tr><td colspan="5">Loading error log…</td></tr>
           </tbody>
         </table>
+      </div>
       </div>
     </section>
 
@@ -478,6 +491,8 @@
             <h3>Recent events</h3>
             <span class="status-pill on" id="recent-count">0</span>
           </div>
+          <button type="button" class="btn btn-ghost btn-sm logs-toggle" id="recent-log-toggle" aria-expanded="false">Show logs</button>
+          <div id="recent-log-content" class="logs-collapsed">
           <div class="msg-modes" style="margin-bottom:10px;gap:6px" id="recent-filter-chips">
             <button type="button" class="seg on" data-ev-filter="all" style="font-size:11.5px;padding:4px 10px">All</button>
             <button type="button" class="seg" data-ev-filter="errors" style="font-size:11.5px;padding:4px 10px;color:#ff5d6e">⚠️ Errors only</button>
@@ -487,6 +502,7 @@
           </div>
           <div class="scroll-box">
             <table class="ff-table"><thead><tr><th>Time</th><th>Who</th><th>Event</th><th>Detail</th></tr></thead><tbody id="t-recent"></tbody></table>
+          </div>
           </div>
         </div>
       </div>
@@ -523,7 +539,7 @@
         <input type="text" id="mm-dm-title" maxlength="120" placeholder="e.g. About your campaign" />
       </div>
       <div class="field" style="margin-bottom:10px">
-        <label for="mm-dm-body">Message — member ke dashboard par inbox me dikhega</label>
+        <label for="mm-dm-body">Message — it will appear in the member’s dashboard inbox</label>
         <textarea id="mm-dm-body" placeholder="Write your message to this member…"></textarea>
       </div>
       <button type="button" class="btn btn-primary btn-sm" id="mm-dm-send">Send to member</button>
@@ -537,6 +553,11 @@
     <h4 class="mm-h">🚀 Campaigns this member runs</h4>
     <div class="scroll-box mm-activity">
       <table class="ff-table"><thead><tr><th>Campaign</th><th>Payout</th><th>Completions</th><th>Spent</th><th>Status</th></tr></thead><tbody id="mm-campaigns"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+    </div>
+
+    <h4 class="mm-h">📝 Task Market tasks this member runs</h4>
+    <div class="scroll-box mm-activity">
+      <table class="ff-table"><thead><tr><th>Task</th><th>Reward</th><th>Slots</th><th>Escrow</th><th>Status</th></tr></thead><tbody id="mm-jobs"><tr><td colspan="5">Loading…</td></tr></tbody></table>
     </div>
 
     <h4 class="mm-h">✅ Tasks completed (proofs sent)</h4>
@@ -568,15 +589,17 @@
       <button class="btn btn-primary btn-sm" id="mm-apply" style="margin-bottom:12px">Apply &amp; save</button>
     </div>
 
-    <h4 class="mm-h">Coin activity</h4>
-    <div class="scroll-box mm-activity">
-      <table class="ff-table"><thead><tr><th>Time</th><th>Source</th><th>Detail</th><th style="text-align:right">Amount</th></tr></thead><tbody id="mm-activity"></tbody></table>
-    </div>
+    <details class="log-details">
+      <summary>Coin activity logs</summary><div class="log-inner"><div class="scroll-box mm-activity">
+        <table class="ff-table"><thead><tr><th>Time</th><th>Source</th><th>Detail</th><th style="text-align:right">Amount</th></tr></thead><tbody id="mm-activity"></tbody></table>
+      </div></div>
+    </details>
 
-    <h4 class="mm-h">🕒 Recent site activity</h4>
-    <div class="scroll-box mm-activity">
-      <table class="ff-table"><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="mm-events"></tbody></table>
-    </div>
+    <details class="log-details">
+      <summary>🕒 Recent site activity logs</summary><div class="log-inner"><div class="scroll-box mm-activity">
+        <table class="ff-table"><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="mm-events"></tbody></table>
+      </div></div>
+    </details>
   </div>
 </div>
 
@@ -710,6 +733,19 @@
   var runnerRpcOk = null;     /* null = loading · true = RPC · false = fallback */
   var lastRunnerTotals = null;
   var activeRunnerFilter = "all";
+  var listLimits = { members:10, runners:10, proofs:10, jobs:10, camps:10, errors:10, recent:10 };
+  function resetLimit(key) { listLimits[key] = 10; }
+  function moreControl(bodyId, key, total, rerender) {
+    var body = $(bodyId); if (!body || !body.parentNode) return;
+    var host = body.closest(".member-table-wrap, .scroll-box, .table-responsive") || body.parentNode.parentNode;
+    var id = "more-" + key, box = $(id);
+    if (!box) { box = document.createElement("div"); box.id=id; box.className="list-more"; host.insertAdjacentElement("afterend", box); }
+    var shown = Math.min(total, listLimits[key]);
+    if (shown >= total) { box.innerHTML=""; box.classList.add("hidden"); return; }
+    box.classList.remove("hidden");
+    box.innerHTML='<button type="button" class="btn btn-ghost btn-sm">More ('+(total-shown)+' left)</button>';
+    box.firstChild.onclick=function(){ listLimits[key]+=10; rerender(); };
+  }
 
   function fmtUsd(n) {
     return "$" + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -930,7 +966,7 @@
       return;
     }
 
-    body.innerHTML = filtered.slice(0, 100).map(function (e) {
+    body.innerHTML = filtered.slice(0, listLimits.errors).map(function (e) {
       var t = e.ts_client ? new Date(e.ts_client) : null;
       var errDetail = e.label || e.task_title || "Unknown error";
       var context = (e.url || e.task_id) ? ('<br><span style="font-size:11px;color:var(--ink-mute)">' + esc(e.url || e.task_id || "") + '</span>') : "";
@@ -940,6 +976,7 @@
         "<td class='k' style='max-width:380px'><b style='color:#ff5d6e;display:inline-block;margin-bottom:2px'>" + esc(errDetail) + "</b>" + context + "</td>" +
         "<td><span class='ev-pill " + esc(e.type) + "'>" + esc(e.type) + "</span></td></tr>";
     }).join("");
+    moreControl("t-errors", "errors", filtered.length, function(){renderErrors(last);});
   }
 
   function renderRecentEvents(es) {
@@ -954,9 +991,9 @@
       filtered = (es || []).filter(function (e) { return e.type === "page_view"; });
     }
 
-    if ($("recent-count")) $("recent-count").textContent = Math.min(filtered.length, 80) + " shown";
+    if ($("recent-count")) $("recent-count").textContent = Math.min(filtered.length, listLimits.recent) + " shown";
     if ($("t-recent")) {
-      $("t-recent").innerHTML = filtered.slice(0, 80).map(function (e) {
+      $("t-recent").innerHTML = filtered.slice(0, listLimits.recent).map(function (e) {
         var isErr = isErrorEvent(e);
         var detail = e.label || e.task_title || e.url || e.page || "—";
         return "<tr><td style='white-space:nowrap'>" + (e.ts_client ? new Date(e.ts_client).toLocaleString("en-IN") : "") +
@@ -964,6 +1001,7 @@
           '</td><td><span class="ev-pill ' + esc(e.type) + (isErr ? ' app_error' : '') + '">' + esc(e.type) +
           '</span></td><td class="k">' + (isErr ? '<b style="color:#ff5d6e">' + esc(detail) + '</b>' : esc(detail)) + "</td></tr>";
       }).join("") || '<tr><td colspan="4" style="color:var(--ink-mute);text-align:center;padding:14px">No events in this filter.</td></tr>';
+      moreControl("t-recent", "recent", filtered.length, function(){renderRecentEvents(last);});
     }
   }
 
@@ -1043,7 +1081,7 @@
       body.innerHTML = '<tr><td colspan="7">No registered accounts yet.</td></tr>';
       return;
     }
-    body.innerHTML = members.map(function (member) {
+    body.innerHTML = members.slice(0, listLimits.members).map(function (member) {
       var rawId = String(member.id || "");
       var accountId = rawId ? "FF-" + rawId.replace(/-/g, "").slice(0, 8).toUpperCase() : "—";
       var joined = member.created_at ? new Date(member.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
@@ -1076,6 +1114,7 @@
         runCell +
         '<td><span class="password-protected">Protected 🔒</span></td></tr>';
     }).join("");
+    moreControl("t-members", "members", members.length, function () { renderMembers(members); });
   }
 
   /* ==================== task runners — kaun kitna chala raha hai ====================
@@ -1161,7 +1200,7 @@
     var warn = $("runner-warn");
     if (warn) {
       if (runnerRpcOk === false) {
-        $("runner-warn-text").innerHTML = "Full scorecard ke liye <code>supabase-admin-task-runners.sql</code> once Supabase SQL editor me run karo — phir tasks done / pending proofs bhi yahin dikhenge. Filhaal campaign counts <code>admin_campaigns_list</code> se aa rahe hain.";
+        $("runner-warn-text").innerHTML = "Run <code>supabase-admin-task-runners.sql</code> once in the Supabase SQL Editor to enable the full scorecard, including completed tasks and pending proofs. Campaign totals are currently loaded from <code>admin_campaigns_list</code>.";
         warn.classList.remove("hidden");
       } else {
         warn.classList.add("hidden");
@@ -1185,21 +1224,21 @@
     if (!shown.length) {
       var why = runnerRpcOk === false
         ? 'No campaigns found yet — jo member campaign banayega wo yahan list ho jaayega.'
-        : 'No members running campaigns or tasks yet — jaise hi koi campaign banayega ya task karega, wo yahan dikhega.';
+        : 'No members are running campaigns or completing tasks yet. They will appear here as soon as activity begins.';
       body.innerHTML = '<tr><td colspan="8" style="color:var(--ink-mute);text-align:center;padding:18px">' + why + '</td></tr>';
       return;
     }
 
-    body.innerHTML = shown.map(function (r) {
+    body.innerHTML = shown.slice(0, listLimits.runners).map(function (r) {
       var rawId = String(r.userId || "");
       var accountId = rawId ? "FF-" + rawId.replace(/-/g, "").slice(0, 8).toUpperCase() : "—";
       var live = Number(r.active || 0), paused = Number(r.paused || 0);
       var pending = Number(r.tasksPending || 0);
       var doneCell = r.tasksDone == null
-        ? '<td class="num" style="color:var(--ink-mute)" title="supabase-admin-task-runners.sql run karo">—</td>'
+        ? '<td class="num" style="color:var(--ink-mute)" title="Run supabase-admin-task-runners.sql">—</td>'
         : '<td class="num">' + fmtPts(r.tasksDone) + '</td>';
       var pendCell = r.tasksPending == null
-        ? '<td class="num" style="color:var(--ink-mute)" title="supabase-admin-task-runners.sql run karo">—</td>'
+        ? '<td class="num" style="color:var(--ink-mute)" title="Run supabase-admin-task-runners.sql">—</td>'
         : '<td class="num">' + (pending > 0 ? '<b style="color:var(--amber)">' + fmtPts(pending) + '</b>' : fmtPts(pending)) + '</td>';
       var status = [];
       if (live > 0) status.push('<span class="st-pill st-active">🚀 ' + fmtPts(live) + ' live</span>');
@@ -1207,7 +1246,7 @@
       if (pending > 0) status.push('<span class="st-pill st-pending">' + fmtPts(pending) + ' proof' + (pending === 1 ? '' : 's') + ' pending</span>');
       if (!status.length) status.push('<span class="st-pill st-paused">Task doer</span>');
       return '<tr>' +
-        '<td><button type="button" class="mail-link" data-member="' + esc(rawId) + '" style="white-space:normal;text-align:left" title="Is member ki poori detail kholo (campaigns + proofs + coins)"><b>' + esc(r.name || "Member") + '</b></button>' +
+        '<td><button type="button" class="mail-link" data-member="' + esc(rawId) + '" style="white-space:normal;text-align:left" title="Open this member’s full details (campaigns, tasks, proofs, and balances)"><b>' + esc(r.name || "Member") + '</b></button>' +
           '<br><span class="run-sub">' + esc(r.email || "") + ' · ' + esc(accountId) + '</span></td>' +
         '<td class="num">' + (live > 0 ? '<b style="color:var(--green)">' + fmtPts(live) + '</b>' : fmtPts(live)) + '</td>' +
         '<td class="num">' + fmtPts(paused) + '</td>' +
@@ -1216,13 +1255,14 @@
         '<td class="num">' + fmtPts(r.spent) + '</td>' +
         '<td style="white-space:nowrap">' + status.join(" ") + '</td></tr>';
     }).join("");
+    moreControl("t-runners", "runners", shown.length, renderRunners);
   }
 
   /* ==================== proof review + member warnings ==================== */
   var proofData = null, activeProofFilter = "pending";
   function loadProofs() { rpc("admin_proofs_list").then(function(r){ proofData=r||{}; renderProofs(); }).catch(function(){ proofData={}; renderProofs(); }); }
   function proofRows() { var a=[]; (proofData&&proofData.campSubs||[]).forEach(function(x){a.push({kind:"camp",id:x.id,worker:x.workerName,title:x.campaignTitle,reward:"+"+fmtPay(x.payout)+" pts",proof:x.proof,status:x.status});}); (proofData&&proofData.jobSubs||[]).forEach(function(x){a.push({kind:"job",id:x.id,worker:x.workerName,title:x.jobTitle,reward:fmtUsd(x.reward),proof:x.proof,status:x.status});}); return a; }
-  function renderProofs() { var body=$("t-proofs"); if(!body)return; var rows=proofRows(), c={pending:0,approved:0,rejected:0}; rows.forEach(function(x){if(c[x.status]!=null)c[x.status]++;}); ["pending","approved","rejected"].forEach(function(k){var e=$("pf-"+k+"-count");if(e)e.textContent=c[k];}); var all=$("pf-all-count");if(all)all.textContent=rows.length; var pill=$("proof-count");if(pill)pill.textContent=c.pending+" pending"; var shown=activeProofFilter==="all"?rows:rows.filter(function(x){return x.status===activeProofFilter;}); body.innerHTML=shown.length?shown.map(function(x){var link=proofCell(x.proof,x.title);var action=x.status==="pending"?'<button class="camp-btn ok" data-pok="'+x.kind+':'+x.id+'">✓ Approve</button> <button class="camp-btn del" data-pno="'+x.kind+':'+x.id+'">✕ Reject</button>':'—';return '<tr><td>'+x.kind+'</td><td>'+esc(x.worker||"Member")+'</td><td>'+esc(x.title||"—")+'</td><td>'+x.reward+'</td><td>'+link+'</td><td>'+esc(x.status)+'</td><td>'+action+'</td></tr>';}).join(""): '<tr><td colspan="7">No proofs in this filter.</td></tr>'; }
+  function renderProofs() { var body=$("t-proofs"); if(!body)return; var rows=proofRows(), c={pending:0,approved:0,rejected:0}; rows.forEach(function(x){if(c[x.status]!=null)c[x.status]++;}); ["pending","approved","rejected"].forEach(function(k){var e=$("pf-"+k+"-count");if(e)e.textContent=c[k];}); var all=$("pf-all-count");if(all)all.textContent=rows.length; var pill=$("proof-count");if(pill)pill.textContent=c.pending+" pending"; var shown=activeProofFilter==="all"?rows:rows.filter(function(x){return x.status===activeProofFilter;}); body.innerHTML=shown.length?shown.slice(0,listLimits.proofs).map(function(x){var link=proofCell(x.proof,x.title);var action=x.status==="pending"?'<button class="camp-btn ok" data-pok="'+x.kind+':'+x.id+'">✓ Approve</button> <button class="camp-btn del" data-pno="'+x.kind+':'+x.id+'">✕ Reject</button>':'—';return '<tr><td>'+x.kind+'</td><td>'+esc(x.worker||"Member")+'</td><td>'+esc(x.title||"—")+'</td><td>'+x.reward+'</td><td>'+link+'</td><td>'+esc(x.status)+'</td><td>'+action+'</td></tr>';}).join(""): '<tr><td colspan="7">No proofs in this filter.</td></tr>'; moreControl("t-proofs","proofs",shown.length,renderProofs); }
   function reviewProof(kind,id,approve) { var reason=approve?"":(window.prompt("Reason for rejecting this proof (optional):")||""); return rpc(kind==="job"?"jobs_admin_review":"admin_proofs_review",kind==="job"?{p_sub:id,p_approve:approve,p_reason:reason}:{p_sub:id,p_approve:approve,p_reason:reason}).then(function(){toast(approve?"Approved — reward paid to worker.":"Proof rejected.");loadProofs();loadPayments();}); }
   function loadMemberWarnings(member) { if(!member)return; rpc("admin_member_warnings",{p_user:member.id}).then(function(r){var e=$("mm-warnings-list");if(e)e.innerHTML=(r.warnings||[]).map(function(w){return '<li>'+esc(w.reason)+' — '+esc(w.severity)+'</li>';}).join("")||"No warnings";}).catch(function(){}); }
   /* ==================== payments — approve / reject ==================== */
@@ -1293,6 +1333,7 @@
     $("mm-warn").classList.add("hidden");
     $("mm-activity").innerHTML = '<tr><td colspan="4">Loading coin activity…</td></tr>';
     $("mm-campaigns").innerHTML = '<tr><td colspan="5">Loading campaigns…</td></tr>';
+    $("mm-jobs").innerHTML = '<tr><td colspan="5">Loading tasks…</td></tr>';
     $("mm-dm-box").classList.add("hidden");
     $("mm-dm-title").value = "";
     $("mm-dm-body").value = "";
@@ -1357,6 +1398,11 @@
       var det = rs[4];
       var camps = det && det.campaigns ? det.campaigns : null;
       var subs = det && det.subs ? det.subs : null;
+      var ownedJobs = det && det.jobs ? det.jobs : null;
+
+      if (ownedJobs) {
+        $("mm-jobs").innerHTML = ownedJobs.map(function(j){ return "<tr><td><b>"+esc(j.title||"—")+"</b></td><td class='num'>"+fmtUsd(j.reward)+"</td><td class='num'>"+fmtPts(j.filled)+" / "+fmtPts(j.slots)+"</td><td class='num'>"+fmtUsd(j.escrow)+"</td><td><span class='st-pill "+(j.status==="active"?"st-active":"st-paused")+"'>"+esc(j.status)+"</span></td></tr>"; }).join("") || '<tr><td colspan="5">This member has no Task Market tasks.</td></tr>';
+      } else $("mm-jobs").innerHTML = '<tr><td colspan="5">Run the updated <code>supabase-admin-member-detail.sql</code> to load Task Market tasks.</td></tr>';
 
       if (camps) {
         $("mm-camps").textContent = camps.length;
@@ -1480,7 +1526,7 @@
       body.innerHTML = '<tr><td colspan="9" style="color:var(--ink-mute)">No posted tasks in this filter.</td></tr>';
       return;
     }
-    body.innerHTML = shown.map(function (j) {
+    body.innerHTML = shown.slice(0, listLimits.jobs).map(function (j) {
       var url = String(j.url || "");
       var st = j.status === "active" ? "st-active" : (j.status === "paused" ? "st-paused" : "st-rejected");
       return "<tr>" +
@@ -1503,6 +1549,7 @@
           '<button type="button" class="camp-btn del" data-jdel="' + esc(j.id) + '" title="Delete this task (escrow refunded)">🗑 Delete</button></td>' +
         "</tr>";
     }).join("");
+    moreControl("t-jobs", "jobs", shown.length, function(){ renderJobs({jobs:jobRows,categories:jobCats}); });
   }
 
   function jobById(id) {
@@ -1535,7 +1582,7 @@
     }).join("");
     $("je-cat").value = j.category || "other";
     $("je-escrow").textContent = "Current escrow " + fmtUsd(j.escrow) +
-      " — reward/slots badalne par bache hue slots ka escrow owner ke wallet se adjust ho jaata hai.";
+      " — changing the reward or slot count automatically adjusts the remaining escrow in the owner’s wallet.";
     $("job-edit-modal").classList.add("open");
     $("je-title").focus();
   }
@@ -1644,7 +1691,7 @@
       $("t-camps").innerHTML = '<tr><td colspan="9" style="color:var(--ink-mute)">No campaigns on the site yet — they will appear here the moment a member creates one.</td></tr>';
       return;
     }
-    $("t-camps").innerHTML = campRows.map(function (c) {
+    $("t-camps").innerHTML = campRows.slice(0, listLimits.camps).map(function (c) {
       var p = campPlatformInfo(c.platform);
       var url = String(c.url || "");
       var watch = Number(c.watchSecs || 0) > 0 ? "⏱ " + c.watchSecs + "s" : "Proof";
@@ -1667,6 +1714,7 @@
           '<button type="button" class="camp-btn" data-cedit="' + esc(c.id) + '">✏️ Edit</button> <button type="button" class="camp-btn del" data-cdel="' + esc(c.id) + '" title="Delete this campaign">🗑 Delete</button></td>' +
         "</tr>";
     }).join("");
+    moreControl("t-camps", "camps", campRows.length, function(){ renderCampaigns({campaigns:campRows}); });
   }
 
   function campFillActions(key, selected) {
@@ -1861,6 +1909,10 @@
 
     $("btn-logout").onclick = function () { saveSession(null); show("login"); };
     $("btn-refresh").onclick = load;
+    [["errors-log-toggle","errors-log-content"],["recent-log-toggle","recent-log-content"]].forEach(function(pair){
+      var btn=$(pair[0]), content=$(pair[1]); if(!btn||!content)return;
+      btn.addEventListener("click",function(){var open=content.classList.toggle("logs-collapsed")===false;btn.textContent=open?"Hide logs":"Show logs";btn.setAttribute("aria-expanded",String(open));});
+    });
 
     /* admin section menu — click par active pill, smooth scroll CSS se */
     document.querySelectorAll("#admin-sec-nav a").forEach(function (a) {
@@ -2019,7 +2071,7 @@
     document.addEventListener("click", function (e) {
       var jf = e.target.closest("[data-job-filter]");
       if (jf) {
-        activeJobFilter = jf.getAttribute("data-job-filter") || "live";
+        activeJobFilter = jf.getAttribute("data-job-filter") || "live"; resetLimit("jobs");
         document.querySelectorAll("[data-job-filter]").forEach(function (b) { b.classList.toggle("on", b === jf); });
         renderJobs({ jobs: jobRows, categories: jobCats });
         return;
@@ -2079,7 +2131,7 @@
     document.addEventListener("click", function (e) {
       var errFilterBtn = e.target.closest("[data-err-filter]");
       if (errFilterBtn) {
-        activeErrFilter = errFilterBtn.getAttribute("data-err-filter") || "all";
+        activeErrFilter = errFilterBtn.getAttribute("data-err-filter") || "all"; resetLimit("errors");
         document.querySelectorAll("[data-err-filter]").forEach(function (b) {
           b.classList.toggle("on", b === errFilterBtn);
         });
@@ -2088,7 +2140,7 @@
       }
       var evFilterBtn = e.target.closest("[data-ev-filter]");
       if (evFilterBtn) {
-        activeEvFilter = evFilterBtn.getAttribute("data-ev-filter") || "all";
+        activeEvFilter = evFilterBtn.getAttribute("data-ev-filter") || "all"; resetLimit("recent");
         document.querySelectorAll("[data-ev-filter]").forEach(function (b) {
           b.classList.toggle("on", b === evFilterBtn);
         });
@@ -2097,17 +2149,17 @@
       }
       var runFilterBtn = e.target.closest("[data-runner-filter]");
       if (runFilterBtn) {
-        activeRunnerFilter = runFilterBtn.getAttribute("data-runner-filter") || "all";
+        activeRunnerFilter = runFilterBtn.getAttribute("data-runner-filter") || "all"; resetLimit("runners");
         document.querySelectorAll("[data-runner-filter]").forEach(function (b) {
           b.classList.toggle("on", b === runFilterBtn);
         });
         renderRunners();
         return;
       }
-      var pf=e.target.closest("[data-proof-filter]"); if(pf){activeProofFilter=pf.getAttribute("data-proof-filter")||"pending";document.querySelectorAll("[data-proof-filter]").forEach(function(b){b.classList.toggle("on",b===pf);});renderProofs();return;}
+      var pf=e.target.closest("[data-proof-filter]"); if(pf){activeProofFilter=pf.getAttribute("data-proof-filter")||"pending";resetLimit("proofs");document.querySelectorAll("[data-proof-filter]").forEach(function(b){b.classList.toggle("on",b===pf);});renderProofs();return;}
       var pok=e.target.closest("[data-pok]"), pno=e.target.closest("[data-pno]"); if(pok||pno){var b=pok||pno,k=String(b.getAttribute(pok?"data-pok":"data-pno")).split(":"),kind=k.shift(),id=k.join(":");b.disabled=true;reviewProof(kind,id,!!pok).catch(function(err){toast((err&&err.message)||"Review failed",true);b.disabled=false;});return;}
       var wt=e.target.closest("#mm-warn-toggle"); if(wt){$("mm-warn-box").classList.toggle("hidden");return;}
-      var ws=e.target.closest("#mm-warn-send"); if(ws&&currentMember){var reason=$("mm-warn-reason").value.trim();if(!reason){toast("Warning ka reason likho",true);return;}rpc("admin_warn_member",{p_email:currentMember.email,p_reason:reason,p_severity:$("mm-warn-severity").value}).then(function(){toast("Warning sent");$("mm-warn-box").classList.add("hidden");loadMemberWarnings(currentMember);}).catch(function(err){toast((err&&err.message)||"Warning failed",true);});return;}
+      var ws=e.target.closest("#mm-warn-send"); if(ws&&currentMember){var reason=$("mm-warn-reason").value.trim();if(!reason){toast("Enter a reason for the warning",true);return;}rpc("admin_warn_member",{p_email:currentMember.email,p_reason:reason,p_severity:$("mm-warn-severity").value}).then(function(){toast("Warning sent");$("mm-warn-box").classList.add("hidden");loadMemberWarnings(currentMember);}).catch(function(err){toast((err&&err.message)||"Warning failed",true);});return;}
       var memBtn = e.target.closest("[data-member]");
       if (memBtn && !e.target.closest("#t-members")) {
         openMember(memBtn.getAttribute("data-member"));

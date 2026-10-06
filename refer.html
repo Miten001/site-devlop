@@ -110,9 +110,9 @@
       </div>
 
       <div class="panel" style="margin-top:16px">
-        <div class="panel-head"><div><h3>Your pyramid</h3><p class="panel-sub">3 levels of income — aapke invites, unke invites, aur unke bhi.</p></div></div>
+        <div class="panel-head"><div><h3>Your pyramid</h3><p class="panel-sub">3 levels of income — your direct invites, their invites, and the next level.</p></div></div>
         <div id="pyr-body" style="display:flex;flex-direction:column;gap:9px;align-items:center"></div>
-        <p class="panel-sub" id="pyr-hint" style="margin-top:12px">Levels: L1 = direct invites (10%) · L2 = unke invites (3%) · L3 = unke bhi invites (1%) — har earning par (campaigns, tasks, streak, mining).</p>
+        <p class="panel-sub" id="pyr-hint" style="margin-top:12px">Levels: L1 = direct invites (10%) · L2 = their invites (3%) · L3 = third-level invites (1%) — earned from campaigns, tasks, streaks, and mining.</p>
       </div>
 
       <div class="panel" style="margin-top:16px">
@@ -210,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (Number(tt.usdt) > 0) inc.push(fmtU(tt.usdt));
     document.getElementById("ref-income").textContent = inc.length ? inc.join(" + ") : "$0";
     const hint = document.getElementById("pyr-hint");
-    if (hint && p) hint.textContent = "Income source: campaigns (points) + tasks, daily streak & mining (USDT) — aapke 3 levels ki har earning par.";
+    if (hint && p) hint.textContent = "Income sources: campaigns (points), tasks, daily streaks, and mining (USDT) across all three referral levels.";
   }
   if (FF.hasServer && FF.hasServer()) {
     FF.rpc("referral_pyramid").then(paintPyramid).catch((err) => {

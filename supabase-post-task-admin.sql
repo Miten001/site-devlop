@@ -132,13 +132,20 @@ begin
       'platformFeePct', (select platform_fee_pct from public.wallet_config where id = 1),
       'minJobReward', (select min_job_reward from public.wallet_config where id = 1)),
     'quota', public.jobs_quota(),
+    /* Real, currently funded reward pool visible to this member. This is derived
+       from locked escrow, never from an optimistic slot count. */
+    'availableRewards', (select coalesce(sum(least(jb.escrow, jb.reward * greatest(0, jb.slots - jb.filled))), 0)
+      from public.jobs jb
+      where jb.status = 'active' and jb.filled < jb.slots and jb.escrow >= jb.reward
+        and jb.owner <> v_user
+        and not exists (select 1 from public.job_subs s where s.job_id = jb.id and s.worker = v_user)),
     -- open jobs: highest paying first, then newest
     'open', (select coalesce(jsonb_agg(j order by (j ->> 'reward')::numeric desc,
                                                   (j ->> 'createdAt')::numeric desc), '[]'::jsonb) from (
         select jsonb_build_object(
           'id', jb.id, 'title', jb.title, 'category', jb.category, 'description', jb.description,
           'url', jb.url, 'proofNote', jb.proof_note, 'reward', jb.reward, 'slots', jb.slots,
-          'filled', jb.filled, 'ownerName', public.wallet_display_name(jb.owner),
+          'filled', jb.filled, 'escrow', jb.escrow, 'ownerName', public.wallet_display_name(jb.owner),
           'createdAt', extract(epoch from jb.created_at) * 1000) as j
         from public.jobs jb
         where jb.status = 'active' and jb.filled < jb.slots and jb.owner <> v_user
