@@ -183,7 +183,9 @@ document.addEventListener("DOMContentLoaded", () => {
       .sort((a, b) => (Number(b.reward) || 0) - (Number(a.reward) || 0) || (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
     const list = all.filter((j) => filter === "all" || j.category === filter);
     $("s-open").textContent = all.length;
-    $("s-value").textContent = W.usd(all.reduce((n, j) => n + j.reward * (j.slots - j.filled), 0));
+    /* Server calculates this from funded escrow; never advertise unfunded/fake rewards. */
+    const fundedRewards = Number(feed.availableRewards);
+    $("s-value").textContent = W.usd(Number.isFinite(fundedRewards) ? fundedRewards : all.reduce((n, j) => n + Math.min(Number(j.escrow || 0), j.reward * (j.slots - j.filled)), 0));
     const mine = feed.mySubs;
     $("s-pending").textContent = mine.filter((s) => s.status === "pending").length;
     $("s-earned").textContent = W.usd(mine.filter((s) => s.status === "approved").reduce((n, s) => n + s.reward, 0));

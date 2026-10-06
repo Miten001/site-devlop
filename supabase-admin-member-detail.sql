@@ -31,6 +31,15 @@ begin
       from public.market_campaigns c
       where c.owner = p_user),
 
+    /* Task Market me is member ki posted tasks (live + paused + closed) */
+    'jobs', (select coalesce(jsonb_agg(jsonb_build_object(
+        'id', j.id, 'title', j.title, 'category', j.category,
+        'reward', j.reward, 'slots', j.slots, 'filled', j.filled,
+        'escrow', j.escrow, 'status', j.status,
+        'created', extract(epoch from j.created_at) * 1000
+      ) order by j.created_at desc), '[]'::jsonb)
+      from public.jobs j where j.owner = p_user),
+
     /* is member ne kaunsi campaigns complete ki (proof bheje) */
     'subs', (select coalesce(jsonb_agg(jsonb_build_object(
         'id', s.id, 'campaignId', s.campaign_id,
