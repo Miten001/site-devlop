@@ -376,7 +376,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const done = doneIds();
     /* Apni PAUSED campaigns bhi dikhti hain (Paused badge ke saath) —
        dusron ki paused campaigns hidden rehti hain. */
-    const items = FF.DB.campaigns().filter((c) => (c.active !== false || isOwnCamp(c)) && (activeFilter === "all" || c.platform === activeFilter));
+    /* Jyada coin/USDT bid karne wali campaign sabse pehle dikhti hai —
+       barabar payout par nayi campaign upar. */
+    const items = FF.DB.campaigns()
+      .filter((c) => (c.active !== false || isOwnCamp(c)) && (activeFilter === "all" || c.platform === activeFilter))
+      .sort((a, b) => (Number(b.payout) || 0) - (Number(a.payout) || 0) || (Number(b.created) || 0) - (Number(a.created) || 0));
     const notDone = items.some((c) => !done.has(c.id));
     emptyEl.classList.toggle("hidden", notDone);
     /* Clear message for the empty state: filter me campaign hai hi nahi,

@@ -194,6 +194,11 @@ if (typeof window !== "undefined") {
     if (!data.description || data.description.trim().length < 20) throw new Error("Describe the task in at least 20 characters");
     if (!(reward >= 0.02)) throw new Error("Minimum reward is $0.02 per worker");
     if (!(slots >= 1)) throw new Error("At least 1 worker slot is required");
+    /* Ek type (category) par maximum 3 live tasks */
+    const cat = data.category || "other";
+    const live = jobs().filter((j) => j.owner === email && j.category === cat &&
+      (j.status === "active" || j.status === "paused")).length;
+    if (live >= 3) throw new Error("Limit reached: only 3 live " + category(cat).name + " tasks at a time — cancel or finish one first");
     const budget = reward * slots;
     const fee = Math.round(budget * CFG.platformFeePct) / 100;
     const total = Math.round((budget + fee) * 10000) / 10000;
@@ -217,10 +222,23 @@ if (typeof window !== "undefined") {
   function openJobs(excludeEmail) {
     const done = subs();
     return jobs().filter((j) => j.status === "active" && j.filled < j.slots && j.owner !== excludeEmail)
-      .filter((j) => !done.some((s) => s.jobId === j.id && s.worker === excludeEmail));
+      .filter((j) => !done.some((s) => s.jobId === j.id && s.worker === excludeEmail))
+      /* jyada reward wali task pehle */
+      .sort((a, b) => num(b.reward) - num(a.reward) || num(b.createdAt) - num(a.createdAt));
   }
 
   function myJobs(email) { return jobs().filter((j) => j.owner === email); }
+
+  /* kitne live tasks is member ke har category me hain (max 3) */
+  function jobQuota(email) {
+    const by = {};
+    jobs().forEach((j) => {
+      if (j.owner !== email) return;
+      if (j.status !== "active" && j.status !== "paused") return;
+      by[j.category || "other"] = (by[j.category || "other"] || 0) + 1;
+    });
+    return { max: 3, byCategory: by };
+  }
   function jobSubs(jobId) { return subs().filter((s) => s.jobId === jobId); }
   function mySubs(email) { return subs().filter((s) => s.worker === email); }
 
@@ -620,6 +638,7 @@ if (typeof window !== "undefined") {
     return {
       mode: "local",
       config: { platformFeePct: CFG.platformFeePct, minJobReward: 0.02 },
+      quota: jobQuota(email),
       categories: CATEGORIES,
       open: openJobs(email).map((j) => Object.assign({}, j, { ownerName: j.ownerName || name || "Member" })),
       mine,
@@ -699,6 +718,13 @@ if (typeof window !== "undefined") {
       return remote("jobs_cancel", { p_job: jobId }, (u) => cancelJob(u.email, jobId), "feed");
     },
 
+    jobQuota() {
+      const u = FF.currentUser();
+      if (!u) return Promise.reject(new Error("Please log in"));
+      if (!serverReady()) return Promise.resolve(jobQuota(u.email));
+      return call("jobs_quota").catch((err) => { if (err.fellBack) return jobQuota(u.email); throw err; });
+    },
+
     /* --- admin --- */
     adminQueue() {
       if (!serverReady()) return Promise.resolve(null);
@@ -740,7 +766,7 @@ if (typeof window !== "undefined") {
     CFG, CATEGORIES, category, money, usd, uid,
     wallet, patchWallet, tx,
     createDeposit, createWithdraw, settleRequest, requests, myRequests,
-    jobs, openJobs, myJobs, postJob, cancelJob,
+    jobs, openJobs, myJobs, postJob, cancelJob, jobQuota,
     subs, jobSubs, mySubs, submitProof, reviewSub,
     adminCancelJob, adminSetJobStatus,
     convertPoints, convertUsdt, syncWalletPills, purgeDemoData, USDT_SVG,

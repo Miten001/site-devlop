@@ -97,6 +97,7 @@
               <select id="j-cat"></select>
               <span class="pick-caret"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></span>
             </div>
+            <p class="sub" id="j-quota" style="margin:8px 0 0;font-size:13px">You can run <b>3 live tasks per category</b> at a time.</p>
           </div>
           <div class="field">
             <label>Full instructions</label>
@@ -156,8 +157,31 @@ document.addEventListener("DOMContentLoaded", () => {
      not a redeploy. */
   let feePct = W.CFG.platformFeePct;
 
+  const MAX_PER_CAT = 3;
+  let quota = { max: MAX_PER_CAT, byCategory: {} };
+  let catNames = {};
+
   function fillCategories(cats) {
+    catNames = {};
+    cats.forEach((c) => (catNames[c.key] = c.name));
     $("j-cat").innerHTML = cats.map((c) => '<option value="' + c.key + '">' + c.name + "</option>").join("");
+    paintQuota();
+  }
+
+  /* Live counter: is category me member ki kitni tasks already chal rahi hain */
+  function paintQuota() {
+    const el = $("j-quota"), btn = $("job-form").querySelector('button[type="submit"]');
+    if (!el) return;
+    const key = $("j-cat").value || "other";
+    const max = Number(quota.max) || MAX_PER_CAT;
+    const used = Number((quota.byCategory || {})[key]) || 0;
+    const name = catNames[key] || "this category";
+    const full = used >= max;
+    el.innerHTML = full
+      ? '<b style="color:var(--danger)">Limit reached — ' + used + " / " + max + " live " + name +
+        " tasks.</b> Cancel or finish one in My Tasks before posting another."
+      : "<b>" + used + " / " + max + "</b> live " + name + " tasks used — you can post " + (max - used) + " more.";
+    if (btn) { btn.disabled = full; btn.style.opacity = full ? ".6" : ""; }
   }
   fillCategories(W.CATEGORIES);
   $("j-fee-pct").textContent = feePct;
@@ -172,9 +196,17 @@ document.addEventListener("DOMContentLoaded", () => {
     $("j-s3").textContent = W.usd(budget + fee);
   }
   ["j-reward", "j-slots"].forEach((id) => $(id).addEventListener("input", calc));
+  $("j-cat").addEventListener("change", paintQuota);
+
+  function loadQuota() {
+    return A.jobQuota().then((q) => { if (q) quota = q; paintQuota(); }).catch(() => {});
+  }
+  loadQuota();
 
   A.feed().then((feed) => {
     if (feed.categories && feed.categories.length) fillCategories(feed.categories);
+    if (feed.quota) { quota = feed.quota; }
+    paintQuota();
     feePct = feed.config.platformFeePct;
     $("j-fee-pct").textContent = feePct;
     calc();
@@ -194,6 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }).catch((err) => {
       FF.toast(err.message, "err");
       if (btn) { btn.disabled = false; btn.style.opacity = ""; }
+      loadQuota();
     });
   });
 
