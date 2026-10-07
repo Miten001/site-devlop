@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="125" height="125" viewBox="0 0 125 125" role="img" aria-label="FlexFam 125x125">
+<svg xmlns="http://www.w3.org/2000/svg" width="125" height="125" viewBox="0 0 125 125" role="img" aria-label="FlexFam button — social exchange, earn USDT">
   <defs>
     <!-- Background Gradient -->
     <linearGradient id="b125_bg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -92,11 +92,11 @@
   <!-- Center Value -->
   <g transform="translate(10, 28)">
     <rect width="105" height="48" rx="8" fill="url(#b125_card)" stroke="rgba(0,245,155,0.25)" stroke-width="1"/>
-    <text x="52" y="14" class="title" font-size="7.5" fill="#9fb0d5" text-anchor="middle">DAILY TASKS</text>
+    <text x="52" y="14" class="title" font-size="7.5" fill="#9fb0d5" text-anchor="middle">SOCIAL TASKS</text>
     <g transform="translate(52, 33)">
-      <text x="0" y="0" class="brand" font-size="16.5" fill="url(#b125_emerald)" text-anchor="middle" letter-spacing="-0.4px">$5.50<tspan fill="#ffffff" font-size="9.5" font-weight="700"> /d</tspan></text>
+      <text x="0" y="0" class="brand" font-size="12.5" fill="url(#b125_emerald)" text-anchor="middle" letter-spacing="-0.2px">EARN USDT</text>
     </g>
-    <text x="52" y="44" class="title" font-size="7" fill="#ffd043" text-anchor="middle">FREE USDT</text>
+    <text x="52" y="44" class="title" font-size="7" fill="#ffd043" text-anchor="middle">points → real USDT</text>
   </g>
 
   <!-- CTA -->

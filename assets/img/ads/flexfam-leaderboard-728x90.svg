@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90" role="img" aria-label="FlexFam Earn USDT Daily">
+<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90" role="img" aria-label="FlexFam — free social exchange: earn USDT for small social tasks">
   <defs>
     <!-- Background Gradient -->
     <linearGradient id="l728_bg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -124,17 +124,16 @@
   
 
     <g transform="translate(62, 2)">
-      <!-- Streak Tag -->
-      <rect x="0" y="0" width="144" height="20" rx="10" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.35)" stroke-width="1"/>
+      <!-- Exchange tag -->
+      <rect x="0" y="0" width="196" height="20" rx="10" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.35)" stroke-width="1"/>
       <path transform="translate(8, 2) scale(1.1)" d="M6 1C5.8 2.5 4.8 3.8 3.5 4.8 2 6 1.5 7.5 1.5 9.2 1.5 12 3.8 14 6.5 14S11.5 12 11.5 9.2c0-1.5-.7-2.8-1.8-3.8 0 1.2-.6 2.2-1.5 2.8 0-2-1-4-2.2-7.2z" fill="#ffd043"/>
-      <text x="26" y="14" class="title" font-size="10" fill="#00f59b" letter-spacing="0.6px">DAILY STREAK TASK</text>
+      <text x="26" y="14" class="title" font-size="10" fill="#00f59b" letter-spacing="0.6px">SOCIAL EXCHANGE TASKS</text>
 
-      <!-- Big Number -->
+      <!-- Big claim-free headline -->
       <g transform="translate(0, 44)">
-        <text x="0" y="0" class="brand" font-size="30" fill="url(#l728_emerald)" letter-spacing="-0.8px">$5.50</text>
-        <text x="96" y="-3" class="brand" font-size="18" fill="#ffffff">/ DAY</text>
+        <text x="0" y="0" class="brand" font-size="24" fill="url(#l728_emerald)" letter-spacing="-0.6px">EARN USDT <tspan fill="#ffffff" font-size="15">DAILY</tspan></text>
       </g>
-      <text x="0" y="60" class="body" font-size="10.5" fill="#9fb0d5">Instant Payouts • BEP20 &amp; UPI</text>
+      <text x="0" y="60" class="body" font-size="10.5" fill="#9fb0d5">Follow · Subscribe · Join · Visit — 9 platforms</text>
     </g>
   </g>
 
