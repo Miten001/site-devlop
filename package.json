@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "scripts": {
     "test": "node tests/reconcile.test.js && node tests/site-audit.js",
-    "test:audit": "node tests/site-audit.js"
+    "test:audit": "node tests/site-audit.js",
+    "build:banners": "node generate-banners.js"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "jsdom": "^30.1.1"
   }
 }

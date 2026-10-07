@@ -105,10 +105,9 @@
     <!-- Main Headline -->
     <g transform="translate(0, 160)">
       <text x="0" y="50" class="brand" font-size="56" fill="#ffffff" letter-spacing="-1px">Earn Real USDT</text>
-      <text x="0" y="115" class="brand" font-size="56" fill="url(#og1200_emerald)" letter-spacing="-1px">Up To $5.50 / Day</text>
-      <text x="0" y="170" class="body" font-size="20" fill="#a4b8db" max-width="500">
-        Complete simple social tasks • Telegram Bot • YouTube • Free Cloud Mining
-      </text>
+      <text x="0" y="115" class="brand" font-size="56" fill="url(#og1200_emerald)" letter-spacing="-1px">Social Tasks Pay</text>
+      <text x="0" y="166" class="body" font-size="20" fill="#a4b8db">Follow · subscribe · join · visit — points &amp; USDT</text>
+      <text x="0" y="196" class="body" font-size="16" fill="#7ce6ae">Grow your own pages on 9 platforms · 100% free to join</text>
     </g>
 
     <!-- CTA Button -->
@@ -147,15 +146,15 @@
     </g>
   
 
-    <text x="185" y="240" class="title" font-size="16" fill="#9fb0d5" text-anchor="middle">DAILY STREAK BONUS</text>
-    <text x="185" y="295" class="brand" font-size="46" fill="url(#og1200_emerald)" text-anchor="middle" letter-spacing="-1px">$5.50</text>
-    <text x="185" y="325" class="title" font-size="18" fill="#ffffff" text-anchor="middle">USDT Withdrawals</text>
+    <text x="185" y="240" class="title" font-size="16" fill="#9fb0d5" text-anchor="middle">SMALL TASKS · REAL USDT</text>
+    <text x="185" y="295" class="brand" font-size="44" fill="url(#og1200_emerald)" text-anchor="middle" letter-spacing="-1px">EARN USDT</text>
+    <text x="185" y="325" class="title" font-size="18" fill="#ffffff" text-anchor="middle">Daily Streak · 9 Ranks</text>
 
     <!-- Mini perks -->
     <g transform="translate(45, 355)">
       <rect width="280" height="42" rx="21" fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
       <path transform="translate(18, 11) scale(1.2)" d="M7 1L1 9h5l-2 7 8-9H7l2-7z" fill="#ffd043"/>
-      <text x="148" y="26" class="title" font-size="13" fill="#ffd043" text-anchor="middle">9 Task Categories • 100% Free</text>
+      <text x="148" y="26" class="title" font-size="12.5" fill="#ffd043" text-anchor="middle">Follow · Subscribe · Join · Visit</text>
     </g>
   </g>
 </svg>

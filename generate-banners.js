@@ -134,7 +134,7 @@ const FONT_STYLE = `
 // 1. Leaderboard 728x90
 function make728x90() {
   const p = "l728_";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90" role="img" aria-label="FlexFam Earn USDT Daily">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90" role="img" aria-label="FlexFam — free social exchange: earn USDT for small social tasks">
   <defs>${getDefs(p)}</defs>
   ${FONT_STYLE}
 
@@ -162,17 +162,16 @@ function make728x90() {
     ${getUsdtCoin(p, 26, 34, 25)}
 
     <g transform="translate(62, 2)">
-      <!-- Streak Tag -->
-      <rect x="0" y="0" width="144" height="20" rx="10" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.35)" stroke-width="1"/>
+      <!-- Exchange tag -->
+      <rect x="0" y="0" width="196" height="20" rx="10" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.35)" stroke-width="1"/>
       ${getFlame(8, 2, 1.1, "#ffd043")}
-      <text x="26" y="14" class="title" font-size="10" fill="#00f59b" letter-spacing="0.6px">DAILY STREAK TASK</text>
+      <text x="26" y="14" class="title" font-size="10" fill="#00f59b" letter-spacing="0.6px">SOCIAL EXCHANGE TASKS</text>
 
-      <!-- Big Number -->
+      <!-- Big claim-free headline -->
       <g transform="translate(0, 44)">
-        <text x="0" y="0" class="brand" font-size="30" fill="url(#${p}emerald)" letter-spacing="-0.8px">$5.50</text>
-        <text x="96" y="-3" class="brand" font-size="18" fill="#ffffff">/ DAY</text>
+        <text x="0" y="0" class="brand" font-size="24" fill="url(#${p}emerald)" letter-spacing="-0.6px">EARN USDT <tspan fill="#ffffff" font-size="15">DAILY</tspan></text>
       </g>
-      <text x="0" y="60" class="body" font-size="10.5" fill="#9fb0d5">Instant Payouts • BEP20 &amp; UPI</text>
+      <text x="0" y="60" class="body" font-size="10.5" fill="#9fb0d5">Follow · Subscribe · Join · Visit — 9 platforms</text>
     </g>
   </g>
 
@@ -190,7 +189,7 @@ function make728x90() {
 // 2. Banner 468x60
 function make468x60() {
   const p = "b468_";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="468" height="60" viewBox="0 0 468 60" role="img" aria-label="FlexFam Earn USDT">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="468" height="60" viewBox="0 0 468 60" role="img" aria-label="FlexFam — earn USDT for small social tasks">
   <defs>${getDefs(p)}</defs>
   ${FONT_STYLE}
 
@@ -206,7 +205,7 @@ function make468x60() {
     <text x="0" y="21" class="brand" font-size="20" fill="#ffffff" letter-spacing="-0.5px">Flex<tspan fill="url(#${p}gold)">Fam</tspan></text>
     <g transform="translate(0, 27)">
       ${getLightning(0, 0, 0.9, "#00f59b")}
-      <text x="12" y="9" class="title" font-size="9.5" fill="#00f59b">FREE USDT</text>
+      <text x="12" y="9" class="title" font-size="9.5" fill="#00f59b">9 PLATFORMS</text>
     </g>
   </g>
 
@@ -215,10 +214,9 @@ function make468x60() {
     ${getUsdtCoin(p, 18, 21, 18)}
     <g transform="translate(44, 4)">
       <g transform="translate(0, 18)">
-        <text x="0" y="0" class="brand" font-size="22" fill="url(#${p}emerald)" letter-spacing="-0.5px">$5.50</text>
-        <text x="74" y="-2" class="brand" font-size="13.5" fill="#ffffff">/ DAY</text>
+        <text x="0" y="0" class="brand" font-size="16" fill="url(#${p}emerald)" letter-spacing="-0.3px">EARN USDT <tspan fill="#ffffff" font-size="12" font-weight="800">DAILY</tspan></text>
       </g>
-      <text x="0" y="33" class="body" font-size="9.5" fill="#9fb0d5">Daily Tasks • Instant Pay</text>
+      <text x="0" y="33" class="body" font-size="9.5" fill="#9fb0d5">Follow · Sub · Join · Visit</text>
     </g>
   </g>
 
@@ -234,7 +232,7 @@ function make468x60() {
 // 3. Rectangle 300x250
 function make300x250() {
   const p = "r300_";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="250" viewBox="0 0 300 250" role="img" aria-label="FlexFam Earn USDT 300x250">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="250" viewBox="0 0 300 250" role="img" aria-label="FlexFam social exchange — earn USDT for small tasks (300x250)">
   <defs>${getDefs(p)}</defs>
   ${FONT_STYLE}
 
@@ -248,10 +246,10 @@ function make300x250() {
   <g transform="translate(0, 16)">
     <text x="150" y="25" class="brand" font-size="26" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5px">Flex<tspan fill="url(#${p}gold)">Fam</tspan></text>
     
-    <g transform="translate(72, 33)">
-      <rect x="0" y="0" width="156" height="18" rx="9" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.3)" stroke-width="1"/>
-      ${getLightning(8, 2, 0.9, "#00f59b")}
-      <text x="80" y="13" class="title" font-size="9" fill="#00f59b" text-anchor="middle" letter-spacing="0.8px">FREE SOCIAL EARNING</text>
+    <g transform="translate(56, 33)">
+      <rect x="0" y="0" width="188" height="18" rx="9" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.3)" stroke-width="1"/>
+      ${getLightning(10, 2, 0.9, "#00f59b")}
+      <text x="104" y="13" class="title" font-size="8.5" fill="#00f59b" text-anchor="middle" letter-spacing="0.7px">FREE SOCIAL EXCHANGE</text>
     </g>
   </g>
 
@@ -263,14 +261,13 @@ function make300x250() {
     ${getUsdtCoin(p, 42, 49, 26)}
 
     <g transform="translate(82, 14)">
-      <text x="0" y="14" class="title" font-size="10" fill="#9fb0d5">EARN UP TO</text>
-      <g transform="translate(0, 42)">
-        <text x="0" y="0" class="brand" font-size="30" fill="url(#${p}emerald)" letter-spacing="-0.8px">$5.50</text>
-        <text x="96" y="-3" class="brand" font-size="16" fill="#ffffff">/ DAY</text>
+      <text x="0" y="14" class="title" font-size="10" fill="#9fb0d5" letter-spacing="0.4px">SOCIAL TASKS PAY</text>
+      <g transform="translate(0, 44)">
+        <text x="0" y="0" class="brand" font-size="19" fill="url(#${p}emerald)" letter-spacing="-0.4px">EARN USDT DAILY</text>
       </g>
       <g transform="translate(0, 62)">
         ${getCheck(0, 0, 0.9, "#ffd043")}
-        <text x="14" y="8" class="title" font-size="10.5" fill="#ffd043">Telegram • YouTube • Web</text>
+        <text x="14" y="8" class="title" font-size="9.5" fill="#ffd043">Follow · Sub · Join · Visit</text>
       </g>
     </g>
   </g>
@@ -279,16 +276,16 @@ function make300x250() {
   <g transform="translate(20, 186)">
     <rect width="260" height="42" rx="21" fill="url(#${p}btn)" filter="url(#${p}shadow)"/>
     <rect x="2" y="2" width="256" height="18" rx="9" fill="rgba(255,255,255,0.35)"/>
-    <text x="130" y="26" class="brand" font-size="15" fill="#051020" text-anchor="middle" letter-spacing="0.3px">CLAIM FREE USDT ➔</text>
+    <text x="130" y="26" class="brand" font-size="15" fill="#051020" text-anchor="middle" letter-spacing="0.3px">JOIN FREE — NO CARD ➔</text>
   </g>
-  <text x="150" y="240" class="body" font-size="9" fill="#8ea5c8" text-anchor="middle">Instant Withdrawals • BEP20 &amp; UPI</text>
+  <text x="150" y="240" class="body" font-size="9" fill="#8ea5c8" text-anchor="middle">Points → real USDT • BEP20 &amp; UPI</text>
 </svg>`;
 }
 
 // 4. Square 250x250
 function make250x250() {
   const p = "s250_";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250" viewBox="0 0 250 250" role="img" aria-label="FlexFam Square 250x250">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250" viewBox="0 0 250 250" role="img" aria-label="FlexFam social exchange — small tasks, real USDT (250x250)">
   <defs>${getDefs(p)}</defs>
   ${FONT_STYLE}
 
@@ -301,10 +298,10 @@ function make250x250() {
   <!-- Logo -->
   <g transform="translate(0, 15)">
     <text x="125" y="23" class="brand" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5px">Flex<tspan fill="url(#${p}gold)">Fam</tspan></text>
-    <g transform="translate(56, 30)">
-      <rect x="0" y="0" width="138" height="17" rx="8.5" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.3)" stroke-width="1"/>
-      ${getLightning(6, 2, 0.8, "#00f59b")}
-      <text x="72" y="12" class="title" font-size="8.5" fill="#00f59b" text-anchor="middle" letter-spacing="0.8px">EARN REAL USDT</text>
+    <g transform="translate(52, 30)">
+      <rect x="0" y="0" width="146" height="17" rx="8.5" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.3)" stroke-width="1"/>
+      ${getLightning(8, 2, 0.8, "#00f59b")}
+      <text x="80" y="12" class="title" font-size="8.5" fill="#00f59b" text-anchor="middle" letter-spacing="0.8px">SOCIAL EXCHANGE</text>
     </g>
   </g>
 
@@ -315,13 +312,13 @@ function make250x250() {
     ${getUsdtCoin(p, 36, 40, 22)}
 
     <g transform="translate(68, 12)">
-      <text x="0" y="14" class="title" font-size="9" fill="#9fb0d5">DAILY REWARD</text>
+      <text x="0" y="14" class="title" font-size="9" fill="#9fb0d5" letter-spacing="0.4px">SOCIAL TASKS PAY</text>
       <g transform="translate(0, 38)">
-        <text x="0" y="0" class="brand" font-size="26" fill="url(#${p}emerald)" letter-spacing="-0.6px">$5.50</text>
-        <text x="84" y="-2" class="brand" font-size="14" fill="#ffffff">/d</text>
+        <text x="0" y="0" class="brand" font-size="22" fill="url(#${p}emerald)" letter-spacing="-0.5px">EARN USDT</text>
+        <text x="0" y="20" class="title" font-size="10.5" fill="#ffffff">for small tasks</text>
       </g>
     </g>
-    <text x="109" y="78" class="title" font-size="9.5" fill="#ffd043" text-anchor="middle">Daily Tasks • Free Mining Rig</text>
+    <text x="109" y="79" class="title" font-size="8" fill="#ffd043" text-anchor="middle" letter-spacing="0.2px">Follow · Subscribe · Join · Visit</text>
   </g>
 
   <!-- CTA -->
@@ -337,7 +334,7 @@ function make250x250() {
 // 5. Mobile 320x50
 function make320x50() {
   const p = "m320_";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="50" viewBox="0 0 320 50" role="img" aria-label="FlexFam Mobile 320x50">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="50" viewBox="0 0 320 50" role="img" aria-label="FlexFam mobile banner — small social tasks, real USDT">
   <defs>${getDefs(p)}</defs>
   ${FONT_STYLE}
 
@@ -353,7 +350,7 @@ function make320x50() {
     <text x="0" y="19" class="brand" font-size="16" fill="#ffffff" letter-spacing="-0.5px">Flex<tspan fill="url(#${p}gold)">Fam</tspan></text>
     <g transform="translate(0, 23)">
       ${getLightning(0, 0, 0.75, "#00f59b")}
-      <text x="10" y="8" class="title" font-size="8" fill="#00f59b">FREE USDT</text>
+      <text x="10" y="8" class="title" font-size="8" fill="#00f59b">9 PLATFORMS</text>
     </g>
   </g>
 
@@ -361,11 +358,10 @@ function make320x50() {
   <g transform="translate(86, 8)">
     ${getUsdtCoin(p, 14, 17, 14)}
     <g transform="translate(34, 3)">
-      <g transform="translate(0, 16)">
-        <text x="0" y="0" class="brand" font-size="18" fill="url(#${p}emerald)" letter-spacing="-0.4px">$5.50</text>
-        <text x="56" y="-2" class="brand" font-size="11" fill="#ffffff">/d</text>
+      <g transform="translate(0, 17)">
+        <text x="0" y="0" class="brand" font-size="15" fill="url(#${p}emerald)" letter-spacing="-0.3px">EARN USDT</text>
       </g>
-      <text x="0" y="28" class="body" font-size="8" fill="#9fb0d5">Tasks &amp; Streaks</text>
+      <text x="0" y="28" class="body" font-size="8" fill="#9fb0d5">Small tasks pay</text>
     </g>
   </g>
 
@@ -381,7 +377,7 @@ function make320x50() {
 // 6. Skyscraper 160x600
 function make160x600() {
   const p = "sky160_";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="600" viewBox="0 0 160 600" role="img" aria-label="FlexFam Skyscraper 160x600">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="600" viewBox="0 0 160 600" role="img" aria-label="FlexFam skyscraper — social exchange, earn USDT">
   <defs>${getDefs(p)}</defs>
   ${FONT_STYLE}
 
@@ -395,10 +391,10 @@ function make160x600() {
   <!-- Logo -->
   <g transform="translate(0, 22)">
     <text x="80" y="26" class="brand" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="-0.5px">Flex<tspan fill="url(#${p}gold)">Fam</tspan></text>
-    <g transform="translate(20, 36)">
-      <rect x="0" y="0" width="120" height="18" rx="9" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.3)" stroke-width="1"/>
-      ${getLightning(8, 2, 0.8, "#00f59b")}
-      <text x="64" y="13" class="title" font-size="8.5" fill="#00f59b" text-anchor="middle" letter-spacing="0.6px">SOCIAL REWARDS</text>
+    <g transform="translate(14, 36)">
+      <rect x="0" y="0" width="132" height="18" rx="9" fill="rgba(0,245,155,0.15)" stroke="rgba(0,245,155,0.3)" stroke-width="1"/>
+      ${getLightning(8, 3, 0.8, "#00f59b")}
+      <text x="75" y="13" class="title" font-size="8.5" fill="#00f59b" text-anchor="middle" letter-spacing="0.4px">SOCIAL EXCHANGE</text>
     </g>
   </g>
 
@@ -408,10 +404,10 @@ function make160x600() {
   <!-- Value Card -->
   <g transform="translate(12, 192)">
     <rect width="136" height="130" rx="12" fill="url(#${p}card)" stroke="rgba(0,245,155,0.3)" stroke-width="1.2"/>
-    <text x="68" y="24" class="title" font-size="10" fill="#9fb0d5" text-anchor="middle">EARN DAILY</text>
-    <text x="68" y="60" class="brand" font-size="32" fill="url(#${p}emerald)" text-anchor="middle" letter-spacing="-0.8px">$5.50</text>
-    <text x="68" y="80" class="brand" font-size="13" fill="#ffffff" text-anchor="middle">USDT / DAY</text>
-    <text x="68" y="104" class="title" font-size="9" fill="#ffd043" text-anchor="middle">Day 90+ Streak</text>
+    <text x="68" y="24" class="title" font-size="8" fill="#9fb0d5" text-anchor="middle" letter-spacing="0.5px">FREE SOCIAL EXCHANGE</text>
+    <text x="68" y="58" class="brand" font-size="19" fill="url(#${p}emerald)" text-anchor="middle" letter-spacing="-0.4px">EARN USDT</text>
+    <text x="68" y="80" class="brand" font-size="11" fill="#ffffff" text-anchor="middle" letter-spacing="0.3px">SOCIAL TASKS PAY</text>
+    <text x="68" y="104" class="title" font-size="9" fill="#ffd043" text-anchor="middle">Points → real USDT</text>
     <text x="68" y="118" class="body" font-size="8.5" fill="#8ea5c8" text-anchor="middle">Instant Withdrawal</text>
   </g>
 
@@ -419,19 +415,19 @@ function make160x600() {
   <g transform="translate(16, 342)">
     <g transform="translate(0, 0)">
       ${getCheck(0, 2, 0.9, "#00f59b")}
-      <text x="18" y="11" class="title" font-size="11" fill="#ffffff">Telegram Tasks</text>
+      <text x="18" y="11" class="title" font-size="10" fill="#ffffff">Telegram · YouTube</text>
     </g>
     <g transform="translate(0, 28)">
       ${getCheck(0, 2, 0.9, "#00f59b")}
-      <text x="18" y="11" class="title" font-size="11" fill="#ffffff">YouTube &amp; Social</text>
+      <text x="18" y="11" class="title" font-size="10" fill="#ffffff">Follows · Subscribes</text>
     </g>
     <g transform="translate(0, 56)">
       ${getCheck(0, 2, 0.9, "#00f59b")}
-      <text x="18" y="11" class="title" font-size="11" fill="#ffffff">Free Mining Rigs</text>
+      <text x="18" y="11" class="title" font-size="10" fill="#ffffff">Free Mining Rigs</text>
     </g>
     <g transform="translate(0, 84)">
       ${getCheck(0, 2, 0.9, "#00f59b")}
-      <text x="18" y="11" class="title" font-size="11" fill="#ffffff">BEP20 &amp; UPI Pay</text>
+      <text x="18" y="11" class="title" font-size="10" fill="#ffffff">Website Visits</text>
     </g>
   </g>
 
@@ -448,7 +444,7 @@ function make160x600() {
 // 7. Button 125x125
 function make125x125() {
   const p = "b125_";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="125" height="125" viewBox="0 0 125 125" role="img" aria-label="FlexFam 125x125">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="125" height="125" viewBox="0 0 125 125" role="img" aria-label="FlexFam button — social exchange, earn USDT">
   <defs>${getDefs(p)}</defs>
   ${FONT_STYLE}
 
@@ -464,11 +460,11 @@ function make125x125() {
   <!-- Center Value -->
   <g transform="translate(10, 28)">
     <rect width="105" height="48" rx="8" fill="url(#${p}card)" stroke="rgba(0,245,155,0.25)" stroke-width="1"/>
-    <text x="52" y="14" class="title" font-size="7.5" fill="#9fb0d5" text-anchor="middle">DAILY TASKS</text>
+    <text x="52" y="14" class="title" font-size="7.5" fill="#9fb0d5" text-anchor="middle">SOCIAL TASKS</text>
     <g transform="translate(52, 33)">
-      <text x="0" y="0" class="brand" font-size="16.5" fill="url(#${p}emerald)" text-anchor="middle" letter-spacing="-0.4px">$5.50<tspan fill="#ffffff" font-size="9.5" font-weight="700"> /d</tspan></text>
+      <text x="0" y="0" class="brand" font-size="12.5" fill="url(#${p}emerald)" text-anchor="middle" letter-spacing="-0.2px">EARN USDT</text>
     </g>
-    <text x="52" y="44" class="title" font-size="7" fill="#ffd043" text-anchor="middle">FREE USDT</text>
+    <text x="52" y="44" class="title" font-size="7" fill="#ffd043" text-anchor="middle">points → real USDT</text>
   </g>
 
   <!-- CTA -->
@@ -512,10 +508,9 @@ function make1200x630() {
     <!-- Main Headline -->
     <g transform="translate(0, 160)">
       <text x="0" y="50" class="brand" font-size="56" fill="#ffffff" letter-spacing="-1px">Earn Real USDT</text>
-      <text x="0" y="115" class="brand" font-size="56" fill="url(#${p}emerald)" letter-spacing="-1px">Up To $5.50 / Day</text>
-      <text x="0" y="170" class="body" font-size="20" fill="#a4b8db" max-width="500">
-        Complete simple social tasks • Telegram Bot • YouTube • Free Cloud Mining
-      </text>
+      <text x="0" y="115" class="brand" font-size="56" fill="url(#${p}emerald)" letter-spacing="-1px">Social Tasks Pay</text>
+      <text x="0" y="166" class="body" font-size="20" fill="#a4b8db">Follow · subscribe · join · visit — points &amp; USDT</text>
+      <text x="0" y="196" class="body" font-size="16" fill="#7ce6ae">Grow your own pages on 9 platforms · 100% free to join</text>
     </g>
 
     <!-- CTA Button -->
@@ -534,15 +529,15 @@ function make1200x630() {
     <!-- Big 3D Coin -->
     ${getUsdtCoin(p, 185, 120, 72)}
 
-    <text x="185" y="240" class="title" font-size="16" fill="#9fb0d5" text-anchor="middle">DAILY STREAK BONUS</text>
-    <text x="185" y="295" class="brand" font-size="46" fill="url(#${p}emerald)" text-anchor="middle" letter-spacing="-1px">$5.50</text>
-    <text x="185" y="325" class="title" font-size="18" fill="#ffffff" text-anchor="middle">USDT Withdrawals</text>
+    <text x="185" y="240" class="title" font-size="16" fill="#9fb0d5" text-anchor="middle">SMALL TASKS · REAL USDT</text>
+    <text x="185" y="295" class="brand" font-size="44" fill="url(#${p}emerald)" text-anchor="middle" letter-spacing="-1px">EARN USDT</text>
+    <text x="185" y="325" class="title" font-size="18" fill="#ffffff" text-anchor="middle">Daily Streak · 9 Ranks</text>
 
     <!-- Mini perks -->
     <g transform="translate(45, 355)">
       <rect width="280" height="42" rx="21" fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
       ${getLightning(18, 11, 1.2, "#ffd043")}
-      <text x="148" y="26" class="title" font-size="13" fill="#ffd043" text-anchor="middle">9 Task Categories • 100% Free</text>
+      <text x="148" y="26" class="title" font-size="12.5" fill="#ffd043" text-anchor="middle">Follow · Subscribe · Join · Visit</text>
     </g>
   </g>
 </svg>`;
