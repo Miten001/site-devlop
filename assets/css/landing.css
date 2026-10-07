@@ -5,6 +5,20 @@
    a vibrant CTA panel and smoother reveals.
    ============================================================ */
 
+/* ---------- living "video" background layer ---------- */
+/* The animated canvas replaces the static floating-coin layer so the
+   motion feels continuous and cinematic instead of looped sprites. */
+#bgMotion {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: block;
+}
+.crypto-bg { display: none; }
+
 /* ---------- hero atmosphere ---------- */
 .hero { padding-top: 148px; }
 
@@ -39,6 +53,39 @@
 
 /* headline presence */
 .hero h1 { line-height: 1.06; }
+
+/* gradient text slowly flows like light on water */
+.hero h1 .grad-text {
+  background-size: 220% 100%;
+  animation: lf-shimmer 6s linear infinite;
+}
+@keyframes lf-shimmer { to { background-position: 220% 0; } }
+
+/* cinematic light sweep drifting across the hero every few seconds */
+.hero-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-sheen::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  width: 34%;
+  left: -45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-18deg);
+  filter: blur(7px);
+  opacity: 0.4;
+  animation: lf-sheen 8s ease-in-out infinite;
+}
+@keyframes lf-sheen {
+  0%, 16%   { left: -45%; }
+  58%, 100% { left: 135%; }
+}
 
 /* soft highlighter swipe under the rotating word */
 .hero h1 .rw { position: relative; padding-bottom: 0.08em; }
@@ -314,6 +361,7 @@ footer::before {
 
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .hero-visual::before, .cta-coin { animation: none !important; }
+  .hero-visual::before, .cta-coin, .hero-sheen::before, .hero h1 .grad-text { animation: none !important; }
+  .hero-sheen { display: none; }
   .reveal { filter: none !important; }
 }

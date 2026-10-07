@@ -24,6 +24,9 @@
 </head>
 <body>
 
+<!-- living video-style background (drifting glow, floating coins, sparkles, comets) -->
+<canvas id="bgMotion" aria-hidden="true"></canvas>
+
 <div class="aurora"><span></span><span></span><span></span></div>
 
 <!-- Floating crypto background (USDT / BTC) -->
@@ -87,6 +90,7 @@
 <!-- ================= HERO ================= -->
 <section class="hero">
   <div class="hero-mesh" aria-hidden="true"></div>
+  <div class="hero-sheen" aria-hidden="true"></div>
   <div class="container hero-grid">
     <div>
       <span class="eyebrow pulse"><span class="dot"></span> <b class="live-n" id="liveCount">2,384</b> members earned today</span>
@@ -711,6 +715,7 @@
     }
   });
 </script>
+<script src="assets/js/landing-bg.js?v=1.0"></script>
 <script src="assets/js/bell.js?v=1.0"></script>
 </body>
 </html>
