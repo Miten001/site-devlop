@@ -1,0 +1,367 @@
+/* ============================================================
+   FLEXFAM — Landing page visual upgrade (index.html only)
+   Loaded after style.css + mobile.css. Purely additive:
+   richer hero atmosphere, glowy cards, testimonial polish,
+   a vibrant CTA panel and smoother reveals.
+   ============================================================ */
+
+/* ---------- living "video" background layer ---------- */
+/* The animated canvas replaces the static floating-coin layer so the
+   motion feels continuous and cinematic instead of looped sprites. */
+#bgMotion {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: block;
+}
+.crypto-bg { display: none; }
+
+/* ---------- hero atmosphere ---------- */
+.hero { padding-top: 148px; }
+
+/* faint blueprint grid fading out below the headline */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(16, 27, 48, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 27, 48, 0.05) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(ellipse 92% 78% at 50% 0%, #000 25%, transparent 74%);
+  mask-image: radial-gradient(ellipse 92% 78% at 50% 0%, #000 25%, transparent 74%);
+}
+
+/* warm sunrise glow behind the hero copy + cool counter-glow right */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(640px 360px at 12% 4%, rgba(247, 148, 29, 0.17), transparent 62%),
+    radial-gradient(520px 320px at 88% 18%, rgba(47, 111, 237, 0.10), transparent 62%),
+    radial-gradient(720px 300px at 50% 108%, rgba(23, 178, 106, 0.08), transparent 70%);
+}
+.hero .container { position: relative; z-index: 1; }
+
+/* headline presence */
+.hero h1 { line-height: 1.06; }
+
+/* gradient text slowly flows like light on water */
+.hero h1 .grad-text {
+  background-size: 220% 100%;
+  animation: lf-shimmer 6s linear infinite;
+}
+@keyframes lf-shimmer { to { background-position: 220% 0; } }
+
+/* cinematic light sweep drifting across the hero every few seconds */
+.hero-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-sheen::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  width: 34%;
+  left: -45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-18deg);
+  filter: blur(7px);
+  opacity: 0.4;
+  animation: lf-sheen 8s ease-in-out infinite;
+}
+@keyframes lf-sheen {
+  0%, 16%   { left: -45%; }
+  58%, 100% { left: 135%; }
+}
+
+/* soft highlighter swipe under the rotating word */
+.hero h1 .rw { position: relative; padding-bottom: 0.08em; }
+.hero h1 .rw::after {
+  content: "";
+  position: absolute;
+  left: -2%;
+  right: 6%;
+  bottom: 0;
+  height: 0.17em;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(247, 148, 29, 0.55), rgba(255, 176, 71, 0.55));
+  transform: skewX(-14deg);
+  z-index: -1;
+}
+
+/* hero eyebrow pill — add a glowing dot ring */
+.hero .eyebrow { box-shadow: 0 4px 16px rgba(247, 148, 29, 0.14); }
+.hero .eyebrow .dot { box-shadow: 0 0 0 4px rgba(247, 148, 29, 0.16); }
+
+/* aurora halo slowly spinning behind the hero card */
+.hero-visual::before {
+  content: "";
+  position: absolute;
+  inset: -14% -10%;
+  z-index: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(247, 148, 29, 0),
+    rgba(247, 148, 29, 0.4),
+    rgba(47, 111, 237, 0.32),
+    rgba(23, 178, 106, 0.3),
+    rgba(247, 148, 29, 0)
+  );
+  filter: blur(42px);
+  opacity: 0.5;
+  animation: lf-spin 16s linear infinite;
+}
+@keyframes lf-spin { to { transform: rotate(360deg); } }
+
+.hero-card {
+  border-color: rgba(247, 148, 29, 0.22);
+  box-shadow: 0 24px 64px rgba(16, 27, 48, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+}
+
+/* micro-trust chips become soft pills */
+.mt-row li {
+  background: rgba(23, 178, 106, 0.07);
+  border: 1px solid rgba(23, 178, 106, 0.16);
+  padding: 6px 12px;
+  border-radius: 999px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.mt-row li:hover { transform: translateY(-2px); background: rgba(23, 178, 106, 0.12); }
+
+/* platform marquee — fade the edges for a polished ticker */
+.marquee-wrap {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+}
+
+/* ---------- stats band ---------- */
+.stat-card { background: linear-gradient(180deg, #ffffff, #fafbfe); }
+.stat-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 3px;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(90deg, var(--sc, var(--orange)), transparent 85%);
+  opacity: 0.85;
+}
+.stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.stats-grid .stat-card:nth-child(1) { --sc: #6d3fd4; }
+.stats-grid .stat-card:nth-child(2) { --sc: #0f7ea8; }
+.stats-grid .stat-card:nth-child(3) { --sc: #0f7a48; }
+.stats-grid .stat-card:nth-child(4) { --sc: #b97309; }
+
+/* ---------- section heads ---------- */
+.section-head h2 { letter-spacing: -0.02em; }
+.eyebrow .dot { box-shadow: 0 0 0 3px rgba(247, 148, 29, 0.14); }
+
+/* ---------- platform cards ---------- */
+.pf-card { background: linear-gradient(180deg, #ffffff, #fbfcfe); }
+.pf-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 3px;
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(90deg, transparent, var(--pf, var(--orange)), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.pf-card:hover {
+  transform: translateY(-5px);
+  border-color: color-mix(in srgb, var(--pf, var(--orange)) 45%, transparent);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--pf, var(--orange)) 16%, rgba(16, 27, 48, 0.06));
+}
+.pf-card:hover::after { opacity: 0.95; }
+.pf-card .ico { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.pf-card:hover .ico { transform: scale(1.1) rotate(-5deg); }
+
+/* ---------- how / usdt / mining step cards ---------- */
+.how-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  background: linear-gradient(170deg, #ffffff, #f9fafd);
+}
+.how-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(247, 148, 29, 0.4);
+  box-shadow: 0 18px 44px rgba(16, 27, 48, 0.10), 0 0 0 1px rgba(247, 148, 29, 0.06);
+}
+.how-card::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(247, 148, 29, 0.10), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.how-card:hover::before { opacity: 1; }
+
+/* ---------- testimonial cards ---------- */
+.testi { padding: 90px 0 40px; }
+.t-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff, #fbfcfe);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.t-card::before {
+  content: "\201C";
+  position: absolute;
+  top: 2px;
+  right: 16px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 92px;
+  line-height: 1;
+  color: rgba(247, 148, 29, 0.13);
+  pointer-events: none;
+}
+.t-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(247, 148, 29, 0.4);
+  box-shadow: 0 18px 42px rgba(247, 148, 29, 0.12);
+}
+.t-stars { display: block; color: #f7941d; letter-spacing: 3px; font-size: 14px; margin-bottom: 12px; }
+.t-card .t-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 14px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0f7a48;
+  background: rgba(23, 178, 106, 0.10);
+  border: 1px solid rgba(23, 178, 106, 0.25);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.t-user .av { box-shadow: 0 6px 14px rgba(16, 27, 48, 0.14); }
+
+/* ---------- pricing: fix featured card for the light theme ---------- */
+.price-card { background: linear-gradient(180deg, #ffffff, #fafbfe); }
+.price-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+.price-card.featured {
+  border-color: rgba(247, 148, 29, 0.55);
+  background:
+    radial-gradient(300px 160px at 85% 0%, rgba(247, 148, 29, 0.16), transparent 65%),
+    linear-gradient(170deg, #fff8ef, #ffffff 55%, #fff3e0);
+  box-shadow: 0 20px 50px rgba(247, 148, 29, 0.20);
+}
+.price-card.featured:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 26px 60px rgba(247, 148, 29, 0.28);
+}
+.price-card.featured .amount { color: #e06d00; }
+.popular-badge { box-shadow: 0 6px 16px rgba(247, 148, 29, 0.4); }
+
+/* ---------- final CTA: vibrant brand panel ---------- */
+.cta-box {
+  background:
+    radial-gradient(560px 230px at 12% 0%, rgba(255, 255, 255, 0.24), transparent 60%),
+    radial-gradient(520px 240px at 88% 105%, rgba(255, 255, 255, 0.16), transparent 60%),
+    linear-gradient(115deg, #ff8a1f, #f7941d 45%, #ffab3d 78%, #ff7a18);
+  border: none;
+  box-shadow: 0 26px 64px rgba(247, 148, 29, 0.35);
+}
+.cta-box h2 { color: #fff; text-shadow: 0 2px 18px rgba(160, 70, 0, 0.25); }
+.cta-box h2 .grad-text {
+  background: linear-gradient(100deg, #fff7ec, #ffe3bd);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.cta-box p { color: rgba(255, 255, 255, 0.94); }
+.cta-box .btn-primary {
+  background: #fff;
+  color: #e06d00;
+  border: none;
+  box-shadow: 0 16px 34px rgba(122, 52, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.cta-box .btn-primary:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 22px 44px rgba(122, 52, 0, 0.34);
+}
+.cta-box .cta-note {
+  margin: 20px auto 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.88);
+}
+.cta-coin {
+  position: absolute;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(2px);
+  animation: lf-bob 6s ease-in-out infinite;
+  pointer-events: none;
+}
+.cta-coin.c1 { width: 62px; height: 62px; font-size: 28px; top: 16%; left: 7%; }
+.cta-coin.c2 { width: 40px; height: 40px; font-size: 18px; bottom: 18%; left: 15%; animation-delay: -1.6s; }
+.cta-coin.c3 { width: 52px; height: 52px; font-size: 24px; top: 13%; right: 9%; animation-delay: -3.1s; }
+.cta-coin.c4 { width: 30px; height: 30px; font-size: 14px; bottom: 24%; right: 17%; animation-delay: -4.4s; }
+@keyframes lf-bob { 50% { transform: translateY(-13px) rotate(6deg); } }
+
+/* ---------- footer flourish ---------- */
+footer { position: relative; }
+footer::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(247, 148, 29, 0.55), transparent);
+}
+
+/* ---------- smoother scroll reveals ---------- */
+.reveal { transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s ease; filter: blur(5px); }
+.reveal.in { filter: blur(0); }
+
+/* ---------- mobile tweaks ---------- */
+@media (max-width: 900px) {
+  .hero-visual::before { inset: -8% -6%; }
+  .cta-coin.c1 { width: 46px; height: 46px; font-size: 21px; }
+  .cta-coin.c3 { width: 40px; height: 40px; font-size: 18px; }
+}
+@media (max-width: 560px) {
+  .cta-coin.c2, .cta-coin.c4 { display: none; }
+  .cta-coin.c1 { left: 3%; top: 8%; }
+  .cta-coin.c3 { right: 4%; top: 6%; }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .hero-visual::before, .cta-coin, .hero-sheen::before, .hero h1 .grad-text { animation: none !important; }
+  .hero-sheen { display: none; }
+  .reveal { filter: none !important; }
+}
