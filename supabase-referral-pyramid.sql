@@ -226,6 +226,9 @@ revoke all on function public.wallet_settle_sub(uuid, boolean, text, boolean) fr
 
 -- ------------------------------------------------------------
 -- 4. streak_claim — daily streak reward par uplines ko USDT %
+--    (earn-rule wali copy: Day 11+ TimeBucks check + pyramid payout.
+--     Is file se PEHLE supabase-daily-streak.sql dobara run karo taaki
+--     streak_earn_req / streak_earned_48h latest ho.)
 -- ------------------------------------------------------------
 create or replace function public.streak_claim()
 returns jsonb language plpgsql security definer set search_path = public as $$
@@ -236,6 +239,9 @@ declare
   v_streak  int;
   v_reward  numeric;
   v_best    int;
+  v_req     numeric;
+  v_earned  numeric := 0;
+  v_tom_req numeric;
 begin
   insert into public.daily_streaks (user_id) values (v_user)
   on conflict (user_id) do nothing;
@@ -251,6 +257,17 @@ begin
     v_streak := coalesce(s.streak, 0) + 1;   -- streak jari hai
   else
     v_streak := 1;                            -- miss hua / pehla claim
+  end if;
+
+  -- TimeBucks earn rule: Day 11+ ke liye last 48h ki earning check.
+  v_req := public.streak_earn_req(v_streak);
+  if v_req > 0 then
+    v_earned := public.streak_earned_48h(v_user);
+    if v_earned < v_req then
+      raise exception 'Day % is locked — earn $% in the last 48 hours (tasks, campaigns, mining) to unlock it. You have $% — earn $% more, then check in.',
+        v_streak, round(v_req, 2), round(v_earned, 4), round(v_req - v_earned, 4)
+        using errcode = 'P0001';
+    end if;
   end if;
 
   v_reward := public.streak_reward(v_streak);
@@ -277,6 +294,12 @@ begin
   perform public.referral_payout(v_user, v_reward, 'usdt',
     'Day ' || v_streak || ' streak of ' || public.wallet_display_name(v_user));
 
+  -- Kal ka preview (Day 10 claim ke baad Day 11 ki condition dikhe).
+  v_tom_req := public.streak_earn_req(v_streak + 1);
+  if v_tom_req > 0 and v_req <= 0 then
+    v_earned := public.streak_earned_48h(v_user);
+  end if;
+
   return jsonb_build_object(
     'ok', true, 'reward', v_reward, 'day', v_streak,
     'canClaim', false, 'claimedToday', true,
@@ -285,7 +308,14 @@ begin
     'nextDay', v_streak, 'nextReward', public.streak_reward(v_streak),
     'nextRank', public.streak_rank(v_streak),
     'rank', public.streak_rank(v_streak),
-    'rewards', public.streak_reward_list()
+    'rewards', public.streak_reward_list(),
+    'earnApplies', (v_tom_req > 0),
+    'earnForDay', v_streak + 1,
+    'earnRequired', v_tom_req,
+    'earnDone', case when v_tom_req > 0 then coalesce(v_earned, 0) else 0 end,
+    'earnNeed', greatest(v_tom_req - coalesce(v_earned, 0), 0),
+    'earnMet', (coalesce(v_earned, 0) >= v_tom_req),
+    'earnWindowHrs', 48
   );
 end;
 $$;
