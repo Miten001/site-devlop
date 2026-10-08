@@ -17,7 +17,7 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 11 | supabase-campaigns-watch.sql | **Watch/View/Read timer earn** — `watch_secs` column + timer-mode campaigns (proof nahi, countdown → instant credit) | 5, 10 |
 | 12 | supabase-admin-campaigns.sql | **Admin campaign manager** — admin.html me SAARI campaigns (kisne banayi — name + email), koi bhi edit (title/link/platform/action/payout/watch/pause) ya delete | 1, 5 |
 | 13 | supabase-campaigns-limit.sql | **Engagement limit** — "kitne user tak campaign chalegi": Add Page par limit (0 = no limit), full hone par submit reject + "Limit reached ⛔" card, progress X/Y (Earn/Dashboard/Admin). Admin edit me bhi limit | 5, 12 |
-| 14 | supabase-daily-streak.sql | **Daily streak — 90 day (TimeBucks style)** — roz check-in → USDT (Day 1: $0.001 → Day 90: $5.50, Day 91+ $5.50/day; 9 ranks Rookie→Godlike; miss = reset). Dashboard panel + countdown + coin sound; wallet history me "Daily streak" | 3 |
+| 14 | supabase-daily-streak.sql | **Daily streak — 90 day (TimeBucks style + earn rule)** — roz check-in → USDT (Day 1: $0.001 → Day 90: $5.50, Day 91+ $5.50/day; 9 ranks Rookie→Godlike; miss = reset). **Day 1-10 free, Day 11+ TimeBucks rule:** last 48h me earning chahiye ($0.02→$5.00 rank ladder; tasks + mining + campaigns + referrals count, streak/deposit/convert nahi). Condition box Day 10 ke baad hi dikhta hai. Dashboard panel + countdown + coin sound; wallet history me "Daily streak" | 3 |
 | 15 | supabase-campaign-quota.sql | **Campaign quota** — har platform par max 3 active campaigns per member (Add Page par live counter + submit block; server par post/toggle guard) | 13 |
 | 16 | supabase-referral-pyramid.sql | **Referral pyramid** — 3-level referral income (L1 10% / L2 3% / L3 1%) har earning par (campaigns points, tasks/streak/mining USDT); Refer page par pyramid panel + income; wallet history me 'L1/L2/L3 referral income' entries | 3, 5, 13, 14, 15 (sab latest, sabse aakhir) |
 | 17 | [`supabase-campaigns-url-fix.sql`](supabase-campaigns-url-fix.sql) | **URL fix** — `ff_normalize_url()` + `campaigns_post` ab link ko khud saaf karta hai (`t.me/x`, `www.foo.com/y`, extra space/zero-width/brackets sab chalte hain). Isse Add Page ka galat "Please enter a valid URL (https://...)" error khatam | 15 |
@@ -28,6 +28,17 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 22 | [`supabase-campaigns-top-bid.sql`](supabase-campaigns-top-bid.sql) | **Top bid first** — jis campaign par jyada coin/USDT bid hai wo Earn page par sabse pehle (payout desc, phir newest) | 13 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
+
+---
+
+## Daily streak earn rule live karne ke liye (TimeBucks rule update)
+
+Day 11+ par **last-48h earning condition** (`streak_earn_req` ladder + `streak_earned_48h` check + Dashboard condition box) deploy karne ke liye, Supabase SQL editor me **isi order me dobara run karo** (dono idempotent hain, data safe):
+
+1. [`supabase-daily-streak.sql`](supabase-daily-streak.sql) (#14) — earn ladder + check + `streak_state`/`streak_claim` update
+2. [`supabase-referral-pyramid.sql`](supabase-referral-pyramid.sql) (#16) — `streak_claim()` ki earn-rule wali copy (ye file claim ko overwrite karti hai, isliye #14 ke baad chalana **zaroori** hai warna rule bypass ho jayega)
+
+Ladder: Day 1-10 free · 11-20 $0.02 · 21-30 $0.05 · 31-40 $0.10 · 41-50 $0.20 · 51-60 $0.40 · 61-70 $0.80 · 71-80 $1.50 · 81-90 $3.00 · 91+ $5.00. Count hota hai: tasks + mining claims + campaigns (points→USDT) + referrals (last 48h). Streak bonus khud, deposits aur converts count nahi hote.
 
 ---
 

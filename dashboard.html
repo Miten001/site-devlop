@@ -47,6 +47,19 @@
 .streak-day.cap .tick { color: var(--amber, #ffd166); }
 .streak-day.cap.done { border-color: rgba(52,229,165,.65); background: linear-gradient(100deg, rgba(52,229,165,.18), rgba(255,209,102,.10)); }
 .streak-day.cap.done .tick, .streak-day.cap.done .r { color: var(--green, #34e5a5); }
+/* Day 11+ earn-rule box — Day 10 ke baad hi dikhta hai (TimeBucks rule) */
+.streak-earn { margin-top: 10px; border: 1px solid rgba(255,209,102,.4); border-radius: 12px; padding: 10px 12px; background: rgba(255,209,102,.07); }
+.streak-earn.met { border-color: rgba(52,229,165,.45); background: rgba(52,229,165,.07); }
+.se-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 800; }
+.se-head .lock { color: var(--amber, #ffd166); }
+.streak-earn.met .se-head .lock { color: var(--green, #34e5a5); }
+.se-text { font-size: 12px; color: var(--ink-dim); margin: 6px 0 8px; line-height: 1.45; }
+.se-bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+.se-bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg,#f7941d,#ffd166); transition: width .5s; }
+.streak-earn.met .se-bar i { background: linear-gradient(90deg,#34e5a5,#22d3ee); }
+.se-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; font-weight: 700; flex-wrap: wrap; }
+.se-row a { color: var(--fuchsia); white-space: nowrap; }
+.se-hint { font-size: 11px; color: var(--ink-mute); margin: 6px 0 0; line-height: 1.4; }
 
 .admin-warn-banner{border:1px solid rgba(255,93,110,.5);border-left:5px solid #ff5d6e;background:rgba(255,93,110,.12);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start}.admin-warn-banner .aw-body{flex:1}.admin-warn-banner .aw-title{font-weight:800;color:#ff8a99}.admin-warn-banner .aw-reason{margin-top:5px;white-space:pre-wrap}.admin-warn-banner.final{border-color:#dc2626}
 </style>
@@ -202,6 +215,13 @@
             </div>
             <div id="streak-groups"></div>
             <button type="button" class="btn btn-ghost btn-sm btn-block" id="streak-more" style="margin:10px 0 0">View all 90 days ▾</button>
+            <div id="streak-earn" class="streak-earn hidden">
+              <div class="se-head"><span class="lock" id="se-title">🔒 Day 11 unlock condition</span><button type="button" class="btn btn-ghost btn-sm" id="se-refresh" style="padding:2px 10px;font-size:11px" title="Refresh progress">↻</button></div>
+              <p class="se-text" id="se-text"></p>
+              <div class="se-bar"><i id="se-fill"></i></div>
+              <div class="se-row"><span id="se-progress"></span><span id="se-links"><a href="tasks.html">Tasks</a> · <a href="earn.html">Campaigns</a> · <a href="mining.html">Mining</a></span></div>
+              <p class="se-hint">Counts last 48h: tasks + mining claims + campaigns + referrals. Streak bonus itself doesn't count.</p>
+            </div>
             <button type="button" class="btn btn-primary btn-block" id="streak-claim" disabled>Loading…</button>
             <p class="text-mute" style="font-size:12px;margin:9px 0 0" id="streak-hint"></p>
           </div>
@@ -625,6 +645,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return end - ist;
   }
   let stCdTimer = null;
+  let stEarnTimer = null;
+  function stStopEarnPoll() {
+    if (stEarnTimer) { clearInterval(stEarnTimer); stEarnTimer = null; }
+  }
   function stStartCountdown() {
     if (stCdTimer) clearInterval(stCdTimer);
     const tick = () => {
@@ -715,6 +739,47 @@ document.addEventListener("DOMContentLoaded", () => {
         stCd.textContent = "";
       }
     }
+
+    /* TimeBucks earn rule — box Day 10 ke baad hi dikhta hai (server
+       earnApplies flag). Purane server par fields nahi aate → hidden. */
+    stStopEarnPoll();
+    const earnBox = document.getElementById("streak-earn");
+    const earnApplies = !!(st && st.earnApplies);
+    if (!earnBox || !earnApplies) {
+      if (earnBox) earnBox.classList.add("hidden");
+    } else {
+      const eDay = Math.max(11, Number(st.earnForDay) || nextDay);
+      const eReq = Number(st.earnRequired) || 0;
+      const eDone = Number(st.earnDone) || 0;
+      const eNeed = Math.max(0, eReq - eDone);
+      const eMet = !!st.earnMet || eDone >= eReq;
+      const eFmt = (v) => "$" + Number(v).toFixed(Number(v) < 1 ? 3 : 2);
+      earnBox.classList.remove("hidden");
+      earnBox.classList.toggle("met", eMet);
+      document.getElementById("se-fill").style.width =
+        (eReq > 0 ? Math.min(100, (eDone / eReq) * 100) : 100).toFixed(1) + "%";
+      document.getElementById("se-progress").textContent =
+        eFmt(eDone) + " / $" + eReq.toFixed(2) + " earned";
+      if (canClaim) {
+        document.getElementById("se-title").textContent =
+          eMet ? "✅ Day " + eDay + " unlocked" : "🔒 Day " + eDay + " unlock condition";
+        document.getElementById("se-text").textContent = eMet
+          ? "Condition met — check in now to claim Day " + eDay + "."
+          : "Earn " + eFmt(eNeed) + " more in the last 48h to unlock Day " + eDay + ". Do tasks, campaigns or claim mining, then check in before midnight IST — warna streak reset.";
+        if (!eMet) {
+          stBtn.disabled = true;
+          stBtn.textContent = "🔒 Earn " + eFmt(eNeed) + " more to unlock Day " + eDay;
+        }
+        /* requirement pending hai to progress live rakho — har 40s refresh */
+        if (!eMet) stEarnTimer = setInterval(streakLoad, 40000);
+      } else {
+        document.getElementById("se-title").textContent =
+          eMet ? "✅ Tomorrow Day " + eDay + " ready" : "🔒 Tomorrow Day " + eDay + " needs earning";
+        document.getElementById("se-text").textContent = eMet
+          ? "You already earned enough for tomorrow's Day " + eDay + " check-in. Come back after midnight IST."
+          : "Tomorrow's Day " + eDay + " needs $" + eReq.toFixed(2) + " earned in 48h — you have " + eFmt(eDone) + ". Earn " + eFmt(eNeed) + " more today to keep the streak alive.";
+      }
+    }
   }
 
   function streakLoad() {
@@ -747,6 +812,11 @@ document.addEventListener("DOMContentLoaded", () => {
       FF.toast((err && err.message) || "Claim failed — try again", "err");
       streakLoad();
     });
+  });
+
+  document.getElementById("se-refresh").addEventListener("click", () => {
+    streakLoad();
+    FF.toast("Progress refreshed", "info");
   });
 
   document.getElementById("streak-more").addEventListener("click", () => {
