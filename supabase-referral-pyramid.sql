@@ -226,9 +226,10 @@ revoke all on function public.wallet_settle_sub(uuid, boolean, text, boolean) fr
 
 -- ------------------------------------------------------------
 -- 4. streak_claim — daily streak reward par uplines ko USDT %
---    (earn-rule wali copy: Day 11+ TimeBucks check + pyramid payout.
---     Is file se PEHLE supabase-daily-streak.sql dobara run karo taaki
---     streak_earn_req / streak_earned_48h latest ho.)
+--    (earn-rule wali copy: window-based earning check + restart on
+--     fail + pyramid payout. Is file se PEHLE supabase-daily-streak.sql
+--     dobara run karo taaki streak_earn_window_hrs / streak_earned_window
+--     latest ho.)
 -- ------------------------------------------------------------
 create or replace function public.streak_claim()
 returns jsonb language plpgsql security definer set search_path = public as $$
@@ -259,14 +260,29 @@ begin
     v_streak := 1;                            -- miss hua / pehla claim
   end if;
 
-  -- TimeBucks earn rule: Day 11+ ke liye last 48h ki earning check.
+  -- Earn rule: Day 11+ ke liye window ki earning check.
   v_req := public.streak_earn_req(v_streak);
   if v_req > 0 then
-    v_earned := public.streak_earned_48h(v_user);
+    v_earned := public.streak_earned_window(v_user, v_streak);
     if v_earned < v_req then
-      raise exception 'Day % is locked — earn $% in the last 48 hours (tasks, campaigns, mining) to unlock it. You have $% — earn $% more, then check in.',
-        v_streak, round(v_req, 2), round(v_earned, 4), round(v_req - v_earned, 4)
-        using errcode = 'P0001';
+      -- RESTART: streak 0 + kal ki date => aaj hi Day 1 claim ho sakta hai
+      update public.daily_streaks
+         set streak = 0, last_date = v_today - 1, updated_at = now()
+       where user_id = v_user;
+
+      return jsonb_build_object(
+        'ok', false, 'reset', true,
+        'lostStreak', coalesce(s.streak, 0),
+        'lostDay', v_streak,
+        'earnRequired', v_req,
+        'earnDone', round(v_earned, 4),
+        'earnNeed', round(v_req - v_earned, 4),
+        'earnWindowHrs', public.streak_earn_window_hrs(v_streak),
+        'message', 'Streak restart ho gaya — Day ' || v_streak || ' ke liye last '
+          || public.streak_earn_window_hrs(v_streak) || 'h me $' || round(v_req, 2)
+          || ' earning chahiye thi (aap ke paas $' || round(v_earned, 4)
+          || '). Ab Day 1 se shuru karo.'
+      ) || public.streak_state();
     end if;
   end if;
 
@@ -275,7 +291,7 @@ begin
 
   update public.daily_streaks
      set streak = v_streak, best = v_best, claims = coalesce(s.claims, 0) + 1,
-         last_date = v_today, updated_at = now()
+         last_date = v_today, last_claim_at = now(), updated_at = now()
    where user_id = v_user;
 
   /* USDT seedha wallet me (points nahi) */
@@ -294,10 +310,11 @@ begin
   perform public.referral_payout(v_user, v_reward, 'usdt',
     'Day ' || v_streak || ' streak of ' || public.wallet_display_name(v_user));
 
-  -- Kal ka preview (Day 10 claim ke baad Day 11 ki condition dikhe).
+  -- Kal ka preview: window pichle check-in (abhi) se shuru hogi, isliye
+  -- kal ke liye sirf aaj ke check-in ke BAAD ki earning ginti hai.
   v_tom_req := public.streak_earn_req(v_streak + 1);
-  if v_tom_req > 0 and v_req <= 0 then
-    v_earned := public.streak_earned_48h(v_user);
+  if v_tom_req > 0 then
+    v_earned := public.streak_earned_window(v_user, v_streak + 1);
   end if;
 
   return jsonb_build_object(
@@ -315,7 +332,8 @@ begin
     'earnDone', case when v_tom_req > 0 then coalesce(v_earned, 0) else 0 end,
     'earnNeed', greatest(v_tom_req - coalesce(v_earned, 0), 0),
     'earnMet', (coalesce(v_earned, 0) >= v_tom_req),
-    'earnWindowHrs', 48
+    'earnWindowHrs', public.streak_earn_window_hrs(v_streak + 1),
+    'resetOnFail', (v_tom_req > 0)
   );
 end;
 $$;
