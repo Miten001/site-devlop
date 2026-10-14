@@ -206,7 +206,7 @@
         <div>
           <div class="panel reveal" id="streak-panel">
             <div class="panel-head">
-              <div><h3>Daily streak 🔥</h3><p class="panel-sub">Check in once a day — rewards grow for 90 days, then $5.50 every day for life. Paid in USDT. Miss a day and the streak resets.</p></div>
+              <div><h3>Daily streak 🔥</h3><p class="panel-sub">Check in once a day — rewards grow for 90 days, then $5.50 every day for life. Paid in USDT. Miss a day, or check in without the earning condition, and the streak restarts from Day 1.</p></div>
               <span class="status-pill on" id="streak-pill">—</span>
             </div>
             <div class="streak-rankbar">
@@ -220,7 +220,7 @@
               <p class="se-text" id="se-text"></p>
               <div class="se-bar"><i id="se-fill"></i></div>
               <div class="se-row"><span id="se-progress"></span><span id="se-links"><a href="tasks.html">Tasks</a> · <a href="earn.html">Campaigns</a> · <a href="mining.html">Mining</a></span></div>
-              <p class="se-hint">Counts last 48h: tasks + mining claims + campaigns + referrals. Streak bonus itself doesn't count.</p>
+              <p class="se-hint" id="se-hint">Counts earning in the window before check-in: tasks + mining claims + campaigns + referrals. Streak bonus, deposits &amp; conversions don't count.</p>
             </div>
             <button type="button" class="btn btn-primary btn-block" id="streak-claim" disabled>Loading…</button>
             <p class="text-mute" style="font-size:12px;margin:9px 0 0" id="streak-hint"></p>
@@ -754,6 +754,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const eNeed = Math.max(0, eReq - eDone);
       const eMet = !!st.earnMet || eDone >= eReq;
       const eFmt = (v) => "$" + Number(v).toFixed(Number(v) < 1 ? 3 : 2);
+      const earnHrs = Number(st.earnWindowHrs) || 24;
+      const hintEl = document.getElementById("se-hint");
+      if (hintEl) hintEl.textContent = "Counts earning in the last " + earnHrs + "h before check-in (window starts at your previous check-in): tasks + mining claims + campaigns + referrals. Streak bonus, deposits & conversions don't count.";
       earnBox.classList.remove("hidden");
       earnBox.classList.toggle("met", eMet);
       document.getElementById("se-fill").style.width =
@@ -765,10 +768,12 @@ document.addEventListener("DOMContentLoaded", () => {
           eMet ? "✅ Day " + eDay + " unlocked" : "🔒 Day " + eDay + " unlock condition";
         document.getElementById("se-text").textContent = eMet
           ? "Condition met — check in now to claim Day " + eDay + "."
-          : "Earn " + eFmt(eNeed) + " more in the last 48h to unlock Day " + eDay + ". Do tasks, campaigns or claim mining, then check in before midnight IST — warna streak reset.";
+          : "Earn " + eFmt(eNeed) + " more in the last " + earnHrs + "h before you check in to unlock Day " + eDay + ". Do tasks, campaigns or claim mining. Agar check-in ke time earning poori nahi hui to streak Day 1 se restart ho jayega.";
         if (!eMet) {
-          stBtn.disabled = true;
-          stBtn.textContent = "🔒 Earn " + eFmt(eNeed) + " more to unlock Day " + eDay;
+          /* Button enabled rakhte hain: check-in karoge bina earning ke to
+             streak Day 1 se restart hoga (server bhi yahi enforce karta hai). */
+          stBtn.disabled = false;
+          stBtn.textContent = "⚠ Check in without " + eFmt(eNeed) + " more = streak restart";
         }
         /* requirement pending hai to progress live rakho — har 40s refresh */
         if (!eMet) stEarnTimer = setInterval(streakLoad, 40000);
@@ -777,7 +782,7 @@ document.addEventListener("DOMContentLoaded", () => {
           eMet ? "✅ Tomorrow Day " + eDay + " ready" : "🔒 Tomorrow Day " + eDay + " needs earning";
         document.getElementById("se-text").textContent = eMet
           ? "You already earned enough for tomorrow's Day " + eDay + " check-in. Come back after midnight IST."
-          : "Tomorrow's Day " + eDay + " needs $" + eReq.toFixed(2) + " earned in 48h — you have " + eFmt(eDone) + ". Earn " + eFmt(eNeed) + " more today to keep the streak alive.";
+          : "Tomorrow's Day " + eDay + " needs $" + eReq.toFixed(2) + " earned in the last " + earnHrs + "h before check-in — you have " + eFmt(eDone) + ". Earn " + eFmt(eNeed) + " more to keep the streak alive.";
       }
     }
   }
@@ -801,9 +806,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   stBtn.addEventListener("click", () => {
     if (stBtn.disabled) return;
+    /* Earning poori nahi hai to check-in = streak restart — pehle confirm */
+    const cur = stLast || {};
+    const eReq = Number(cur.earnRequired) || 0;
+    const eDone = Number(cur.earnDone) || 0;
+    const willRestart = !!(cur.canClaim && cur.earnApplies && !cur.earnMet && eDone < eReq);
+    if (willRestart) {
+      const hrs = Number(cur.earnWindowHrs) || 24;
+      const msg = "Day " + (cur.earnForDay || cur.nextDay) + " ke liye last " + hrs + "h me $" + eReq.toFixed(2) +
+        " earning chahiye. Aapne $" + eDone.toFixed(3) + " kiya hai.\n\nAbhi check-in karoge to streak Day 1 se RESTART ho jayega. Continue?";
+      if (!window.confirm(msg)) return;
+    }
     stBtn.disabled = true;
     stBtn.textContent = "Claiming…";
     FF.rpc("streak_claim", {}).then((r) => {
+      if (r && r.reset) {
+        FF.toast(r.message || "Streak restart ho gaya — Day 1 se shuru karo", "err");
+        streakRender(r);
+        return;
+      }
       FF.sfx.cash();
       FF.toast("+" + stFmt(r.reward) + " USDT added to your wallet 🎉", "ok");
       streakRender(r);

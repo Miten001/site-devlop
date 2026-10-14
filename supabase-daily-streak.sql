@@ -7,10 +7,14 @@
 --   • Day 91+ har din $5.50 (streak zinda rahe toh)
 --   • Din miss → streak reset Day 1 ($0.001)
 --   • Day 1-10 FREE (koi earning condition nahi)
---   • Day 11+ TimeBucks rule: last 48h me minimum earning chahiye
---     (tasks + mining claims + campaigns + referrals; streak/deposit/
---      convert/escrow/refund count NAHI hote). Requirement rank ke
---      saath badhta hai: $0.02 → $5.00 (streak_earn_req ladder).
+--   • Day 11+ TimeBucks rule: check-in se pehle window me minimum
+--     earning chahiye. Window: Day 11-50 = 24h · Day 51+ = 12h,
+--     pichle check-in ke baad se (streak_earn_window_hrs).
+--   • Earning poori na ho aur check-in kare → streak Day 1 se RESTART
+--     (streak_claim ok:false, reset:true; reward nahi milta).
+--   • Earning count: tasks + mining claims + campaigns + referrals
+--     (streak/deposit/convert/escrow/refund count NAHI hote).
+--     Requirement rank ke saath badhta hai: $0.02 → $5.00 (streak_earn_req).
 --   • UI me condition box Day 10 complete hone ke BAAD hi dikhta hai
 --     (earnApplies flag) — naye users ko pehle 10 din kuch nahi dikhta.
 --   • Reward seedha wallet (USDT) me + wallet history log
@@ -27,8 +31,10 @@ create table if not exists public.daily_streaks (
   best       int  not null default 0,
   claims     int  not null default 0,
   last_date  date,
+  last_claim_at timestamptz,            -- pichla check-in (earn window ka start)
   updated_at timestamptz not null default now()
 );
+alter table public.daily_streaks add column if not exists last_claim_at timestamptz;
 
 alter table public.daily_streaks enable row level security;
 -- koi direct policy nahi — sirf niche wale security-definer RPCs se access
@@ -95,7 +101,7 @@ $$;
 
 -- ------------------------------------------------------------
 -- 2b. Earn-requirement ladder (TimeBucks rule) — Day 11+ ke liye
---     last 48h me kitna USDT-equivalent kamaya hona chahiye.
+--     window me kitna USDT-equivalent kamaya hona chahiye.
 --     Shuru easy ($0.02), aage challenging ($5.00) — sirf active
 --     members Day 90 / Godlike tak pahunchenge.
 -- ------------------------------------------------------------
@@ -116,64 +122,88 @@ returns numeric language sql immutable as $$
 $$;
 
 -- ------------------------------------------------------------
--- 2c. Last 48h me USDT-equivalent earning (TimeBucks "since your
---     last check-in" rule ka FlexFam version).
---     COUNTS: tasks (earning) + mining claims + campaigns (points
---     ko points_per_usdt se USDT me badal ke) + referrals (USDT +
---     points-dono). EXCLUDES: streak khud, deposit, convert,
---     escrow, payout, refund — taaki condition ko khareeda ya
---     ghumaya (cycle) na ja sake.
+-- 2c. Earn window (hours) — Day 11-50: 24h · Day 51+: 12h
+--     Check-in se pehle isi window me earning honi chahiye. Window
+--     pichle check-in ke BAAD se shuru hoti hai (us se pehle ki
+--     earning dobara nahi ginti), aur window se zyada peeche nahi.
 -- ------------------------------------------------------------
-create or replace function public.streak_earned_48h(p_user uuid)
+create or replace function public.streak_earn_window_hrs(p_day int)
+returns int language sql immutable as $$
+  select case
+    when coalesce(p_day, 1) <= 10 then 0      -- Rookie: free, window nahi
+    when p_day <= 50 then 24                  -- Hustler .. Veteran
+    else 12                                   -- Expert .. Godlike (Day 51+)
+  end;
+$$;
+
+-- Old 48h helper hata do (streak_earned_window se replace hua)
+drop function if exists public.streak_earned_48h(uuid);
+
+-- ------------------------------------------------------------
+-- 2d. Window me USDT-equivalent earning.
+--     since = max(pichla check-in, now - window)
+--     COUNTS: tasks (earning) + mining claims + campaigns (points ->
+--     USDT) + referrals (USDT + points). EXCLUDES: streak khud,
+--     deposit, convert, escrow, payout, refund.
+-- ------------------------------------------------------------
+create or replace function public.streak_earned_window(p_user uuid, p_day int)
 returns numeric language plpgsql stable security definer set search_path = public as $$
 declare
-  v_rate int := 1000;
-  v_usdt numeric := 0;
-  v_mine numeric := 0;
-  v_pts  numeric := 0;
-  v_tmp  numeric := 0;
+  v_rate  int := 1000;
+  v_hrs   int;
+  v_last  timestamptz;
+  v_since timestamptz;
+  v_usdt  numeric := 0;
+  v_mine  numeric := 0;
+  v_pts   numeric := 0;
+  v_tmp   numeric := 0;
 begin
   if p_user is null then return 0; end if;
+  v_hrs := public.streak_earn_window_hrs(p_day);
+  if v_hrs <= 0 then return 0; end if;
+
   select points_per_usdt into v_rate from public.mining_config where id = 1;
   if v_rate is null or v_rate <= 0 then v_rate := 1000; end if;
+
+  select last_claim_at into v_last from public.daily_streaks where user_id = p_user;
+  v_since := greatest(coalesce(v_last, now() - make_interval(hours => v_hrs)),
+                      now() - make_interval(hours => v_hrs));
 
   -- 1) tasks + USDT referrals (completed, positive only)
   select coalesce(sum(amount), 0) into v_usdt
     from public.wallet_txns
    where user_id = p_user
-     and at >= now() - interval '48 hours'
+     and at >= v_since
      and status = 'completed' and amount > 0
      and (type = 'earning'
           or (type = 'referral' and coalesce(ref_currency, 'usdt') = 'usdt'));
 
-  -- 2) mining claims — USDT mode ho ya points mode, ledger.amount
-  --    hamesha USDT value hoti hai, isliye seedha judti hai.
+  -- 2) mining claims — ledger.amount hamesha USDT value hoti hai
   select coalesce(sum(amount), 0) into v_mine
     from public.mining_ledger
    where user_id = p_user
-     and at >= now() - interval '48 hours'
+     and at >= v_since
      and type = 'claim' and amount > 0;
 
-  -- 3) campaigns: last 48h me approved payouts (points).
-  --    Campaigns migration (#5) optional hai — table na ho to skip.
-  --    (Dynamic SQL taaki table missing ho tab bhi function bane.)
+  -- 3) campaigns: window me approved payouts (points). Table optional.
   if to_regclass('public.market_campaign_subs') is not null
      and to_regclass('public.market_campaigns') is not null then
-    execute $$
+    -- inner dollar-quote $q$ (outer body wale quote ka use nahi)
+    execute $q$
       select coalesce(sum(c.payout), 0)
         from public.market_campaign_subs s
         join public.market_campaigns c on c.id = s.campaign_id
        where s.worker = $1 and s.status = 'approved'
-         and coalesce(s.reviewed_at, s.at) >= now() - interval '48 hours'
-    $$ using p_user into v_tmp;
+         and coalesce(s.reviewed_at, s.at) >= $2
+    $q$ using p_user, v_since into v_tmp;
     v_pts := v_pts + coalesce(v_tmp, 0);
   end if;
 
-  -- 4) referral points (USDT referrals upar #1 me aa gaye)
+  -- 4) referral points
   select coalesce(sum(amount), 0) into v_tmp
     from public.wallet_txns
    where user_id = p_user
-     and at >= now() - interval '48 hours'
+     and at >= v_since
      and status = 'completed' and amount > 0
      and type = 'referral' and ref_currency = 'points';
   v_pts := v_pts + coalesce(v_tmp, 0);
@@ -216,15 +246,14 @@ begin
   v_streak := coalesce(s.streak, 0);
 
   -- Earn rule wala day: claim pending hai to AAJ ka v_next, warna
-  -- KAL ka (streak+1) preview — taaki Day 10 claim karte hi Day 11
-  -- ki condition dikhne lage ("jab lagne wali ho tab hi pata chale").
+  -- KAL ka (streak+1) preview.
   if v_can then v_earn_day := v_next;
   else v_earn_day := v_streak + 1;
   end if;
   v_earn_req := public.streak_earn_req(v_earn_day);
   v_applies  := (v_earn_req > 0);
   if v_applies then
-    v_earned := public.streak_earned_48h(v_user);
+    v_earned := public.streak_earned_window(v_user, v_earn_day);
   end if;
 
   return jsonb_build_object(
@@ -245,14 +274,18 @@ begin
     'earnDone',     coalesce(v_earned, 0),
     'earnNeed',     greatest(v_earn_req - coalesce(v_earned, 0), 0),
     'earnMet',      (coalesce(v_earned, 0) >= v_earn_req),
-    'earnWindowHrs', 48
+    'earnWindowHrs', public.streak_earn_window_hrs(v_earn_day),
+    'resetOnFail',  (v_earn_req > 0)
   );
 end;
 $$;
 
 -- ------------------------------------------------------------
 -- 4. streak_claim() — din ka reward claim karo (USDT credit)
---    Day 11+ par earn rule enforce hota hai (TimeBucks jaisa).
+--    Day 11+ par window ki earning enforce hoti hai. Earning poori
+--    na ho to streak Day 1 se RESTART hota hai (reward nahi milta).
+--    Reset ke liye exception nahi, ok:false return karte hain —
+--    exception se transaction rollback ho jata (reset bhi ud jata).
 -- ------------------------------------------------------------
 create or replace function public.streak_claim()
 returns jsonb language plpgsql security definer set search_path = public as $$
@@ -283,15 +316,29 @@ begin
     v_streak := 1;                            -- miss hua / pehla claim
   end if;
 
-  -- TimeBucks earn rule: Day 11+ ke liye last 48h ki earning check.
-  -- (Day 1-10 free — v_req = 0, koi block nahi.)
+  -- Earn rule: Day 11+ ke liye window ki earning check.
   v_req := public.streak_earn_req(v_streak);
   if v_req > 0 then
-    v_earned := public.streak_earned_48h(v_user);
+    v_earned := public.streak_earned_window(v_user, v_streak);
     if v_earned < v_req then
-      raise exception 'Day % is locked — earn $% in the last 48 hours (tasks, campaigns, mining) to unlock it. You have $% — earn $% more, then check in.',
-        v_streak, round(v_req, 2), round(v_earned, 4), round(v_req - v_earned, 4)
-        using errcode = 'P0001';
+      -- RESTART: streak 0 + kal ki date => aaj hi Day 1 claim ho sakta hai
+      update public.daily_streaks
+         set streak = 0, last_date = v_today - 1, updated_at = now()
+       where user_id = v_user;
+
+      return jsonb_build_object(
+        'ok', false, 'reset', true,
+        'lostStreak', coalesce(s.streak, 0),
+        'lostDay', v_streak,
+        'earnRequired', v_req,
+        'earnDone', round(v_earned, 4),
+        'earnNeed', round(v_req - v_earned, 4),
+        'earnWindowHrs', public.streak_earn_window_hrs(v_streak),
+        'message', 'Streak restart ho gaya — Day ' || v_streak || ' ke liye last '
+          || public.streak_earn_window_hrs(v_streak) || 'h me $' || round(v_req, 2)
+          || ' earning chahiye thi (aap ke paas $' || round(v_earned, 4)
+          || '). Ab Day 1 se shuru karo.'
+      ) || public.streak_state();
     end if;
   end if;
 
@@ -300,7 +347,7 @@ begin
 
   update public.daily_streaks
      set streak = v_streak, best = v_best, claims = coalesce(s.claims, 0) + 1,
-         last_date = v_today, updated_at = now()
+         last_date = v_today, last_claim_at = now(), updated_at = now()
    where user_id = v_user;
 
   /* USDT seedha wallet me (points nahi) */
@@ -315,12 +362,11 @@ begin
     'Day ' || v_streak || ' daily streak reward — ' || public.streak_rank(v_streak),
     'completed', null, null);
 
-  -- Kal ka preview (Day 10 claim ke baad Day 11 ki condition dikhe).
-  -- Streak reward khud earn-count me nahi judta, isliye v_earned kal
-  -- ke liye bhi same hai; Day 1-10 wale claims par fresh compute karo.
+  -- Kal ka preview: window pichle check-in (abhi) se shuru hogi, isliye
+  -- kal ke liye sirf aaj ke check-in ke BAAD ki earning ginti hai.
   v_tom_req := public.streak_earn_req(v_streak + 1);
-  if v_tom_req > 0 and v_req <= 0 then
-    v_earned := public.streak_earned_48h(v_user);
+  if v_tom_req > 0 then
+    v_earned := public.streak_earned_window(v_user, v_streak + 1);
   end if;
 
   return jsonb_build_object(
@@ -338,7 +384,8 @@ begin
     'earnDone', case when v_tom_req > 0 then coalesce(v_earned, 0) else 0 end,
     'earnNeed', greatest(v_tom_req - coalesce(v_earned, 0), 0),
     'earnMet', (coalesce(v_earned, 0) >= v_tom_req),
-    'earnWindowHrs', 48
+    'earnWindowHrs', public.streak_earn_window_hrs(v_streak + 1),
+    'resetOnFail', (v_tom_req > 0)
   );
 end;
 $$;
@@ -352,7 +399,8 @@ revoke all on function public.streak_reward(int)             from public, anon;
 revoke all on function public.streak_reward_list()           from public, anon;
 revoke all on function public.streak_rank(int)               from public, anon;
 revoke all on function public.streak_earn_req(int)           from public, anon, authenticated;
-revoke all on function public.streak_earned_48h(uuid)        from public, anon, authenticated;
+revoke all on function public.streak_earn_window_hrs(int)    from public, anon, authenticated;
+revoke all on function public.streak_earned_window(uuid, int) from public, anon, authenticated;
 
 grant execute on function public.streak_state()              to authenticated;
 grant execute on function public.streak_claim()              to authenticated;
