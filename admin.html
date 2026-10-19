@@ -133,7 +133,8 @@
     display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
     padding: 9px 10px; margin: 0 0 20px;
     border: 1px solid var(--line); border-radius: 14px;
-    background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    /* Opaque surface avoids re-blurring the entire scrolling dashboard on mobile. */
+    background: var(--glass);
     scrollbar-width: none;
   }
   .admin-sec-nav::-webkit-scrollbar { display: none; }
@@ -141,6 +142,14 @@
   .admin-sec-nav a:hover { color: var(--ink); border-color: var(--line); background: var(--glass-2); }
   .admin-sec-nav a.on { color: var(--ink); border-color: rgba(224,72,159,.45); background: rgba(224,72,159,.14); }
   .admin-shell section[id], .admin-shell div.admin-cols[id] { scroll-margin-top: 148px; }
+  /* The long dashboard should not lay out/paint every offscreen panel while
+     scrolling. Browsers without content-visibility simply render as before. */
+  @supports (content-visibility: auto) {
+    .admin-shell > section.panel, .admin-shell > .admin-cols {
+      content-visibility: auto;
+      contain-intrinsic-size: auto 440px;
+    }
+  }
   @media (max-width: 560px) {
     .admin-sec-nav { top: 66px; }
     .admin-shell section[id], .admin-shell div.admin-cols[id] { scroll-margin-top: 132px; }
@@ -718,6 +727,7 @@
   var views = {};
   var last = [];
   var exact = {};   /* lifetime totals from PostgREST count queries */
+  var loadVersion = 0; /* ignore slow responses from an older refresh */
   var members = [];
   var session = null;
   var balanceMap = {};
@@ -850,52 +860,77 @@
   }
 
   function load() {
-    var eventsError = null;
-    var membersError = null;
-    var eventsRequest = api("/rest/v1/events?select=*&order=ts_client.desc&limit=2500")
-      .catch(function (error) { eventsError = error; return null; });
-    var membersRequest = api("/rest/v1/profiles?select=id,email,display_name,created_at&order=created_at.desc&limit=500")
-      .catch(function (error) { membersError = error; return null; });
-    var balancesRequest = api("/rest/v1/balances?select=user_id,usdt,points&limit=2000")
-      .catch(function () { return null; });
+    var version = ++loadVersion;
+    exact = {}; /* Never show the previous refresh's lifetime counts as current. */
+    var refresh = $("btn-refresh");
+    refresh.disabled = true;
+    refresh.textContent = "↻ Loading…";
 
-    /* Exact counts for the stat cards (see apiCount). Fallback = window count. */
-    var today = new Date().toISOString().slice(0, 10);
-    var countDefs = [
-      ["views", "/rest/v1/events?type=eq.page_view"],
-      ["today", "/rest/v1/events?type=eq.page_view&day=eq." + today],
-      ["bot", "/rest/v1/events?type=eq.telegram_bot_click"],
-      ["claims", "/rest/v1/events?type=eq.task_claim"],
-      ["camps", "/rest/v1/events?type=eq.campaign_created"],
-      ["errors", "/rest/v1/events?type=in.(app_error,user_error,campaign_error,runtime_error)"],
-      ["events", "/rest/v1/events"]
-    ];
-    var countRequests = countDefs.map(function (d) {
-      return apiCount(d[1]).then(function (n) { exact[d[0]] = n; });
-    });
-
-    Promise.all([eventsRequest, membersRequest, balancesRequest].concat(countRequests)).then(function (results) {
-      var eventRows = results[0];
-      var memberRows = results[1];
-      balanceMap = {};
-      (results[2] || []).forEach(function (b) { balanceMap[b.user_id] = b; });
-      if (eventRows) {
-        last = eventRows;
+    /* Fetch only columns used by the dashboard, not the large ua/ref/path
+       fields. A full export is fetched only if the admin requests it. */
+    var eventsRequest = api("/rest/v1/events?select=type,page,vid,day,ts_client,url,label,task_title,task_id,email,user_name&order=ts_client.desc&limit=2500")
+      .then(function (rows) {
+        if (version !== loadVersion) return;
+        last = rows || [];
         render(last);
         if (!last.length) toast("Connected, but no events are recorded yet.");
-      } else {
-        reportLoadError(eventsError, "analytics");
-      }
-      if (memberRows) {
-        renderMembers(memberRows);
-        if (last.length) render(last);   // re-paint so member links resolve
-        $("msg-emails").innerHTML = memberRows.map(function (m) {
+      }).catch(function (error) {
+        if (version === loadVersion) reportLoadError(error, "analytics");
+      });
+    var membersRequest = api("/rest/v1/profiles?select=id,email,display_name,created_at&order=created_at.desc&limit=500")
+      .then(function (rows) {
+        if (version !== loadVersion) return;
+        renderMembers(rows || []);
+        $("msg-emails").innerHTML = (rows || []).map(function (m) {
           return '<option value="' + esc(m.email || "") + '"></option>';
         }).join("");
-      } else {
-        renderMembers([], membersError);
-        reportLoadError(membersError, "members");
+        /* Update actor links only; don't recalculate every dashboard table. */
+        if (last.length) { renderErrors(last); renderRecentEvents(last); }
+      }).catch(function (error) {
+        if (version !== loadVersion) return;
+        renderMembers([], error);
+        reportLoadError(error, "members");
+      });
+    var balancesRequest = api("/rest/v1/balances?select=user_id,usdt,points&limit=2000")
+      .then(function (rows) {
+        if (version !== loadVersion) return;
+        balanceMap = {};
+        (rows || []).forEach(function (b) { balanceMap[b.user_id] = b; });
+        if (members.length) renderMembers(members);
+      }).catch(function () {});
+
+    /* Exact lifetime counts are important, but seven count scans must not
+       hold up the UI or saturate Supabase while the first tables are loading. */
+    var today = new Date().toISOString().slice(0, 10);
+    var countDefs = [
+      ["views", "/rest/v1/events?type=eq.page_view", "k-views"],
+      ["today", "/rest/v1/events?type=eq.page_view&day=eq." + today, "k-today"],
+      ["bot", "/rest/v1/events?type=eq.telegram_bot_click", "k-bot"],
+      ["claims", "/rest/v1/events?type=eq.task_claim", "k-claims"],
+      ["camps", "/rest/v1/events?type=eq.campaign_created", "k-camps"],
+      ["errors", "/rest/v1/events?type=in.(app_error,user_error,campaign_error,runtime_error)", "k-errors"],
+      ["events", "/rest/v1/events", "who-count"]
+    ];
+    Promise.all([eventsRequest, membersRequest, balancesRequest]).then(function () {
+      if (version !== loadVersion) return;
+      refresh.disabled = false;
+      refresh.textContent = "↻ Refresh";
+      /* Two count requests at a time; each card updates when its result lands. */
+      var next = 0;
+      function countWorker() {
+        if (version !== loadVersion || next >= countDefs.length) return Promise.resolve();
+        var d = countDefs[next++];
+        return apiCount(d[1]).then(function (n) {
+          if (version !== loadVersion) return;
+          if (n != null) {
+            exact[d[0]] = n;
+            $(d[2]).textContent = n.toLocaleString("en-IN");
+          }
+          return countWorker();
+        });
       }
+      countWorker();
+      countWorker();
     });
 
     loadPayments();
@@ -2167,13 +2202,27 @@
     });
 
     $("btn-export").onclick = function () {
-      var a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob(
-        [JSON.stringify({ exportedAt: new Date(), events: last, members: members, payments: lastQueue }, null, 2)],
-        { type: "application/json" }
-      ));
-      a.download = "flexfam-admin-export.json";
-      a.click();
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = "Preparing export…";
+      /* Keep the JSON export complete without downloading UA and other large
+         fields for every ordinary dashboard visit. */
+      api("/rest/v1/events?select=*&order=ts_client.desc&limit=2500").then(function (events) {
+        var a = document.createElement("a");
+        var url = URL.createObjectURL(new Blob(
+          [JSON.stringify({ exportedAt: new Date(), events: events || [], members: members, payments: lastQueue }, null, 2)],
+          { type: "application/json" }
+        ));
+        a.href = url;
+        a.download = "flexfam-admin-export.json";
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      }).catch(function (err) {
+        toast("Export failed: " + ((err && err.message) || "network error"), true);
+      }).then(function () {
+        btn.disabled = false;
+        btn.textContent = "⬇ Export JSON";
+      });
     };
 
     var stored = loadSession();
