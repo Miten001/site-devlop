@@ -52,6 +52,20 @@ begin
       ) order by s.at desc), '[]'::jsonb)
       from public.market_campaign_subs s
       join public.market_campaigns c on c.id = s.campaign_id
+      where s.worker = p_user),
+
+    /* Task Market tasks jo is member ne complete ki (proof/screenshot ke saath) */
+    'jobSubs', (select coalesce(jsonb_agg(jsonb_build_object(
+        'id', s.id, 'jobId', s.job_id,
+        'jobTitle', j.title, 'reward', s.reward,
+        'status', s.status, 'reason', s.reason,
+        'proof', s.proof, 'note', s.note,
+        'at', extract(epoch from s.at) * 1000,
+        'reviewedAt', case when s.reviewed_at is null then 0
+                           else extract(epoch from s.reviewed_at) * 1000 end
+      ) order by s.at desc), '[]'::jsonb)
+      from public.job_subs s
+      join public.jobs j on j.id = s.job_id
       where s.worker = p_user)
   );
 end;
