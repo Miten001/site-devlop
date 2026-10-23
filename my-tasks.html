@@ -19,6 +19,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/style.css?v=2.2" />
 <link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+<style>
+  /* proof screenshot — owner ko review se pehle hi thumbnail dikhe */
+  .proof-thumb { display: block; width: 74px; height: 54px; object-fit: cover; border-radius: 9px; border: 1px solid var(--line, #e5e7eb); cursor: zoom-in; background: #0b0d14; margin-bottom: 6px; }
+  .proof-thumb:hover { border-color: var(--cyan, #22d3ee); }
+</style>
 </head>
 <body class="app-body" data-requires-auth>
 
@@ -162,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("rev-empty").classList.toggle("hidden", pending.length > 0);
     $("rev-body").innerHTML = pending.map((s) => (
       "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.workerName) + "</b></td><td>" + esc(s.jobTitle) + "</td>" +
-      '<td><span class="mono-cut" title="' + esc(s.proof) + '">' + esc(s.proof) + "</span> <b style=\"color:var(--green)\">" + (isImageProof(s.proof) ? "📷" : "") + "</b>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s.note) + "</span>" : "") + "</td>" +
+      '<td>' + shotThumb(s.proof) + '<span class="mono-cut" title="' + esc(s.proof) + '">' + esc(s.proof) + "</span> <b style=\"color:var(--green)\">" + (isImageProof(s.proof) ? "📷" : "") + "</b>" + (s.note ? '<br><span style="font-size:11.5px;color:var(--ink-mute)">' + esc(s.note) + "</span>" : "") + "</td>" +
       '<td class="num pos">' + W.usd(s.reward) + "</td>" +
       '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-view="' + s.id + '">View</button> <button class="btn btn-primary btn-sm" data-ok="' + s.id + '">Approve</button> <button class="btn btn-ghost btn-sm" data-no="' + s.id + '">Reject</button></td></tr>'
     )).join("");
@@ -183,12 +188,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function lock(el, on) { if (el) { el.disabled = on; el.style.opacity = on ? ".6" : ""; } }
 
-  /* ---------- submission detail modal: proof + screenshot dekho, phir decide ---------- */
-  function isImageProof(proof) {
-    const p = String(proof || "");
-    return /^https?:\/\//i.test(p) && (/\.(png|jpe?g|webp|gif)(\?|$)/i.test(p) || /\/object\/public\//i.test(p));
+  /* ---------- submission detail modal: proof + screenshot dekho, phir decide ----------
+     Worker text + screenshot dono bhej sakta hai — proof tab "text | https://...png"
+     hota hai, isliye URL poore string me dhoondho (start me hi hona zaruri nahi). */
+  function imageFromProof(proof) {
+    const urls = String(proof || "").match(/https?:\/\/[^\s|]+/gi) || [];
+    for (const u of urls) {
+      if (/\.(png|jpe?g|webp|gif|bmp|avif)(\?|#|$)/i.test(u) || /\/storage\/v1\/object\/public\/proofs\//i.test(u)) return u;
+    }
+    return "";
   }
+  function firstUrlIn(proof) {
+    const m = String(proof || "").match(/https?:\/\/[^\s|]+/i);
+    return m ? m[0] : "";
+  }
+  function isImageProof(proof) { return !!imageFromProof(proof); }
   window.isImageProof = isImageProof;
+
+  /* pending table me chhota thumbnail — click karo to full screenshot khulega */
+  function shotThumb(proof) {
+    const img = imageFromProof(proof);
+    if (!img) return "";
+    return '<a href="' + esc(img) + '" target="_blank" rel="noopener" title="Open full screenshot">' +
+      '<img class="proof-thumb" src="' + esc(img) + '" alt="Proof screenshot" loading="lazy" ' +
+      'onerror="this.parentNode.style.display=\'none\'" /></a>';
+  }
 
   const subModal = document.getElementById("sub-modal");
   let currentSub = null;
@@ -201,15 +225,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const proof = String(sub.proof || "");
     document.getElementById("sm-proof-text").textContent = proof;
     const linkEl = document.getElementById("sm-proof-link");
-    if (/^https?:\/\//i.test(proof)) { linkEl.href = proof; linkEl.classList.remove("hidden"); }
+    const proofUrl = firstUrlIn(proof);
+    if (proofUrl) { linkEl.href = proofUrl; linkEl.classList.remove("hidden"); }
     else linkEl.classList.add("hidden");
     const noteEl = document.getElementById("sm-proof-note");
     if (sub.note) { noteEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span><b>Note:</b> ' + esc(sub.note) + "</span>"; noteEl.classList.remove("hidden"); }
     else noteEl.classList.add("hidden");
     const shotWrap = document.getElementById("sm-shot-wrap");
-    if (isImageProof(proof)) {
+    const shotUrl = imageFromProof(proof);
+    if (shotUrl) {
       shotWrap.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:6px">Screenshot</div>' +
-        '<a href="' + esc(proof) + '" target="_blank" rel="noopener"><img src="' + esc(proof) + '" alt="proof screenshot" style="max-width:100%;border-radius:12px;border:1px solid var(--line,#e5e7eb)" onerror="this.parentNode.innerHTML=\'(image failed to load — use the link above)\'" /></a>';
+        '<a href="' + esc(shotUrl) + '" target="_blank" rel="noopener"><img src="' + esc(shotUrl) + '" alt="proof screenshot" style="max-width:100%;border-radius:12px;border:1px solid var(--line,#e5e7eb)" onerror="this.parentNode.innerHTML=\'(image failed to load — use the link above)\'" /></a>';
     } else shotWrap.innerHTML = "";
     subModal.classList.add("open");
     subModal.setAttribute("aria-hidden", "false");

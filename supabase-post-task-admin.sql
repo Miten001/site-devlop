@@ -241,7 +241,24 @@ begin
           'pending', (select count(*) from public.job_subs s
                        where s.job_id = j.id and s.status = 'pending'),
           'approved', (select count(*) from public.job_subs s
-                        where s.job_id = j.id and s.status = 'approved')
+                        where s.job_id = j.id and s.status = 'approved'),
+          /* kaun is task ko run kar raha hai — worker ka naam, status aur time */
+          'workers', coalesce((
+            select jsonb_agg(w order by (w->>'at')::numeric desc)
+            from (
+              select jsonb_build_object(
+                'workerId', s.worker,
+                'name', coalesce(nullif(trim(p.display_name), ''), 'Member'),
+                'email', coalesce(p.email, ''),
+                'status', s.status,
+                'at', extract(epoch from s.at) * 1000) as w
+              from public.job_subs s
+              left join public.profiles p on p.id = s.worker
+              where s.job_id = j.id
+              order by s.at desc
+              limit 50
+            ) x
+          ), '[]'::jsonb)
         ) as t
         from public.jobs j
         left join public.profiles p on p.id = j.owner

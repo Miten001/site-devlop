@@ -309,7 +309,7 @@
       <div class="panel-head">
         <div>
           <h3 id="task-title">Tasks — who is running what</h3>
-          <p class="panel-sub">See every member’s task scorecard in one place — <b>live and paused campaigns</b>, approved tasks, and proofs awaiting review. <b>Click a member</b> to open their full details, including campaigns, tasks, proofs, and balances.</p>
+          <p class="panel-sub">See every member’s task scorecard in one place — <b>live and paused campaigns</b>, posted Task Market tasks, approved tasks and proofs awaiting review (<b>points campaigns + USDT Task Market dono</b>). <b>Click a member</b> to open their full details, including campaigns, tasks, proofs, and balances.</p>
         </div>
         <span class="status-pill on" id="runner-count">0 members</span>
       </div>
@@ -322,6 +322,7 @@
         <div class="mini-stat"><b id="tk-camps">—</b><span>Total campaigns</span></div>
         <div class="mini-stat"><b id="tk-active">—</b><span>Running now</span></div>
         <div class="mini-stat"><b id="tk-paused">—</b><span>Paused</span></div>
+        <div class="mini-stat"><b id="tk-jobs">—</b><span>Live Task Market tasks</span></div>
         <div class="mini-stat"><b id="tk-done">—</b><span>Tasks approved</span></div>
         <div class="mini-stat"><b id="tk-pending">—</b><span>Proofs pending</span></div>
       </div>
@@ -356,8 +357,8 @@
       </div>
       <div class="member-table-wrap">
         <table class="ff-table camp-table">
-          <thead><tr><th>Task</th><th>Category</th><th class="num">Reward</th><th>Posted by</th><th class="num">Filled</th><th class="num">Escrow</th><th class="num">Pending</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="t-jobs"><tr><td colspan="9">Loading posted tasks…</td></tr></tbody>
+          <thead><tr><th>Task</th><th>Category</th><th class="num">Reward</th><th>Posted by</th><th class="num">Filled</th><th class="num">Escrow</th><th class="num">Pending</th><th>Running / workers</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="t-jobs"><tr><td colspan="10">Loading posted tasks…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -571,7 +572,7 @@
 
     <h4 class="mm-h">✅ Tasks completed (proofs sent)</h4>
     <div class="scroll-box mm-activity">
-      <table class="ff-table"><thead><tr><th>Campaign</th><th>Payout</th><th>Status</th><th>Proof</th><th>When</th></tr></thead><tbody id="mm-subs"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+      <table class="ff-table"><thead><tr><th>Task / Campaign</th><th>Reward</th><th>Status</th><th>Proof</th><th>When</th></tr></thead><tbody id="mm-subs"><tr><td colspan="5">Loading…</td></tr></tbody></table>
     </div>
 
     <h4 class="mm-h">⚠️ Member warnings</h4><ul id="mm-warnings-list"><li>Loading…</li></ul>
@@ -743,6 +744,7 @@
   var runnerRpcOk = null;     /* null = loading · true = RPC · false = fallback */
   var lastRunnerTotals = null;
   var activeRunnerFilter = "all";
+  var jobsLoaded = false;   /* admin_jobs_list successful — tk-jobs fallback ke liye */
   var listLimits = { members:10, runners:10, proofs:10, jobs:10, camps:10, errors:10, recent:10 };
   function resetLimit(key) { listLimits[key] = 10; }
   function moreControl(bodyId, key, total, rerender) {
@@ -1127,14 +1129,17 @@
       /* bina click kiye dikhna chahiye: ye member kitne tasks chala raha hai */
       var run = runnerMap[rawId];
       var runCell;
-      if (run && (Number(run.totalCamps) > 0 || Number(run.tasksDone || 0) + Number(run.tasksPending || 0) > 0)) {
+      var runDone = run ? Number(run.tasksDone || 0) + Number(run.jobsDone || 0) : 0;
+      if (run && (Number(run.totalCamps || 0) > 0 || Number(run.postedJobs || 0) > 0 || runDone > 0)) {
         var live = Number(run.active || 0);
+        var livePosted = Number(run.livePosted || 0);
         runCell = '<td class="num" style="white-space:nowrap">' +
-          (live > 0
-            ? '<b style="color:var(--green)">🚀 ' + fmtPts(live) + '</b> <span class="coin-unit">live</span>'
+          (live > 0 || livePosted > 0
+            ? '<b style="color:var(--green)">🚀 ' + fmtPts(live + livePosted) + '</b> <span class="coin-unit">live</span>'
             : '<span style="color:var(--ink-mute)">0 live</span>') +
-          '<br><span class="coin-unit">' + fmtPts(run.totalCamps) + ' total' +
-          (run.tasksDone != null ? ' · ' + fmtPts(run.tasksDone) + ' done' : '') +
+          '<br><span class="coin-unit">' + fmtPts(run.totalCamps) + ' camp' +
+          (Number(run.postedJobs || 0) > 0 ? ' · 📝 ' + fmtPts(run.postedJobs) + ' post' : '') +
+          (runDone > 0 ? ' · ' + fmtPts(runDone) + ' done' : '') +
           '</span></td>';
       } else if (runnerRpcOk === null) {
         runCell = '<td class="num" style="color:var(--ink-mute)">…</td>';
@@ -1166,7 +1171,9 @@
       if (!map[id]) {
         map[id] = { userId: id, name: c.ownerName || "Member", email: c.ownerEmail || "",
                     totalCamps: 0, active: 0, paused: 0, actions: 0, spent: 0,
-                    tasksDone: null, tasksPending: null };
+                    tasksDone: null, tasksPending: null,
+                    jobsDone: null, jobsPending: null,
+                    postedJobs: null, livePosted: null };
       }
       var r = map[id];
       r.totalCamps += 1;
@@ -1204,8 +1211,11 @@
     runnerMap = map;
 
     var list = Object.keys(map).map(function (k) { return map[k]; });
-    var owners = list.filter(function (r) { return Number(r.totalCamps || 0) > 0; });
-    var workers = list.filter(function (r) { return Number(r.tasksDone || 0) + Number(r.tasksPending || 0) > 0; });
+    var owners = list.filter(function (r) { return Number(r.totalCamps || 0) > 0 || Number(r.postedJobs || 0) > 0; });
+    var workers = list.filter(function (r) {
+      return Number(r.tasksDone || 0) + Number(r.tasksPending || 0) +
+             Number(r.jobsDone || 0) + Number(r.jobsPending || 0) > 0;
+    });
 
     /* chips ke counts */
     if ($("run-all-count")) $("run-all-count").textContent = list.length;
@@ -1222,14 +1232,21 @@
     var doneKnown = runnerRpcOk === true;
     var totDone = 0, totPending = 0;
     list.forEach(function (r) {
-      totDone += Number(r.tasksDone || 0);
-      totPending += Number(r.tasksPending || 0);
+      totDone += Number(r.tasksDone || 0) + Number(r.jobsDone || 0);
+      totPending += Number(r.tasksPending || 0) + Number(r.jobsPending || 0);
     });
     if ($("tk-camps")) $("tk-camps").textContent = fmtPts(totCamps);
     if ($("tk-active")) $("tk-active").textContent = fmtPts(actCamps);
     if ($("tk-paused")) $("tk-paused").textContent = fmtPts(pauCamps);
     if ($("tk-done")) $("tk-done").textContent = doneKnown ? fmtPts(totDone) : "—";
     if ($("tk-pending")) $("tk-pending").textContent = doneKnown ? fmtPts(totPending) : "—";
+    /* Live Task Market tasks — liveJobs sirf naye SQL me hai, warna jobs table se */
+    if ($("tk-jobs")) {
+      var t2 = lastRunnerTotals;
+      if (t2 && t2.liveJobs != null) $("tk-jobs").textContent = fmtPts(t2.liveJobs);
+      else if (jobsLoaded) $("tk-jobs").textContent = fmtPts((jobRows || []).filter(function (j) { return j.status === "active"; }).length);
+      else $("tk-jobs").textContent = "—";
+    }
 
     /* setup hint (fallback chal raha hai to) */
     var warn = $("runner-warn");
@@ -1268,15 +1285,19 @@
       var rawId = String(r.userId || "");
       var accountId = rawId ? "FF-" + rawId.replace(/-/g, "").slice(0, 8).toUpperCase() : "—";
       var live = Number(r.active || 0), paused = Number(r.paused || 0);
-      var pending = Number(r.tasksPending || 0);
-      var doneCell = r.tasksDone == null
+      /* pending = points campaigns + USDT Task Market dono ke proofs */
+      var pending = Number(r.tasksPending || 0) + Number(r.jobsPending || 0);
+      var done = Number(r.tasksDone || 0) + Number(r.jobsDone || 0);
+      var posted = Number(r.postedJobs || 0), livePosted = Number(r.livePosted || 0);
+      var doneCell = (r.tasksDone == null && r.jobsDone == null)
         ? '<td class="num" style="color:var(--ink-mute)" title="Run supabase-admin-task-runners.sql">—</td>'
-        : '<td class="num">' + fmtPts(r.tasksDone) + '</td>';
-      var pendCell = r.tasksPending == null
+        : '<td class="num">' + fmtPts(done) + '</td>';
+      var pendCell = (r.tasksPending == null && r.jobsPending == null)
         ? '<td class="num" style="color:var(--ink-mute)" title="Run supabase-admin-task-runners.sql">—</td>'
         : '<td class="num">' + (pending > 0 ? '<b style="color:var(--amber)">' + fmtPts(pending) + '</b>' : fmtPts(pending)) + '</td>';
       var status = [];
-      if (live > 0) status.push('<span class="st-pill st-active">🚀 ' + fmtPts(live) + ' live</span>');
+      if (live > 0) status.push('<span class="st-pill st-active">🚀 ' + fmtPts(live) + ' live camp</span>');
+      if (posted > 0) status.push('<span class="st-pill st-active">📝 ' + fmtPts(livePosted) + ' / ' + fmtPts(posted) + ' task posted</span>');
       if (paused > 0) status.push('<span class="st-pill st-paused">⏸ ' + fmtPts(paused) + ' paused</span>');
       if (pending > 0) status.push('<span class="st-pill st-pending">' + fmtPts(pending) + ' proof' + (pending === 1 ? '' : 's') + ' pending</span>');
       if (!status.length) status.push('<span class="st-pill st-paused">Task doer</span>');
@@ -1285,7 +1306,7 @@
           '<br><span class="run-sub">' + esc(r.email || "") + ' · ' + esc(accountId) + '</span></td>' +
         '<td class="num">' + (live > 0 ? '<b style="color:var(--green)">' + fmtPts(live) + '</b>' : fmtPts(live)) + '</td>' +
         '<td class="num">' + fmtPts(paused) + '</td>' +
-        '<td class="num">' + fmtPts(r.totalCamps) + '</td>' +
+        '<td class="num">' + fmtPts(r.totalCamps) + (posted > 0 ? '<br><span class="run-sub">📝 ' + fmtPts(posted) + ' posted</span>' : '') + '</td>' +
         doneCell + pendCell +
         '<td class="num">' + fmtPts(r.spent) + '</td>' +
         '<td style="white-space:nowrap">' + status.join(" ") + '</td></tr>';
@@ -1433,6 +1454,8 @@
       var det = rs[4];
       var camps = det && det.campaigns ? det.campaigns : null;
       var subs = det && det.subs ? det.subs : null;
+      /* naye supabase-admin-member-detail.sql se Task Market submissions bhi aate hain */
+      var jobSubs = det && det.jobSubs ? det.jobSubs : null;
       var ownedJobs = det && det.jobs ? det.jobs : null;
 
       if (ownedJobs) {
@@ -1457,27 +1480,39 @@
         $("mm-campaigns").innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute)">Run <code>supabase-admin-member-detail.sql</code> once in the Supabase SQL editor to load this member\'s campaigns.</td></tr>';
       }
 
-      if (subs) {
+      if (subs || jobSubs) {
+        /* points campaigns AUR USDT Task Market — dono ke submissions ek jagah,
+           taaki admin ko pata chale is member ne kaunsi task complete ki */
+        var allSubs = [];
+        (subs || []).forEach(function (x) {
+          allSubs.push({ at: x.at, title: x.campaignTitle || "Campaign", sub: (x.platform || "") + (x.note ? " · " + x.note : ""),
+            rewardHtml: esc(fmtCoins(x.payout)), status: x.status, reason: x.reason, proof: x.proof, proofTitle: x.campaignTitle || "Proof" });
+        });
+        (jobSubs || []).forEach(function (x) {
+          allSubs.push({ at: x.at, title: x.jobTitle || "Task Market task", sub: "Task Market" + (x.note ? " · " + x.note : ""),
+            rewardHtml: esc(fmtUsd(x.reward)), status: x.status, reason: x.reason, proof: x.proof, proofTitle: x.jobTitle || "Proof" });
+        });
+        allSubs.sort(function (a, b) { return Number(b.at || 0) - Number(a.at || 0); });
         var done = 0, pend = 0, rej = 0;
-        subs.forEach(function (x) {
+        allSubs.forEach(function (x) {
           if (x.status === "approved") done++; else if (x.status === "pending") pend++; else rej++;
         });
         var tk = $("mm-tasks");
         tk.textContent = String(done);
         tk.title = done + " approved · " + pend + " pending · " + rej + " rejected";
-        $("mm-subs").innerHTML = subs.map(function (x) {
+        $("mm-subs").innerHTML = allSubs.map(function (x) {
           var pill = x.status === "approved" ? '<span class="st-pill st-approved">Approved ✓</span>'
             : x.status === "pending" ? '<span class="st-pill st-pending">Pending</span>'
             : '<span class="st-pill st-rejected">Rejected</span>';
           var proof = String(x.proof || "");
-          var proofHtml = proof ? proofCell(proof, x.campaignTitle || "Proof") : '<span class="k">—</span>';
-          return "<tr><td class='k'><b>" + esc(x.campaignTitle || "—") + "</b><br>" +
-            '<span style="font-size:11px;color:var(--ink-mute)">' + esc((x.platform || "") + (x.note ? " · " + x.note : "")) + "</span></td>" +
-            '<td class="num">' + esc(fmtCoins(x.payout)) + "</td>" +
+          var proofHtml = proof ? proofCell(proof, x.proofTitle) : '<span class="k">—</span>';
+          return "<tr><td class='k'><b>" + esc(x.title || "—") + "</b><br>" +
+            '<span style="font-size:11px;color:var(--ink-mute)">' + esc(x.sub || "") + "</span></td>" +
+            '<td class="num">' + x.rewardHtml + "</td>" +
             "<td>" + pill + (x.status === "rejected" && x.reason ? '<br><span style="font-size:11px;color:#dc2626">' + esc(x.reason) + "</span>" : "") + "</td>" +
             "<td>" + proofHtml + "</td>" +
             "<td style='white-space:nowrap'>" + esc(fdateMs(x.at)) + "</td></tr>";
-        }).join("") || '<tr><td colspan="5" style="color:var(--ink-mute)">This member has not completed any campaigns yet.</td></tr>';
+        }).join("") || '<tr><td colspan="5" style="color:var(--ink-mute)">This member has not completed any tasks yet.</td></tr>';
       } else {
         $("mm-tasks").textContent = "—";
         $("mm-subs").innerHTML = '<tr><td colspan="5" style="color:var(--ink-mute)">Run <code>supabase-admin-member-detail.sql</code> once in the Supabase SQL editor to load this member\'s tasks.</td></tr>';
@@ -1534,7 +1569,7 @@
       var m = (err && err.message) || "";
       var pill = $("jobs-count"); if (pill) pill.textContent = "Setup needed";
       var body = $("t-jobs");
-      if (body) body.innerHTML = '<tr><td colspan="9">Run <code>supabase-post-task-admin.sql</code> once in the Supabase SQL editor to manage posted tasks here.</td></tr>';
+      if (body) body.innerHTML = '<tr><td colspan="10">Run <code>supabase-post-task-admin.sql</code> once in the Supabase SQL editor to manage posted tasks here.</td></tr>';
       if (!/admin_jobs_list|does not exist|PGRST|Admins only/i.test(m)) toast("Could not load posted tasks: " + m, true);
     });
   }
@@ -1548,6 +1583,7 @@
   function renderJobs(r) {
     jobRows = (r && r.jobs) || [];
     jobCats = (r && r.categories) || jobCats;
+    jobsLoaded = true;
     var body = $("t-jobs"); if (!body) return;
     var c = { live: 0, paused: 0, closed: 0 };
     jobRows.forEach(function (j) { c[jobBucket(j)]++; });
@@ -1558,12 +1594,34 @@
 
     var shown = activeJobFilter === "all" ? jobRows : jobRows.filter(function (j) { return jobBucket(j) === activeJobFilter; });
     if (!shown.length) {
-      body.innerHTML = '<tr><td colspan="9" style="color:var(--ink-mute)">No posted tasks in this filter.</td></tr>';
+      body.innerHTML = '<tr><td colspan="10" style="color:var(--ink-mute)">No posted tasks in this filter.</td></tr>';
       return;
     }
     body.innerHTML = shown.slice(0, listLimits.jobs).map(function (j) {
       var url = String(j.url || "");
       var st = j.status === "active" ? "st-active" : (j.status === "paused" ? "st-paused" : "st-rejected");
+      /* kaun is task ko run kar raha hai — worker naam + status (SQL me workers field) */
+      var workers = j.workers || null;
+      var workerCell;
+      if (workers && workers.length) {
+        workerCell = workers.slice(0, 6).map(function (w) {
+          var pill = w.status === "approved" ? '<span class="st-pill st-approved" title="Approved">✓</span>'
+            : w.status === "pending" ? '<span class="st-pill st-pending" title="Pending review">…</span>'
+            : '<span class="st-pill st-rejected" title="Rejected">✗</span>';
+          var wid = String(w.workerId || "");
+          var label = esc(w.name || "Member");
+          var who = wid
+            ? '<button type="button" class="mail-link" data-member="' + esc(wid) + '" style="text-align:left;font-size:12px" title="Open ' + esc(w.email || w.name || "member") + ' — tasks, proofs and balances">' + label + "</button>"
+            : label;
+          return '<div style="white-space:nowrap;font-size:12px;line-height:1.7">' + pill + " " + who + "</div>";
+        }).join("") + (workers.length > 6
+          ? '<div class="camp-sub">+' + (workers.length - 6) + " more</div>"
+          : "");
+      } else if (workers) {
+        workerCell = '<span class="camp-sub">No submissions yet</span>';
+      } else {
+        workerCell = '<span class="camp-sub" title="Run supabase-post-task-admin.sql once to see who is running each task">—</span>';
+      }
       return "<tr>" +
         '<td class="k" style="max-width:240px"><b>' + esc(j.title) + "</b>" +
           (url ? '<a class="camp-url" href="' + esc(url) + '" target="_blank" rel="noopener" title="' + esc(url) + '">' + esc(url) + "</a>" : "") + "</td>" +
@@ -1573,6 +1631,7 @@
         '<td class="num">' + fmtPts(j.filled) + " / " + fmtPts(j.slots) + "</td>" +
         '<td class="num">' + fmtUsd(j.escrow) + "</td>" +
         '<td class="num">' + fmtPts(j.pending) + "</td>" +
+        "<td>" + workerCell + "</td>" +
         '<td><span class="st-pill ' + st + '">' + esc(j.status) + "</span></td>" +
         '<td style="white-space:nowrap">' +
           (j.status === "active"
@@ -1585,6 +1644,8 @@
         "</tr>";
     }).join("");
     moreControl("t-jobs", "jobs", shown.length, function(){ renderJobs({jobs:jobRows,categories:jobCats}); });
+    /* jobs table ke baad Task Market mini-stat (tk-jobs) bhi refresh */
+    if (runnerRpcOk !== null) renderRunners();
   }
 
   function jobById(id) {
@@ -1667,6 +1728,18 @@
     u = String(u || "");
     return /^https?:\/\//i.test(u) && (/\.(png|jpe?g|webp|gif|bmp|avif)(\?|#|$)/i.test(u) || /\/storage\/v1\/object\/public\/proofs\//i.test(u));
   }
+  /* proof me kabhi-kabhi "text | https://...png" hota hai — URL bheetar bhi dhoondho */
+  function imageFromProof(proof) {
+    var raw = String(proof || "");
+    if (isImageUrl(raw)) return raw;
+    var urls = raw.match(/https?:\/\/[^\s|]+/gi) || [];
+    for (var i = 0; i < urls.length; i++) if (isImageUrl(urls[i])) return urls[i];
+    return "";
+  }
+  function firstUrlIn(proof) {
+    var m = String(proof || "").match(/https?:\/\/[^\s|]+/i);
+    return m ? m[0] : "";
+  }
   function openShot(url, title) {
     $("shot-img").src = url;
     $("shot-head").textContent = title || "Proof screenshot";
@@ -1676,12 +1749,14 @@
   function proofCell(proof, title) {
     var raw = String(proof || "");
     if (!raw) return "—";
-    if (isImageUrl(raw)) {
-      return '<div class="proof-cell"><img class="proof-shot" src="' + esc(raw) + '" alt="Proof screenshot" loading="lazy" data-shot="' + esc(raw) + '" data-shot-title="' + esc(title || "") + '" />' +
-        '<a href="' + esc(raw) + '" target="_blank" rel="noopener">Open ↗</a></div>';
+    var img = imageFromProof(raw);
+    if (img) {
+      return '<div class="proof-cell"><img class="proof-shot" src="' + esc(img) + '" alt="Proof screenshot" loading="lazy" data-shot="' + esc(img) + '" data-shot-title="' + esc(title || "") + '" />' +
+        '<a href="' + esc(img) + '" target="_blank" rel="noopener">Open ↗</a></div>';
     }
-    if (/^https?:\/\//i.test(raw)) {
-      return '<div class="proof-cell"><a href="' + esc(raw) + '" target="_blank" rel="noopener">View proof ↗</a></div>';
+    var link = firstUrlIn(raw);
+    if (link) {
+      return '<div class="proof-cell"><a href="' + esc(link) + '" target="_blank" rel="noopener">View proof ↗</a></div>';
     }
     return '<div class="proof-cell">' + esc(raw) + "</div>";
   }
