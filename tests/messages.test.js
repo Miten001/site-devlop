@@ -147,6 +147,40 @@ async function main() {
   unit.window.close();
 
   /* ---------------------------------------------------------------- */
+  console.log("\n[MESSAGES 2b] Notification bell tap opens the full message");
+  const bellDom = new JSDOM('<!doctype html><html><head></head><body><div class="head-actions"></div></body></html>', {
+    runScripts: "dangerously", url: "https://flexfam.io/dashboard.html"
+  });
+  const bw = bellDom.window;
+  const bellCalls = [];
+  bw.FF = {
+    currentUser: () => ({ email: "bob@test.dev" }),
+    hasServer: () => true,
+    rpc: (name, args) => {
+      bellCalls.push({ name, args });
+      if (name === "bell_feed") return Promise.resolve({
+        unread: 1,
+        items: [{ id: "n1", kind: "broadcast", title: "Long bell message", body: LONG, at: Date.now(), read: false }]
+      });
+      if (name === "bell_mark_read") return Promise.resolve({ ok: true });
+      return Promise.resolve({});
+    }
+  };
+  bw.eval(mv);
+  bw.eval(bell);
+  await sleep(30);
+  const bellItem = bw.document.querySelector("#ff-bell-list .bell-item[data-msg-id]");
+  check("Bell renders a tappable notification row", !!bellItem);
+  if (bellItem) bellItem.click();
+  await sleep(30);
+  const bellModal = bw.document.getElementById("ffm-modal");
+  check("Bell tap opens the full-message modal (not swallowed by the panel)", !!bellModal && bellModal.classList.contains("open"));
+  check("Bell modal contains the entire long message", !!bellModal && bellModal.textContent.includes("Ant tak padhne ke liye message par tap karo."));
+  check("Full-message modal stacks above bell/support layers", (bw.document.getElementById("ffm-style").textContent || "").includes("#ffm-modal{z-index:1000}"));
+  check("Opening the bell message marks only that notification read", bellCalls.some(c => c.name === "bell_mark_read" && c.args && c.args.p_ids[0] === "n1"));
+  bellDom.window.close();
+
+  /* ---------------------------------------------------------------- */
   console.log("\n[MESSAGES 3] Dashboard inbox: full message on tap + read state");
   const storage = {
     ff_users: JSON.stringify([
