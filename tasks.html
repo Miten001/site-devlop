@@ -115,24 +115,35 @@
     <p class="m-sub" id="jm-sub"></p>
     <div style="text-align:left;margin:16px 0;font-size:13.6px;line-height:1.6;color:var(--ink-dim);white-space:pre-wrap" id="jm-desc"></div>
     <div class="fee-hint" id="jm-proofnote" style="text-align:left"></div>
+    <div id="jm-example" class="hidden" style="text-align:left;margin-top:12px"></div>
     <a class="btn btn-ghost btn-block hidden" id="jm-open" href="#" target="_blank" rel="noopener" style="margin-top:14px">Open task link</a>
-    <div class="field" style="text-align:left;margin-top:16px">
-      <label>Your proof (link, screenshot URL, username or ID)</label>
-      <input type="text" id="jm-proof" placeholder="https://... or @username" />
+    <div class="fee-hint" style="text-align:left;margin-top:16px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span><b>Proof me do option hain — dono ek saath bhej sakte ho:</b> neeche text type karo / link paste karo, aur screenshot attach karo. Buyer aur admin dono ko typed text aur screenshot alag-alag, full size me dikhte hain.</span>
     </div>
-    <div class="field hidden" style="text-align:left" id="jm-attach-field">
-      <label>Or attach a screenshot (optional, max 5 MB)</label>
+    <div class="field" style="text-align:left;margin-top:16px">
+      <label>✍️ Type your proof</label>
+      <textarea id="jm-proof" rows="3" placeholder="Apna username / ID, kaunsa step kiya, ya koi bhi detail likho…"></textarea>
+    </div>
+    <div class="field" style="text-align:left">
+      <label>🔗 Proof link (optional)</label>
+      <input type="text" id="jm-link" placeholder="https://... (profile, post ya screenshot link)" />
+    </div>
+    <div class="field" style="text-align:left" id="jm-attach-field">
+      <label>📎 Attach a screenshot (optional, max 5 MB)</label>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <label class="btn btn-ghost btn-sm" for="jm-file" style="cursor:pointer" id="jm-attach-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           Attach screenshot
-          <input type="file" id="jm-file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" hidden />
+          <input type="file" id="jm-file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,video/mp4" hidden />
         </label>
+        <button type="button" class="btn btn-ghost btn-sm hidden" id="jm-file-remove">✕ Remove</button>
         <span id="jm-file-name" style="font-size:12.5px;color:var(--ink-mute)"></span>
       </div>
+      <div id="jm-preview" class="hidden" style="margin-top:10px"></div>
     </div>
     <div class="field" style="text-align:left">
-      <label>Note to the buyer (optional)</label>
+      <label>📝 Note to the buyer (optional)</label>
       <textarea id="jm-note" rows="2" placeholder="Anything the buyer should know"></textarea>
     </div>
     <button class="btn btn-primary btn-block" id="jm-submit">Submit proof &amp; claim reward</button>
@@ -148,6 +159,7 @@
 <script src="assets/js/wallet.js?v=2.3"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/support.js?v=1.0"></script>
+<script src="assets/js/proof.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   let user = FF.currentUser();
@@ -213,7 +225,9 @@ document.addEventListener("DOMContentLoaded", () => {
     $("sub-empty").classList.toggle("hidden", mine.length > 0);
     $("sub-body").innerHTML = mine.map((s) => (
       "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.jobTitle) + "</b></td>" +
-      '<td><span class="mono-cut">' + esc(s.proof) + "</span>" + (/\.(png|jpe?g|webp|gif)(\?|$)/i.test(String(s.proof || "")) || /\/object\/public\//i.test(String(s.proof || "")) ? ' <b title="screenshot attached">📷</b>' : "") + "</td>" +
+      "<td>" + (window.FFProof ? FFProof.cell(s.proof, {
+        title: s.jobTitle, note: s.note, reward: W.usd(s.reward), status: s.status, at: fdate(s.at)
+      }) : '<span class="mono-cut">' + esc(s.proof) + "</span>") + "</td>" +
       '<td class="num pos">' + W.usd(s.reward) + "</td>" +
       '<td><span class="badge ' + esc(s.status) + '">' + esc(s.status) + "</span></td></tr>"
     )).join("");
@@ -248,11 +262,20 @@ document.addEventListener("DOMContentLoaded", () => {
     $("jm-title").textContent = current.title;
     $("jm-sub").innerHTML = esc(c.name) + " · Reward <b style='color:var(--green)'>" + W.usd(current.reward) + " USDT</b> · " + (current.slots - current.filled) + " slots left";
     $("jm-desc").textContent = current.description;
-    $("jm-proofnote").innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span><b>Required proof:</b> ' + esc(current.proofNote) + "</span>";
+    /* Poster ne typed instructions ke saath example screenshot bhi attach kiya
+       ho to wo alag se dikhao — raw data URL kabhi text me na aaye. */
+    const note = window.FFProof ? FFProof.parse(current.proofNote || "") : { text: current.proofNote || "", images: [] };
+    $("jm-proofnote").innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span><b>Required proof:</b> ' + esc(note.text || "Screenshot / proof link of the completed action") + "</span>";
+    const example = $("jm-example");
+    if (note.images && note.images.length) {
+      example.innerHTML = '<div style="font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:6px">Example screenshot from the buyer</div>' +
+        '<a href="' + esc(note.images[0]) + '" target="_blank" rel="noopener"><img src="' + esc(note.images[0]) + '" alt="Example proof screenshot" style="max-width:100%;max-height:220px;border-radius:12px;border:1px solid var(--line)" onerror="this.parentNode.style.display=\'none\'" /></a>';
+      example.classList.remove("hidden");
+    } else { example.classList.add("hidden"); example.innerHTML = ""; }
     const link = $("jm-open");
     if (current.url) { link.href = current.url; link.classList.remove("hidden"); } else link.classList.add("hidden");
-    $("jm-proof").value = ""; $("jm-note").value = "";
-    proofFile = null; $("jm-file").value = ""; $("jm-file-name").textContent = "";
+    $("jm-proof").value = ""; $("jm-link").value = ""; $("jm-note").value = "";
+    clearProofFile();
     openTaskModal(b);
   });
 
@@ -260,75 +283,69 @@ document.addEventListener("DOMContentLoaded", () => {
   modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("open")) close(); });
 
-  /* ---------- screenshot attach (server mode only — Supabase Storage) ---------- */
+  /* ---------- typed proof + link + screenshot — DONO option hamesha ----------
+     Server mode me file Supabase Storage me jaati hai; bucket abhi na ho ya
+     offline ho to FFProof ek compressed copy proof ke andar embed kar deta
+     hai, isliye buyer/admin ko screenshot hamesha dikhta hai. */
   let proofFile = null;
-  const attachField = $("jm-attach-field");
-  if (attachField && FF.hasServer && FF.hasServer()) attachField.classList.remove("hidden");
+  let proofPreview = "";
+
+  function clearProofFile() {
+    proofFile = null;
+    FFProof.releasePreview(proofPreview);
+    proofPreview = "";
+    $("jm-file").value = "";
+    $("jm-file-name").textContent = "";
+    $("jm-file-remove").classList.add("hidden");
+    const pv = $("jm-preview");
+    pv.classList.add("hidden");
+    pv.innerHTML = "";
+  }
 
   $("jm-file").addEventListener("change", () => {
+    clearProofFile();
     const f = $("jm-file").files && $("jm-file").files[0];
-    proofFile = null;
-    if (!f) { $("jm-file-name").textContent = ""; return; }
-    if (f.size > 5 * 1024 * 1024) {
-      FF.toast("File is larger than 5 MB — attach a smaller screenshot", "err");
-      $("jm-file").value = ""; $("jm-file-name").textContent = "";
-      return;
-    }
+    if (!f) return;
+    try { FFProof.validate(f, 5); }
+    catch (err) { FF.toast(err.message, "err"); clearProofFile(); return; }
     proofFile = f;
     $("jm-file-name").textContent = "📎 " + f.name + " (" + Math.max(1, Math.round(f.size / 1024)) + " KB)";
+    $("jm-file-remove").classList.remove("hidden");
+    proofPreview = FFProof.previewUrl(f);
+    const pv = $("jm-preview");
+    if (proofPreview) {
+      pv.innerHTML = /^video\//i.test(f.type)
+        ? '<video controls src="' + esc(proofPreview) + '" style="max-width:100%;max-height:190px;border-radius:12px"></video>'
+        : '<img src="' + esc(proofPreview) + '" alt="Selected screenshot" style="max-width:100%;max-height:190px;border-radius:12px;border:1px solid var(--line)" />';
+      pv.classList.remove("hidden");
+    }
   });
-
-  function uploadProofFile(file) {
-    const cfg = window.FF_SUPABASE_CONFIG;
-    return FF.accessToken().then((token) => {
-      if (!token) throw new Error("Your session expired — please log in again");
-      const exts = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" };
-      const ext = exts[file.type] || "png";
-      const uid = (FF.DB && FF.DB.auth && FF.DB.auth() && FF.DB.auth().userId) ? FF.DB.auth().userId : "user";
-      const path = uid + "/" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
-      return fetch(String(cfg.url).replace(/\/+$/, "") + "/storage/v1/object/proofs/" + path, {
-        method: "POST",
-        headers: {
-          apikey: cfg.anonKey,
-          Authorization: "Bearer " + token,
-          "Content-Type": file.type || "image/png",
-        },
-        body: file,
-      }).then((res) => res.text().then((text) => {
-        if (!res.ok) {
-          console.warn("[FlexFam] Proof upload not live on server yet — run supabase-proof-storage.sql once in the Supabase SQL editor.");
-          throw new Error("Screenshot upload failed — please use the link option instead.");
-        }
-        return String(cfg.url).replace(/\/+$/, "") + "/storage/v1/object/public/proofs/" + path;
-      }));
-    });
-  }
+  $("jm-file-remove").addEventListener("click", clearProofFile);
 
   $("jm-submit").addEventListener("click", () => {
     if (!current) return;
     const btn = $("jm-submit");
-    btn.disabled = true; btn.style.opacity = ".6";
-    const proofText = $("jm-proof").value;
-    if (!proofText.trim() && !proofFile) {
-      FF.toast("Enter a proof link or attach a screenshot", "err");
-      btn.disabled = false; btn.style.opacity = "";
+    const proofText = $("jm-proof").value.trim();
+    const proofLink = $("jm-link").value.trim();
+    if (!proofText && !proofLink && !proofFile) {
+      FF.toast("Proof likho, link do, ya screenshot attach karo — koi ek to chahiye", "err");
       return;
     }
-    const send = (proof) => {
-      if (!current) { FF.toast("The dialog was closed — please try again", "err"); return Promise.resolve(); }
-      return A.submitProof(current.id, proof, $("jm-note").value).then((f) => {
+    btn.disabled = true; btn.style.opacity = ".6";
+    const jobId = current.id;
+    const note = $("jm-note").value;
+    const attach = proofFile ? FFProof.upload(proofFile, { maxMB: 5 }) : Promise.resolve("");
+    if (proofFile) FF.toast("Uploading screenshot…", "info");
+
+    attach.then((image) => {
+      const proof = FFProof.build({ text: proofText, link: proofLink, image: image });
+      if (proof.trim().length < 6) throw new Error("Proof thoda detail me likho (kam se kam 6 characters)");
+      return A.submitProof(jobId, proof, note).then((f) => {
         FF.toast("Proof submitted! The buyer will review it shortly.", "ok");
+        clearProofFile();
         close(); render(f);
-      }).catch(fail).then(() => { btn.disabled = false; btn.style.opacity = ""; });
-    };
-    if (proofFile) {
-      FF.toast("Uploading screenshot…", "info");
-      uploadProofFile(proofFile)
-        .then((url) => { proofFile = null; $("jm-file").value = ""; $("jm-file-name").textContent = ""; return send(proofText.trim() ? proofText.trim() + " | " + url : url); })
-        .catch((err) => { fail(err); btn.disabled = false; btn.style.opacity = ""; });
-    } else {
-      send(proofText);
-    }
+      });
+    }).catch(fail).then(() => { btn.disabled = false; btn.style.opacity = ""; });
   });
 
   A.feed().then(render).catch(fail);

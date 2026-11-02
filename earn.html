@@ -146,18 +146,24 @@
     <div id="cm-proof-zone">
       <div class="m-steps">
         <div><span class="n">1</span> Open the page and complete the action — join / follow / subscribe</div>
-        <div><span class="n">2</span> Come back and paste your proof — or attach a screenshot 📎</div>
+        <div><span class="n">2</span> Come back — proof type karo / link do, aur screenshot attach karo 📎 (dono chal sakte hain)</div>
         <div><span class="n">3</span> Submit — your points are credited instantly ⚡</div>
       </div>
       <a class="btn btn-ghost btn-block hidden" id="cm-open" href="#" target="_blank" rel="noopener" style="margin-top:14px">Open task link</a>
       <div class="field" style="text-align:left;margin-top:16px">
-        <label>Your proof (link, username or ID)</label>
+        <label>✍️ Type your proof (username / ID / details)</label>
+        <textarea id="cm-text" rows="2" placeholder="Apna username ya koi detail likho…"></textarea>
+      </div>
+      <div class="field" style="text-align:left">
+        <label>🔗 Proof link (optional)</label>
         <input type="text" id="cm-proof" placeholder="https://... or @username" />
         <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
           <button type="button" class="btn btn-ghost btn-sm" id="cm-attach">📎 Attach screenshot / media</button>
+          <button type="button" class="btn btn-ghost btn-sm hidden" id="cm-file-remove">✕ Remove</button>
           <span id="cm-file-name" style="font-size:12px;color:var(--ink-mute)"></span>
         </div>
-        <input type="file" id="cm-file" accept="image/*,video/*" class="hidden" />
+        <input type="file" id="cm-file" accept="image/*,video/mp4,video/webm" class="hidden" />
+        <div id="cm-preview" class="hidden" style="margin-top:10px"></div>
       </div>
       <div class="field" style="text-align:left">
         <label>Note to the campaign owner (optional)</label>
@@ -189,6 +195,7 @@
 <script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/campaigns.js?v=2.0"></script>
 <script src="assets/js/support.js?v=1.0"></script>
+<script src="assets/js/proof.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   /* Guest (bina login) bhi campaigns ki listing dekh sakta hai — read-only.
@@ -461,8 +468,8 @@ document.addEventListener("DOMContentLoaded", () => {
     cmTitle.textContent = task.action + " · " + (task.user || task.title);
     cmSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " points</b> (credited instantly \u26A1)";
     cmProof.value = ""; cmNote.value = "";
-    document.getElementById("cm-file-name").textContent = "";
-    proofUpload = null;
+    document.getElementById("cm-text").value = "";
+    clearProofFile();
 
     /* WATCH campaigns (View/Watch/Read): proof nahi — TIMER mode */
     const watchZone = document.getElementById("cm-watch-zone");
@@ -551,70 +558,83 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   document.getElementById("cm-claim").addEventListener("click", submitTimerClaim);
 
-  /* ---------- PROOF: media attachment (screenshot upload) ---------- */
-  let proofUpload = null;
-  function uploadProofMedia(file) {
-    const cfg = window.FF_SUPABASE_CONFIG;
-    return FF.accessToken().then((token) => {
-      if (!token) throw new Error("Please log in to upload media — use the link option instead");
-      const exts = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif", "video/mp4": "mp4" };
-      const ext = exts[file.type] || "png";
-      const uid = (FF.DB && FF.DB.auth && FF.DB.auth() && FF.DB.auth().userId) ? FF.DB.auth().userId : "user";
-      const path = uid + "/" + Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "." + ext;
-      return fetch(String(cfg.url).replace(/\/+$/, "") + "/storage/v1/object/proofs/" + path, {
-        method: "POST",
-        headers: { apikey: cfg.anonKey, Authorization: "Bearer " + token, "Content-Type": file.type || "image/png" },
-        body: file,
-      }).then((res) => res.text().then(() => {
-        if (!res.ok) {
-          console.warn("[FlexFam] Proof upload not live on server yet — run supabase-proof-storage.sql once in the Supabase SQL editor.");
-          throw new Error("Upload failed — please use the link option instead.");
-        }
-        return String(cfg.url).replace(/\/+$/, "") + "/storage/v1/object/public/proofs/" + path;
-      }));
-    });
+  /* ---------- PROOF: typed text + link + screenshot (dono ek saath) ----------
+     Pehle screenshot attach karne se typed/link proof overwrite ho jaata tha.
+     Ab FFProof.build() sab ko alag lines me save karta hai, aur owner/admin
+     ko text + screenshot dono dikhte hain. Storage na ho to compressed copy
+     proof me embed ho jaati hai — screenshot kabhi gayab nahi hota. */
+  let proofFile = null;
+  let proofPreview = "";
+
+  function clearProofFile() {
+    proofFile = null;
+    FFProof.releasePreview(proofPreview);
+    proofPreview = "";
+    const input = document.getElementById("cm-file");
+    if (input) input.value = "";
+    document.getElementById("cm-file-name").textContent = "";
+    document.getElementById("cm-file-remove").classList.add("hidden");
+    const pv = document.getElementById("cm-preview");
+    pv.classList.add("hidden");
+    pv.innerHTML = "";
   }
+
   document.getElementById("cm-attach").addEventListener("click", () => document.getElementById("cm-file").click());
+  document.getElementById("cm-file-remove").addEventListener("click", clearProofFile);
   document.getElementById("cm-file").addEventListener("change", (e) => {
+    clearProofFile();
     const f = e.target.files && e.target.files[0];
     if (!f) return;
-    if (f.size > 8 * 1024 * 1024) { FF.toast("File must be smaller than 8MB", "err"); e.target.value = ""; return; }
-    document.getElementById("cm-file-name").textContent = "📎 Uploading " + f.name + "…";
-    proofUpload = uploadProofMedia(f).then((url) => {
-      document.getElementById("cm-proof").value = url;
-      document.getElementById("cm-file-name").textContent = "📎 " + f.name + " \u2713 attached";
-      return url;
-    }).catch((err) => {
-      document.getElementById("cm-file-name").textContent = "";
-      FF.toast(err.message, "err");
-    });
-    e.target.value = "";
+    try { FFProof.validate(f, 8); }
+    catch (err) { FF.toast(err.message, "err"); clearProofFile(); return; }
+    proofFile = f;
+    document.getElementById("cm-file-name").textContent = "📎 " + f.name + " ✓ attached";
+    document.getElementById("cm-file-remove").classList.remove("hidden");
+    proofPreview = FFProof.previewUrl(f);
+    const pv = document.getElementById("cm-preview");
+    if (proofPreview) {
+      pv.innerHTML = /^video\//i.test(f.type)
+        ? '<video controls src="' + FFProof.esc(proofPreview) + '" style="max-width:100%;max-height:170px;border-radius:12px"></video>'
+        : '<img src="' + FFProof.esc(proofPreview) + '" alt="Selected screenshot" style="max-width:100%;max-height:170px;border-radius:12px;border:1px solid var(--line)" />';
+      pv.classList.remove("hidden");
+    }
   });
 
   cmSubmit.addEventListener("click", () => {
     if (!pendingCamp) return;
-    /* Agar media upload chal raha hai to pehle complete hone do */
-    if (proofUpload) {
-      const btn = cmSubmit, lbl = btn.textContent;
-      btn.disabled = true; btn.textContent = "Uploading proof…";
-      proofUpload.finally(() => { btn.disabled = false; btn.textContent = lbl; cmSubmit.click(); });
+    const text = document.getElementById("cm-text").value.trim();
+    const link = cmProof.value.trim();
+    if (!text && !link && !proofFile) {
+      FF.toast("Proof likho, link do, ya screenshot attach karo", "err");
       return;
     }
-    const finish = () => {
-      FF.sfx.coin();
-      FF.toast("Proof submitted! +" + (pendingCamp ? pendingCamp.payout : "") + " points credited \u26A1", "ok");
-      campModal.classList.remove("open");
-      pendingCamp = null;
-      render();
-    };
     const fail = (err) => FF.toast(err.message, "err");
-    try {
-      /* Server mode: proof database mein jaata hai (promise). Local/demo:
-         seedha localStorage mein (sync) — dono case handle hota hai. */
-      const res = FF.submitCampaignProof(user.email, user.name, pendingCamp.id, cmProof.value, cmNote.value);
-      if (res && typeof res.then === "function") res.then(finish).catch(fail);
-      else finish();
-    } catch (err) { fail(err); }
+    const submit = (image) => {
+      const proof = FFProof.build({ text: text, link: link, image: image });
+      if (proof.trim().length < 3) { FF.toast("Proof thoda detail me likho", "err"); return; }
+      const camp = pendingCamp;
+      const finish = () => {
+        FF.sfx.coin();
+        FF.toast("Proof submitted! +" + camp.payout + " points credited \u26A1", "ok");
+        campModal.classList.remove("open");
+        pendingCamp = null;
+        clearProofFile();
+        render();
+      };
+      try {
+        /* Server mode: promise. Local/demo: sync — dono handle hote hain. */
+        const res = FF.submitCampaignProof(user.email, user.name, camp.id, proof, cmNote.value);
+        if (res && typeof res.then === "function") res.then(finish).catch(fail);
+        else finish();
+      } catch (err) { fail(err); }
+    };
+    if (!proofFile) return submit("");
+    const btn = cmSubmit, lbl = btn.textContent;
+    btn.disabled = true; btn.textContent = "Uploading proof…";
+    FF.toast("Uploading screenshot…", "info");
+    FFProof.upload(proofFile, { maxMB: 8 })
+      .then(submit).catch(fail)
+      .then(() => { btn.disabled = false; btn.textContent = lbl; });
   });
 
   function stepRows(task) {

@@ -109,7 +109,22 @@
           </div>
           <div class="field">
             <label>Proof workers must submit</label>
-            <input type="text" id="j-proof" placeholder="Screenshot link + your username" />
+            <textarea id="j-proof" rows="3" placeholder="Screenshot + your username / ID. Step-by-step likho ki worker kya proof bheje…"></textarea>
+            <div style="margin-top:12px">
+              <label style="display:block;margin-bottom:8px">📎 Attach an example screenshot (optional, max 5 MB)</label>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <label class="btn btn-ghost btn-sm" for="j-proof-file" style="cursor:pointer">Attach screenshot
+                  <input type="file" id="j-proof-file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif" hidden />
+                </label>
+                <button type="button" class="btn btn-ghost btn-sm hidden" id="j-proof-file-remove">✕ Remove</button>
+                <span id="j-proof-file-name" style="font-size:12.5px;color:var(--ink-mute)"></span>
+              </div>
+              <div id="j-proof-preview" class="hidden" style="margin-top:10px"></div>
+            </div>
+            <div class="fee-hint" style="margin-top:12px;text-align:left">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+              <span><b>Yahan dono option hain:</b> upar typing box me likho ki kaunsa proof chahiye, aur ek example screenshot attach kar sakte ho (worker ko "Required proof" me dikhega). <b>Worker ko bhi dono option milte hain</b> — ✍️ typed text / link ka box <b>+</b> 📎 screenshot file attach, dono ek saath. Aap "My Tasks → View" me typed text aur full screenshot dekhoge — admin ko bhi wahi proof dikhta hai.</span>
+            </div>
           </div>
           <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div>
@@ -146,6 +161,7 @@
 <script src="assets/js/wallet.js?v=2.3"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/support.js?v=1.0"></script>
+<script src="assets/js/proof.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
@@ -212,14 +228,51 @@ document.addEventListener("DOMContentLoaded", () => {
     calc();
   }).catch(() => {});
 
+  /* ---------- poster ka example screenshot (optional) ----------
+     Typed instructions + example image dono proof_note me jaate hain, taaki
+     worker ko task modal me exact proof ka sample dikhe. */
+  let exampleFile = null, examplePreview = "";
+  function clearExample() {
+    exampleFile = null;
+    FFProof.releasePreview(examplePreview);
+    examplePreview = "";
+    $("j-proof-file").value = "";
+    $("j-proof-file-name").textContent = "";
+    $("j-proof-file-remove").classList.add("hidden");
+    const pv = $("j-proof-preview");
+    pv.classList.add("hidden"); pv.innerHTML = "";
+  }
+  $("j-proof-file").addEventListener("change", () => {
+    clearExample();
+    const f = $("j-proof-file").files && $("j-proof-file").files[0];
+    if (!f) return;
+    try { FFProof.validate(f, 5); }
+    catch (err) { FF.toast(err.message, "err"); clearExample(); return; }
+    exampleFile = f;
+    $("j-proof-file-name").textContent = "📎 " + f.name + " (" + Math.max(1, Math.round(f.size / 1024)) + " KB)";
+    $("j-proof-file-remove").classList.remove("hidden");
+    examplePreview = FFProof.previewUrl(f);
+    if (examplePreview) {
+      $("j-proof-preview").innerHTML = '<img src="' + FFProof.esc(examplePreview) + '" alt="Example proof screenshot" style="max-width:100%;max-height:190px;border-radius:12px;border:1px solid var(--line)" />';
+      $("j-proof-preview").classList.remove("hidden");
+    }
+  });
+  $("j-proof-file-remove").addEventListener("click", clearExample);
+
   $("job-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const btn = $("job-form").querySelector('button[type="submit"]');
     if (btn) { btn.disabled = true; btn.style.opacity = ".6"; }
-    A.postJob({
+    const data = {
       title: $("j-title").value, category: $("j-cat").value, description: $("j-desc").value,
       url: (function(v){v=String(v||"").trim().replace(/[\u200B-\u200D\uFEFF\u00A0]/g," ").trim();if(!v)return "";return /^https?:\/\//i.test(v)?v:"https://"+v.replace(/^\/+/,"");})($("j-url").value), proofNote: $("j-proof").value,
       reward: $("j-reward").value, slots: $("j-slots").value,
+    };
+    if (exampleFile) FF.toast("Uploading example screenshot…", "info");
+    const ready = exampleFile ? FFProof.upload(exampleFile, { maxMB: 5 }) : Promise.resolve("");
+    ready.then((image) => {
+      if (image) data.proofNote = (String(data.proofNote || "").trim() ? String(data.proofNote).trim() + "\n" : "") + "📎 Screenshot: " + image;
+      return A.postJob(data);
     }).then(() => {
       FF.toast("Task published! Workers can start right away.", "ok");
       setTimeout(() => (window.location.href = "my-tasks.html"), 800);
