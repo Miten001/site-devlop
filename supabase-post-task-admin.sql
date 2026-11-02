@@ -175,7 +175,18 @@ begin
           'at', extract(epoch from s.at) * 1000) as j
         from public.job_subs s join public.jobs jb on jb.id = s.job_id
         where s.owner = v_user and s.status = 'pending'
-      ) i)
+      ) i),
+    /* Task poster ka "All submissions" panel — reviewed proofs bhi dikhte hain */
+    'history', (select coalesce(jsonb_agg(j order by j ->> 'at' desc), '[]'::jsonb) from (
+        select jsonb_build_object(
+          'id', s.id, 'jobId', s.job_id, 'jobTitle', jb.title, 'reward', s.reward,
+          'workerName', public.wallet_display_name(s.worker),
+          'proof', s.proof, 'note', s.note, 'status', s.status, 'reason', s.reason,
+          'at', extract(epoch from s.at) * 1000) as j
+        from public.job_subs s join public.jobs jb on jb.id = s.job_id
+        where s.owner = v_user
+        order by s.at desc limit 200
+      ) h)
   );
 end;
 $$;

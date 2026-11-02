@@ -331,6 +331,25 @@ $$;
 revoke all on function public.messages_mark_read() from public, anon;
 grant execute on function public.messages_mark_read() to authenticated;
 
+-- Ek message "tap karke pura padhne" par SIRF usi ko read mark karna.
+-- Purane installs me ye function nahi hota — front-end local flag se kaam
+-- chala leta hai, isliye re-run optional (but recommended).
+create or replace function public.messages_mark_one_read(p_id uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare v_user uuid := auth.uid();
+begin
+  if v_user is null then raise exception 'Please log in' using errcode = 'P0001'; end if;
+  insert into public.message_reads (message_id, user_id)
+  select m.id, v_user from public.messages m
+   where m.id = p_id and (m.audience = 'all' or m.user_id = v_user)
+  on conflict (message_id, user_id) do nothing;
+  return public.messages_inbox();
+end;
+$$;
+
+revoke all on function public.messages_mark_one_read(uuid) from public, anon;
+grant execute on function public.messages_mark_one_read(uuid) to authenticated;
+
 -- ============================================================
 -- 4. Admin: set a member's exact coin / USDT balance
 -- ============================================================

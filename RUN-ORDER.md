@@ -9,7 +9,7 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 3 | [`supabase-wallet.sql`](supabase-wallet.sql) | USDT wallet, task marketplace, escrow, `wallet_*` RPCs | 1, 2 |
 | 4 | [`supabase-points-import.sql`](supabase-points-import.sql) | *Optional:* `wallet_import_points()` — browser points ko server ledger me import | 1, 2, 3 |
 | 5 | [`supabase-campaigns.sql`](supabase-campaigns.sql) | Point campaigns (Add Page → Earn page) server-sync — `market_campaigns` tables + `campaigns_*` RPCs. Iske bina user-posted campaigns sirf poster ke browser me dikhte the | 1, 2, 3 |
-| 6 | [`supabase-proof-storage.sql`](supabase-proof-storage.sql) | Proof **screenshot attach** ke liye Storage bucket (`proofs`) + policies — task proof me file upload, owner "View" me screenshot dekh sakta hai | — |
+| 6 | [`supabase-proof-storage.sql`](supabase-proof-storage.sql) | Proof **screenshot attach** ke liye Storage bucket (`proofs`) + policies (images + short videos, 8 MB) — Task Market aur Earn campaigns dono me file upload; owner "View full proof" me full screenshot dekh sakta hai. **Dobara run karo** (naye extensions add karta hai). Bucket na ho to site compressed screenshot proof me embed kar deti hai — proof kabhi gayab nahi hota | — |
 | 8 | [`supabase-campaigns-public.sql`](supabase-campaigns-public.sql) | **Public campaign listing** — demo/offline members ko bhi campaigns dikhti hain (bina login ke read-only listing). Complete karne ke liye real account | 5 |
 | 9  | supabase-admin-member-detail.sql | Admin panel: member pe click → uski campaigns + Task Market tasks + completed tasks (points AUR USDT dono ke proofs/screenshot ke saath — `jobSubs`) | admin.html |
 | 10 | supabase-campaigns-autoapprove.sql | Campaign auto-approve — proof submit karte hi points turant, owner review nahi | 5 |
@@ -28,6 +28,39 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 22 | [`supabase-campaigns-top-bid.sql`](supabase-campaigns-top-bid.sql) | **Top bid first** — jis campaign par jyada coin/USDT bid hai wo Earn page par sabse pehle (payout desc, phir newest) | 13 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
+
+---
+
+## 🧾 Proof: typed text + screenshot (2026-11 update)
+
+Worker ko ab **dono option hamesha milte hain** — `tasks.html` (USDT Task Market) aur `earn.html` (point campaigns) dono me:
+
+`post-task.html` me poster ko bhi **dono** milte hain: `#j-proof` typing box (proof instructions) aur `#j-proof-file` example screenshot attach. Example worker ko task modal me "Example screenshot from the buyer" ke taur par dikhta hai (aur admin edit me preserve hota hai).
+
+| Option | Field | Kahan save |
+|---|---|---|
+| ✍️ Typed text (multi-line) | `#jm-proof` / `#cm-text` — textarea | `proof` column ki pehli lines |
+| 🔗 Proof link (optional) | `#jm-link` / `#cm-proof` | `🔗 Proof link: <url>` line |
+| 📎 Screenshot / short video | `#jm-file` / `#cm-file` — file attach | `📎 Screenshot: <url>` line |
+| 📝 Note | note textarea | `note` column (alag) |
+
+Sab ek hi submission me jaate hain, koi overwrite nahi hota. `post-task.html` ka "Proof workers must submit" ab ek bada typing box hai jisme poster likhta hai ki worker kya proof bheje.
+
+**Dekhne wale:**
+
+* **Task poster** — `my-tasks.html → 👁 View proof` me typed text, link, note aur full-size screenshot ek card me; naya **All submissions & proofs** panel me approve/reject ke baad bhi proof dikhta hai.
+* **Admin** — `admin.html → 🧾 Proofs` (pending/approved/rejected filters), `admin-payments.html` ke dono pending-proof tables, aur member detail modal me **View full proof** lightbox.
+* **Worker** — `tasks.html → My submissions` aur `dashboard.html → Pending campaign proofs` me apna proof + thumbnail.
+* Shared helper [`assets/js/proof.js`](assets/js/proof.js) purane `"text | https://...png"` proofs, plain URLs, data URLs aur naye marker wale proofs — sab parse karta hai. XSS-safe (sab text escape hota hai), aur data URL ko raw view me `[embedded screenshot]` se mask karta hai.
+
+**Server mode me live karne ke liye (ek baar, idempotent):**
+
+1. [`supabase-proof-storage.sql`](supabase-proof-storage.sql) (#6) **dobara run karo** — bucket me `avif / bmp / mp4 / webm / mov` extensions aur 8 MB limit add hoti hai. Ye bucket full-quality screenshots ke liye hai.
+2. Agar task poster ko **reviewed (approved/rejected) proofs bhi** `All submissions` me dikhane hain: [`supabase-wallet.sql`](supabase-wallet.sql) (#3) aur [`supabase-post-task-admin.sql`](supabase-post-task-admin.sql) (#21) **dono dobara run karo** — `jobs_feed()` me naya `history` key add hota hai. Ye na karne par bhi page chalta hai (sirf pending proofs dikhte hain).
+
+> Koi naya table/column nahi chahiye: text, link aur screenshot sab existing `proof TEXT` column me human-readable lines me rehte hain, isliye purane data safe hain aur admin SQL editor me bhi proof padha ja sakta hai. Agar Storage bucket abhi run nahi hua hai ya network offline hai, to site screenshot ko canvas se chhota karke proof ke andar embed kar deti hai — buyer/admin ko screenshot phir bhi dikhta hai.
+
+Tests: `npm test` me [`tests/proof.test.js`](tests/proof.test.js) — build/parse, legacy proofs, XSS, poster modal, history panel aur admin queue ka end-to-end local flow.
 
 ---
 
@@ -132,3 +165,20 @@ Wallet ka "Points → USDT" tab ab **"Convert"** hai, jisme dono direction ka to
 Run karo: [`supabase-wallet.sql`](supabase-wallet.sql) **dobara** (naya `wallet_convert_usdt()` RPC + `min_usdt_convert` config column).
 
 Agar sirf ye exact error aa raha ho — **“Could not find the function public.wallet_convert_usdt(p_amount) in the schema cache”** — to chhota focused hotfix [`supabase-wallet-convert-usdt-fix.sql`](supabase-wallet-convert-usdt-fix.sql) SQL Editor me poora run kar sakte ho. Ye missing function + permission install karke PostgREST schema cache turant reload karta hai; balances ya transaction data reset nahi hota.
+
+---
+
+## Message box: "msg cut ja raha hai" → tap karke poora message (2026-11 update)
+
+Pehle bell notifications 2 line me, dashboard inbox aur admin message log narrow table cell me **cut** ho jaate the aur poora padhne ka koi option nahi tha. Ab sab message surfaces par **tap/click (ya keyboard se Enter/Space)** karne par ek bada **Full message** modal khulta hai:
+
+* 🔔 **Bell notifications** — `.bi-body` ab 3-line preview + "👆 Tap to read full message"; kholne par sirf wahi notification read hoti hai (`bell_mark_read`).
+* 📥 **Dashboard → Messages** — har row clickable; full view me **poora title + body**, line breaks, wrapping, sender/audience/date. Kholne par **sirf usi message** ka read flag set hota hai — "Mark all read" button waise hi kaam karta hai.
+* 💬 **Support 💬 box** — "Your recent messages" ke items tap karne par poora message; text `pre-wrap` + `overflow-wrap:anywhere` se kabhi side me nahi kata.
+* 📋 **Admin → Messages → Inbox / Sent** — poora `<tr>` clickable, cells me `overflow:visible` + `text-overflow:clip`, log height 240px → 460px.
+
+Shared component [`assets/js/message-view.js`](assets/js/message-view.js) (`window.FFMessage`) sab pages par [`assets/js/bell.js`](assets/js/bell.js) se pehle load hota hai, kisi `FF`/Supabase API par depend nahi karta, sab text **escape** karta hai, links readable rehte hain, aur Escape / backdrop / Close button se band hota hai. Mobile touch + keyboard dono supported.
+
+**Server mode me live karne ke liye (optional but recommended):** [`supabase-community.sql`](supabase-community.sql) **ek baar dobara run karo** — isme naya `messages_mark_one_read(uuid)` RPC add hua hai (sirf khola hua message read mark karta hai). Ye file idempotent hai, data safe. RPC na ho to bhi site chalati hai: read flag browser/local fallback me save hota hai aur page crash nahi karta. Bell ke liye [`supabase-notifications.sql`](supabase-notifications.sql) pehle se hi `bell_mark_read(p_ids)` provide karta hai — koi naya table/column nahi chahiye.
+
+Tests: `npm test` me [`tests/messages.test.js`](tests/messages.test.js) — shared modal runtime (long text, newlines, XSS, Escape/Enter), dashboard inbox tap + per-message read + "Mark all read", aur sab 4 surfaces ki wiring. Proof flow (`tests/proof.test.js`) bhi unchanged pass rehta hai.

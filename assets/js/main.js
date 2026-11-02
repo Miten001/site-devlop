@@ -769,6 +769,24 @@ if (typeof window !== "undefined") {
     }))).catch(() => inboxMessages());
   }
 
+  /* Ek message kholne par SIRF usi ko read mark karo — baaki unread rahein.
+     Local mode me ff_msg_reads me save hota hai; server mode me
+     messages_mark_one_read() RPC (supabase-community.sql). Purane installs
+     me RPC na ho to local flag kaam karta hai, page crash nahi karta. */
+  function markMessageRead(id) {
+    const u = currentUser();
+    if (u && id) {
+      const all = store.get("ff_msg_reads", {});
+      const list = all[u.email] || [];
+      if (list.indexOf(id) < 0) {
+        all[u.email] = list.concat([id]);
+        store.set("ff_msg_reads", all);
+      }
+    }
+    if (!hasServer() || !id) return Promise.resolve(null);
+    return rpc("messages_mark_one_read", { p_id: id }).then(() => null).catch(() => null);
+  }
+
   /* ---------- credits engine ---------- */
   function addActivity(user, type, text, amount) {
     const act = user.activity || [];
@@ -1280,7 +1298,7 @@ if (typeof window !== "undefined") {
     addCampaign, updateCampaign, deleteCampaign,
     awardCredits, spendCredits, syncCreditPills,
     refCodeFor, refLink, referralStats, loadReferralStats, pendingRefCode, captureRefCode,
-    inboxMessages, loadInbox, markInboxRead,
+    inboxMessages, loadInbox, markInboxRead, markMessageRead,
     campSubsFor, myCampSubs, submitCampaignProof, reviewCampaignSub,
     toast, avatarColor, initials,
   };

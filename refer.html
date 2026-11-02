@@ -19,6 +19,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/style.css?v=2.2" />
 <link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+<style>
+  /* Pyramid "recent members" — "+N more" ab click karke sab names dikhata hai */
+  .pyr-names { white-space: normal; overflow-wrap: anywhere; line-height: 1.55; }
+  .pyr-more { display: inline-block; margin-left: 4px; padding: 3px 6px; min-height: 26px; border: 0; border-radius: 7px; background: none; color: var(--blue, #2f6fed); font-size: 11.5px; font-weight: 800; cursor: pointer; }
+  .pyr-more:hover { background: rgba(47,111,237,.08); text-decoration: underline; }
+  .pyr-extra.hidden { display: none !important; }
+</style>
 </head>
 <body class="app-body" data-requires-auth>
 
@@ -191,13 +198,17 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("pyr-body").innerHTML = tiers.map((t, i) => {
       const l = lv[i + 1] || { count: 0, usdt: 0, points: 0, recent: [] };
       const names = (l.recent || []).map((r) => esc(r.name || "Member"));
+      /* Pehle "+N more" sirf text tha — ab tap karke baaki sab names khulte hain. */
       const namesTxt = names.length === 0 ? "No members yet" :
-        names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) + " more" : "");
+        names.slice(0, 3).join(", ") + (names.length > 3
+          ? '<span class="pyr-extra hidden">, ' + names.slice(3).join(", ") + '</span>' +
+            '<button type="button" class="pyr-more" data-pyr-more="' + i + '" data-count="' + (names.length - 3) + '" aria-expanded="false">+' + (names.length - 3) + ' more ▾</button>'
+          : "");
       return '<div style="width:' + t.w + ';min-width:0;border:1px solid ' + t.c + '44;border-left:4px solid ' + t.c +
         ';border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,' + t.c + '14,transparent)">' +
         '<span style="font-size:18px;font-weight:800;color:' + t.c + ';flex-shrink:0">' + t.rate + '</span>' +
         '<div style="flex:1;min-width:0"><b style="font-size:13.5px">' + t.label + '</b>' +
-        '<div style="font-size:11.5px;color:var(--ink-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+        '<div class="pyr-names" style="font-size:11.5px;color:var(--ink-mute)">' +
         namesTxt + '</div></div>' +
         '<div style="text-align:right;flex-shrink:0"><b style="font-size:15px;color:var(--ink)">' + Number(l.count || 0) + '</b>' +
         '<div style="font-size:10.5px;color:var(--ink-mute)">member' + (Number(l.count) === 1 ? "" : "s") + '</div></div>' +
@@ -229,6 +240,18 @@ document.addEventListener("DOMContentLoaded", () => {
     paintPyramid(null);
   }
 
+  /* Pyramid ke "+N more" buttons — click karke chhupe hue names dikhao */
+  document.getElementById("pyr-body").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-pyr-more]");
+    if (!btn) return;
+    const extra = btn.parentNode.querySelector(".pyr-extra");
+    if (!extra) return;
+    const opening = extra.classList.contains("hidden");
+    extra.classList.toggle("hidden", !opening);
+    btn.setAttribute("aria-expanded", opening ? "true" : "false");
+    btn.textContent = opening ? "Show less ▴" : "+" + (btn.getAttribute("data-count") || "0") + " more ▾";
+  });
+
   document.getElementById("copy-ref").addEventListener("click", () => {
     if (!refs.link) return;
     const done = () => FF.toast("Referral link copied! 🎉", "ok");
@@ -243,6 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<script src="assets/js/message-view.js?v=1.0"></script>
 <script src="assets/js/bell.js?v=1.0"></script>
 </body>
 </html>

@@ -597,6 +597,9 @@ if (typeof window !== "undefined") {
       mine: (payload.mine || []).map(job),
       mySubs: (payload.mySubs || []).map(sub),
       inbox: (payload.inbox || []).map(sub),
+      /* Owner ko reviewed proofs bhi dikhane hain ("All submissions" panel).
+         Purane server builds me ye key nahi hoti — tab inbox se fallback. */
+      history: (payload.history || []).map(sub),
     };
   }
 
@@ -644,6 +647,7 @@ if (typeof window !== "undefined") {
       mine,
       mySubs: mySubs(email),
       inbox: subs().filter((s) => ids.indexOf(s.jobId) > -1 && s.status === "pending"),
+      history: subs().filter((s) => ids.indexOf(s.jobId) > -1),
     };
   }
 
