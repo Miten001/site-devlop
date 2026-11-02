@@ -2,7 +2,7 @@
   "name": "flexfam",
   "version": "1.0.0",
   "scripts": {
-    "test": "node tests/reconcile.test.js && node tests/site-audit.js && node tests/admin-load.test.js && node tests/proof.test.js && node tests/messages.test.js",
+    "test": "node tests/reconcile.test.js && node tests/site-audit.js && node tests/admin-load.test.js && node tests/proof.test.js && node tests/messages.test.js && node tests/more-expand.test.js",
     "test:audit": "node tests/site-audit.js",
     "build:banners": "node generate-banners.js"
   },
