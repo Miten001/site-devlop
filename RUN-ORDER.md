@@ -165,3 +165,20 @@ Wallet ka "Points → USDT" tab ab **"Convert"** hai, jisme dono direction ka to
 Run karo: [`supabase-wallet.sql`](supabase-wallet.sql) **dobara** (naya `wallet_convert_usdt()` RPC + `min_usdt_convert` config column).
 
 Agar sirf ye exact error aa raha ho — **“Could not find the function public.wallet_convert_usdt(p_amount) in the schema cache”** — to chhota focused hotfix [`supabase-wallet-convert-usdt-fix.sql`](supabase-wallet-convert-usdt-fix.sql) SQL Editor me poora run kar sakte ho. Ye missing function + permission install karke PostgREST schema cache turant reload karta hai; balances ya transaction data reset nahi hota.
+
+---
+
+## Message box: "msg cut ja raha hai" → tap karke poora message (2026-11 update)
+
+Pehle bell notifications 2 line me, dashboard inbox aur admin message log narrow table cell me **cut** ho jaate the aur poora padhne ka koi option nahi tha. Ab sab message surfaces par **tap/click (ya keyboard se Enter/Space)** karne par ek bada **Full message** modal khulta hai:
+
+* 🔔 **Bell notifications** — `.bi-body` ab 3-line preview + "👆 Tap to read full message"; kholne par sirf wahi notification read hoti hai (`bell_mark_read`).
+* 📥 **Dashboard → Messages** — har row clickable; full view me **poora title + body**, line breaks, wrapping, sender/audience/date. Kholne par **sirf usi message** ka read flag set hota hai — "Mark all read" button waise hi kaam karta hai.
+* 💬 **Support 💬 box** — "Your recent messages" ke items tap karne par poora message; text `pre-wrap` + `overflow-wrap:anywhere` se kabhi side me nahi kata.
+* 📋 **Admin → Messages → Inbox / Sent** — poora `<tr>` clickable, cells me `overflow:visible` + `text-overflow:clip`, log height 240px → 460px.
+
+Shared component [`assets/js/message-view.js`](assets/js/message-view.js) (`window.FFMessage`) sab pages par [`assets/js/bell.js`](assets/js/bell.js) se pehle load hota hai, kisi `FF`/Supabase API par depend nahi karta, sab text **escape** karta hai, links readable rehte hain, aur Escape / backdrop / Close button se band hota hai. Mobile touch + keyboard dono supported.
+
+**Server mode me live karne ke liye (optional but recommended):** [`supabase-community.sql`](supabase-community.sql) **ek baar dobara run karo** — isme naya `messages_mark_one_read(uuid)` RPC add hua hai (sirf khola hua message read mark karta hai). Ye file idempotent hai, data safe. RPC na ho to bhi site chalati hai: read flag browser/local fallback me save hota hai aur page crash nahi karta. Bell ke liye [`supabase-notifications.sql`](supabase-notifications.sql) pehle se hi `bell_mark_read(p_ids)` provide karta hai — koi naya table/column nahi chahiye.
+
+Tests: `npm test` me [`tests/messages.test.js`](tests/messages.test.js) — shared modal runtime (long text, newlines, XSS, Escape/Enter), dashboard inbox tap + per-message read + "Mark all read", aur sab 4 surfaces ki wiring. Proof flow (`tests/proof.test.js`) bhi unchanged pass rehta hai.

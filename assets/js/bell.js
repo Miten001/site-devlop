@@ -14,6 +14,11 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
     });
   }
+  function fmtFull(t) {
+    if (window.FFMessage && FFMessage.fmtDate) return FFMessage.fmtDate(t);
+    try { return new Date(Number(t) || 0).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }); }
+    catch (e) { return ""; }
+  }
   function ago(t) {
     var d = Date.now() - Number(t || 0);
     if (!(d > 0)) return "just now";
@@ -116,12 +121,31 @@
       list.innerHTML = '<div class="bell-empty">🔔 Nothing yet — credits and announcements will land here.</div>';
       return;
     }
+    var MV = window.FFMessage;
     list.innerHTML = items.map(function (it) {
-      return '<div class="bell-item' + (it.read ? "" : " unread") + '">' +
+      /* Har notification tap karne par POORA message khulta hai —
+         pehle .bi-body 2 lines me cut ho jaata tha aur aage padhne ka
+         koi option nahi tha. */
+      var attrs = "", tap = "";
+      if (MV) {
+        var id = MV.register({
+          kind: (LABEL[it.kind] || "Notice"),
+          title: it.title || "Update",
+          body: it.body || "",
+          meta: [(LABEL[it.kind] || "Notice"), fmtFull(it.at), it.read ? "Read" : "Unread"]
+        }, function (msg) {
+          if (!it.read && it.id && FF.rpc) {
+            FF.rpc("bell_mark_read", { p_ids: [it.id] }).then(load).catch(function () {});
+          }
+        });
+        attrs = ' data-msg-id="' + id + '" role="button" tabindex="0" aria-label="Read full message: ' + esc(it.title || "Update") + '"';
+        tap = '<span class="bi-tap">👆 Tap to read full message</span>';
+      }
+      return '<div class="bell-item' + (it.read ? "" : " unread") + '"' + attrs + '>' +
         '<span class="bi-ico">' + (ICON[it.kind] || "🔔") + "</span>" +
         '<span class="bi-main"><span class="bi-kind">' + (LABEL[it.kind] || "Notice") + " · " + ago(it.at) + "</span>" +
         '<b class="bi-title">' + esc(it.title || "Update") + "</b>" +
-        '<span class="bi-body">' + esc(it.body || "") + "</span></span>" +
+        '<span class="bi-body">' + esc(it.body || "") + "</span>" + tap + "</span>" +
         (it.read ? "" : '<span class="bi-dot"></span>') +
         "</div>";
     }).join("");

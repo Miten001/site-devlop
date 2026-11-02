@@ -112,12 +112,22 @@
         list.innerHTML = "";
         return;
       }
-      list.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute,#888);margin-bottom:8px">Your recent messages</div>' +
-        rows.map((m) => (
-          '<div style="border-top:1px solid var(--line,#eee);padding:8px 0;font-size:13px">' +
-          (m.title ? "<b>" + esc(m.title) + "</b><br>" : "") + esc(m.body) +
-          '<br><span style="font-size:11.5px;color:var(--ink-mute,#888)">' + fdate(m.at) + "</span></div>"
-        )).join("");
+      const MV = window.FFMessage;
+      list.innerHTML = '<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute,#888);margin-bottom:8px">Your recent messages <span style="font-weight:600;text-transform:none;letter-spacing:0">— tap to read full</span></div>' +
+        rows.map((m) => {
+          let attrs = "", tap = "";
+          if (MV) {
+            const id = MV.register({
+              kind: "💬 Support message", title: m.title || "Message to support",
+              body: m.body || "", meta: ["Sent by you", fdate(m.at)]
+            });
+            attrs = ' class="ff-sup-item" data-msg-id="' + id + '" role="button" tabindex="0"';
+            tap = '<br><span class="msg-tap">👆 Tap to read full message</span>';
+          }
+          return '<div' + attrs + ' style="border-top:1px solid var(--line,#eee);padding:9px 0;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere">' +
+            (m.title ? "<b>" + esc(m.title) + "</b><br>" : "") + esc(m.body) +
+            '<br><span style="font-size:11.5px;color:var(--ink-mute,#888)">' + fdate(m.at) + "</span>" + tap + "</div>";
+        }).join("");
     }).catch(() => { list.innerHTML = ""; });
   }
 

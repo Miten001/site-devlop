@@ -249,7 +249,7 @@
           </div>
 
           <div class="panel reveal mt-16" id="msg-panel">
-            <div class="panel-head"><div><h3>Messages <span class="msg-badge hidden" id="msg-unread">0</span></h3><p class="panel-sub">Announcements and personal notes from the FlexFam team.</p></div><button class="btn btn-ghost btn-sm" id="msg-read-all">Mark all read</button></div>
+            <div class="panel-head"><div><h3>Messages <span class="msg-badge hidden" id="msg-unread">0</span></h3><p class="panel-sub">Announcements and personal notes from the FlexFam team. <b>Message par tap karo</b> to poora message bade view me padho.</p></div><button class="btn btn-ghost btn-sm" id="msg-read-all">Mark all read</button></div>
             <div class="msg-list" id="msg-list"></div>
             <div class="empty-mini hidden" id="msg-empty"><b>No messages yet</b>Updates from the team will land here.</div>
           </div>
@@ -468,13 +468,34 @@ document.addEventListener("DOMContentLoaded", () => {
     sideMsgBadge.textContent = unread;
     sideMsgBadge.classList.toggle("hidden", unread === 0);
     msgEmpty.classList.toggle("hidden", msgs.length > 0);
-    msgList.innerHTML = msgs.slice(0, 12).map((m) => (
-      '<div class="msg-row' + (m.read ? "" : " unread") + '">' +
-        "<h5>" + (m.read ? "" : '<span class="msg-dot"></span>') + escMsg(m.title || (m.audience === "user" ? "Message for you" : "Announcement")) + "</h5>" +
+    const MV = window.FFMessage;
+    msgList.innerHTML = msgs.slice(0, 12).map((m) => {
+      const title = m.title || (m.audience === "user" ? "Message for you" : "Announcement");
+      const audience = m.audience === "user" ? "Direct message" : "Broadcast";
+      let attrs = "", tap = "";
+      if (MV) {
+        /* Tap / Enter se POORA message bade modal me — koi cut nahi. */
+        const id = MV.register({
+          kind: audience, title: title, body: m.body || "",
+          meta: [audience, "FlexFam team", fullDate(m.at), m.read ? "Read" : "Unread"]
+        }, (msg) => {
+          if (m.read) return;
+          const mark = FF.markMessageRead ? FF.markMessageRead(m.id) : Promise.resolve();
+          mark.then(() => FF.loadInbox()).then(renderMessages).catch(() => {});
+        });
+        attrs = ' data-msg-id="' + id + '" role="button" tabindex="0" aria-label="Read full message: ' + escMsg(title) + '"';
+        tap = '<span class="msg-tap">👆 Tap to read full message</span>';
+      }
+      return '<div class="msg-row' + (m.read ? "" : " unread") + '"' + attrs + '>' +
+        "<h5>" + (m.read ? "" : '<span class="msg-dot"></span>') + escMsg(title) + "</h5>" +
         "<p>" + escMsg(m.body) + "</p>" +
-        '<span class="msg-meta">' + (m.audience === "user" ? "Direct message" : "Broadcast") + " · " + timeAgo(Number(m.at)) + "</span>" +
-      "</div>"
-    )).join("");
+        '<span class="msg-meta">' + audience + " · " + timeAgo(Number(m.at)) + "</span>" + tap +
+      "</div>";
+    }).join("");
+  }
+  function fullDate(t) {
+    if (window.FFMessage && FFMessage.fmtDate) return FFMessage.fmtDate(t);
+    return new Date(Number(t) || 0).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
   }
   FF.loadInbox().then(renderMessages);
   document.getElementById("msg-read-all").addEventListener("click", () => {
@@ -873,6 +894,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+<script src="assets/js/message-view.js?v=1.0"></script>
 <script src="assets/js/bell.js?v=1.0"></script>
 </body>
 </html>

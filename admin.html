@@ -171,7 +171,7 @@
     padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer;
   }
   .msg-modes .seg.on { border-color: var(--fuchsia); color: var(--ink); background: rgba(224,72,159,.12); }
-  .msg-sent { max-height: 240px; }
+  .msg-sent { max-height: 460px; }
   .msg-audience { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; border: 1px solid var(--line); color: var(--ink-dim); }
   .msg-audience.all { color: var(--green); border-color: rgba(52,229,165,.35); }
   .msg-audience.user { color: var(--blue); border-color: rgba(47,111,237,.35); }
@@ -402,7 +402,7 @@
 
     <section class="panel msg-panel" id="sec-messages" aria-labelledby="msg-title">
       <div class="panel-head">
-        <div><h3 id="msg-title">Messages — broadcast or direct</h3><p class="panel-sub">Send an announcement to every member, or a private note to one account. Member support messages arrive in <b>Inbox</b>; everything you send is under <b>Sent</b>.</p></div>
+        <div><h3 id="msg-title">Messages — broadcast or direct</h3><p class="panel-sub">Send an announcement to every member, or a private note to one account. Member support messages arrive in <b>Inbox</b>; everything you send is under <b>Sent</b>. <b>Message row par tap karo</b> to poora message padho.</p></div>
         <span class="status-pill on" id="msg-count">0 sent</span>
       </div>
       <div class="msg-modes">
@@ -1997,10 +1997,32 @@
       $("msg-out-count").textContent = sent.length;
       $("msg-count").textContent = inbox.length + (inbox.length === 1 ? " message" : " messages");
 
+      var MV = window.FFMessage;
+      /* Har message row tap karne par POORA message bade modal me khulta
+         hai — table cell me text cut/overflow hone par bhi padha ja sakta hai. */
+      var msgCell = function (m, meta) {
+        var attrs = "", tap = "";
+        if (MV) {
+          var id = MV.register({
+            kind: m.audience === "user" ? "✉️ Direct message" : "📢 Announcement",
+            title: m.title || "(no subject)", body: m.body || "",
+            meta: meta.concat([fdateMs(m.at)])
+          });
+          /* row par data-msg-id: poora <tr> clickable, keyboard se bhi */
+          attrs = ' data-msg-id="' + id + '" tabindex="0"';
+          tap = '<br><span class="msg-tap">👆 Tap to read full message</span>';
+        }
+        return {
+          attrs: attrs,
+          html: '<td class="k" style="max-width:420px;white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible;text-overflow:clip">' +
+            (m.title ? "<b>" + esc(m.title) + "</b><br>" : "") + esc(m.body) + tap + "</td>"
+        };
+      };
+
       $("msg-in-body").innerHTML = inbox.map(function (m) {
-        return "<tr><td style='white-space:nowrap'><b>" + esc(m.sentBy || "member") + "</b></td>" +
-          '<td class="k" style="max-width:420px;white-space:normal">' +
-            (m.title ? "<b>" + esc(m.title) + "</b><br>" : "") + esc(m.body) + "</td>" +
+        var c = msgCell(m, ["From: " + (m.sentBy || "member"), "Support inbox"]);
+        return "<tr" + c.attrs + "><td style='white-space:nowrap'><b>" + esc(m.sentBy || "member") + "</b></td>" +
+          c.html +
           "<td style='white-space:nowrap'>" + esc(fdateMs(m.at)) + "</td></tr>";
       }).join("") || '<tr><td colspan="3" style="color:var(--ink-mute)">No messages from members yet — support-box messages land here.</td></tr>';
 
@@ -2008,10 +2030,10 @@
         var who = m.audience === "user"
           ? "To: " + esc(m.to || "member")
           : "📢 Everyone";
-        return "<tr><td style='white-space:nowrap'>" + esc(fdateMs(m.at)) + "</td>" +
+        var c = msgCell(m, [m.audience === "user" ? "To: " + (m.to || "member") : "All members", "Sent by admin"]);
+        return "<tr" + c.attrs + "><td style='white-space:nowrap'>" + esc(fdateMs(m.at)) + "</td>" +
           '<td><span class="msg-audience ' + esc(m.audience) + '">' + who + "</span></td>" +
-          '<td class="k" style="max-width:420px;white-space:normal">' +
-            (m.title ? "<b>" + esc(m.title) + "</b><br>" : "") + esc(m.body) + "</td></tr>";
+          c.html + "</tr>";
       }).join("") || '<tr><td colspan="3" style="color:var(--ink-mute)">You have not sent any messages yet.</td></tr>';
     }).catch(function (err) {
       var m = (err && err.message) || "";
@@ -2368,6 +2390,7 @@ window.addEventListener("DOMContentLoaded", function () {
   }, 2500);
 });
 </script>
+<script src="assets/js/message-view.js?v=1.0"></script>
 <script src="assets/js/bell.js?v=1.0"></script>
 </body>
 </html>
