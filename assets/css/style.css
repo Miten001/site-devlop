@@ -2206,9 +2206,8 @@ body.modal-open { overflow: hidden; }
 .site-today .site-stat b.site-stat-long { font-size: 15px; letter-spacing: -.04em; }
 .site-today .site-stat b.site-stat-extra-long { font-size: 12px; letter-spacing: -.045em; }
 .site-today .site-stat span { display: block; margin-top: 6px; font-size: 10.5px; line-height: 1.5; }
-.site-stats-key { margin-top: 12px; color: var(--ink-mute); font-size: 11.5px; line-height: 1.6; }
-.site-stats-key b { color: var(--ink-dim); }
-.site-stats-note { margin-top: 5px; color: var(--ink-mute); font-size: 11.5px; line-height: 1.6; }
+.site-stats-note { margin-top: 12px; color: var(--ink-mute); font-size: 11.5px; line-height: 1.6; }
+.site-stats-note[hidden] { display: none; }
 .site-today[data-state="error"] .site-stats-note { color: var(--danger); }
 .site-today[data-state="partial"] .site-stats-note { color: var(--amber); }
 @media (max-width: 1200px) {
