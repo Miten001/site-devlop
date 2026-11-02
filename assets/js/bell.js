@@ -59,10 +59,12 @@
     document.body.appendChild(panel);
 
     btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
-    panel.addEventListener("click", function (e) { e.stopPropagation(); });
+    /* Message rows must bubble to the shared full-message viewer.
+       Do NOT stopPropagation here — that swallowed the tap and the
+       notification never opened. Outside-click closing ignores the panel. */
     document.getElementById("ff-bell-clear").addEventListener("click", markAll);
     document.addEventListener("click", function (e) {
-      if (OPEN && e.target !== btn && !btn.contains(e.target)) close();
+      if (OPEN && e.target !== btn && !btn.contains(e.target) && !panel.contains(e.target)) close();
     });
     window.addEventListener("resize", function () { if (OPEN) position(); });
 

@@ -26,8 +26,30 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 20 | [`supabase-member-warnings.sql`](supabase-member-warnings.sql) | **Member warnings** — admin warning/final warning, dashboard acknowledgement banner aur inbox message | 1 |
 | 21 | [`supabase-post-task-admin.sql`](supabase-post-task-admin.sql) | **Post task quota + admin task manager** — ek member ek category (type) me max **3 live tasks**; Post a Task page par live counter; admin.html ka naya "📝 Posted tasks" section: edit / approve / pause / delete (delete par bacha hua escrow owner ko refund) + har task me **kaun member use run kar raha hai** (worker naam + status — `workers` field); Task Market me jyada reward wali task pehle | 3 |
 | 22 | [`supabase-campaigns-top-bid.sql`](supabase-campaigns-top-bid.sql) | **Top bid first** — jis campaign par jyada coin/USDT bid hai wo Earn page par sabse pehle (payout desc, phir newest) | 13 |
+| 23 | [`supabase-site-stats.sql`](supabase-site-stats.sql) | **Dashboard site overview** — Visitors today / Registered today ke saath Total views / Total registered / Running tasks / Completed tasks. `site_stats()` aggregate RPC; dono task markets ke live listings aur approved submissions | 1; task totals ke liye 3 + 5 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
+
+---
+
+## Dashboard: daily ke saath total views / registrations / tasks
+
+Dashboard ke **Site activity — real data** card me ab chhe counters hain: **Visitors today, Registered today, Total views, Total registered, Running tasks, Completed tasks**. Mobile par do columns, tablet par teen aur desktop par chhah — sab ek hi section me.
+
+**Live server par ek baar:** [`supabase-site-stats.sql`](supabase-site-stats.sql) (#23) ka poora script Supabase SQL Editor me Run karo. File idempotent hai; existing data delete/update nahi hoti. Task totals ke liye `supabase-wallet.sql` (#3) aur `supabase-campaigns.sql` (#5) installed hone chahiye. Migration ke bina purane daily counters fallback se chalte rahenge; missing totals `—` dikhenge, fake zero nahi.
+
+| Counter | Real source |
+|---|---|
+| Visitors today | Aaj ke distinct non-empty visitor IDs (`events.vid`) |
+| Registered today | Aaj bane `profiles` accounts |
+| Total views | Sab recorded `page_view` events (repeat visits included) |
+| Total registered | Sab server-registered `profiles` accounts |
+| Running tasks | Active points campaigns + active USDT Task Market listings |
+| Completed tasks | Dono markets ki approved worker submissions; pending/rejected proofs excluded |
+
+Daily boundary **UTC midnight** hai (browser timezone nahi). Counts page load par, visible tab me har 60 seconds par, tab wapas visible hone par aur Refresh button se update hote hain. Campaign sync ke baad bhi refresh hota hai. Sirf signed-in server accounts aggregate counts dekh sakte hain; demo/localStorage activity site totals me mix nahi hoti. Network error par last successful snapshot clearly labelled rehta hai.
+
+Regression tests: `node tests/site-stats.test.js` (full suite me included).
 
 ---
 

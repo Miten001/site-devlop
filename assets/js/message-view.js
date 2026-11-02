@@ -58,7 +58,8 @@
     var st = document.createElement("style");
     st.id = "ffm-style";
     st.textContent = [
-      /* full-message modal */
+      /* full-message modal — above bell/support drawers and floating buttons */
+      "#ffm-modal{z-index:1000}",
       ".ffm-card{width:min(620px,100%);text-align:left}",
       ".ffm-kind{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--blue,#2f6fed);background:rgba(47,111,237,.08);border:1px solid rgba(47,111,237,.2);border-radius:999px;padding:4px 10px;margin:2px 40px 10px 0}",
       ".ffm-title{margin:0 40px 6px 0;font-size:19px;line-height:1.35;overflow-wrap:anywhere}",
