@@ -60,7 +60,10 @@
   function state(label, message, kind) {
     status.textContent = label;
     status.className = "status-pill " + (kind === "live" ? "on" : "off");
-    note.textContent = message;
+    // Setup/migration instructions belong in the runbook, not the member UI.
+    // Keep this live region for actionable connection/account errors only.
+    note.textContent = message || "";
+    note.hidden = !message;
     panel.dataset.state = kind;
   }
 
@@ -115,9 +118,9 @@
       paint(result.stats);
       var complete = Object.keys(FIELDS).every(function (key) { return result.stats[key] != null; });
       if (result.legacy) {
-        state("Daily only", "Daily counts are live. All-time and task totals need the supabase-site-stats.sql migration.", "partial");
+        state("Daily only", "", "partial");
       } else if (!complete) {
-        state("Partial data", "Available counts are live. Missing task totals need the campaign and Task Market SQL migrations.", "partial");
+        state("Partial data", "", "partial");
       } else {
         state("Live data", "Updated " + new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) + " · Refreshes every minute while this page is visible.", "live");
       }

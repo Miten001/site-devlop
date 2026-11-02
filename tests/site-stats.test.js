@@ -47,7 +47,9 @@ const values = (doc) => ids.map((id) => text(doc, id));
 const status = (doc) => doc.getElementById("site-stats-status").textContent;
 
 async function main() {
-  assert.match(dashboard, /assets\/js\/site-stats\.js\?v=1\.0/);
+  assert.match(dashboard, /assets\/js\/site-stats\.js\?v=1\.1/);
+  assert.doesNotMatch(dashboard, /site-stats-key|Running<\/b> = live campaigns/);
+  assert.doesNotMatch(script, /Daily counts are live\. All-time and task totals need|supabase-site-stats\.sql migration/);
   assert.equal(/FF\.rpc\("site_today_stats"\)/.test(dashboard), false, "old inline loader must not issue a competing request");
   ids.forEach((id) => assert.ok(dashboard.includes('id="' + id + '"')));
   assert.match(read("assets/css/style.css"), /\.site-today \.site-stats-grid \{ grid-template-columns: repeat\(6/);
@@ -105,7 +107,8 @@ async function main() {
   assert.deepEqual(legacyCalls, ["site_stats", "site_today_stats"]);
   assert.deepEqual(values(legacy.doc), ["8", "2", "—", "—", "—", "—"]);
   assert.equal(status(legacy.doc), "Daily only");
-  assert.match(text(legacy.doc, "site-stats-note"), /supabase-site-stats\.sql/);
+  assert.equal(text(legacy.doc, "site-stats-note"), "", "migration instructions must not appear on the website");
+  assert.equal(legacy.doc.getElementById("site-stats-note").hidden, true);
   legacy.doc.getElementById("site-stats-refresh").click();
   await tick(); await tick();
   assert.deepEqual(legacyCalls, ["site_stats", "site_today_stats", "site_today_stats"]);
@@ -120,6 +123,8 @@ async function main() {
   assert.deepEqual(errorCalls, ["site_stats"], "non-404 errors are not missing migrations");
   assert.deepEqual(values(error.doc), Array(6).fill("—"));
   assert.equal(status(error.doc), "Unavailable");
+  assert.equal(error.doc.getElementById("site-stats-note").hidden, false, "actionable errors stay visible");
+  assert.match(text(error.doc, "site-stats-note"), /try Refresh/);
   error.dom.window.close();
 
   const offlineCalls = [];
@@ -128,12 +133,15 @@ async function main() {
   assert.deepEqual(offlineCalls, [], "demo/local activity is not site-wide data");
   assert.deepEqual(values(offline.doc), Array(6).fill("—"));
   assert.match(text(offline.doc, "site-stats-note"), /Demo and browser-only activity are not included/);
+  assert.equal(offline.doc.getElementById("site-stats-note").hidden, false);
   offline.dom.window.close();
 
   const partial = createDom(() => Promise.resolve(Object.assign({}, full, { running_tasks: null, completed_tasks: null })));
   await tick();
   assert.deepEqual(values(partial.doc), ["12", "3", "1,23,456", "7,890", "—", "—"]);
   assert.equal(status(partial.doc), "Partial data");
+  assert.equal(text(partial.doc, "site-stats-note"), "");
+  assert.equal(partial.doc.getElementById("site-stats-note").hidden, true);
   partial.dom.window.close();
 
   const invalid = createDom(() => Promise.resolve({ total_views: -1, total_registered: "bad", running_tasks: null }));
@@ -159,6 +167,6 @@ async function main() {
   assert.match(sql, /grant execute on function public\.site_stats\(\) to authenticated/);
   assert.doesNotMatch(sql, /grant[^\n]*to[^\n]*\banon\b/);
   assert.match(read("RUN-ORDER.md"), /supabase-site-stats\.sql/);
-  console.log("Site overview: six counters, zeroes, legacy fallback, errors, refresh and SQL permissions: PASS");
+  console.log("Site overview: six counters, hidden setup notes, fallbacks, errors, refresh and SQL permissions: PASS");
 }
 main().catch((err) => { console.error(err); process.exitCode = 1; });
