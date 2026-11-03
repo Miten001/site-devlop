@@ -271,10 +271,19 @@ begin
     raise exception 'Unsupported currency %', p_currency using errcode = 'P0001';
   end if;
 
-  if bal.usdt < p_price then
-    raise exception 'Need % USDT — you have %', round(p_price, 2), round(bal.usdt, 2) using errcode = 'P0001';
+  /* Compare at cent precision. Balances keep up to 8 decimals but every page
+     shows them rounded to 2, so "$1.20" on screen can really be 1.1996 — a
+     strict "<" then rejects a purchase with
+     "Need $1.20 USDT — you have $1.20", which looks like a broken button.
+     Rounding both sides fixes that; the debit is clamped at zero so the
+     sub-cent difference is absorbed instead of creating a negative balance. */
+  if round(bal.usdt, 2) < round(p_price, 2) then
+    raise exception 'Need $% USDT — you have $%. Deposit or convert points first.',
+      round(p_price, 2), round(bal.usdt, 2) using errcode = 'P0001';
   end if;
-  update public.balances set usdt = usdt - p_price, updated_at = now() where user_id = p_user;
+  update public.balances
+     set usdt = greatest(0, round(usdt - p_price, 8)), updated_at = now()
+   where user_id = p_user;
   return jsonb_build_object('paid_with', 'usdt', 'paid_amount', p_price);
 end;
 $$;

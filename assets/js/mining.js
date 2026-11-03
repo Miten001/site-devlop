@@ -234,8 +234,10 @@ if (typeof window !== "undefined") {
       return { paidWith: "points", paidAmount: pts };
     }
     const w = W.wallet(email);
-    if (w.available < priceUsd) throw new Error("Need " + W.usd(priceUsd) + " USDT in your wallet — deposit or convert points first");
-    W.patchWallet(email, (acc) => { acc.available = round(acc.available - priceUsd); });
+    if (!W.enough(w.available, priceUsd)) {
+      throw new Error("Need " + W.usd(priceUsd) + " USDT — you have " + W.usd(w.available) + ". Deposit or convert points first.");
+    }
+    W.patchWallet(email, (acc) => { acc.available = round(W.debit(acc.available, priceUsd)); });
     W.tx(email, "mining", -priceUsd, label, "completed");
     return { paidWith: "usdt", paidAmount: priceUsd };
   }

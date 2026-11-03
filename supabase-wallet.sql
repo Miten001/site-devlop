@@ -331,7 +331,10 @@ begin
   if p_amount is null or p_amount < cfg.min_withdraw then
     raise exception 'Minimum withdrawal is $% USDT', cfg.min_withdraw using errcode = 'P0001';
   end if;
-  if p_amount > bal.usdt then
+  /* Cent-precision compare: the wallet shows 2 decimals, the balance keeps 8.
+     Without this a member whose page reads "$1.20" gets rejected withdrawing
+     "1.20" because the real balance is 1.1996. */
+  if round(p_amount, 2) > round(bal.usdt, 2) then
     raise exception 'Not enough available balance — you have $%', round(bal.usdt, 2) using errcode = 'P0001';
   end if;
   if not exists (select 1 from public.wallet_networks where network = p_network and withdraw) then
@@ -352,7 +355,7 @@ begin
 
   -- move the money out of spendable and into locked in the same statement
   update public.balances
-     set usdt = round(usdt - p_amount, 8), locked = round(locked + p_amount, 8), updated_at = now()
+     set usdt = greatest(0, round(usdt - p_amount, 8)), locked = round(locked + p_amount, 8), updated_at = now()
    where user_id = v_user;
 
   insert into public.pay_requests (user_id, kind, amount, fee, receive, network, address)
@@ -425,7 +428,8 @@ begin
   if v_amount < cfg.min_usdt_convert then
     raise exception 'Minimum $% USDT to convert', cfg.min_usdt_convert using errcode = 'P0001';
   end if;
-  if v_amount > bal.usdt then
+  /* cent-precision compare — see wallet_create_withdraw */
+  if round(v_amount, 2) > round(bal.usdt, 2) then
     raise exception 'Not enough available USDT — you have $%', round(bal.usdt, 2) using errcode = 'P0001';
   end if;
 
@@ -435,7 +439,7 @@ begin
   end if;
 
   update public.balances
-     set usdt = round(usdt - v_amount, 8),
+     set usdt = greatest(0, round(usdt - v_amount, 8)),
          points = points + v_points,
          updated_at = now()
    where user_id = v_user;
@@ -558,15 +562,16 @@ begin
   insert into public.balances (user_id) values (v_user) on conflict (user_id) do nothing;
   select * into bal from public.balances where user_id = v_user for update;
 
-  if bal.usdt < v_total then
-    raise exception 'Need $% USDT in your wallet (incl. % fee) — you have $%',
+  /* cent-precision compare + clamped debit — see wallet_create_withdraw */
+  if round(bal.usdt, 2) < round(v_total, 2) then
+    raise exception 'Need $% USDT in your wallet (incl. % fee) — you have $%. Deposit or convert points first.',
       round(v_total, 2), public.wallet_pct_label(cfg.platform_fee_pct),
       round(bal.usdt, 2) using errcode = 'P0001';
   end if;
 
   -- escrow: leave spendable, enter locked
   update public.balances
-     set usdt = round(usdt - v_total, 8), locked = round(locked + v_budget, 8), updated_at = now()
+     set usdt = greatest(0, round(usdt - v_total, 8)), locked = round(locked + v_budget, 8), updated_at = now()
    where user_id = v_user;
 
   insert into public.jobs (owner, title, category, description, url, proof_note, reward, slots, escrow, fee)

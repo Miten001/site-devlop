@@ -44,7 +44,9 @@ begin
   if v_amount < cfg.min_usdt_convert then
     raise exception 'Minimum $% USDT to convert', cfg.min_usdt_convert using errcode = 'P0001';
   end if;
-  if v_amount > bal.usdt then
+  /* cent-precision compare: the wallet page shows 2 decimals, the balance
+     keeps 4-8 — a member whose page reads "$1.20" must be able to convert it. */
+  if round(v_amount, 2) > round(bal.usdt, 2) then
     raise exception 'Not enough available USDT — you have $%', round(bal.usdt, 2) using errcode = 'P0001';
   end if;
 
@@ -54,7 +56,7 @@ begin
   end if;
 
   update public.balances
-     set usdt = round(usdt - v_amount, 8),
+     set usdt = greatest(0, round(usdt - v_amount, 8)),
          points = points + v_points,
          updated_at = now()
    where user_id = v_user;

@@ -146,13 +146,13 @@
     <div id="cm-proof-zone">
       <div class="m-steps">
         <div><span class="n">1</span> Open the page and complete the action — join / follow / subscribe</div>
-        <div><span class="n">2</span> Come back — proof type karo / link do, aur screenshot attach karo 📎 (dono chal sakte hain)</div>
+        <div><span class="n">2</span> Come back — type your proof or paste a link, and attach a screenshot 📎 (both work together)</div>
         <div><span class="n">3</span> Submit — your points are credited instantly ⚡</div>
       </div>
       <a class="btn btn-ghost btn-block hidden" id="cm-open" href="#" target="_blank" rel="noopener" style="margin-top:14px">Open task link</a>
       <div class="field" style="text-align:left;margin-top:16px">
         <label>✍️ Type your proof (username / ID / details)</label>
-        <textarea id="cm-text" rows="2" placeholder="Apna username ya koi detail likho…"></textarea>
+        <textarea id="cm-text" rows="2" placeholder="Your username or any useful detail…"></textarea>
       </div>
       <div class="field" style="text-align:left">
         <label>🔗 Proof link (optional)</label>
@@ -605,13 +605,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const text = document.getElementById("cm-text").value.trim();
     const link = cmProof.value.trim();
     if (!text && !link && !proofFile) {
-      FF.toast("Proof likho, link do, ya screenshot attach karo", "err");
+      FF.toast("Add your proof first — type some text, paste a link or attach a screenshot", "err");
       return;
     }
     const fail = (err) => FF.toast(err.message, "err");
     const submit = (image) => {
       const proof = FFProof.build({ text: text, link: link, image: image });
-      if (proof.trim().length < 3) { FF.toast("Proof thoda detail me likho", "err"); return; }
+      if (proof.trim().length < 3) { FF.toast("Please describe your proof in a bit more detail", "err"); return; }
       const camp = pendingCamp;
       const finish = () => {
         FF.sfx.coin();

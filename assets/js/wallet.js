@@ -87,6 +87,19 @@ if (typeof window !== "undefined") {
 
   function usd(n) { return "$" + Number(n || 0).toFixed(2); }
 
+  /* ---------- money comparisons ----------
+     Balances are stored with up to 8 decimals but the UI only shows 2, so a
+     wallet that reads "$1.20" can really hold 1.1996. A strict "<" then
+     throws "Need $1.20 — you have $1.20", which looks like a broken button.
+     Compare what the member actually sees (cents) and let the debit absorb
+     the sub-cent difference, clamping at zero so a balance can never end up
+     negative. */
+  function cents(n) { return Math.round(Number(n || 0) * 100); }
+  function enough(balance, amount) { return cents(balance) >= cents(amount); }
+  function debit(balance, amount) {
+    return Math.max(0, Math.round((Number(balance || 0) - Number(amount || 0)) * 1e8) / 1e8);
+  }
+
   function tx(email, type, amount, note, status, meta) {
     patchWallet(email, (w) => {
       w.txns.unshift(Object.assign({
@@ -122,7 +135,7 @@ if (typeof window !== "undefined") {
     amount = Number(amount);
     const w = wallet(email);
     if (!(amount >= CFG.minWithdraw)) throw new Error("Minimum withdrawal is " + usd(CFG.minWithdraw) + " USDT");
-    if (amount > w.available) throw new Error("Not enough available balance");
+    if (!enough(w.available, amount)) throw new Error("Not enough available balance — you have " + usd(w.available) + " USDT");
     if (!network || CFG.withdrawNetworks.indexOf(network) < 0) throw new Error("Select a payout method");
     const destination = String(address || "").trim();
     if (network === "UPI") {
@@ -131,7 +144,7 @@ if (typeof window !== "undefined") {
       throw new Error("Enter a valid USDT wallet address");
     }
     const fee = Math.round(amount * CFG.withdrawFeePct) / 100;
-    patchWallet(email, (acc) => { acc.available -= amount; acc.locked += amount; });
+    patchWallet(email, (acc) => { acc.available = debit(acc.available, amount); acc.locked += amount; });
     const req = {
       id: uid("wd"), kind: "withdraw", email, name: name || email, amount, fee,
       receive: Math.round((amount - fee) * 100) / 100,
@@ -194,7 +207,7 @@ if (typeof window !== "undefined") {
     if (!data.description || data.description.trim().length < 20) throw new Error("Describe the task in at least 20 characters");
     if (!(reward >= 0.02)) throw new Error("Minimum reward is $0.02 per worker");
     if (!(slots >= 1)) throw new Error("At least 1 worker slot is required");
-    /* Ek type (category) par maximum 3 live tasks */
+    /* Only 3 live tasks per category. */
     const cat = data.category || "other";
     const live = jobs().filter((j) => j.owner === email && j.category === cat &&
       (j.status === "active" || j.status === "paused")).length;
@@ -203,9 +216,11 @@ if (typeof window !== "undefined") {
     const fee = Math.round(budget * CFG.platformFeePct) / 100;
     const total = Math.round((budget + fee) * 10000) / 10000;
     const w = wallet(email);
-    if (w.available < total) throw new Error("Need " + usd(total) + " USDT in your wallet (incl. " + CFG.platformFeePct + "% fee). Deposit first.");
+    if (!enough(w.available, total)) {
+      throw new Error("Need " + usd(total) + " USDT in your wallet (incl. " + CFG.platformFeePct + "% fee) — you have " + usd(w.available) + ". Deposit or convert points first.");
+    }
 
-    patchWallet(email, (acc) => { acc.available -= total; acc.locked += budget; });
+    patchWallet(email, (acc) => { acc.available = debit(acc.available, total); acc.locked += budget; });
     const job = {
       id: uid("job"), owner: email, ownerName: name || email.split("@")[0],
       title: data.title.trim(), category: data.category || "other",
@@ -327,10 +342,10 @@ if (typeof window !== "undefined") {
     const w = wallet(email);
     if (!FF.currentUser()) throw new Error("Please log in");
     if (!(amount >= CFG.minUsdtConvert)) throw new Error("Minimum " + usd(CFG.minUsdtConvert) + " USDT to convert");
-    if (amount > w.available) throw new Error("Not enough available USDT — you have " + usd(w.available));
+    if (!enough(w.available, amount)) throw new Error("Not enough available USDT — you have " + usd(w.available));
     const points = Math.floor(amount * CFG.pointsPerUsdt);
     if (points < 1) throw new Error("That amount is too small to convert");
-    patchWallet(email, (acc) => { acc.available = Math.round((acc.available - amount) * 1e8) / 1e8; });
+    patchWallet(email, (acc) => { acc.available = debit(acc.available, amount); });
     FF.awardCredits(email, points, "Converted " + usd(amount) + " USDT to " + points + " points");
     tx(email, "convert", -amount, usd(amount) + " USDT converted to " + points + " points", "completed");
     return points;
@@ -767,7 +782,7 @@ if (typeof window !== "undefined") {
   });
 
   FF.W = {
-    CFG, CATEGORIES, category, money, usd, uid,
+    CFG, CATEGORIES, category, money, usd, uid, cents, enough, debit,
     wallet, patchWallet, tx,
     createDeposit, createWithdraw, settleRequest, requests, myRequests,
     jobs, openJobs, myJobs, postJob, cancelJob, jobQuota,

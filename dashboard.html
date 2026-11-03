@@ -192,7 +192,7 @@
           </div>
 
           <div class="panel reveal mt-16" id="camp-review-panel" style="display:none">
-            <div class="panel-head"><div><h3>Pending campaign proofs</h3><p class="panel-sub">Old pending proofs only — new submissions are approved and paid instantly now. <b>View full proof</b> me typed text + screenshot dono dikhte hain.</p></div></div>
+            <div class="panel-head"><div><h3>Pending campaign proofs</h3><p class="panel-sub">Old pending proofs only — new submissions are approved and paid instantly now. <b>View full proof</b> shows both the typed text and the screenshot.</p></div></div>
             <div class="ff-table-wrap"><table class="ff-table"><thead><tr><th>Date</th><th>Worker</th><th>Campaign</th><th>Proof</th><th>Reward</th><th>Action</th></tr></thead><tbody id="camp-rev-body"></tbody></table></div>
             <div class="empty-mini hidden" id="camp-rev-empty"><b>No proofs waiting</b>You're all caught up.</div>
           </div>
@@ -249,7 +249,7 @@
           </div>
 
           <div class="panel reveal mt-16" id="msg-panel">
-            <div class="panel-head"><div><h3>Messages <span class="msg-badge hidden" id="msg-unread">0</span></h3><p class="panel-sub">Announcements and personal notes from the FlexFam team. <b>Message par tap karo</b> to poora message bade view me padho.</p></div><button class="btn btn-ghost btn-sm" id="msg-read-all">Mark all read</button></div>
+            <div class="panel-head"><div><h3>Messages <span class="msg-badge hidden" id="msg-unread">0</span></h3><p class="panel-sub">Announcements and personal notes from the FlexFam team. <b>Tap a message</b> to read it in full in a larger view.</p></div><button class="btn btn-ghost btn-sm" id="msg-read-all">Mark all read</button></div>
             <div class="msg-list" id="msg-list"></div>
             <div class="empty-mini hidden" id="msg-empty"><b>No messages yet</b>Updates from the team will land here.</div>
           </div>
@@ -798,7 +798,7 @@ document.addEventListener("DOMContentLoaded", () => {
           eMet ? "✅ Day " + eDay + " unlocked" : "🔒 Day " + eDay + " unlock condition";
         document.getElementById("se-text").textContent = eMet
           ? "Condition met — check in now to claim Day " + eDay + "."
-          : "Earn " + eFmt(eNeed) + " more in the last " + earnHrs + "h before you check in to unlock Day " + eDay + ". Do tasks, campaigns or claim mining. Agar check-in ke time earning poori nahi hui to streak Day 1 se restart ho jayega.";
+          : "Earn " + eFmt(eNeed) + " more in the last " + earnHrs + "h before you check in to unlock Day " + eDay + ". Do tasks, campaigns or claim mining. If the target is not met when you check in, the streak restarts from Day 1.";
         if (!eMet) {
           /* Button enabled rakhte hain: check-in karoge bina earning ke to
              streak Day 1 se restart hoga (server bhi yahi enforce karta hai). */
@@ -843,15 +843,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const willRestart = !!(cur.canClaim && cur.earnApplies && !cur.earnMet && eDone < eReq);
     if (willRestart) {
       const hrs = Number(cur.earnWindowHrs) || 24;
-      const msg = "Day " + (cur.earnForDay || cur.nextDay) + " ke liye last " + hrs + "h me $" + eReq.toFixed(2) +
-        " earning chahiye. Aapne $" + eDone.toFixed(3) + " kiya hai.\n\nAbhi check-in karoge to streak Day 1 se RESTART ho jayega. Continue?";
+      const msg = "Day " + (cur.earnForDay || cur.nextDay) + " needs $" + eReq.toFixed(2) +
+        " earned in the last " + hrs + "h. You have earned $" + eDone.toFixed(3) + ".\n\nIf you check in now, your streak RESTARTS from Day 1. Continue?";
       if (!window.confirm(msg)) return;
     }
     stBtn.disabled = true;
     stBtn.textContent = "Claiming…";
     FF.rpc("streak_claim", {}).then((r) => {
       if (r && r.reset) {
-        FF.toast(r.message || "Streak restart ho gaya — Day 1 se shuru karo", "err");
+        FF.toast(r.message || "Streak restarted — you are back on Day 1", "err");
         streakRender(r);
         return;
       }

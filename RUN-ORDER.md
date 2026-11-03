@@ -204,3 +204,41 @@ Shared component [`assets/js/message-view.js`](assets/js/message-view.js) (`wind
 **Server mode me live karne ke liye (optional but recommended):** [`supabase-community.sql`](supabase-community.sql) **ek baar dobara run karo** — isme naya `messages_mark_one_read(uuid)` RPC add hua hai (sirf khola hua message read mark karta hai). Ye file idempotent hai, data safe. RPC na ho to bhi site chalati hai: read flag browser/local fallback me save hota hai aur page crash nahi karta. Bell ke liye [`supabase-notifications.sql`](supabase-notifications.sql) pehle se hi `bell_mark_read(p_ids)` provide karta hai — koi naya table/column nahi chahiye.
 
 Tests: `npm test` me [`tests/messages.test.js`](tests/messages.test.js) — shared modal runtime (long text, newlines, XSS, Escape/Enter), dashboard inbox tap + per-message read + "Mark all read", aur sab 4 surfaces ki wiring. Proof flow (`tests/proof.test.js`) bhi unchanged pass rehta hai.
+
+---
+
+## Fix: "Need $1.20 USDT — you have $1.20" + fully English copy (2026-11)
+
+**Symptom.** Buying hashrate (or withdrawing, converting or posting a task) failed with
+`Need $1.20 USDT — you have $1.20`, even though the wallet clearly showed the full amount.
+The admin error log collected these as `app_error` rows on `mining.html` / `tasks.html`.
+
+**Cause.** Balances are stored with up to 8 decimals (for example `1.1996`) while every page
+shows them rounded to 2 (`$1.20`). The server compared the raw numbers with a strict `<`,
+so the purchase was rejected — and because the error message rounded both sides, it printed
+the same amount twice. On the task page the same proof check also answered in Hinglish
+("Proof thoda detail me likho…").
+
+**Fix.** Every money check now compares **cent precision** (what the member actually sees) and
+the debit is clamped at zero, so the sub-cent difference is absorbed instead of leaving a
+negative balance. The error text now reads e.g. `Need $5.00 USDT — you have $1.18. Deposit or
+convert points first.` The proof message is `Please describe your proof in more detail — at
+least 6 characters`, and **all user-facing copy across the site is now English**.
+
+**Run once on the live database.**
+[`supabase-fix-balance-rounding.sql`](supabase-fix-balance-rounding.sql) in the Supabase SQL
+editor. It only contains `create or replace` for the five affected functions
+(`mining_charge`, `wallet_create_withdraw`, `wallet_convert_usdt`, `jobs_post`,
+`admin_jobs_update`), so it is idempotent and never touches wallet data. The same fixes are
+already committed in [`supabase-mining.sql`](supabase-mining.sql),
+[`supabase-wallet.sql`](supabase-wallet.sql) and
+[`supabase-post-task-admin.sql`](supabase-post-task-admin.sql) for fresh installs.
+
+**No SQL access?** The browser-side engine ([`assets/js/wallet.js`](assets/js/wallet.js),
+[`assets/js/mining.js`](assets/js/mining.js)) already uses the new rule, so local/demo mode is
+fixed immediately; server mode needs the SQL above.
+
+**Tests.** `npm test` now also runs [`tests/money-rounding.test.js`](tests/money-rounding.test.js):
+cent-precision helpers, buying a rig / withdrawing / converting / posting a task with a balance
+that only *displays* as the exact price, the SQL guards, and a scan that fails the build if
+Hinglish copy ever comes back to any page.

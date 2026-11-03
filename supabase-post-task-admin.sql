@@ -53,7 +53,7 @@ begin
     raise exception 'Unknown task category' using errcode = 'P0001';
   end if;
 
-  /* QUOTA — ek type (category) par 3 se jyada task ek sath nahi */
+  /* QUOTA — at most 3 live tasks per category */
   select count(*) into v_live
     from public.jobs
    where owner = v_user and category = v_cat
@@ -73,14 +73,16 @@ begin
   insert into public.balances (user_id) values (v_user) on conflict (user_id) do nothing;
   select * into bal from public.balances where user_id = v_user for update;
 
-  if bal.usdt < v_total then
-    raise exception 'Need $% USDT in your wallet (incl. % fee) — you have $%',
+  /* cent-precision compare + clamped debit — the wallet page rounds to 2
+     decimals, so "$1.20" on screen can really be 1.1996. */
+  if round(bal.usdt, 2) < round(v_total, 2) then
+    raise exception 'Need $% USDT in your wallet (incl. % fee) — you have $%. Deposit or convert points first.',
       round(v_total, 2), public.wallet_pct_label(cfg.platform_fee_pct),
       round(bal.usdt, 2) using errcode = 'P0001';
   end if;
 
   update public.balances
-     set usdt = round(usdt - v_total, 8), locked = round(locked + v_budget, 8), updated_at = now()
+     set usdt = greatest(0, round(usdt - v_total, 8)), locked = round(locked + v_budget, 8), updated_at = now()
    where user_id = v_user;
 
   insert into public.jobs (owner, title, category, description, url, proof_note, reward, slots, escrow, fee)
@@ -332,12 +334,12 @@ begin
     select * into bal from public.balances where user_id = j.owner for update;
 
     if v_diff > 0 then
-      if bal.usdt < v_diff then
+      if round(bal.usdt, 2) < round(v_diff, 2) then
         raise exception 'Owner needs $% more USDT in their wallet for this change — they have $%',
           round(v_diff, 2), round(bal.usdt, 2) using errcode = 'P0001';
       end if;
       update public.balances
-         set usdt = round(usdt - v_diff, 8), locked = round(locked + v_diff, 8), updated_at = now()
+         set usdt = greatest(0, round(usdt - v_diff, 8)), locked = round(locked + v_diff, 8), updated_at = now()
        where user_id = j.owner;
       perform public.wallet_tx(j.owner, 'escrow', -v_diff,
         'Extra escrow after an admin edited "' || trim(p_title) || '"', 'completed', null, j.id);
