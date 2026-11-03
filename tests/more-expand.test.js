@@ -59,7 +59,7 @@ async function main() {
   check("Admin has a toggle handler", /closest\("\[data-workers-more\]"\)/.test(admin) && /Show less ▴/.test(admin));
   check("Admin +N more button is keyboard/ARIA aware", /aria-expanded/.test(admin) && /:focus-visible/.test(admin));
   check("Old dead text '+38 more' is gone", !/camp-sub">\+\' \+ \(workers\.length - 6\)/.test(admin));
-  check("Posted tasks panel explains the tap", /\+N more<\/b> par tap/.test(admin));
+  check("Posted tasks panel explains the tap", /Tap <b>\+N more<\/b>/.test(admin));
   check("Referral pyramid has a real +N more button", /data-pyr-more/.test(refer) && /class="pyr-more"/.test(refer));
   check("Referral pyramid renders hidden extra names", /pyr-extra hidden/.test(refer));
   check("Referral pyramid click handler registered on the list", /pyr-body"\)\.addEventListener\("click"/.test(refer));

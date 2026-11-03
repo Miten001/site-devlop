@@ -119,15 +119,15 @@
     <a class="btn btn-ghost btn-block hidden" id="jm-open" href="#" target="_blank" rel="noopener" style="margin-top:14px">Open task link</a>
     <div class="fee-hint" style="text-align:left;margin-top:16px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-      <span><b>Proof me do option hain — dono ek saath bhej sakte ho:</b> neeche text type karo / link paste karo, aur screenshot attach karo. Buyer aur admin dono ko typed text aur screenshot alag-alag, full size me dikhte hain.</span>
+      <span><b>You can send proof two ways — both together work too:</b> type your proof below or paste a link, and attach a screenshot. Both the buyer and the admin see your typed text and the full-size screenshot.</span>
     </div>
     <div class="field" style="text-align:left;margin-top:16px">
       <label>✍️ Type your proof</label>
-      <textarea id="jm-proof" rows="3" placeholder="Apna username / ID, kaunsa step kiya, ya koi bhi detail likho…"></textarea>
+      <textarea id="jm-proof" rows="3" placeholder="Your username / ID, which step you completed, or any other detail…"></textarea>
     </div>
     <div class="field" style="text-align:left">
       <label>🔗 Proof link (optional)</label>
-      <input type="text" id="jm-link" placeholder="https://... (profile, post ya screenshot link)" />
+      <input type="text" id="jm-link" placeholder="https://... (profile, post or screenshot link)" />
     </div>
     <div class="field" style="text-align:left" id="jm-attach-field">
       <label>📎 Attach a screenshot (optional, max 5 MB)</label>
@@ -328,7 +328,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const proofText = $("jm-proof").value.trim();
     const proofLink = $("jm-link").value.trim();
     if (!proofText && !proofLink && !proofFile) {
-      FF.toast("Proof likho, link do, ya screenshot attach karo — koi ek to chahiye", "err");
+      FF.toast("Add your proof first — type some text, paste a link or attach a screenshot", "err");
+      return;
+    }
+    /* Validate before the upload starts, so a too-short answer fails instantly
+       instead of after a screenshot has already been sent. A file on its own
+       is a complete proof. */
+    if (!proofFile && (proofText + " " + proofLink).trim().length < 6) {
+      FF.toast("Please describe your proof in more detail — at least 6 characters", "err");
       return;
     }
     btn.disabled = true; btn.style.opacity = ".6";
@@ -339,7 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     attach.then((image) => {
       const proof = FFProof.build({ text: proofText, link: proofLink, image: image });
-      if (proof.trim().length < 6) throw new Error("Proof thoda detail me likho (kam se kam 6 characters)");
+      if (proof.trim().length < 6) throw new Error("Please describe your proof in more detail — at least 6 characters");
       return A.submitProof(jobId, proof, note).then((f) => {
         FF.toast("Proof submitted! The buyer will review it shortly.", "ok");
         clearProofFile();
