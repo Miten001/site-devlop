@@ -301,7 +301,7 @@ begin
     raise exception 'Slots cannot be lower than the % already filled', j.filled using errcode = 'P0001';
   end if;
 
-  /* bache hue (unfilled) slots ke liye kitna escrow chahiye */
+  /* how much escrow the remaining (unfilled) slots need */
   v_need := round(v_reward * (v_slots - j.filled), 8);
   if j.status in ('cancelled', 'completed') then v_need := j.escrow; end if;
   v_diff := round(v_need - j.escrow, 8);
