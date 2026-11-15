@@ -27,8 +27,62 @@ Ye site bina Supabase ke bhi chalti hai (browser-only / localStorage fallback). 
 | 21 | [`supabase-post-task-admin.sql`](supabase-post-task-admin.sql) | **Post task quota + admin task manager** — ek member ek category (type) me max **3 live tasks**; Post a Task page par live counter; admin.html ka naya "📝 Posted tasks" section: edit / approve / pause / delete (delete par bacha hua escrow owner ko refund) + har task me **kaun member use run kar raha hai** (worker naam + status — `workers` field); Task Market me jyada reward wali task pehle | 3 |
 | 22 | [`supabase-campaigns-top-bid.sql`](supabase-campaigns-top-bid.sql) | **Top bid first** — jis campaign par jyada coin/USDT bid hai wo Earn page par sabse pehle (payout desc, phir newest) | 13 |
 | 23 | [`supabase-site-stats.sql`](supabase-site-stats.sql) | **Dashboard site overview** — Visitors today / Registered today ke saath Total views / Total registered / Running tasks / Completed tasks. `site_stats()` aggregate RPC; dono task markets ke live listings aur approved submissions | 1; task totals ke liye 3 + 5 |
+| 24 | [`supabase-admin-member-earnings.sql`](supabase-admin-member-earnings.sql) | **Withdrawal review — "How earned"** — every payment row in `admin.html → 💳 Payments` and `admin-payments.html` gets a **🔍 How earned** button: where the member's USDT and coins came from (tasks, streak, referrals, mining, deposits, conversions), a balance check, every past request, who paid them and the full money ledger. One read-only, admins-only function `admin_member_earnings()` — no table, no data change | 1, 2, 3 (#5, #14 and #16 are optional) |
+| 25 | [`supabase-withdraw-one-at-a-time.sql`](supabase-withdraw-one-at-a-time.sql) | **One withdrawal at a time** — a member can have only one withdrawal waiting for approval; the next one is accepted after the admin approves it (or rejects it, which returns the money). Adds one check to `wallet_create_withdraw()` — no table, no data change, existing pending requests stay as they are | 1, 2, 3 |
 
 > ⚠️ **Order zaroori hai:** `public.balances` table `supabase-mining.sql` (#2) me banti hai, isliye ye `supabase-wallet.sql` (#3) se **pehle** chalna chahiye. `supabase-points-import.sql` (#4) `wallet_state()` / `wallet_tx()` use karta hai jo `supabase-wallet.sql` (#3) me define hote hain, isliye wo sabse aakhir me.
+
+---
+
+## One withdrawal at a time (#25)
+
+A member can have **only one withdrawal waiting for approval**. While it is pending, `wallet.html → Withdraw` shows that request (amount, payout method, address, what the member receives) instead of the form. Once the admin **approves** it, the form is back and the next withdrawal can be requested — on the next visit to the wallet, or straight away with the card's **Check status** button. A **rejected** request also frees the member: the money returns to the available balance and they can request again.
+
+**On the live server, once:** run the whole [`supabase-withdraw-one-at-a-time.sql`](supabase-withdraw-one-at-a-time.sql) (#25) script in the Supabase SQL Editor. It is idempotent and replaces exactly one function, `wallet_create_withdraw()`, adding one check before a request is created. No table, balance or existing request is touched. It needs #1, #2 and #3.
+
+| Situation | What happens |
+|---|---|
+| No withdrawal pending | The request is accepted as before (minimum, balance, payout method and address checks are unchanged) |
+| One withdrawal pending | Refused: `You already have a withdrawal of $12.46 waiting for approval. You can request the next one after it is approved.` — nothing is locked, no request is created |
+| Two requests sent at the same moment (double tap, two tabs, two devices) | Exactly one is accepted. The check runs after the member's balance row is locked, so the second request waits and then sees the first |
+| The admin approves or rejects the pending one | The next request is accepted |
+| A deposit is pending | Not part of the rule — deposits are never limited, and a pending deposit does not block a withdrawal |
+| Withdrawals that were already pending before this file was run | They stay in the queue and are approved / rejected as usual. A member who has several is told `You already have 3 withdrawals ($33.16 in total) waiting for approval…` and can request again once **all** of them are settled |
+
+The rule is enforced **on the server**; the page only shows it nicely. A request sent from an old cached page, another tab or straight to the API gets the same refusal.
+
+**Fresh installs** get the rule from [`supabase-wallet.sql`](supabase-wallet.sql). [`supabase-fix-balance-rounding.sql`](supabase-fix-balance-rounding.sql) carries the same function, so re-running either of them later does not remove the rule.
+
+**Without the migration** the page still hides the form while a withdrawal is pending, and the browser-only (demo) wallet already applies the rule — but only the SQL above makes it impossible to get around.
+
+Regression tests: `node tests/withdraw-one-at-a-time.test.js` (included in the full suite).
+
+---
+
+## Admin: how did a withdrawing member earn? (#24)
+
+When a member asks for a withdrawal, the admin can now see where that money came from **before** approving it. Every row of the payments queue — `admin.html → 💳 Payments` and `admin-payments.html` — has a **🔍 How earned** button; the same breakdown is in every member modal of `admin.html`.
+
+**On the live server, once:** run the whole [`supabase-admin-member-earnings.sql`](supabase-admin-member-earnings.sql) (#24) script in the Supabase SQL Editor. It is idempotent. It adds exactly one function, `admin_member_earnings(p_user, p_request, p_limit)`, and nothing else: no table, no policy, no change to any balance, request or task. It needs #1, #2 and #3; campaigns (#5), daily streak (#14) and the referral pyramid (#16) are optional — their lines simply stay empty without them.
+
+| The admin sees | Real source |
+|---|---|
+| Request under review + **Approve / Reject** | `pay_requests` |
+| USDT in / out by source | `wallet_txns` (tasks, streak, referral, conversions, deposits, escrow, withdrawals), `mining_ledger` (claims, admin edits), `mining_contracts` (rigs paid in USDT) |
+| Coins in / out by source | `market_campaign_subs` / `market_campaigns`, coin referral rows and browser imports in `wallet_txns`, mining claims paid in coins, rigs paid in coins |
+| **Balance check** | money in − money out compared with `balances.usdt` (the withdrawable balance) |
+| Every deposit / withdrawal request | `pay_requests` |
+| Who paid this member | approved `job_subs`, grouped by task poster |
+| Whose activity paid referral income | referral rows in `wallet_txns`, grouped by invited member and level |
+| Money ledger | `wallet_txns` + `mining_ledger` + `mining_contracts`, newest first (300 at first, **Load all** up to 5,000) |
+
+Rows that never moved the spendable balance are **not** counted and are greyed in the ledger: pending / rejected deposits, rejected withdrawals, and the task owner's "Paid … from escrow" notes (that money already left with the escrow row).
+
+The balance check is green when the difference is under 5 cents (purchases compare at cent precision) and red otherwise. Only admins in `public.admins` can call the function; a signed-in member gets `Admins only` and the `anon` role cannot execute it at all.
+
+**Without the migration** the button still works: it opens the request with Approve / Reject and a note that names this file; `admin.html` also lists the latest raw ledger entries.
+
+Regression tests: `node tests/admin-earnings.test.js` (included in the full suite).
 
 ---
 

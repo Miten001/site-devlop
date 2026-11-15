@@ -131,9 +131,32 @@ if (typeof window !== "undefined") {
     return req;
   }
 
+  /* One withdrawal at a time — the same rule wallet_create_withdraw() applies
+     on the server. openWithdrawals() picks the withdrawals that are still
+     waiting for an admin out of a request list (either mode's view.requests);
+     withdrawBlockedMessage() is what a member is told when they ask for
+     another one. The next request is accepted once those are approved (or
+     rejected, which returns the money). */
+  function openWithdrawals(list) {
+    return (list || []).filter((r) => r && r.kind === "withdraw" && r.status === "pending");
+  }
+  function withdrawBlockedMessage(open) {
+    const total = (open || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    return open && open.length > 1
+      ? "You already have " + open.length + " withdrawals (" + usd(total) + " in total) waiting for approval. You can request the next one after they are approved."
+      : "You already have a withdrawal of " + usd(total) + " waiting for approval. You can request the next one after it is approved.";
+  }
+  /* True when an error is that refusal — from this file or from the server,
+     which words it the same way. It is the rule working, not a fault. */
+  function isWithdrawBlocked(err) {
+    return /^You already have (a withdrawal|\d+ withdrawals) .*waiting for approval/.test(String((err && err.message) || ""));
+  }
+
   function createWithdraw(email, name, amount, network, address) {
     amount = Number(amount);
     const w = wallet(email);
+    const open = openWithdrawals(myRequests(email));
+    if (open.length) throw new Error(withdrawBlockedMessage(open));
     if (!(amount >= CFG.minWithdraw)) throw new Error("Minimum withdrawal is " + usd(CFG.minWithdraw) + " USDT");
     if (!enough(w.available, amount)) throw new Error("Not enough available balance — you have " + usd(w.available) + " USDT");
     if (!network || CFG.withdrawNetworks.indexOf(network) < 0) throw new Error("Select a payout method");
@@ -390,11 +413,32 @@ if (typeof window !== "undefined") {
   }
 
   /* ---------- UI helpers ---------- */
+  /* "In escrow / pending" for a signed-in (server) member is the Postgres
+     figure: task escrow and pending withdrawals are locked by the wallet /
+     jobs RPCs and never reach the browser ledger, whose `locked` stays 0 for
+     that member. Painting the chip from the browser ledger therefore showed
+     "In escrow / pending: 0.00" as soon as anything repainted after the
+     wallet_state response (the mining payload landing, a local wallet patch)
+     even though the member had USDT locked.
+
+     The last server figure is remembered next to the other server baselines
+     (ff_srv_sync) so EVERY repaint — and the first paint of the next page —
+     shows it. The browser ledger's own `locked` is left untouched, so local
+     previews and the offline bookkeeping keep their own escrow maths. */
+  function lockedShown(u, w) {
+    if (u && FF.hasServer && FF.hasServer()) {
+      const mark = srvMarks()[u.email];
+      if (mark && mark.locked != null) return Number(mark.locked) || 0;
+    }
+    return Number((w && w.locked) || 0);
+  }
+
   function syncWalletPills() {
     const u = FF.currentUser();
     const w = u ? wallet(u.email) : { available: 0, locked: 0 };
+    const locked = lockedShown(u, w);
     document.querySelectorAll("[data-usdt]").forEach((el) => { el.textContent = Number(w.available).toFixed(2); });
-    document.querySelectorAll("[data-usdt-locked]").forEach((el) => { el.textContent = Number(w.locked).toFixed(2); });
+    document.querySelectorAll("[data-usdt-locked]").forEach((el) => { el.textContent = locked.toFixed(2); });
   }
 
   /* ---------- server ⇄ browser balance merge ----------
@@ -420,10 +464,14 @@ if (typeof window !== "undefined") {
     store.set("ff_srv_sync", all);
   }
 
-  function reconcileServer(srvPts, srvUsdt) {
+  /* srvLocked is optional: wallet_state knows it, the mining payload does
+     not — a caller that leaves it out keeps the last remembered figure. */
+  function reconcileServer(srvPts, srvUsdt, srvLocked) {
     const u = FF.currentUser();
     const out = { points: Number(srvPts || 0), usdt: Number(srvUsdt || 0), exPoints: 0, exUsdt: 0 };
     if (!u) return out;
+    /* Record the server's locked figure BEFORE anything below repaints. */
+    if (srvLocked != null) setSrvMark(u.email, { locked: Math.max(0, Number(srvLocked) || 0) });
     const mark = Object.assign({ pts: 0, usdt: 0 }, srvMarks()[u.email]);
     const locPts = Number(u.credits || 0);
     const locUsdt = Number(wallet(u.email).available || 0);
@@ -541,7 +589,8 @@ if (typeof window !== "undefined") {
        the chips never drop back to zero (see reconcileServer). */
     const rec = reconcileServer(
       num((payload.wallet || {}).points),
-      num((payload.wallet || {}).available)
+      num((payload.wallet || {}).available),
+      num((payload.wallet || {}).locked)
     );
     const view = {
       mode: "server",
@@ -785,6 +834,7 @@ if (typeof window !== "undefined") {
     CFG, CATEGORIES, category, money, usd, uid, cents, enough, debit,
     wallet, patchWallet, tx,
     createDeposit, createWithdraw, settleRequest, requests, myRequests,
+    openWithdrawals, withdrawBlockedMessage, isWithdrawBlocked,
     jobs, openJobs, myJobs, postJob, cancelJob, jobQuota,
     subs, jobSubs, mySubs, submitProof, reviewSub,
     adminCancelJob, adminSetJobStatus,

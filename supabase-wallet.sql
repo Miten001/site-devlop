@@ -323,10 +323,28 @@ declare
   bal public.balances;
   v_fee numeric;
   v_id uuid;
+  v_open int;
+  v_open_amt numeric;
 begin
   select * into cfg from public.wallet_config where id = 1;
   insert into public.balances (user_id) values (v_user) on conflict (user_id) do nothing;
   select * into bal from public.balances where user_id = v_user for update;
+
+  /* One withdrawal at a time: the next request is accepted only after an
+     admin has approved (or rejected) the one that is waiting. The balance
+     row is locked just above, so two requests sent at the same moment queue
+     up here and the second one sees the first. Requests that were already
+     pending before this rule are left alone. */
+  select count(*), coalesce(sum(amount), 0) into v_open, v_open_amt
+    from public.pay_requests
+   where user_id = v_user and kind = 'withdraw' and status = 'pending';
+  if v_open = 1 then
+    raise exception 'You already have a withdrawal of $% waiting for approval. You can request the next one after it is approved.',
+      round(v_open_amt, 2) using errcode = 'P0001';
+  elsif v_open > 1 then
+    raise exception 'You already have % withdrawals ($% in total) waiting for approval. You can request the next one after they are approved.',
+      v_open, round(v_open_amt, 2) using errcode = 'P0001';
+  end if;
 
   if p_amount is null or p_amount < cfg.min_withdraw then
     raise exception 'Minimum withdrawal is $% USDT', cfg.min_withdraw using errcode = 'P0001';

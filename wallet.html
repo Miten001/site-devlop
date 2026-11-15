@@ -19,6 +19,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/style.css?v=2.2" />
 <link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+<style>
+  /* Withdraw tab — shown instead of the form while a withdrawal waits for approval */
+  .wd-pending { border: 1px solid #f6d3a0; background: var(--orange-soft); border-radius: 16px; padding: 18px 20px 20px; }
+  .wd-pending-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .wd-pending-head b { font-size: 15.5px; color: var(--ink); line-height: 1.35; }
+  .wd-pending-text { margin: 9px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--ink-dim); }
+  .wd-pending-list { margin-top: 14px; border-radius: 12px; background: #fff; border: 1px solid #f6d3a0; }
+  .wd-pending-item { padding: 13px 15px; }
+  .wd-pending-item + .wd-pending-item { border-top: 1px dashed #f6d3a0; }
+  .wd-pending-item .row { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; font-size: 13.5px; padding: 4px 0; color: var(--ink-dim); }
+  .wd-pending-item .row b { color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+  .wd-pending-item .row .dest { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+  .wd-pending-item .row.total b { color: #0f7a48; font-size: 15px; }
+  .wd-pending-foot { margin: 14px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ink-mute); }
+  .wd-pending-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+</style>
 </head>
 <body class="app-body" data-requires-auth>
 
@@ -168,6 +184,21 @@
       <div class="tab-pane" id="pane-withdraw">
         <div class="panel">
           <div class="panel-head"><div><h3>Withdraw USDT</h3><p class="panel-sub">Payouts are reviewed and sent within 24 hours on business days.</p></div></div>
+
+          <!-- One withdrawal at a time: while a request waits for approval this
+               card replaces the form (see paintWdGate). -->
+          <div class="wd-pending hidden" id="wd-pending" role="status">
+            <div class="wd-pending-head"><span class="badge pending">Pending</span><b id="wd-pending-title">Your withdrawal is waiting for approval</b></div>
+            <p class="wd-pending-text" id="wd-pending-text"></p>
+            <div class="wd-pending-list" id="wd-pending-list"></div>
+            <p class="wd-pending-foot">If a request is rejected, the full amount returns to your available balance and you can request again.</p>
+            <div class="wd-pending-actions">
+              <button type="button" class="btn btn-ghost btn-sm" data-goto="requests">View my requests</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="wd-pending-refresh">Check status</button>
+            </div>
+          </div>
+
+          <div id="wd-open">
           <div class="warn-banner">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>
             <div>
@@ -176,6 +207,7 @@
                 <li>For USDT, the wallet address must match BEP20 — a wrong address means <b>lost funds</b>.</li>
                 <li>For UPI, enter your exact UPI ID (for example, <b>name@bank</b>). The INR equivalent is calculated when the payout is processed.</li>
                 <li>Minimum withdrawal is <b>$10.00</b>. Requests are reviewed manually and paid within 24 hours on business days.</li>
+                <li>Only <b>one withdrawal at a time</b>: once you request one, you can request the next after it is approved.</li>
               </ul>
             </div>
           </div>
@@ -202,6 +234,7 @@
             </div>
             <button class="btn btn-primary btn-block" type="submit" style="margin-top:18px">Request withdrawal</button>
           </form>
+          </div>
         </div>
       </div>
 
@@ -267,7 +300,7 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.6"></script>
-<script src="assets/js/wallet.js?v=2.3"></script>
+<script src="assets/js/wallet.js?v=2.5"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script>
@@ -335,7 +368,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     depNet = (net(depositNets(), depNet && depNet.network) || {}).network || null;
     wdNet = (net(withdrawNets(), wdNet && wdNet.network) || {}).network || null;
-    paintDepNets(); paintWdNets(); wdSummary(); cvSummary();
+    paintDepNets(); paintWdNets(); wdSummary(); cvSummary(); paintWdGate();
 
     /* Points earned in this browser ride on top of the server balance (see
        wallet.js reconcileServer). Tell the member which part is still being
@@ -432,6 +465,58 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* ---------- withdraw ---------- */
+  /* One withdrawal at a time. While a request is waiting for approval the
+     form is replaced by a card that shows it; the form comes back as soon as
+     an admin approves (or rejects) it. The server enforces the same rule in
+     wallet_create_withdraw(), so this is only the friendly side of it. */
+  function paintWdGate() {
+    const open = W.openWithdrawals(view.requests);
+    const blocked = open.length > 0;
+    $("wd-pending").classList.toggle("hidden", !blocked);
+    $("wd-open").classList.toggle("hidden", blocked);
+    if (!blocked) return;
+    const many = open.length > 1;
+    const total = open.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    $("wd-pending-title").textContent = many
+      ? open.length + " withdrawals (" + W.usd(total) + " in total) are waiting for approval"
+      : "Your withdrawal of " + W.usd(total) + " is waiting for approval";
+    $("wd-pending-text").textContent = "Only one withdrawal can be open at a time. You can request the next one as soon as " +
+      (many ? "these are approved." : "this one is approved.");
+    $("wd-pending-list").innerHTML = open.map((r) => {
+      const fee = Number(r.fee || 0);
+      const receive = r.receive != null && Number(r.receive) > 0 ? Number(r.receive) : Math.max(0, Number(r.amount || 0) - fee);
+      return '<div class="wd-pending-item">' +
+        '<div class="row"><span>Requested</span><b>' + esc(fdate(r.at)) + "</b></div>" +
+        '<div class="row"><span>Payout method</span><b>' + esc(r.network || "—") + "</b></div>" +
+        '<div class="row"><span>' + (r.network === "UPI" ? "UPI ID" : "Wallet address") + '</span><b class="dest">' + esc(r.address || "—") + "</b></div>" +
+        '<div class="row"><span>Amount</span><b>' + W.usd(r.amount) + "</b></div>" +
+        '<div class="row total"><span>You receive' + (fee > 0 ? " (after the " + W.usd(fee) + " fee)" : "") + "</span><b>" + W.usd(receive) + "</b></div>" +
+        "</div>";
+    }).join("");
+  }
+
+  /* The admin can approve the request while this page is open, so the card
+     has a "Check status" button that reads the wallet again. */
+  $("wd-pending-refresh").addEventListener("click", () => {
+    const b = $("wd-pending-refresh");
+    const mode = view.mode;
+    const before = W.openWithdrawals(view.requests);
+    b.disabled = true;
+    A.wallet().then((v) => {
+      paint(v);
+      /* The server could not be reached and the page has switched to its
+         browser fallback (the note at the top says so). Nothing was checked. */
+      if (view.mode !== mode) return FF.toast("Could not reach the server, so the status was not checked. Reload the page to try again.", "err", { report: false });
+      if (W.openWithdrawals(view.requests).length) return FF.toast("Still waiting for approval.", "info");
+      const now = before.map((r) => (view.requests || []).find((x) => x.id === r.id)).filter(Boolean);
+      const approved = now.length > 0 && now.every((r) => r.status === "approved");
+      const rejected = now.length > 0 && now.every((r) => r.status === "rejected");
+      FF.toast(approved ? "Your withdrawal was approved. You can request the next one now."
+        : rejected ? "Your withdrawal was rejected and the amount is back in your available balance. You can request again."
+        : "Your withdrawals have been reviewed — see My requests. You can request the next one now.", rejected ? "info" : "ok");
+    }).catch(fail).then(() => { b.disabled = false; });
+  });
+
   function wdSummary() {
     const a = Math.max(0, Number($("wd-amount").value) || 0);
     const fee = Math.round(a * view.config.withdrawFeePct) / 100;
@@ -443,6 +528,11 @@ document.addEventListener("DOMContentLoaded", () => {
   $("wd-max").addEventListener("click", () => { $("wd-amount").value = view.wallet.available.toFixed(2); wdSummary(); });
   $("wd-form").addEventListener("submit", (e) => {
     e.preventDefault();
+    /* The form is hidden while a withdrawal is pending; this covers a submit
+       that gets through anyway. Not reported to the admin error log — it is
+       the rule working, not a fault. */
+    const open = W.openWithdrawals(view.requests);
+    if (open.length) { paintWdGate(); return FF.toast(W.withdrawBlockedMessage(open), "err", { report: false }); }
     if (!wdNet) return FF.toast("No withdrawal network is available right now", "err");
     const destinationLabel = wdNet === "UPI" ? "UPI ID" : "wallet address";
     if (!window.confirm("Withdraw " + W.usd(Number($("wd-amount").value) || 0) + " via " + wdNet + " to:\n\n" + $("wd-address").value.trim() + "\n\nIs this " + destinationLabel + " correct? Incorrect payout details cannot be recovered.")) return;
@@ -451,7 +541,14 @@ document.addEventListener("DOMContentLoaded", () => {
       FF.toast("Withdrawal requested — payout within 24 hours.", "ok");
       $("wd-amount").value = "";
       paint(v); showTab("requests");
-    }).catch(fail).then(() => busy($("wd-form"), false));
+    }).catch((err) => {
+      if (!W.isWithdrawBlocked(err)) return fail(err);
+      /* Refused by the one-at-a-time rule: the server knows about a request
+         this tab has not seen yet (made in another tab or on another device).
+         Say so, then reload the wallet so the pending card replaces the form. */
+      FF.toast(err.message, "err", { report: false });
+      return A.wallet().then(paint).catch(() => {});
+    }).then(() => busy($("wd-form"), false));
   });
 
   /* ---------- convert (both directions) ---------- */

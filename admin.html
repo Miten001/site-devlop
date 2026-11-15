@@ -126,10 +126,6 @@
   .mm-edit .row .field { flex: 1; min-width: 150px; margin-bottom: 12px; }
   .mm-edit .field { margin-bottom: 12px; }
   .mm-activity { max-height: 250px; border: 1px solid var(--line); border-radius: 12px; }
-  .amt-pos { color: var(--green); font-weight: 700; font-variant-numeric: tabular-nums; }
-  .amt-neg { color: var(--danger); font-weight: 700; font-variant-numeric: tabular-nums; }
-  .ev-pill.wallet { color: var(--blue); border-color: rgba(47,111,237,.35); }
-  .ev-pill.mining { color: var(--amber); border-color: rgba(154,100,16,.3); }
 
   /* ============ admin section menu — sticky quick-jump ============ */
   html { scroll-behavior: smooth; }
@@ -383,7 +379,7 @@
 
     <section class="panel pay-panel" id="sec-payments" aria-labelledby="pay-title">
       <div class="panel-head">
-        <div><h3 id="pay-title">Payments — approve / reject</h3><p class="panel-sub">Verify the on-chain transaction before approving a deposit; rejecting returns the member's funds.</p></div>
+        <div><h3 id="pay-title">Payments — approve / reject</h3><p class="panel-sub">Verify the on-chain transaction before approving a deposit; rejecting returns the member's funds. Tap <b>🔍 How earned</b> on a request to see where that member's balance came from — tasks, streak, referrals, mining, deposits — before you pay it out.</p></div>
         <span class="status-pill on" id="pay-count">0 pending</span>
       </div>
       <div class="fee-hint warn hidden" id="pay-warn" style="margin-bottom:14px">
@@ -565,6 +561,9 @@
       <span id="mm-warn-text"></span>
     </div>
 
+    <h4 class="mm-h">💰 How this member earned</h4>
+    <div id="mm-earn"><p class="ffe-note">Loading earnings…</p></div>
+
     <h4 class="mm-h">🚀 Campaigns this member runs</h4>
     <div class="scroll-box mm-activity">
       <table class="ff-table"><thead><tr><th>Campaign</th><th>Payout</th><th>Completions</th><th>Spent</th><th>Status</th></tr></thead><tbody id="mm-campaigns"><tr><td colspan="5">Loading…</td></tr></tbody></table>
@@ -604,10 +603,8 @@
       <button class="btn btn-primary btn-sm" id="mm-apply" style="margin-bottom:12px">Apply &amp; save</button>
     </div>
 
-    <details class="log-details">
-      <summary>Coin activity logs</summary><div class="log-inner"><div class="scroll-box mm-activity">
-        <table class="ff-table"><thead><tr><th>Time</th><th>Source</th><th>Detail</th><th style="text-align:right">Amount</th></tr></thead><tbody id="mm-activity"></tbody></table>
-      </div></div>
+    <details class="log-details" id="mm-ledger-box">
+      <summary id="mm-ledger-title">Money ledger</summary><div class="log-inner"><div id="mm-ledger"></div></div>
     </details>
 
     <details class="log-details">
@@ -724,6 +721,7 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/proof.js?v=1.0"></script>
+<script src="assets/js/admin-earnings.js?v=1.0"></script>
 <script>
 /* FlexFam admin — Supabase Auth + analytics over plain REST (fetch). */
 (function () {
@@ -742,6 +740,10 @@
   var emailToId = {};
   var lastQueue = null;
   var currentMember = null;
+  /* "How this member earned" — assets/js/admin-earnings.js renders it. */
+  var EARN = window.FFEarnings || null;
+  var memberReq = null;     /* payment request the member modal was opened from */
+  var extraMembers = {};    /* id → member opened by name but outside the loaded accounts */
   var balMode = "adjust";
   var msgMode = "all";
   var SKEY = "ff_admin_session";
@@ -1397,7 +1399,7 @@
 
     $("a-pending-empty").classList.toggle("hidden", pending.length > 0);
     $("a-pending").innerHTML = pending.map(function (r) {
-      return "<tr><td>" + esc(fdateMs(r.at)) + "</td><td><b>" + esc(r.name) + "</b><br><span style='font-size:11.5px;color:var(--ink-mute)'>" + esc(r.email) + "</span></td>" +
+      return "<tr><td>" + esc(fdateMs(r.at)) + "</td><td><b>" + esc(r.name) + "</b><br><span style='font-size:11.5px;color:var(--ink-mute)'>" + esc(r.email) + "</span>" + earnButton(r) + "</td>" +
         "<td>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") + "</td><td>" + esc(r.network) + "</td>" +
         '<td><span class="mono-cut" title="' + esc(r.txid || r.address) + '">' + esc(r.txid || r.address) + "</span></td>" +
         '<td class="num">' + esc(fmtUsd(r.amount)) + (r.fee ? "<br><span style='font-size:11px;color:var(--ink-mute)'>net " + esc(fmtUsd(r.receive)) + "</span>" : "") + "</td>" +
@@ -1405,7 +1407,7 @@
     }).join("");
 
     $("a-history").innerHTML = settled.map(function (r) {
-      return "<tr><td>" + esc(fdateMs(r.settledAt || r.at)) + "</td><td>" + esc(r.email) + "</td><td>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") +
+      return "<tr><td>" + esc(fdateMs(r.settledAt || r.at)) + "</td><td>" + esc(r.email) + earnButton(r) + "</td><td>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") +
         '</td><td class="num">' + esc(fmtUsd(r.amount)) + '</td><td><span class="badge ' + esc(r.status) + '">' + esc(r.status) + "</span></td></tr>";
     }).join("") || '<tr><td colspan="5">Nothing settled yet.</td></tr>';
   }
@@ -1416,13 +1418,120 @@
     $("member-modal").classList.remove("open");
     document.body.classList.remove("modal-open");
     currentMember = null;
+    memberReq = null;
   }
 
-  function openMember(id) {
-    var member = null;
-    members.forEach(function (m) { if (String(m.id) === String(id)) member = m; });
+  function memberById(id) {
+    var hit = null;
+    members.forEach(function (m) { if (String(m.id) === String(id)) hit = m; });
+    return hit || extraMembers[String(id)] || null;
+  }
+
+  /* A payment request by id, from the queue that is on screen. */
+  function queueRow(reqId) {
+    var hit = null;
+    if (!lastQueue || !reqId) return null;
+    (lastQueue.pending || []).concat(lastQueue.history || []).forEach(function (r) {
+      if (String(r.id) === String(reqId)) hit = r;
+    });
+    return hit;
+  }
+
+  function earnButton(r) {
+    return EARN && r && r.id ? "<br>" + EARN.buttonHtml(r.id) : "";
+  }
+
+  function earnArgs(member, limit, reqId) {
+    var a = { p_user: member.id, p_limit: limit };
+    if (reqId) a.p_request = reqId;
+    return a;
+  }
+
+  /* Payments row → the member modal with that request on top. The queue only
+     carries the member's email: resolve the id from the loaded accounts, and
+     ask the server who made the request when the member is not among them. */
+  function openEarnings(reqId) {
+    if (!reqId) return;
+    var row = queueRow(reqId);
+    var uid = row && row.email ? emailToId[String(row.email).toLowerCase()] : null;
+    if (uid && memberById(uid)) { openMember(uid, reqId); return; }
+    rpc("admin_member_earnings", { p_request: reqId, p_limit: EARN ? EARN.LIMIT : 300 }).then(function (d) {
+      var m = (d && d.member) || {};
+      if (!m.id) throw new Error("member not found");
+      if (!memberById(m.id)) {
+        extraMembers[String(m.id)] = { id: m.id, email: m.email || "", display_name: m.name || "Member",
+          created_at: m.joinedAt ? new Date(Number(m.joinedAt)).toISOString() : null };
+      }
+      openMember(m.id, reqId, d);
+    }).catch(function (err) {
+      toast(EARN && EARN.isMissing(err) ? EARN.missingHint
+        : "Could not open this member: " + ((err && err.message) || "unknown error"), true);
+    });
+  }
+
+  /* A member named inside the earnings summary (task poster, invited member)
+     → a link that opens that member, even outside the loaded accounts. */
+  function memberCell(id, name, email) {
+    if (!id) return "<b>" + esc(name || "Unknown") + "</b>";
+    if (!memberById(id)) {
+      extraMembers[String(id)] = { id: id, email: email || "", display_name: name || "Member", created_at: null };
+    }
+    return '<button type="button" class="mail-link" data-member="' + esc(id) + '" style="white-space:normal;text-align:left" title="Open this member">' +
+      esc(name || email || "Member") + "</button>" +
+      (email ? '<br><span style="font-size:11px;color:var(--ink-mute)">' + esc(email) + "</span>" : "");
+  }
+
+  /* Ledger rows when admin_member_earnings() is not installed: the latest
+     entries of the two raw logs. The wallet log mixes coins and USDT, and a
+     mining purchase only stores its USD list price, so label each row. */
+  function restLedger(logs) {
+    var rows = [];
+    ((logs && logs[0]) || []).forEach(function (t) {
+      var coins = t.type === "adjust" || (t.type === "referral" && t.ref_currency === "points");
+      rows.push({ at: t.at, src: "wallet", type: t.type, unit: coins ? "points" : "usdt",
+        amount: Number(t.amount || 0), note: t.note || "", status: t.status || "completed",
+        counted: !(t.type === "payout" || (t.type === "deposit" && t.status !== "completed") ||
+          (t.type === "withdraw" && t.status === "rejected")) });
+    });
+    ((logs && logs[1]) || []).forEach(function (l) {
+      var asPoints = l.type === "claim" ? /as (\d+) points/.exec(l.detail || "") : null;
+      rows.push({ at: l.at, src: "mining", type: l.type,
+        unit: asPoints ? "points" : l.type === "buy" ? "list" : "usdt",
+        amount: asPoints ? Number(asPoints[1]) : Number(l.amount || 0),
+        note: l.detail || "", status: "completed", counted: true });
+    });
+    rows.sort(function (a, b) { return new Date(b.at) - new Date(a.at); });
+    return rows.slice(0, 60);
+  }
+
+  function paintEarnings(member, earn, err, logs, reqId) {
+    var box = $("mm-earn"), led = $("mm-ledger"), title = $("mm-ledger-title");
+    if (!EARN) {
+      box.innerHTML = '<p class="member-note" style="margin:0">Earning details did not load — refresh the page.</p>';
+      led.innerHTML = "";
+      return;
+    }
+    box.innerHTML = EARN.summaryHtml(earn, {
+      request: queueRow(reqId), error: err, balances: false, memberCell: memberCell
+    });
+    if (earn) {
+      var total = Number(earn.ledgerTotal || 0);
+      title.textContent = "Money ledger — " + fmtPts(total) + (total === 1 ? " entry" : " entries");
+      EARN.mountLedger(led, {
+        rows: EARN.rows(earn), total: total, server: true,
+        loadAll: function () { return rpc("admin_member_earnings", earnArgs(member, EARN.MAX, reqId)); }
+      });
+    } else {
+      title.textContent = "Money ledger";
+      EARN.mountLedger(led, { rows: restLedger(logs), server: false });
+    }
+  }
+
+  function openMember(id, reqId, preloaded) {
+    var member = memberById(id);
     if (!member) return;
     currentMember = member;
+    memberReq = reqId || null;
     var rawId = String(member.id || "");
     var accountId = rawId ? "FF-" + rawId.replace(/-/g, "").slice(0, 8).toUpperCase() : "—";
     var joined = member.created_at ? new Date(member.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
@@ -1430,7 +1539,12 @@
     $("mm-sub").innerHTML = "<b>" + esc(member.email || "") + "</b> · " + esc(accountId) + " · Joined " + esc(joined);
     ["mm-points", "mm-usdt", "mm-locked", "mm-mined", "mm-camps", "mm-tasks"].forEach(function (k) { $(k).textContent = "…"; });
     $("mm-warn").classList.add("hidden");
-    $("mm-activity").innerHTML = '<tr><td colspan="4">Loading coin activity…</td></tr>';
+    $("mm-earn").innerHTML = EARN
+      ? EARN.summaryHtml(null, { request: queueRow(memberReq), loading: true, actions: false })
+      : '<p class="member-note" style="margin:0">Loading earnings…</p>';
+    $("mm-ledger-title").textContent = "Money ledger";
+    if (EARN) EARN.mountLedger($("mm-ledger"), { loading: true });
+    else $("mm-ledger").innerHTML = "";
     $("mm-campaigns").innerHTML = '<tr><td colspan="5">Loading campaigns…</td></tr>';
     $("mm-jobs").innerHTML = '<tr><td colspan="5">Loading tasks…</td></tr>';
     $("mm-dm-box").classList.add("hidden");
@@ -1440,25 +1554,41 @@
     $("mm-events").innerHTML = '<tr><td colspan="3">Loading activity…</td></tr>';
     $("member-modal").classList.add("open");
     document.body.classList.add("modal-open");
-    loadMemberDetail(member);
+    /* opened from inside the modal (a task poster / invited member): start at the top */
+    var pane = $("member-modal").querySelector(".modal");
+    if (pane) pane.scrollTop = 0;
+    loadMemberDetail(member, preloaded);
     loadMemberWarnings(member);
   }
 
-  function loadMemberDetail(member) {
+  function loadMemberDetail(member, preloaded) {
     var id = encodeURIComponent(String(member.id));
+    var reqId = memberReq;
     var fails = [];
     function grab(path, tag) {
       return api(path).catch(function () { fails.push(tag); return null; });
     }
     var qBal = grab("/rest/v1/balances?user_id=eq." + id + "&select=*", "balance");
     var qAcc = grab("/rest/v1/mining_accounts?user_id=eq." + id + "&select=unclaimed,claimed", "mining stats");
-    var qTx = grab("/rest/v1/wallet_txns?user_id=eq." + id + "&select=type,amount,note,status,at&order=at.desc&limit=40", "wallet log");
-    var qLed = grab("/rest/v1/mining_ledger?user_id=eq." + id + "&select=type,detail,amount,at&order=at.desc&limit=40", "mining log");
+    /* Where the money came from: one admin RPC (supabase-admin-member-earnings.sql).
+       Only when it is missing are the two raw logs read over REST, so the
+       ledger still shows the latest entries on a database without that file. */
+    var earnErr = null;
+    var qEarn = (preloaded ? Promise.resolve(preloaded)
+      : rpc("admin_member_earnings", earnArgs(member, EARN ? EARN.LIMIT : 300, reqId)))
+      .catch(function (err) { earnErr = err; return null; });
+    var qLogs = qEarn.then(function (earn) {
+      if (earn) return [null, null];
+      return Promise.all([
+        grab("/rest/v1/wallet_txns?user_id=eq." + id + "&select=*&order=at.desc&limit=40", "wallet log"),
+        grab("/rest/v1/mining_ledger?user_id=eq." + id + "&select=type,detail,amount,at&order=at.desc&limit=40", "mining log")
+      ]);
+    });
     /* campaigns + tasks is member ke — admin_member_detail RPC se.
        (SQL nahi chala to null — hint dikha denge, panel crash nahi hoga.) */
     var qDetail = rpc("admin_member_detail", { p_user: member.id }).catch(function () { return null; });
-    Promise.all([qBal, qAcc, qTx, qLed, qDetail]).then(function (rs) {
-      if (currentMember !== member) return;
+    Promise.all([qBal, qAcc, qLogs, qDetail, qEarn]).then(function (rs) {
+      if (currentMember !== member || memberReq !== reqId) return;
       var bal = (rs[0] || [])[0] || null;
       var acc = (rs[1] || [])[0] || null;
       $("mm-points").textContent = bal ? fmtPts(bal.points) : "0";
@@ -1470,23 +1600,7 @@
       $("mm-usdt-in").dataset.current = bal ? Number(bal.usdt || 0).toFixed(4) : "0";
       if (balMode === "set") fillExact();
 
-      var rows = [];
-      (rs[2] || []).forEach(function (t) {
-        rows.push({ at: t.at, src: "wallet", type: t.type, unit: "usdt", note: (t.note || "") + (t.status && t.status !== "completed" ? " (" + t.status + ")" : ""), amt: Number(t.amount || 0) });
-      });
-      (rs[3] || []).forEach(function (l) {
-        rows.push({ at: l.at, src: "mining", type: l.type, unit: "usdt", note: l.detail || "", amt: Number(l.amount || 0) });
-      });
-      rows.sort(function (a, b) { return new Date(b.at) - new Date(a.at); });
-      $("mm-activity").innerHTML = rows.slice(0, 60).map(function (r) {
-        var show = function (n) { return r.unit === "coins" ? fmtCoins(n) : fmtUsdt(n); };
-        var amt = r.amt > 0 ? '<td class="num"><span class="amt-pos">+' + esc(show(r.amt)) + "</span></td>"
-          : r.amt < 0 ? '<td class="num"><span class="amt-neg">−' + esc(show(-r.amt)) + "</span></td>"
-          : '<td class="num" style="color:var(--ink-mute)">—</td>';
-        return "<tr><td style='white-space:nowrap'>" + esc(new Date(r.at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })) + "</td>" +
-          '<td><span class="ev-pill ' + esc(r.src) + '">' + esc(r.src + " · " + r.type) + "</span></td>" +
-          '<td class="k" style="max-width:230px">' + esc(r.note || "—") + "</td>" + amt + "</tr>";
-      }).join("") || '<tr><td colspan="4">No coin activity recorded yet.</td></tr>';
+      paintEarnings(member, rs[4], earnErr, rs[2], reqId);
 
       if (fails.length) {
         $("mm-warn-text").textContent = "Could not read " + fails.join(", ") + " — run the updated supabase-mining.sql (it adds the admin read policies) and supabase-wallet.sql once, then refresh.";
@@ -1494,7 +1608,7 @@
       }
 
       /* ---- campaigns run + tasks done (admin_member_detail) ---- */
-      var det = rs[4];
+      var det = rs[3];
       var camps = det && det.campaigns ? det.campaigns : null;
       var subs = det && det.subs ? det.subs : null;
       /* naye supabase-admin-member-detail.sql se Task Market submissions bhi aate hain */
@@ -2314,12 +2428,20 @@
         .then(function (q) {
           toast(ok ? "Request approved." : "Request rejected and refunded.", !ok);
           renderPayments(q);
+          /* an open member modal shows this request and the balances it changed */
+          if (currentMember && $("member-modal").classList.contains("open")) loadMemberDetail(currentMember);
         })
         .catch(function (err) {
           toast("Settle failed: " + ((err && err.message) || "unknown error"), true);
           btn.disabled = false;
           btn.style.opacity = "";
         });
+    });
+
+    /* payments row → "How earned": the member modal with that request on top */
+    document.addEventListener("click", function (e) {
+      var eb = e.target.closest("[data-ffe-open]");
+      if (eb) openEarnings(eb.getAttribute("data-ffe-open"));
     });
 
     /* error & event filter switches + member clicks across all tables */

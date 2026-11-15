@@ -1,0 +1,647 @@
+{
+  "member": {
+    "id": "fba6816f-c5c4-44a1-8b2e-8776845df2f3",
+    "name": "Alice",
+    "email": "alice@test.dev",
+    "joinedAt": 1794720381904
+  },
+  "request": {
+    "at": 1794720382133,
+    "id": "61710c15-6b7e-4f08-a8af-6bd144da3dd6",
+    "fee": 0.1,
+    "kind": "withdraw",
+    "txid": null,
+    "amount": 10,
+    "status": "pending",
+    "address": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "network": "BEP20 (BSC)",
+    "receive": 9.9,
+    "adminNote": "",
+    "settledAt": null
+  },
+  "balance": {
+    "usdt": 1.861,
+    "locked": 11,
+    "points": 3636,
+    "totalEarned": 6.861,
+    "miningClaimed": 2.05,
+    "totalDeposited": 20,
+    "totalWithdrawn": 10,
+    "miningUnclaimed": 0
+  },
+  "usdt": {
+    "in": 33.611,
+    "net": 1.861,
+    "out": -31.75,
+    "diff": 0,
+    "rows": [
+      {
+        "cur": "usdt",
+        "key": "deposit",
+        "last": 1794720382034,
+        "count": 1,
+        "first": 1794720382034,
+        "amount": 20
+      },
+      {
+        "cur": "usdt",
+        "key": "tasks",
+        "last": 1794720381979,
+        "count": 2,
+        "first": 1794720381959,
+        "amount": 3.5
+      },
+      {
+        "cur": "usdt",
+        "key": "refund",
+        "last": 1794720382092,
+        "count": 1,
+        "first": 1794720382092,
+        "amount": 3
+      },
+      {
+        "cur": "usdt",
+        "key": "from_points",
+        "last": 1794720382019,
+        "count": 1,
+        "first": 1794720382019,
+        "amount": 3
+      },
+      {
+        "cur": "usdt",
+        "key": "admin_credit",
+        "last": 1794720382081,
+        "count": 1,
+        "first": 1794720382081,
+        "amount": 2.5
+      },
+      {
+        "cur": "usdt",
+        "key": "mining",
+        "last": 1794720382066,
+        "count": 1,
+        "first": 1794720382066,
+        "amount": 1.25
+      },
+      {
+        "cur": "usdt",
+        "key": "referral",
+        "last": 1794720382078,
+        "count": 3,
+        "first": 1794720381987,
+        "amount": 0.36
+      },
+      {
+        "cur": "usdt",
+        "key": "streak",
+        "last": 1794720382002,
+        "count": 1,
+        "first": 1794720382002,
+        "amount": 0.001
+      },
+      {
+        "cur": "usdt",
+        "key": "admin_debit",
+        "last": 1794720382083,
+        "count": 1,
+        "first": 1794720382083,
+        "amount": -0.5
+      },
+      {
+        "cur": "usdt",
+        "key": "to_points",
+        "last": 1794720382024,
+        "count": 1,
+        "first": 1794720382024,
+        "amount": -1
+      },
+      {
+        "cur": "usdt",
+        "key": "rigs",
+        "last": 1794720382049,
+        "count": 1,
+        "first": 1794720382049,
+        "amount": -5
+      },
+      {
+        "cur": "usdt",
+        "key": "escrow",
+        "last": 1794720382095,
+        "count": 2,
+        "first": 1794720382084,
+        "amount": -5.25
+      },
+      {
+        "cur": "usdt",
+        "key": "withdrawn",
+        "last": 1794720382120,
+        "count": 1,
+        "first": 1794720382120,
+        "amount": -10
+      },
+      {
+        "cur": "usdt",
+        "key": "withdraw_pending",
+        "last": 1794720382133,
+        "count": 1,
+        "first": 1794720382133,
+        "amount": -10
+      }
+    ],
+    "balance": 1.861
+  },
+  "points": {
+    "in": 7121,
+    "net": 3636,
+    "out": -3485,
+    "diff": 0,
+    "rows": [
+      {
+        "cur": "points",
+        "key": "imported",
+        "last": 1794720382013,
+        "count": 1,
+        "first": 1794720382013,
+        "amount": 5000
+      },
+      {
+        "cur": "points",
+        "key": "from_usdt",
+        "last": 1794720382024,
+        "count": 1,
+        "first": 1794720382024,
+        "amount": 1000
+      },
+      {
+        "cur": "points",
+        "key": "mining",
+        "last": 1794720382070,
+        "count": 1,
+        "first": 1794720382070,
+        "amount": 880
+      },
+      {
+        "cur": "points",
+        "key": "referral",
+        "last": 1794720382116,
+        "count": 2,
+        "first": 1794720382074,
+        "amount": 221
+      },
+      {
+        "cur": "points",
+        "key": "campaigns",
+        "last": 1794720382108,
+        "count": 1,
+        "first": 1794720382108,
+        "amount": 20
+      },
+      {
+        "cur": "points",
+        "key": "campaign_spend",
+        "last": 1794720382113,
+        "count": 1,
+        "first": 1794720382113,
+        "amount": -15
+      },
+      {
+        "cur": "points",
+        "key": "rigs",
+        "last": 1794720382060,
+        "count": 1,
+        "first": 1794720382060,
+        "amount": -470
+      },
+      {
+        "cur": "points",
+        "key": "to_usdt",
+        "last": 1794720382019,
+        "count": 1,
+        "first": 1794720382019,
+        "amount": -3000
+      }
+    ],
+    "balance": 3636
+  },
+  "locked": {
+    "escrow": 1,
+    "escrowJobs": 1,
+    "withdrawals": 10,
+    "withdrawCount": 1
+  },
+  "requests": [
+    {
+      "at": 1794720382133,
+      "id": "61710c15-6b7e-4f08-a8af-6bd144da3dd6",
+      "fee": 0.1,
+      "kind": "withdraw",
+      "txid": null,
+      "amount": 10,
+      "status": "pending",
+      "address": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "network": "BEP20 (BSC)",
+      "receive": 9.9,
+      "adminNote": "",
+      "settledAt": null
+    },
+    {
+      "at": 1794720382126,
+      "id": "8f8c514e-306f-44b3-b992-aa8b61045ac8",
+      "fee": 0.1,
+      "kind": "withdraw",
+      "txid": null,
+      "amount": 10,
+      "status": "rejected",
+      "address": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "network": "BEP20 (BSC)",
+      "receive": 9.9,
+      "adminNote": "Address invalid",
+      "settledAt": 1794720382129
+    },
+    {
+      "at": 1794720382120,
+      "id": "7f4b5971-1069-4337-96cd-5211d1504a74",
+      "fee": 0.1,
+      "kind": "withdraw",
+      "txid": null,
+      "amount": 10,
+      "status": "approved",
+      "address": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "network": "BEP20 (BSC)",
+      "receive": 9.9,
+      "adminNote": "paid",
+      "settledAt": 1794720382124
+    },
+    {
+      "at": 1794720382046,
+      "id": "ec11d661-8dbd-44dd-b84c-4e2d6bf7f21e",
+      "fee": 0,
+      "kind": "deposit",
+      "txid": "0x026a7dca01e33000000000000000000000000000000000000000000000000000",
+      "amount": 12,
+      "status": "pending",
+      "address": null,
+      "network": "BEP20 (BSC)",
+      "receive": 0,
+      "adminNote": "",
+      "settledAt": null
+    },
+    {
+      "at": 1794720382042,
+      "id": "57cf7e56-02bd-40f9-bffe-e198243f3336",
+      "fee": 0,
+      "kind": "deposit",
+      "txid": "0x06cdbbe8a26f5000000000000000000000000000000000000000000000000000",
+      "amount": 15,
+      "status": "rejected",
+      "address": null,
+      "network": "BEP20 (BSC)",
+      "receive": 0,
+      "adminNote": "TXID not found",
+      "settledAt": 1794720382044
+    },
+    {
+      "at": 1794720382034,
+      "id": "b4fb77dc-13dd-4383-b58a-8449a4bb36b4",
+      "fee": 0,
+      "kind": "deposit",
+      "txid": "0xe1a7440a8e49f000000000000000000000000000000000000000000000000000",
+      "amount": 20,
+      "status": "approved",
+      "address": null,
+      "network": "BEP20 (BSC)",
+      "receive": 0,
+      "adminNote": "",
+      "settledAt": 1794720382039
+    }
+  ],
+  "payers": [
+    {
+      "name": "Bob",
+      "count": 2,
+      "email": "bob@test.dev",
+      "amount": 3.5,
+      "userId": "302d6ba5-8025-41c6-afa7-a607ffbabbd6"
+    }
+  ],
+  "referral": {
+    "direct": 1,
+    "levels": [
+      {
+        "usdt": 0.3,
+        "count": 4,
+        "level": 1,
+        "points": 221,
+        "members": 1
+      },
+      {
+        "usdt": 0.06,
+        "count": 1,
+        "level": 2,
+        "points": 0,
+        "members": 1
+      }
+    ],
+    "downline": [
+      {
+        "name": "Carol",
+        "usdt": 0.3,
+        "count": 4,
+        "email": "carol@test.dev",
+        "level": 1,
+        "points": 221,
+        "userId": "4a259c39-c9f9-4d1f-b1b4-3be924a2531e"
+      },
+      {
+        "name": "Dave",
+        "usdt": 0.06,
+        "count": 1,
+        "email": "dave@test.dev",
+        "level": 2,
+        "points": 0,
+        "userId": "98a504ac-a063-4544-ae6b-06e96b4860cb"
+      }
+    ]
+  },
+  "streak": {
+    "best": 1,
+    "claims": 1,
+    "streak": 1,
+    "lastDate": "2026-11-15"
+  },
+  "adminEdits": 2,
+  "ledger": [
+    {
+      "at": 1794720382133,
+      "src": "wallet",
+      "note": "Withdrawal to BEP20 (BSC) (fee $0.10)",
+      "type": "withdraw",
+      "unit": "usdt",
+      "amount": -10,
+      "status": "pending",
+      "counted": true
+    },
+    {
+      "at": 1794720382126,
+      "src": "wallet",
+      "note": "Withdrawal to BEP20 (BSC) (fee $0.10)",
+      "type": "withdraw",
+      "unit": "usdt",
+      "amount": -10,
+      "status": "rejected",
+      "counted": false
+    },
+    {
+      "at": 1794720382120,
+      "src": "wallet",
+      "note": "Withdrawal to BEP20 (BSC) (fee $0.10)",
+      "type": "withdraw",
+      "unit": "usdt",
+      "amount": -10,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382116,
+      "src": "wallet",
+      "note": "L1 referral income · Campaign \"Alice group\" by Alice",
+      "type": "referral",
+      "unit": "points",
+      "amount": 1,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382095,
+      "src": "wallet",
+      "note": "Escrow for task \"Review my app please\" (2 slots + 5% fee)",
+      "type": "escrow",
+      "unit": "usdt",
+      "amount": -1.05,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382092,
+      "src": "wallet",
+      "note": "Refund from cancelled task \"Join my channel\"",
+      "type": "refund",
+      "unit": "usdt",
+      "amount": 3,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382090,
+      "src": "wallet",
+      "note": "Paid Bob for \"Join my channel\"",
+      "type": "payout",
+      "unit": "usdt",
+      "amount": -1,
+      "status": "completed",
+      "counted": false
+    },
+    {
+      "at": 1794720382084,
+      "src": "wallet",
+      "note": "Escrow for task \"Join my channel\" (4 slots + 5% fee)",
+      "type": "escrow",
+      "unit": "usdt",
+      "amount": -4.2,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382083,
+      "src": "mining",
+      "note": "Correction",
+      "type": "admin",
+      "unit": "usdt",
+      "amount": -0.5,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382081,
+      "src": "mining",
+      "note": "Telegram promo bonus",
+      "type": "admin",
+      "unit": "usdt",
+      "amount": 2.5,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382078,
+      "src": "wallet",
+      "note": "L1 referral income · Mining claim to USDT",
+      "type": "referral",
+      "unit": "usdt",
+      "amount": 0.1,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382074,
+      "src": "wallet",
+      "note": "L1 referral income · Mining claim as points",
+      "type": "referral",
+      "unit": "points",
+      "amount": 220,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382070,
+      "src": "mining",
+      "note": "Claimed $0.8000 as 880 points",
+      "type": "claim",
+      "unit": "points",
+      "amount": 880,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382066,
+      "src": "mining",
+      "note": "Claimed $1.2500 to the USDT balance",
+      "type": "claim",
+      "unit": "usdt",
+      "amount": 1.25,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382060,
+      "src": "mining",
+      "note": "Custom Rig · 100 GH/s for 7 days",
+      "type": "rig",
+      "unit": "points",
+      "amount": -470,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382049,
+      "src": "mining",
+      "note": "Bronze Miner · 260 GH/s for 30 days",
+      "type": "rig",
+      "unit": "usdt",
+      "amount": -5,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382046,
+      "src": "wallet",
+      "note": "Deposit via BEP20 (BSC)",
+      "type": "deposit",
+      "unit": "usdt",
+      "amount": 12,
+      "status": "pending",
+      "counted": false
+    },
+    {
+      "at": 1794720382042,
+      "src": "wallet",
+      "note": "Deposit via BEP20 (BSC)",
+      "type": "deposit",
+      "unit": "usdt",
+      "amount": 15,
+      "status": "rejected",
+      "counted": false
+    },
+    {
+      "at": 1794720382034,
+      "src": "wallet",
+      "note": "Deposit via BEP20 (BSC)",
+      "type": "deposit",
+      "unit": "usdt",
+      "amount": 20,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382024,
+      "src": "wallet",
+      "note": "$1.0000 USDT converted to 1000 points",
+      "type": "convert",
+      "unit": "usdt",
+      "amount": -1,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382019,
+      "src": "wallet",
+      "note": "3000 points converted to USDT",
+      "type": "convert",
+      "unit": "usdt",
+      "amount": 3,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382013,
+      "src": "wallet",
+      "note": "Imported browser-earned points",
+      "type": "adjust",
+      "unit": "points",
+      "amount": 5000,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720382002,
+      "src": "wallet",
+      "note": "Day 1 daily streak reward — Rookie",
+      "type": "streak",
+      "unit": "usdt",
+      "amount": 0.001,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720381996,
+      "src": "wallet",
+      "note": "L2 referral income · Task \"Follow my page\" approved",
+      "type": "referral",
+      "unit": "usdt",
+      "amount": 0.06,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720381987,
+      "src": "wallet",
+      "note": "L1 referral income · Task \"Follow my page\" approved",
+      "type": "referral",
+      "unit": "usdt",
+      "amount": 0.2,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720381979,
+      "src": "wallet",
+      "note": "Task approved: \"Like my video\"",
+      "type": "earning",
+      "unit": "usdt",
+      "amount": 1.5,
+      "status": "completed",
+      "counted": true
+    },
+    {
+      "at": 1794720381959,
+      "src": "wallet",
+      "note": "Task approved: \"Follow my page\"",
+      "type": "earning",
+      "unit": "usdt",
+      "amount": 2,
+      "status": "completed",
+      "counted": true
+    }
+  ],
+  "ledgerTotal": 27,
+  "ledgerLimit": 300
+}
