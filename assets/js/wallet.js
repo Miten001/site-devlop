@@ -131,9 +131,32 @@ if (typeof window !== "undefined") {
     return req;
   }
 
+  /* One withdrawal at a time — the same rule wallet_create_withdraw() applies
+     on the server. openWithdrawals() picks the withdrawals that are still
+     waiting for an admin out of a request list (either mode's view.requests);
+     withdrawBlockedMessage() is what a member is told when they ask for
+     another one. The next request is accepted once those are approved (or
+     rejected, which returns the money). */
+  function openWithdrawals(list) {
+    return (list || []).filter((r) => r && r.kind === "withdraw" && r.status === "pending");
+  }
+  function withdrawBlockedMessage(open) {
+    const total = (open || []).reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    return open && open.length > 1
+      ? "You already have " + open.length + " withdrawals (" + usd(total) + " in total) waiting for approval. You can request the next one after they are approved."
+      : "You already have a withdrawal of " + usd(total) + " waiting for approval. You can request the next one after it is approved.";
+  }
+  /* True when an error is that refusal — from this file or from the server,
+     which words it the same way. It is the rule working, not a fault. */
+  function isWithdrawBlocked(err) {
+    return /^You already have (a withdrawal|\d+ withdrawals) .*waiting for approval/.test(String((err && err.message) || ""));
+  }
+
   function createWithdraw(email, name, amount, network, address) {
     amount = Number(amount);
     const w = wallet(email);
+    const open = openWithdrawals(myRequests(email));
+    if (open.length) throw new Error(withdrawBlockedMessage(open));
     if (!(amount >= CFG.minWithdraw)) throw new Error("Minimum withdrawal is " + usd(CFG.minWithdraw) + " USDT");
     if (!enough(w.available, amount)) throw new Error("Not enough available balance — you have " + usd(w.available) + " USDT");
     if (!network || CFG.withdrawNetworks.indexOf(network) < 0) throw new Error("Select a payout method");
@@ -811,6 +834,7 @@ if (typeof window !== "undefined") {
     CFG, CATEGORIES, category, money, usd, uid, cents, enough, debit,
     wallet, patchWallet, tx,
     createDeposit, createWithdraw, settleRequest, requests, myRequests,
+    openWithdrawals, withdrawBlockedMessage, isWithdrawBlocked,
     jobs, openJobs, myJobs, postJob, cancelJob, jobQuota,
     subs, jobSubs, mySubs, submitProof, reviewSub,
     adminCancelJob, adminSetJobStatus,
