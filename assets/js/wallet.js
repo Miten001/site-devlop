@@ -390,11 +390,32 @@ if (typeof window !== "undefined") {
   }
 
   /* ---------- UI helpers ---------- */
+  /* "In escrow / pending" for a signed-in (server) member is the Postgres
+     figure: task escrow and pending withdrawals are locked by the wallet /
+     jobs RPCs and never reach the browser ledger, whose `locked` stays 0 for
+     that member. Painting the chip from the browser ledger therefore showed
+     "In escrow / pending: 0.00" as soon as anything repainted after the
+     wallet_state response (the mining payload landing, a local wallet patch)
+     even though the member had USDT locked.
+
+     The last server figure is remembered next to the other server baselines
+     (ff_srv_sync) so EVERY repaint — and the first paint of the next page —
+     shows it. The browser ledger's own `locked` is left untouched, so local
+     previews and the offline bookkeeping keep their own escrow maths. */
+  function lockedShown(u, w) {
+    if (u && FF.hasServer && FF.hasServer()) {
+      const mark = srvMarks()[u.email];
+      if (mark && mark.locked != null) return Number(mark.locked) || 0;
+    }
+    return Number((w && w.locked) || 0);
+  }
+
   function syncWalletPills() {
     const u = FF.currentUser();
     const w = u ? wallet(u.email) : { available: 0, locked: 0 };
+    const locked = lockedShown(u, w);
     document.querySelectorAll("[data-usdt]").forEach((el) => { el.textContent = Number(w.available).toFixed(2); });
-    document.querySelectorAll("[data-usdt-locked]").forEach((el) => { el.textContent = Number(w.locked).toFixed(2); });
+    document.querySelectorAll("[data-usdt-locked]").forEach((el) => { el.textContent = locked.toFixed(2); });
   }
 
   /* ---------- server ⇄ browser balance merge ----------
@@ -420,10 +441,14 @@ if (typeof window !== "undefined") {
     store.set("ff_srv_sync", all);
   }
 
-  function reconcileServer(srvPts, srvUsdt) {
+  /* srvLocked is optional: wallet_state knows it, the mining payload does
+     not — a caller that leaves it out keeps the last remembered figure. */
+  function reconcileServer(srvPts, srvUsdt, srvLocked) {
     const u = FF.currentUser();
     const out = { points: Number(srvPts || 0), usdt: Number(srvUsdt || 0), exPoints: 0, exUsdt: 0 };
     if (!u) return out;
+    /* Record the server's locked figure BEFORE anything below repaints. */
+    if (srvLocked != null) setSrvMark(u.email, { locked: Math.max(0, Number(srvLocked) || 0) });
     const mark = Object.assign({ pts: 0, usdt: 0 }, srvMarks()[u.email]);
     const locPts = Number(u.credits || 0);
     const locUsdt = Number(wallet(u.email).available || 0);
@@ -541,7 +566,8 @@ if (typeof window !== "undefined") {
        the chips never drop back to zero (see reconcileServer). */
     const rec = reconcileServer(
       num((payload.wallet || {}).points),
-      num((payload.wallet || {}).available)
+      num((payload.wallet || {}).available),
+      num((payload.wallet || {}).locked)
     );
     const view = {
       mode: "server",

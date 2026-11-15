@@ -18,10 +18,13 @@
 - 🏦 **USDT Wallet** — `wallet.html` with deposit (USDT on BEP20, min $10, live QR code + TXID submission), withdrawal requests (BEP20 or UPI, min $10, 1% fee), points→USDT conversion (1000 pts = $1) and a full transaction ledger. Wallet, escrow and the marketplace all run on a **server-authoritative Postgres backend** ([`supabase-wallet.sql`](supabase-wallet.sql))
 - ⛏️ **Cloud Mining** — `mining.html`: rent hashrate with **points or USDT**, rigs mine 24/7 (rewards accrue even while offline), free daily +25% boost, claim mined USDT to the wallet or as points with a +10% bonus. Ships with a **server-authoritative Postgres backend** ([`supabase-mining.sql`](supabase-mining.sql)) so balances cannot be edited from the browser console
 - 🛡️ **Payments admin** — `admin-payments.html` for allowlisted admins to approve/reject deposits and withdrawals
+- 🔍 **Withdrawal review — "How earned"** — every row of the payments queue (`admin.html → 💳 Payments` and `admin-payments.html`) has a **🔍 How earned** button that shows where that member's balance came from **before** you pay it out: USDT in/out by source (Task Market tasks, daily streak, referral income, mining claims and rigs, coin conversions, deposits, task escrow, earlier withdrawals), the same for coins, every deposit/withdrawal request the member ever made, which task posters paid them, whose activity produced the referral income, and the full money ledger with filters. A **balance check** confirms the entries add up to the withdrawable balance and turns red when they do not; Approve / Reject sit next to the evidence. Needs [`supabase-admin-member-earnings.sql`](supabase-admin-member-earnings.sql) — one read-only, admins-only function ([details](#reviewing-a-withdrawal--how-earned))
 - 🎨 Premium dark UI — aurora gradients, glassmorphism, 3D tilt, scroll reveals
 
 ## Recent fixes
 
+- **Dashboard "In escrow / pending" showed 0.00** — a signed-in member with a pending withdrawal or task escrow saw the right amount for a moment and then `0.00`. The chip was painted from the server (`wallet_state`) and then repainted from the browser ledger as soon as the mining state arrived — and the browser ledger never hears about money the server has locked. `reconcileServer()` in [`assets/js/wallet.js`](assets/js/wallet.js) now remembers the server's locked amount next to the other synced balances, and every repaint (and the first paint of the next page) uses it. Browser/demo mode is unchanged and no SQL had to change — the server figure was already right. Regression: scenario 7b in [`tests/reconcile.test.js`](tests/reconcile.test.js).
+- **Admin could not see how a withdrawing member earned** — the payments queue only showed name, amount and address. Each request now has a **🔍 How earned** button ([details](#reviewing-a-withdrawal--how-earned)); run [`supabase-admin-member-earnings.sql`](supabase-admin-member-earnings.sql) once to turn it on.
 - **"Need $1.20 USDT — you have $1.20"** — balances are stored with 8 decimals but shown with 2, so a strict comparison rejected purchases the wallet clearly covered. Every money check (mining rigs, withdrawals, USDT conversion, task escrow) now compares at **cent precision** and clamps the debit at zero; the error message names the real balance. The five server functions are fixed in [`supabase-fix-balance-rounding.sql`](supabase-fix-balance-rounding.sql) — run that file once in the Supabase SQL editor to apply it to a live database.
 - **Whole site in English** — every user-facing string (pages, admin panels, toasts, validation errors, placeholders) is English, and `tests/money-rounding.test.js` fails the build if Hinglish copy returns.
 
@@ -86,6 +89,27 @@ Members can `select` only their own `wallet_txns` / `pay_requests`; job listings
 ### Admin
 
 Admins listed in `window.FF_ADMIN_EMAILS` settle payment requests at `admin-payments.html`. In server mode the page calls `wallet_admin_queue`, `wallet_admin_settle`, `jobs_admin_review` and `jobs_admin_cancel`, all gated by the `public.admins` allowlist — the browser-side `FF_ADMIN_EMAILS` list is only a UI hint. Approving a deposit credits the balance; rejecting a withdrawal returns the locked funds; cancelling a task refunds the unused escrow to its owner.
+
+#### Reviewing a withdrawal — "How earned"
+
+Before paying a withdrawal, check where the money came from: click **🔍 How earned** on any row of the payments queue (`admin.html → 💳 Payments`, or `admin-payments.html`). The same breakdown is in every member modal of `admin.html`.
+
+| Block | What it tells you |
+| --- | --- |
+| Request card | Amount, fee, what the member receives, network and address — with **Approve** / **Reject** right there |
+| Earned (net) · Deposited · Withdrawn so far · Waiting to withdraw | The four numbers to compare at a glance |
+| USDT — money in / money out | One line per source with the number of entries and the date range. In: Task Market tasks, daily streak, referral income, mining claims, coins → USDT, deposits, escrow refunds, admin credits. Out: paid and pending withdrawals, task escrow, rigs bought with USDT, USDT → coins, admin debits |
+| Coins — in / out | Point campaigns, referral income, mining claimed as coins, browser import, conversions, rigs, payouts on the member's own campaigns |
+| Deposits & withdrawals | Every request the member ever made, with status and reject reason |
+| Who paid this member | Task posters whose approved tasks paid them — click a name to open that member |
+| Referral income | Which invited members' activity produced it, by level |
+| Money ledger | Every wallet and mining entry, newest first, with filters and **Load all** |
+
+**Balance check.** Money in − money out must equal the balance the member can withdraw. Within 5 cents the check is green; anything larger turns red (for example *"$25.00 of the available $26.90 has no matching entry"*) — look at the ledger before paying out a balance nobody can explain. Coins only get a soft note, because admin coin edits and changed campaign payouts are not itemised.
+
+**Earned (net)** = tasks + streak + referrals + mining claims − rigs bought with USDT ± coin conversions. Rigs are subtracted on purpose: a member who cycles the same $100 through rigs ten times has not earned $1,000, and a deposit converted to coins and back is not an earning.
+
+**Setup:** run [`supabase-admin-member-earnings.sql`](supabase-admin-member-earnings.sql) once, after `supabase.sql`, `supabase-mining.sql` and `supabase-wallet.sql`. It adds one function, `admin_member_earnings(p_user, p_request, p_limit)` — `security definer`, gated by the `public.admins` allowlist, not executable by `anon`, and read-only: it creates no table and changes no row. Until it is run the button still opens the request (with Approve / Reject) and a note naming the file; `admin.html` also lists the latest raw ledger entries. The page code is [`assets/js/admin-earnings.js`](assets/js/admin-earnings.js); tests are in [`tests/admin-earnings.test.js`](tests/admin-earnings.test.js).
 
 ## Points never zero out (browser ⇄ server merge)
 

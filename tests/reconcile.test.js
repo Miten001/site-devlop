@@ -199,6 +199,38 @@ async function main() {
   check("mining view balances merged: points 59", view7.balances.points === 59, view7.balances.points);
   check("mining local credits stay 59", getUser().credits === 59, getUser().credits);
 
+  /* ============ SCENARIO 7b: "In escrow / pending" chip ============ */
+  /* Reported bug: the dashboard showed "In escrow / pending: 0.00 USDT" for
+     a member with USDT locked in task escrow / a pending withdrawal. The chip
+     was painted correctly from wallet_state, then the mining payload landed
+     and repainted it from the browser ledger, where a server member's
+     `locked` is always 0. */
+  console.log("\n[7b] \"In escrow / pending\" keeps the server's locked USDT after later repaints");
+  const lockedEl = fakeEl('[data-usdt-locked]');
+  rpcResponses.mining_state.balances = { usdt: 4.0668, points: 0 };
+  rpcResponses.wallet_state = walletStatePayload(0, 4.0668, 7.5);
+  const view7b = await FF.W.api.wallet();
+  check("wallet_state paints the escrow chip: 7.50", lockedEl.textContent === "7.50", lockedEl.textContent);
+  check("view.wallet.locked = 7.5", view7b.wallet.locked === 7.5, view7b.wallet.locked);
+  await FF.M.api.load();   // mining_state has no `locked` — it used to reset the chip
+  check("mining_state landing afterwards keeps 7.50 (not 0.00)", lockedEl.textContent === "7.50", lockedEl.textContent);
+  W.patchWallet("rohan@test.dev", () => {});   // any browser wallet patch repaints the chips
+  check("a browser wallet patch keeps 7.50", lockedEl.textContent === "7.50", lockedEl.textContent);
+  lockedEl.textContent = "0.00";               // next page: markup default, then first paint
+  W.syncWalletPills();
+  check("next page's first paint shows the remembered 7.50", lockedEl.textContent === "7.50", lockedEl.textContent);
+  check("browser ledger's own locked stays untouched (0)", W.wallet("rohan@test.dev").locked === 0, W.wallet("rohan@test.dev").locked);
+  rpcResponses.wallet_state = walletStatePayload(0, 4.0668, 33.16);
+  await FF.W.api.wallet();
+  await FF.M.api.load();
+  check("chip follows the server up to 33.16 (new withdrawal request)", lockedEl.textContent === "33.16", lockedEl.textContent);
+  rpcResponses.wallet_state = walletStatePayload(0, 4.0668, 0);
+  await FF.W.api.wallet();
+  await FF.M.api.load();
+  check("chip follows the server back to 0.00 once it is settled", lockedEl.textContent === "0.00", lockedEl.textContent);
+  rpcResponses.wallet_state = walletStatePayload(0, 4.0668, 7.5);
+  await FF.W.api.wallet();   // leave a server figure behind for the local-mode check below
+
   /* ============ SCENARIO 8: local mode untouched ============ */
   console.log("\n[8] local (browser-only) mode keeps working exactly like before");
   FF.store.set("ff_auth", null);
@@ -209,6 +241,10 @@ async function main() {
   check("local mode: view points 1240", view8.wallet.points === 1240, view8.wallet.points);
   check("local mode: mode is 'local'", view8.mode === "local", view8.mode);
   check("pills paint 1,240", creditsEl.textContent === "1,240", creditsEl.textContent);
+  check("local mode: escrow chip paints the browser ledger, not a server figure", lockedEl.textContent === "0.00", lockedEl.textContent);
+  W.patchWallet("demo@flexfam.io", (acc) => { acc.locked = 2.5; });
+  check("local mode: browser escrow of 2.50 is shown", lockedEl.textContent === "2.50", lockedEl.textContent);
+  W.patchWallet("demo@flexfam.io", (acc) => { acc.locked = 0; });
 
   /* ============ SCENARIO 9: welcome bonus on signup only ============ */
   console.log("\n[9] signup keeps the welcome bonus, login does not");
