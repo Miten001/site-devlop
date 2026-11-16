@@ -26,6 +26,12 @@ begin
         'created', extract(epoch from c.created_at) * 1000) as c
       from public.market_campaigns c join auth.users au on au.id = c.owner
       where c.active
+        and not exists (
+          select 1 from public.market_campaign_subs s
+           where s.campaign_id = c.id
+             and s.worker = v_user
+             and s.status in ('approved', 'pending')
+        )
     ) o),
     'mine', (select coalesce(jsonb_agg(c order by (c ->> 'payout')::numeric desc,
                                                   (c ->> 'created')::numeric desc), '[]'::jsonb) from (

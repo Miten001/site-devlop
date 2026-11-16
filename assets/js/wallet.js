@@ -257,35 +257,41 @@ if (typeof window !== "undefined") {
     return job;
   }
 
+  function sameEmail(a, b) {
+    return String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+  }
+
   function openJobs(excludeEmail) {
     const done = subs();
-    return jobs().filter((j) => j.status === "active" && j.filled < j.slots && j.owner !== excludeEmail)
-      .filter((j) => !done.some((s) => s.jobId === j.id && s.worker === excludeEmail))
+    return jobs()
+      .filter((j) => j.status === "active" && j.filled < j.slots && !sameEmail(j.owner, excludeEmail))
+      .filter((j) => j.escrow == null || enough(j.escrow, j.reward))
+      .filter((j) => !done.some((s) => s.jobId === j.id && sameEmail(s.worker, excludeEmail)))
       /* jyada reward wali task pehle */
       .sort((a, b) => num(b.reward) - num(a.reward) || num(b.createdAt) - num(a.createdAt));
   }
 
-  function myJobs(email) { return jobs().filter((j) => j.owner === email); }
+  function myJobs(email) { return jobs().filter((j) => sameEmail(j.owner, email)); }
 
   /* kitne live tasks is member ke har category me hain (max 3) */
   function jobQuota(email) {
     const by = {};
     jobs().forEach((j) => {
-      if (j.owner !== email) return;
+      if (!sameEmail(j.owner, email)) return;
       if (j.status !== "active" && j.status !== "paused") return;
       by[j.category || "other"] = (by[j.category || "other"] || 0) + 1;
     });
     return { max: 3, byCategory: by };
   }
   function jobSubs(jobId) { return subs().filter((s) => s.jobId === jobId); }
-  function mySubs(email) { return subs().filter((s) => s.worker === email); }
+  function mySubs(email) { return subs().filter((s) => sameEmail(s.worker, email)); }
 
   function submitProof(email, name, jobId, proof, note) {
     const job = jobs().find((j) => j.id === jobId);
     if (!job) throw new Error("Task not found");
-    if (job.owner === email) throw new Error("You cannot work on your own task");
+    if (sameEmail(job.owner, email)) throw new Error("You cannot work on your own task");
     if (job.status !== "active" || job.filled >= job.slots) throw new Error("This task is already full");
-    if (subs().some((s) => s.jobId === jobId && s.worker === email)) throw new Error("You already submitted this task");
+    if (subs().some((s) => s.jobId === jobId && sameEmail(s.worker, email))) throw new Error("You already submitted this task");
     if (!proof || proof.trim().length < 6) throw new Error("Add your proof (link, screenshot URL, username or ID)");
     const sub = {
       id: uid("sub"), jobId, jobTitle: job.title, reward: job.reward,
@@ -327,7 +333,7 @@ if (typeof window !== "undefined") {
   function cancelJob(email, jobId) {
     const list = jobs();
     const j = list.find((x) => x.id === jobId);
-    if (!j || j.owner !== email) throw new Error("Task not found");
+    if (!j || !sameEmail(j.owner, email)) throw new Error("Task not found");
     if (j.status === "cancelled") throw new Error("Already cancelled");
     const remaining = Math.max(0, j.slots - j.filled) * j.reward;
     j.status = "cancelled";
@@ -657,6 +663,8 @@ if (typeof window !== "undefined") {
         minJobReward: num(cfg.minJobReward) || 0.02,
       },
       categories: (payload.categories || []).map((c) => ({ key: c.key, name: c.name, color: c.color })),
+      quota: payload.quota || undefined,
+      availableRewards: payload.availableRewards != null ? num(payload.availableRewards) : undefined,
       open: (payload.open || []).map(job),
       mine: (payload.mine || []).map(job),
       mySubs: (payload.mySubs || []).map(sub),
@@ -769,7 +777,10 @@ if (typeof window !== "undefined") {
         p_title: data.title, p_category: data.category, p_description: data.description,
         p_url: data.url || "", p_proof_note: data.proofNote || "",
         p_reward: Number(data.reward), p_slots: parseInt(data.slots, 10),
-      }, (u) => postJob(u.email, u.name, data), "feed");
+      }, (u) => postJob(u.email, u.name, data), "feed").then((res) => {
+        if (res && res.mode === "server") api.wallet().catch(() => {});
+        return res;
+      });
     },
 
     submitProof(jobId, proof, note) {
@@ -779,11 +790,17 @@ if (typeof window !== "undefined") {
 
     reviewSub(subId, approve, reason) {
       return remote("jobs_review", { p_sub: subId, p_approve: !!approve, p_reason: reason || "" },
-        () => reviewSub(subId, approve, reason), "feed");
+        () => reviewSub(subId, approve, reason), "feed").then((res) => {
+        if (res && res.mode === "server") api.wallet().catch(() => {});
+        return res;
+      });
     },
 
     cancelJob(jobId) {
-      return remote("jobs_cancel", { p_job: jobId }, (u) => cancelJob(u.email, jobId), "feed");
+      return remote("jobs_cancel", { p_job: jobId }, (u) => cancelJob(u.email, jobId), "feed").then((res) => {
+        if (res && res.mode === "server") api.wallet().catch(() => {});
+        return res;
+      });
     },
 
     jobQuota() {

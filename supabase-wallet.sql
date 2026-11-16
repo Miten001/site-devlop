@@ -498,7 +498,8 @@ begin
           'filled', jb.filled, 'escrow', jb.escrow, 'ownerName', public.wallet_display_name(jb.owner),
           'createdAt', extract(epoch from jb.created_at) * 1000) as j
         from public.jobs jb
-        where jb.status = 'active' and jb.filled < jb.slots and jb.owner <> v_user
+        where jb.status = 'active' and jb.filled < jb.slots and jb.escrow >= jb.reward
+          and jb.owner <> v_user
           and not exists (select 1 from public.job_subs s where s.job_id = jb.id and s.worker = v_user)
       ) o),
     -- my own postings

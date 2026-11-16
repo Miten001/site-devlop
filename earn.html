@@ -191,9 +191,9 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.6"></script>
-<script src="assets/js/wallet.js?v=2.5"></script>
+<script src="assets/js/wallet.js?v=2.6"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
-<script src="assets/js/campaigns.js?v=2.0"></script>
+<script src="assets/js/campaigns.js?v=2.1"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script src="assets/js/proof.js?v=1.0"></script>
 <script>
@@ -312,20 +312,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderBonuses() {
     if (!bonusEl) return;
-    bonusEl.innerHTML = BONUS_TASKS.map((b) => {
+    const openBonuses = BONUS_TASKS.filter((b) => !isBonusDone(b));
+    const quickPanel = bonusEl.closest(".quick-earn");
+    if (quickPanel) quickPanel.classList.toggle("hidden", openBonuses.length === 0);
+    bonusEl.innerHTML = openBonuses.map((b) => {
       const p = FF.PLATFORMS[b.platform] || { color: "#7c3aed", icon: "", name: "Platform" };
-      const done = isBonusDone(b);
       return `
-        <div class="bonus-card ${done ? "done" : ""}" style="--pf:${p.color}">
+        <div class="bonus-card" style="--pf:${p.color}">
           <span class="bonus-ico">${p.icon}</span>
           <div>
             <h4>${b.title}</h4>
             <p>${p.name} · ${b.action}</p>
           </div>
           <div class="bonus-meta"><b>+${b.payout}</b><span>${b.hint}</span></div>
-          <button class="btn ${done ? "btn-ghost" : "btn-primary"} btn-sm" data-bonus="${b.id}" ${done ? "disabled" : ""}>
-            ${done ? (b.cooldown === "daily" ? "Done today ✓" : "Claimed ✓") : "Start & Earn"}
-          </button>
+          <button class="btn btn-primary btn-sm" data-bonus="${b.id}">Start &amp; Earn</button>
         </div>`;
     }).join("");
   }
@@ -357,11 +357,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function doneIds() {
+    if (!user || !user.email || user.guest) return new Set();
     return new Set(FF.DB.doneMap()[user.email] || []);
   }
 
   function mySubState(campaignId) {
-    const subs = FF.myCampSubs(user.email).filter((s) => s.campaignId === campaignId);
+    if (!user || !user.email || user.guest) return null;
+    const subs = FF.myCampSubs(user.email)
+      .filter((s) => s.campaignId === campaignId)
+      .sort((a, b) => Number(b.at || 0) - Number(a.at || 0));
     if (!subs.length) return null;
     // most recent submission wins (a rejected one can be resubmitted)
     return subs[0];
@@ -379,51 +383,56 @@ document.addEventListener("DOMContentLoaded", () => {
     return c.mine === true;
   }
 
+  function isCampCompletedByMe(c, done) {
+    if (!c || isOwnCamp(c)) return false;
+    if (!user || !user.email || user.guest) return false;
+    if (done.has(c.id)) return true;
+    const sub = mySubState(c.id);
+    return !!(sub && (sub.status === "approved" || sub.status === "pending"));
+  }
+
   function render() {
     const done = doneIds();
-    /* Apni PAUSED campaigns bhi dikhti hain (Paused badge ke saath) —
-       dusron ki paused campaigns hidden rehti hain. */
-    /* Jyada coin/USDT bid karne wali campaign sabse pehle dikhti hai —
-       barabar payout par nayi campaign upar. */
-    const items = FF.DB.campaigns()
-      .filter((c) => (c.active !== false || isOwnCamp(c)) && (activeFilter === "all" || c.platform === activeFilter))
+    /* Hide campaigns the signed-in member has already completed or submitted
+       so completed tasks leave their screen immediately. Owners still see
+       their own campaigns (live or paused) with status badges. */
+    const inFilter = FF.DB.campaigns()
+      .filter((c) => (c.active !== false || isOwnCamp(c)) && (activeFilter === "all" || c.platform === activeFilter));
+    const items = inFilter
+      .filter((c) => !isCampCompletedByMe(c, done))
       .sort((a, b) => (Number(b.payout) || 0) - (Number(a.payout) || 0) || (Number(b.created) || 0) - (Number(a.created) || 0));
-    const notDone = items.some((c) => !done.has(c.id));
-    emptyEl.classList.toggle("hidden", notDone);
-    /* Clear message for the empty state: filter me campaign hai hi nahi,
-       ya sab complete kar liye — dono alag batado. */
+    const hasCompletedAny = inFilter.length > items.length
+      || (activeFilter === "all" && (done.size > 0 || (user && user.email && !user.guest && FF.myCampSubs(user.email).some((s) => s.status === "approved" || s.status === "pending"))));
+    emptyEl.classList.toggle("hidden", items.length > 0);
     const eTitle = document.getElementById("empty-title");
     const eText = document.getElementById("empty-text");
-    if (!notDone && eTitle && eText) {
-      if (!items.length) {
+    if (!items.length && eTitle && eText) {
+      if (hasCompletedAny) {
+        eTitle.textContent = "All tasks complete!";
+        eText.textContent = "You've finished every campaign in this filter. Completed tasks are hidden from your screen — check other platform filters or come back soon for new campaigns.";
+      } else {
         const p = activeFilter !== "all" ? FF.PLATFORMS[activeFilter] : null;
         eTitle.textContent = "No campaigns here yet";
         eText.textContent = p
           ? "No one has posted a " + p.name + " campaign yet. Check \"All Tasks\" for other platforms, or come back soon."
           : "No community campaigns right now. New ones appear here as soon as members post them.";
-      } else {
-        eTitle.textContent = "All tasks complete!";
-        eText.textContent = "You've finished every campaign in this filter. Check other platform filters or come back soon for new campaigns.";
       }
     }
     listEl.innerHTML = items.map((c) => {
       const p = FF.PLATFORMS[c.platform] || { color: "#7c3aed", icon: "", name: "Platform", hint: "Network" };
-      const isDone = done.has(c.id);
-      const sub = !isDone ? mySubState(c.id) : null;
-      const isPending = sub && sub.status === "pending";
+      const sub = mySubState(c.id);
       const isRejected = sub && sub.status === "rejected";
-      /* Apni hi campaign — complete nahi kar sakte, par status dikhna chahiye */
       const isOwn = isOwnCamp(c);
       const isPaused = c.active === false && isOwn;
       const isWatch = FF.isTimerCampaign ? FF.isTimerCampaign(c) : false;
       const maxA = Math.max(0, Math.round(Number(c.maxActions || 0)));
       const acts = Number(c.actions || 0);
       const isFull = maxA > 0 && acts >= maxA;
-      const disabled = isDone || isPending || isOwn || isFull;
-      const label = isDone ? "Completed ✓" : isPending ? "Pending review" : isPaused ? "Paused ⏸" : isOwn ? "Your campaign 👑" : isFull ? "Limit reached ⛔" : isRejected ? "Try again" : isWatch ? "Watch & Earn ⏱" : "Start Task";
-      const btnClass = isDone || isPending || isOwn || isFull ? "btn-ghost" : "btn-primary";
+      const disabled = isOwn || isFull;
+      const label = isPaused ? "Paused ⏸" : isOwn ? "Your campaign 👑" : isFull ? "Limit reached ⛔" : isRejected ? "Try again" : isWatch ? "Watch & Earn ⏱" : "Start Task";
+      const btnClass = isOwn || isFull ? "btn-ghost" : "btn-primary";
       return `
-        <div class="task-card ${isDone ? "done" : ""}" style="--pf:${p.color}">
+        <div class="task-card" style="--pf:${p.color}">
           <div class="task-top">
             <span class="pf-badge">${p.icon}</span>
             <div>
@@ -440,8 +449,8 @@ document.addEventListener("DOMContentLoaded", () => {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
             </a>
           </div>
-          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isFull ? "This campaign reached its engagement limit (" + acts + "/" + maxA + ") — watch for new campaigns from other members" : isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isPending ? "Waiting for the campaign owner to approve your proof" : isWatch ? "\u23F1\uFE0F Watch for " + (Number(c.watchSecs) || 15) + "s — points credited when the timer completes" : "Submit proof — points credit after owner approval \u2705"}</span>
-          ${isDone ? '<span class="done-tag">Done</span>' : ""} ${isOwn && !isPaused ? '<span class="done-tag" style="background:rgba(34,197,94,.15);color:var(--green,#22c55e)">Yours</span>' : ""} ${isPaused ? '<span class="done-tag" style="background:rgba(245,158,11,.16);color:#d97706">Paused</span>' : ""} ${maxA > 0 ? (isFull ? '<span class="done-tag" style="background:rgba(239,68,68,.14);color:#ef4444">Full</span>' : '<span class="done-tag" style="background:rgba(255,209,102,.12);color:var(--amber,#ffd166)">' + acts + "/" + maxA + '</span>') : ""}
+          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isFull ? "This campaign reached its engagement limit (" + acts + "/" + maxA + ") — watch for new campaigns from other members" : isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isWatch ? "\u23F1\uFE0F Watch for " + (Number(c.watchSecs) || 15) + "s — points credited when the timer completes" : "Submit proof — points credit instantly \u26A1"}</span>
+          ${isOwn && !isPaused ? '<span class="done-tag" style="background:rgba(34,197,94,.15);color:var(--green,#22c55e)">Yours</span>' : ""} ${isPaused ? '<span class="done-tag" style="background:rgba(245,158,11,.16);color:#d97706">Paused</span>' : ""} ${maxA > 0 ? (isFull ? '<span class="done-tag" style="background:rgba(239,68,68,.14);color:#ef4444">Full</span>' : '<span class="done-tag" style="background:rgba(255,209,102,.12);color:var(--amber,#ffd166)">' + acts + "/" + maxA + '</span>') : ""}
         </div>`;
     }).join("");
   }
@@ -542,15 +551,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function submitTimerClaim() {
     if (!pendingCamp || !watchDone) return;
+    const camp = pendingCamp;
     const btn = document.getElementById("cm-claim");
     btn.disabled = true;
     const fail = (err) => { btn.disabled = false; FF.toast(err.message, "err"); };
     try {
-      const res = FF.submitCampaignProof(user.email, user.name, pendingCamp.id,
+      const res = FF.submitCampaignProof(user.email, user.name, camp.id,
         "Watched " + watchTotal + "s \u2713 (timer)", "");
       const done = () => {
         FF.sfx.coin();
-        FF.toast("Watched " + watchTotal + "s! +" + pendingCamp.payout + " points credited \u26A1", "ok");
+        FF.toast("Watched " + watchTotal + "s! +" + camp.payout + " points credited \u26A1", "ok");
         campModal.classList.remove("open"); pendingCamp = null; render();
       };
       if (res && typeof res.then === "function") res.then(done).catch(fail); else done();
