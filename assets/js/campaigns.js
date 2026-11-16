@@ -247,7 +247,7 @@
     }
     return FF.rpc("campaigns_submit_proof", {
       p_campaign: campaignId, p_proof: proof, p_note: note || "",
-    }).then((feed) => { adopt(feed); });
+    }).then((feed) => { adopt(feed); syncWallet(); });
   };
 
   const localReview = FF.reviewCampaignSub;

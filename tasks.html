@@ -156,7 +156,7 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.6"></script>
-<script src="assets/js/wallet.js?v=2.5"></script>
+<script src="assets/js/wallet.js?v=2.6"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script src="assets/js/proof.js?v=1.0"></script>
@@ -166,6 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!user) return;
   const W = FF.W, A = W.api, $ = (id) => document.getElementById(id);
   let filter = "all", current = null, feed = null, cats = W.CATEGORIES;
+  const locallySubmittedIds = new Set();
 
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
   const fdate = (t) => new Date(t).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -190,25 +191,40 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!feed) return;
     if (feed.categories && feed.categories.length && feed.categories !== cats) { cats = feed.categories; paintCats(); }
 
-    /* Highest paying task sabse upar (barabar reward par nayi task pehle) */
-    const all = (feed.open || []).slice()
+    const mine = feed.mySubs || [];
+    const submittedIds = new Set(mine.map((s) => String(s.jobId)));
+    const rawOpen = feed.open || [];
+    /* Hide every micro-job the member already submitted/completed, or that is no
+       longer active/funded. Highest-paying task stays on top. */
+    const all = rawOpen
+      .filter((j) => j
+        && !submittedIds.has(String(j.id))
+        && !locallySubmittedIds.has(String(j.id))
+        && (!j.status || j.status === "active")
+        && Number(j.filled || 0) < Number(j.slots || 0)
+        && (j.escrow == null || W.enough(j.escrow, j.reward)))
       .sort((a, b) => (Number(b.reward) || 0) - (Number(a.reward) || 0) || (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
     const list = all.filter((j) => filter === "all" || j.category === filter);
     $("s-open").textContent = all.length;
     /* Server calculates this from funded escrow; never advertise unfunded/fake rewards. */
-    const fundedRewards = Number(feed.availableRewards);
-    $("s-value").textContent = W.usd(Number.isFinite(fundedRewards) ? fundedRewards : all.reduce((n, j) => n + Math.min(Number(j.escrow || 0), j.reward * (j.slots - j.filled)), 0));
-    const mine = feed.mySubs;
+    const visibleRewards = all.reduce((n, j) => n + Math.min(Number(j.escrow || 0), j.reward * Math.max(0, j.slots - j.filled)), 0);
+    const fundedRewards = (all.length === rawOpen.length && feed.availableRewards != null) ? Number(feed.availableRewards) : NaN;
+    $("s-value").textContent = W.usd(Number.isFinite(fundedRewards) ? fundedRewards : visibleRewards);
     $("s-pending").textContent = mine.filter((s) => s.status === "pending").length;
     $("s-earned").textContent = W.usd(mine.filter((s) => s.status === "approved").reduce((n, s) => n + s.reward, 0));
 
     $("job-empty").classList.toggle("hidden", list.length > 0);
     if (!list.length) {
       const filtered = filter !== "all";
-      $("job-empty-title").textContent = filtered ? "No open tasks in this category" : "No open tasks right now";
+      const hasDone = mine.length > 0 || locallySubmittedIds.size > 0;
+      $("job-empty-title").textContent = filtered
+        ? "No open tasks in this category"
+        : (hasDone ? "All available tasks completed!" : "No open tasks right now");
       $("job-empty-text").textContent = filtered
         ? "Try another category filter, or post your own task for the community."
-        : "Tasks posted by the community appear here as soon as they are funded. Be the first to post one.";
+        : (hasDone
+          ? "You've completed every open task right now. Completed tasks are hidden from your screen — check back soon for new ones or post your own."
+          : "Tasks posted by the community appear here as soon as they are funded. Be the first to post one.");
     }
     $("job-grid").innerHTML = list.map((j) => {
       const c = category(j.category);
@@ -348,6 +364,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const proof = FFProof.build({ text: proofText, link: proofLink, image: image });
       if (proof.trim().length < 6) throw new Error("Please describe your proof in more detail — at least 6 characters");
       return A.submitProof(jobId, proof, note).then((f) => {
+        locallySubmittedIds.add(String(jobId));
         FF.toast("Proof submitted! The buyer will review it shortly.", "ok");
         clearProofFile();
         close(); render(f);

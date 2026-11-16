@@ -136,7 +136,7 @@
         <div class="bal-card main">
           <span class="cap"><span data-usdt-icon style="display:flex"></span> USDT balance</span>
           <div class="amt"><span data-usdt>0.00</span> <small>USDT</small></div>
-          <p class="note">In escrow / pending: <b data-usdt-locked>0.00</b> USDT</p>
+          <p class="note">In escrow / pending: <b data-usdt-locked>0.00</b> USDT<span id="db-locked-detail"></span></p>
           <div class="bal-actions">
             <a class="btn btn-primary btn-sm" href="wallet.html#deposit">Deposit</a>
             <a class="btn btn-ghost btn-sm" href="wallet.html#withdraw">Withdraw</a>
@@ -289,9 +289,9 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.6"></script>
-<script src="assets/js/wallet.js?v=2.5"></script>
+<script src="assets/js/wallet.js?v=2.6"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
-<script src="assets/js/campaigns.js?v=2.0"></script>
+<script src="assets/js/campaigns.js?v=2.1"></script>
 <script src="assets/js/site-stats.js?v=1.1"></script>
 <script src="assets/js/support.js?v=1.0"></script>
 <script src="assets/js/proof.js?v=1.0"></script>
@@ -319,15 +319,54 @@ document.addEventListener("DOMContentLoaded", () => {
   /* USDT wallet + task marketplace summary (server-synced when configured) */
   if (FF.W) {
     const W = FF.W;
+    let latestWallet = null;
+    let latestFeed = null;
+
+    function paintLockedDetail() {
+      const detailEl = document.getElementById("db-locked-detail");
+      if (!detailEl) return;
+      const lockedTotal = latestWallet && latestWallet.wallet
+        ? Number(latestWallet.wallet.locked || 0)
+        : Number((W.wallet(user.email) || {}).locked || 0);
+      if (W.cents(lockedTotal) <= 0) {
+        detailEl.innerHTML = "";
+        return;
+      }
+      const openWds = W.openWithdrawals(latestWallet ? latestWallet.requests : W.myRequests(user.email));
+      const wdPending = openWds.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+      const escrowJobs = latestFeed
+        ? (latestFeed.mine || []).filter((j) => (j.status === "active" || j.status === "paused") && Number(j.escrow || 0) > 0)
+        : [];
+      const taskEscrow = latestFeed
+        ? escrowJobs.reduce((sum, j) => sum + Number(j.escrow || 0), 0)
+        : Math.max(0, Math.round((lockedTotal - wdPending) * 100) / 100);
+      const parts = [];
+      if (W.cents(taskEscrow) > 0) {
+        const label = latestFeed && escrowJobs.length
+          ? W.usd(taskEscrow) + " held for " + escrowJobs.length + (escrowJobs.length === 1 ? " posted task" : " posted tasks")
+          : W.usd(taskEscrow) + " held for posted tasks";
+        parts.push(label + ' (<a href="my-tasks.html" style="color:var(--fuchsia)">manage / refund</a>)');
+      }
+      if (W.cents(wdPending) > 0) {
+        parts.push(W.usd(wdPending) + ' pending withdrawal (<a href="wallet.html#requests" style="color:var(--fuchsia)">view</a>)');
+      }
+      detailEl.innerHTML = parts.length ? " — " + parts.join(" · ") : "";
+    }
+
     W.syncWalletPills();
-    W.api.wallet().catch(() => null);
+    paintLockedDetail();
+    W.api.wallet().then((v) => {
+      if (v) { latestWallet = v; paintLockedDetail(); }
+    }).catch(() => null);
     W.api.feed().then((feed) => {
       if (!feed) return;
+      latestFeed = feed;
       const done = feed.mySubs.filter((s) => s.status === "approved");
       document.getElementById("db-task-earn").textContent = W.usd(done.reduce((n, s) => n + s.reward, 0));
       document.getElementById("db-task-done").textContent = done.length;
       document.getElementById("db-jobs").textContent = feed.mine.filter((j) => j.status === "active").length;
       document.getElementById("db-reviews").textContent = feed.inbox.length;
+      paintLockedDetail();
     }).catch(() => {});
   }
 

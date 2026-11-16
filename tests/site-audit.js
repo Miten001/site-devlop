@@ -12,9 +12,9 @@
         - Alice Earn page: verified as "Your campaign 👑" (disabled)
         - Signup Account 2 (Bob)
         - Bob Earn page: BUG FIX VERIFIED -> NOT own campaign, button enabled!
-        - Bob submits proof -> status 'pending'
+        - Bob submits proof -> status 'pending' & task hides from Bob's screen
         - Alice Dashboard -> reviews & approves submission
-        - Bob Earn page / balance -> points credited (+50) & "Completed ✓"
+        - Bob Earn page / balance -> points credited (+50) & completed task stays hidden
    ========================================================================= */
 
 "use strict";
@@ -464,8 +464,7 @@ async function runAudit() {
   check("Submission owner is Alice", bobSub && bobSub.owner === "alice@test.dev", bobSub ? bobSub.owner : null);
 
   const bobTaskBtnAfter = bobEarnDoc.querySelector(`[data-task="${campaignPayload.id}"]`);
-  check("After proof submission, Bob's button shows 'Pending review'", bobTaskBtnAfter && bobTaskBtnAfter.textContent.trim().includes("Pending review"));
-  check("After proof submission, Bob's button is disabled", bobTaskBtnAfter && bobTaskBtnAfter.disabled === true);
+  check("After proof submission, completed campaign hides immediately from Bob's Earn screen", !bobTaskBtnAfter);
   bobEarnDom.dom.window.close();
 
   // Step 4.8: Alice Reviews and Approves Bob's Submission on Dashboard
@@ -484,8 +483,8 @@ async function runAudit() {
   check("Submission status is now 'approved'", reviewedSub && reviewedSub.status === "approved", reviewedSub ? reviewedSub.status : null);
   aliceReviewDashDom.dom.window.close();
 
-  // Step 4.9: Bob Receives Points & Campaign shows Completed
-  console.log("\n  --- Step 4.9: Bob Points Credited & Task Completed ---");
+  // Step 4.9: Bob Receives Points & Completed Campaign stays hidden
+  console.log("\n  --- Step 4.9: Bob Points Credited & Completed Task Hidden ---");
   const bobFinalEarnDom = createDOM("earn.html", { storage: sharedStorage, userEmail: "bob@test.dev" });
   await sleep(30);
   const bobFinalUser = bobFinalEarnDom.dom.window.FF.currentUser();
@@ -493,8 +492,9 @@ async function runAudit() {
   check("Bob received +50 points payout (total credits = 75)", bobFinalUser && bobFinalUser.credits === 75, bobFinalUser ? bobFinalUser.credits : null);
 
   const bobFinalTaskBtn = bobFinalEarnDom.dom.window.document.querySelector(`[data-task="${campaignPayload.id}"]`);
-  check("Alice's campaign now displays 'Completed ✓' for Bob", bobFinalTaskBtn && bobFinalTaskBtn.textContent.trim().includes("Completed"));
-  check("Completed campaign button is disabled", bobFinalTaskBtn && bobFinalTaskBtn.disabled === true);
+  check("Alice's completed campaign remains hidden from Bob's Earn screen", !bobFinalTaskBtn);
+  const bobEmptyTitle = bobFinalEarnDom.dom.window.document.getElementById("empty-title");
+  check("Empty state confirms all tasks complete for Bob", bobEmptyTitle && /All tasks complete/i.test(bobEmptyTitle.textContent), bobEmptyTitle && bobEmptyTitle.textContent);
   bobFinalEarnDom.dom.window.close();
 
   /* -------------------------------------------------------------
