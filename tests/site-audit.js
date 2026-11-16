@@ -51,6 +51,7 @@ const HTML_PAGES = [
   "post-task.html",
   "my-tasks.html",
   "tasks.html",
+  "quests.html",
   "mining.html",
   "wallet.html",
   "refer.html",

@@ -88,7 +88,7 @@
   var EARNED_NOTE = "Earned (net) = tasks + streak + referrals + mining claims − rigs bought with USDT ± coin conversions.";
 
   var TYPE = {
-    earning: "Task earning", streak: "Daily streak", referral: "Referral", convert: "Conversion",
+    earning: "Task earning", streak: "Daily streak", quest: "Quest reward", referral: "Referral", convert: "Conversion",
     deposit: "Deposit", withdraw: "Withdrawal", escrow: "Task escrow", payout: "Paid from escrow",
     refund: "Escrow refund", adjust: "Browser import", claim: "Mining claim", rig: "Mining rig",
     buy: "Mining rig", boost: "Mining boost", admin: "Admin edit"
