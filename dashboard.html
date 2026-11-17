@@ -318,7 +318,6 @@
 <script src="assets/js/campaigns.js?v=2.1"></script>
 <script src="assets/js/quests.js?v=1.0"></script>
 <script src="assets/js/site-stats.js?v=1.1"></script>
-<script src="assets/js/support.js?v=1.0"></script>
 <script src="assets/js/proof.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -931,6 +930,7 @@ document.addEventListener("DOMContentLoaded", () => {
       FF.toast("+" + stFmt(r.reward) + " USDT added to your wallet 🎉", "ok");
       streakRender(r);
       if (FF.W && FF.W.api) FF.W.api.wallet().catch(() => {});
+      document.dispatchEvent(new CustomEvent("ff:quests-refresh"));
     }).catch((err) => {
       FF.toast((err && err.message) || "Claim failed — try again", "err");
       streakLoad();

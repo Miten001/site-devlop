@@ -188,7 +188,7 @@ async function main() {
     check(page + " has no Hinglish copy", hits.length === 0, hits.slice(0, 3));
   });
   ["assets/js/main.js", "assets/js/wallet.js", "assets/js/mining.js", "assets/js/campaigns.js",
-    "assets/js/quests.js", "assets/js/proof.js", "assets/js/bell.js", "assets/js/support.js", "assets/js/message-view.js",
+    "assets/js/quests.js", "assets/js/proof.js", "assets/js/bell.js", "assets/js/message-view.js",
     "assets/js/admin-earnings.js"]
     .forEach((js) => {
       const hits = userFacingLines(js);

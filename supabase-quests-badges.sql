@@ -290,7 +290,7 @@ begin
 
   if v_q.reward_type = 'points' then
     update public.balances
-       set points = points + v_q.reward_amount,
+       set points = points + round(v_q.reward_amount)::bigint,
            updated_at = now()
      where user_id = v_user;
   else
