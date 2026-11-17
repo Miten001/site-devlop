@@ -20,58 +20,360 @@
 <link rel="stylesheet" href="assets/css/style.css?v=2.2" />
 <link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
 <style>
-  .pf-wrap { max-width: 860px; margin: 0 auto; }
+  .pf-wrap { max-width: 880px; margin: 0 auto; }
+
+  /* Luxury Metal VIP Showcase Card — always crisp high-contrast light text on dark obsidian */
   .pf-card {
-    border: 1px solid color-mix(in srgb, var(--vc, #ffd166) 55%, transparent);
-    border-radius: 24px; padding: 28px; position: relative; overflow: hidden;
+    --vc: #f6c453;
+    --vc-hi: #fff2b2;
+    --vc-lo: #b7791f;
+    --vc-glow: rgba(246, 196, 83, .45);
+    color: #f8fafc;
+    border: 1.5px solid color-mix(in srgb, var(--vc) 68%, rgba(255,255,255,.22));
+    border-radius: 26px;
+    padding: 28px 30px;
+    position: relative;
+    overflow: hidden;
     background:
-      radial-gradient(circle at 12% 14%, color-mix(in srgb, var(--vc, #e0489f) 24%, transparent), transparent 46%),
-      radial-gradient(circle at 88% 84%, rgba(56,189,248,.2), transparent 46%),
-      linear-gradient(145deg, rgba(16,20,40,.96), rgba(11,15,30,.98));
-    box-shadow: 0 24px 60px -28px color-mix(in srgb, var(--vc, #e0489f) 65%, transparent);
-    margin-bottom: 20px;
+      radial-gradient(ellipse 65% 60% at 8% 0%, color-mix(in srgb, var(--vc) 28%, transparent), transparent 60%),
+      radial-gradient(ellipse 55% 55% at 96% 100%, color-mix(in srgb, var(--vc-lo) 26%, rgba(56,189,248,.16)), transparent 62%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,.018) 0 1px, transparent 1px 11px),
+      linear-gradient(145deg, #101526 0%, #0a0e1b 52%, #11182c 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.22),
+      inset 0 0 0 1px rgba(255,255,255,.06),
+      0 26px 64px -22px rgba(7, 10, 22, .72),
+      0 12px 34px -16px var(--vc-glow);
+    margin-bottom: 22px;
   }
-  .pf-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-  .pf-id { display: flex; align-items: center; gap: 16px; }
-  .pf-avatar {
-    width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center;
-    font-family: "Sora", sans-serif; font-size: 28px; font-weight: 800; color: #fff;
-    background: linear-gradient(135deg, var(--vc, #e0489f), #7c5cff);
-    box-shadow: 0 10px 26px -10px var(--vc, #e0489f);
+  .pf-card[data-tier="bronze"] {
+    --vc: #e09153; --vc-hi: #ffd8b5; --vc-lo: #9c5221; --vc-glow: rgba(224,145,83,.42);
+  }
+  .pf-card[data-tier="silver"] {
+    --vc: #cbd5e1; --vc-hi: #ffffff; --vc-lo: #64748b; --vc-glow: rgba(203,213,225,.38);
+  }
+  .pf-card[data-tier="gold"] {
+    --vc: #f6c453; --vc-hi: #fff1b8; --vc-lo: #b7791f; --vc-glow: rgba(246,196,83,.5);
+  }
+  .pf-card[data-tier="platinum"] {
+    --vc: #c084fc; --vc-hi: #f3e8ff; --vc-lo: #7c3aed; --vc-glow: rgba(192,132,252,.48);
+  }
+  .pf-card[data-tier="diamond"] {
+    --vc: #38bdf8; --vc-hi: #e0f7ff; --vc-lo: #0284c7; --vc-glow: rgba(56,189,248,.52);
+  }
+
+  /* Top metallic accent hairline */
+  .pf-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 4%, var(--vc-lo), var(--vc-hi) 50%, var(--vc-lo), transparent 96%);
+    opacity: .95;
+    pointer-events: none;
+  }
+  /* Subtle holographic foil sheen sweep */
+  .pf-card::after {
+    content: "";
+    position: absolute;
+    top: -40%;
+    left: -60%;
+    width: 48%;
+    height: 180%;
+    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,.075) 50%, transparent 80%);
+    transform: rotate(12deg);
+    animation: pf-sheen 7.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes pf-sheen {
+    0%, 100% { transform: translateX(-30%) rotate(12deg); opacity: 0; }
+    18% { opacity: 1; }
+    48% { transform: translateX(360%) rotate(12deg); opacity: 0; }
+    49%, 99% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pf-card::after { animation: none; display: none; }
+  }
+
+  .pf-card > * { position: relative; z-index: 1; }
+
+  /* VIP Pass top header bar */
+  .pf-pass-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+  .pf-pass-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: "Sora", sans-serif;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--vc-hi);
+  }
+  .pf-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: #86efac;
+    background: rgba(34, 197, 94, .14);
+    border: 1px solid rgba(74, 222, 128, .4);
+  }
+  .pf-pass-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pf-perk-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--vc-hi);
+    background: color-mix(in srgb, var(--vc) 16%, rgba(15,23,42,.75));
+    border: 1px solid color-mix(in srgb, var(--vc) 48%, transparent);
+  }
+  .pf-chip-svg {
+    width: 36px;
+    height: 26px;
+    border-radius: 6px;
+    display: block;
+    box-shadow: 0 2px 10px rgba(0,0,0,.45);
     flex-shrink: 0;
   }
-  .pf-name { font-family: "Sora", sans-serif; font-size: 28px; font-weight: 800; margin: 0; line-height: 1.15; }
-  .pf-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--ink-dim); }
+
+  .pf-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .pf-id { display: flex; align-items: center; gap: 18px; min-width: 0; }
+  .pf-avatar-wrap {
+    position: relative;
+    padding: 3px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--vc-hi), var(--vc), var(--vc-lo));
+    box-shadow: 0 10px 28px -8px var(--vc-glow);
+    flex-shrink: 0;
+  }
+  .pf-avatar {
+    width: 74px; height: 74px; border-radius: 21px; display: grid; place-items: center;
+    font-family: "Sora", sans-serif; font-size: 30px; font-weight: 800; color: #ffffff;
+    background: radial-gradient(circle at 28% 22%, color-mix(in srgb, var(--vc) 72%, #7c5cff), #1c1e3a 88%);
+    text-shadow: 0 2px 10px rgba(0,0,0,.45);
+  }
+  .pf-avatar-medal {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    background: #0d1222;
+    border: 2px solid var(--vc);
+    box-shadow: 0 4px 12px rgba(0,0,0,.55);
+  }
+
+  .pf-name {
+    font-family: "Sora", sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.15;
+    color: #ffffff;
+    letter-spacing: -.01em;
+    text-shadow: 0 2px 14px rgba(0,0,0,.4);
+    word-break: break-word;
+  }
+  .pf-sub {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #cbd5e1;
+  }
+  .pf-dot { color: rgba(255,255,255,.35); }
   .pf-pill {
-    display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px;
-    font-size: 12px; font-weight: 800;
-    border: 1px solid color-mix(in srgb, var(--vc, #ffd166) 55%, transparent);
-    background: color-mix(in srgb, var(--vc, #ffd166) 18%, transparent);
-    color: var(--ink);
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px;
+    font-size: 12px; font-weight: 800; letter-spacing: .03em;
+    background: linear-gradient(135deg, var(--vc-hi) 0%, var(--vc) 58%, var(--vc-lo) 100%);
+    color: #161005;
+    border: 1px solid rgba(255,255,255,.45);
+    box-shadow: 0 6px 18px -6px var(--vc-glow);
   }
+
   .pf-code-box {
-    text-align: right; padding: 10px 14px; border-radius: 14px;
-    border: 1px solid var(--line); background: rgba(255,255,255,.04);
+    text-align: right;
+    padding: 12px 16px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--vc) 46%, rgba(255,255,255,.15));
+    background: linear-gradient(150deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+    min-width: 196px;
   }
-  .pf-code-box small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-mute); font-weight: 700; }
-  .pf-code-box b { font-family: "Sora", sans-serif; font-size: 17px; color: #ffd166; letter-spacing: .04em; }
+  .pf-code-box small {
+    display: block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #94a3b8;
+    font-weight: 700;
+  }
+  .pf-code-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .pf-code-box b {
+    font-family: "Sora", sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--vc-hi);
+    letter-spacing: .06em;
+    text-shadow: 0 0 18px var(--vc-glow);
+  }
+  .pf-code-copy {
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(255,255,255,.09);
+    color: #f8fafc;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .pf-code-copy:hover {
+    background: color-mix(in srgb, var(--vc) 28%, rgba(255,255,255,.12));
+    border-color: var(--vc);
+    color: #ffffff;
+  }
 
-  .pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0 20px; }
+  /* VIP XP Progress Strip inside the card */
+  .pf-vip-progress {
+    margin: 20px 0 18px;
+    padding: 13px 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.1);
+  }
+  .pf-vp-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+  .pf-vp-top span:last-child { color: var(--vc-hi); }
+  .pf-vp-track {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    overflow: hidden;
+    margin-top: 9px;
+  }
+  .pf-vp-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--vc-lo), var(--vc), var(--vc-hi));
+    box-shadow: 0 0 14px var(--vc-glow);
+    transition: width .55s ease;
+    width: 0%;
+  }
+
+  .pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 22px; }
   .pf-stat {
-    border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 14px;
-    background: rgba(255,255,255,.04);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 16px;
+    padding: 15px 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.075) 0%, rgba(255,255,255,.03) 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+    transition: transform .18s ease, border-color .18s ease;
   }
-  .pf-stat .l { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-mute); font-weight: 700; }
-  .pf-stat .v { font-family: "Sora", sans-serif; font-size: 24px; font-weight: 800; color: var(--ink); margin-top: 6px; }
+  .pf-stat::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--vc) 70%, #fff), transparent);
+    opacity: .6;
+  }
+  .pf-stat:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--vc) 55%, rgba(255,255,255,.2));
+  }
+  .pf-stat .l {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #a9b8cf;
+    font-weight: 700;
+  }
+  .pf-stat .v {
+    font-family: "Sora", sans-serif;
+    font-size: 27px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-top: 6px;
+    line-height: 1.15;
+    text-shadow: 0 2px 12px rgba(0,0,0,.35);
+  }
 
-  .pf-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-  .pf-badge {
-    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
-    font-size: 12.5px; font-weight: 700;
-    border: 1px solid color-mix(in srgb, var(--bc, #34e5a5) 55%, transparent);
-    background: color-mix(in srgb, var(--bc, #34e5a5) 14%, transparent);
-    color: var(--ink);
+  .pf-badges-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #b8c7dc;
+    font-weight: 800;
   }
+  .pf-badges-head b { color: var(--vc-hi); }
+  .pf-badges { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 12px; }
+  .pf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid color-mix(in srgb, var(--bc, #34e5a5) 68%, rgba(255,255,255,.2));
+    background: color-mix(in srgb, var(--bc, #34e5a5) 20%, rgba(15, 23, 42, .85));
+    color: #ffffff;
+    box-shadow: 0 6px 16px -10px color-mix(in srgb, var(--bc, #34e5a5) 75%, transparent), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .pf-badge-empty { font-size: 13px; color: #cbd5e1; }
 
   .pf-share-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
   .pf-link-box {
@@ -79,18 +381,21 @@
     border: 1px solid var(--line); border-radius: 14px; padding: 11px 14px;
     background: var(--glass-2); margin-top: 12px;
   }
-  .pf-link-box code { color: var(--cyan, #38bdf8); font-size: 13px; word-break: break-all; }
+  .pf-link-box code { color: var(--cyan, #0f7ea8); font-size: 13px; word-break: break-all; font-weight: 600; }
 
   .pf-cta {
-    border: 1px solid rgba(52,229,165,.45); border-radius: 18px; padding: 20px;
-    background: linear-gradient(135deg, rgba(52,229,165,.12), rgba(124,92,255,.12));
+    border: 1px solid rgba(15, 122, 72, .35); border-radius: 18px; padding: 20px;
+    background: linear-gradient(135deg, rgba(23,178,106,.11), rgba(47,111,237,.09));
     display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
   }
   .pf-empty { text-align: center; padding: 48px 20px; }
   @media (max-width: 720px) {
     .pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .pf-card { padding: 20px; }
-    .pf-name { font-size: 22px; }
+    .pf-card { padding: 20px; border-radius: 22px; }
+    .pf-name { font-size: 23px; }
+    .pf-stat .v { font-size: 23px; }
+    .pf-code-box { width: 100%; text-align: left; }
+    .pf-code-row { justify-content: space-between; }
   }
 </style>
 </head>
@@ -150,36 +455,75 @@
     </div>
 
     <div id="pf-content" class="hidden">
-      <article class="pf-card" id="pf-card" style="--vc:#ffd166">
+      <article class="pf-card" id="pf-card" data-tier="gold" style="--vc:#f6c453">
+        <!-- Luxury VIP Pass top strip -->
+        <div class="pf-pass-bar">
+          <div class="pf-pass-brand">
+            <span>✦ FLEXFAM VIP PASS</span>
+            <span class="pf-verified">✓ Verified</span>
+          </div>
+          <div class="pf-pass-right">
+            <span class="pf-perk-chip" id="pf-spin-perk">🎡 1.0× Spin Boost</span>
+            <svg class="pf-chip-svg" viewBox="0 0 36 26" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="vipChipGold" x1="0" y1="0" x2="36" y2="26" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff4c4"/>
+                  <stop offset="48%" stop-color="#e8b84b"/>
+                  <stop offset="100%" stop-color="#9e6d1c"/>
+                </linearGradient>
+              </defs>
+              <rect width="36" height="26" rx="5" fill="url(#vipChipGold)"/>
+              <path d="M12 0v26M24 0v26M0 9h12M24 9h12M0 17h12M24 17h12M12 13h12" stroke="rgba(42,26,4,.48)" stroke-width="1.2"/>
+              <rect x="13" y="8" width="10" height="10" rx="2" stroke="rgba(42,26,4,.5)" stroke-width="1.2" fill="rgba(255,248,220,.28)"/>
+            </svg>
+          </div>
+        </div>
+
         <div class="pf-top">
           <div class="pf-id">
-            <div class="pf-avatar" id="pf-avatar">F</div>
+            <div class="pf-avatar-wrap">
+              <div class="pf-avatar" id="pf-avatar">F</div>
+              <span class="pf-avatar-medal" id="pf-avatar-medal" aria-hidden="true">🥉</span>
+            </div>
             <div>
               <h2 class="pf-name" id="pf-name">FlexFam Member</h2>
               <div class="pf-sub">
                 <span class="pf-pill" id="pf-vip-pill">🥉 Bronze VIP</span>
                 <span id="pf-rank">Newcomer</span>
-                <span>·</span>
+                <span class="pf-dot">·</span>
                 <span id="pf-joined">Joined recently</span>
               </div>
             </div>
           </div>
           <div class="pf-code-box">
             <small>Invite Code</small>
-            <b id="pf-code">—</b>
+            <div class="pf-code-row">
+              <b id="pf-code">—</b>
+              <button type="button" class="pf-code-copy" id="btn-copy-code" title="Copy invite code">Copy</button>
+            </div>
           </div>
         </div>
 
+        <!-- VIP XP Progress Bar -->
+        <div class="pf-vip-progress">
+          <div class="pf-vp-top">
+            <span id="pf-vp-label">VIP Tier Progress</span>
+            <span id="pf-vp-right">0 XP</span>
+          </div>
+          <div class="pf-vp-track"><div class="pf-vp-fill" id="pf-vp-fill"></div></div>
+        </div>
+
         <div class="pf-stats">
-          <div class="pf-stat"><div class="l">Tasks Done</div><div class="v" id="pf-s-tasks">0</div></div>
-          <div class="pf-stat"><div class="l">Best Streak</div><div class="v" id="pf-s-streak">0d</div></div>
-          <div class="pf-stat"><div class="l">Referrals</div><div class="v" id="pf-s-refs">0</div></div>
-          <div class="pf-stat"><div class="l">VIP XP</div><div class="v" id="pf-s-xp">0</div></div>
+          <div class="pf-stat"><div class="l">✅ Tasks Done</div><div class="v" id="pf-s-tasks">0</div></div>
+          <div class="pf-stat"><div class="l">🔥 Best Streak</div><div class="v" id="pf-s-streak">0d</div></div>
+          <div class="pf-stat"><div class="l">🤝 Referrals</div><div class="v" id="pf-s-refs">0</div></div>
+          <div class="pf-stat"><div class="l">⚡ VIP XP</div><div class="v" id="pf-s-xp">0</div></div>
         </div>
 
         <div>
-          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);font-weight:700">
-            Unlocked Badges (<span id="pf-b-count">0 / 8</span>)
+          <div class="pf-badges-head">
+            <span>Unlocked Badges (<b id="pf-b-count">0 / 8</b>)</span>
+            <span id="pf-daily-perk">Daily VIP Bonus: +10 pts</span>
           </div>
           <div class="pf-badges" id="pf-badges"></div>
         </div>
@@ -257,20 +601,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const vip = card.vip || {};
     const stats = card.stats || {};
     const name = card.displayName || "FlexFam Member";
+    const tierId = String(vip.tierId || vip.tierName || "bronze").toLowerCase();
     const cardEl = document.getElementById("pf-card");
-    cardEl.style.setProperty("--vc", vip.tierColor || "#ffd166");
+    cardEl.setAttribute("data-tier", tierId);
+    cardEl.style.setProperty("--vc", vip.tierColor || "#f6c453");
 
     document.getElementById("pf-avatar").textContent = name.trim().slice(0, 1).toUpperCase() || "F";
+    const medalEl = document.getElementById("pf-avatar-medal");
+    if (medalEl) medalEl.textContent = vip.tierIcon || "🥉";
     document.getElementById("pf-name").textContent = name;
     document.getElementById("pf-vip-pill").textContent = (vip.tierIcon || "🥉") + " " + (vip.tierName || "Bronze") + " VIP";
     document.getElementById("pf-rank").textContent = card.masteryRank || "Newcomer";
     document.getElementById("pf-joined").textContent = "Joined " + new Date(card.joinedAt || Date.now()).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
     document.getElementById("pf-code").textContent = card.code || "—";
 
+    const mult = Number(vip.spinMult || 1);
+    const spinPerkEl = document.getElementById("pf-spin-perk");
+    if (spinPerkEl) spinPerkEl.textContent = "🎡 " + mult + "× Spin Boost";
+
+    const dailyPerkEl = document.getElementById("pf-daily-perk");
+    if (dailyPerkEl && R.formatReward) {
+      const bonusTxt = R.formatReward(vip.dailyType || "points", vip.dailyAmount || 10);
+      const spinsCnt = Number(vip.freeSpins || 1);
+      dailyPerkEl.textContent = "Daily VIP Bonus: " + bonusTxt + " · " + spinsCnt + " Free Spin" + (spinsCnt > 1 ? "s" : "");
+    }
+
+    const xp = Number(vip.xp || 0);
+    const pct = Math.max(0, Math.min(100, Number(vip.progressPct != null ? vip.progressPct : 100)));
+    const vpLabel = document.getElementById("pf-vp-label");
+    const vpRight = document.getElementById("pf-vp-right");
+    const vpFill = document.getElementById("pf-vp-fill");
+    if (vpLabel && vpRight && vpFill) {
+      if (vip.nextTierName && vip.nextTierXp) {
+        const rem = Math.max(0, Number(vip.nextTierXp) - xp);
+        vpLabel.textContent = (vip.tierName || "Bronze") + " VIP  →  " + vip.nextTierName + " VIP (" + rem.toLocaleString("en-IN") + " XP to go)";
+        vpRight.textContent = xp.toLocaleString("en-IN") + " / " + Number(vip.nextTierXp).toLocaleString("en-IN") + " XP";
+      } else {
+        vpLabel.textContent = "✦ Top VIP Tier Unlocked — " + (vip.tierName || "Diamond") + " VIP";
+        vpRight.textContent = xp.toLocaleString("en-IN") + " XP · MAX";
+      }
+      vpFill.style.width = pct + "%";
+    }
+
     document.getElementById("pf-s-tasks").textContent = Number(stats.totalTasks || 0).toLocaleString("en-IN");
     document.getElementById("pf-s-streak").textContent = Number(stats.bestStreak || 0) + "d";
     document.getElementById("pf-s-refs").textContent = Number(stats.referrals || 0).toLocaleString("en-IN");
-    document.getElementById("pf-s-xp").textContent = Number(vip.xp || 0).toLocaleString("en-IN");
+    document.getElementById("pf-s-xp").textContent = xp.toLocaleString("en-IN");
 
     const unlocked = card.badges || [];
     document.getElementById("pf-b-count").textContent = unlocked.length + " / " + (stats.badgesTotal || 8);
@@ -279,7 +655,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const b = R.BADGE_META[bid] || { icon: "⭐", name: bid, color: "#34e5a5" };
           return '<span class="pf-badge" style="--bc:' + esc(b.color) + '">' + esc(b.icon) + ' ' + esc(b.name) + '</span>';
         }).join("")
-      : '<span style="font-size:13px;color:var(--ink-mute)">No badges unlocked yet — complete quests to collect profile badges!</span>';
+      : '<span class="pf-badge-empty">No badges unlocked yet — complete quests to collect profile badges!</span>';
 
     const baseUrl = location.href.split("?")[0].split("#")[0];
     const shareUrl = baseUrl + "?u=" + encodeURIComponent(card.code || "");
@@ -294,6 +670,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (card.isOwn) {
       document.getElementById("pf-visitor-cta").classList.add("hidden");
     }
+  }
+
+  const copyCodeBtn = document.getElementById("btn-copy-code");
+  if (copyCodeBtn) {
+    copyCodeBtn.addEventListener("click", async () => {
+      const code = (document.getElementById("pf-code").textContent || "").trim();
+      if (!code || code === "—") return;
+      try {
+        await navigator.clipboard.writeText(code);
+        copyCodeBtn.textContent = "Copied!";
+        setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 1600);
+        FF.toast("Invite code " + code + " copied!", "ok");
+      } catch {
+        FF.toast("Copy code: " + code, "info");
+      }
+    });
   }
 
   document.getElementById("btn-copy-url").addEventListener("click", async () => {

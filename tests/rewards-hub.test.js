@@ -227,6 +227,15 @@ async function main() {
     check(p + " links to rewards.html and profile.html", /href="rewards\.html"/.test(h) && /href="profile\.html"/.test(h));
   });
 
+  const profileHtml = read("profile.html");
+  check("profile.html VIP Showcase Card uses explicit high-contrast white text on dark obsidian (never dark --ink on dark card)",
+    /\.pf-card\s*\{[\s\S]*?color:\s*#f8fafc/.test(profileHtml) &&
+    /\.pf-name\s*\{[\s\S]*?color:\s*#ffffff/.test(profileHtml) &&
+    /\.pf-stat \.v\s*\{[\s\S]*?color:\s*#ffffff/.test(profileHtml) &&
+    /\.pf-badge\s*\{[\s\S]*?color:\s*#ffffff/.test(profileHtml));
+  check("profile.html renders VIP Pass header, Smart Chip SVG, XP progress bar & Invite Code copy button",
+    /FLEXFAM VIP PASS/.test(profileHtml) && /pf-chip-svg/.test(profileHtml) && /id="pf-vp-fill"/.test(profileHtml) && /id="btn-copy-code"/.test(profileHtml));
+
   const adminHtml = read("admin.html");
   check("admin.html has Promo codes nav item and #sec-promos panel", /href="#sec-promos"/.test(adminHtml) && /id="sec-promos"/.test(adminHtml));
   check("admin.html wires admin_promo_list / save / toggle / delete RPCs",

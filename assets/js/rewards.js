@@ -664,7 +664,7 @@
         '</div>' +
         '<div class="rh-grid">' +
           '<div class="rh-tile">' +
-            '<div class="t-top"><span>🎡 Lucky Spin</span><span>' + (freeLeft > 0 ? '<b style="color:var(--mint)">Ready</b>' : 'Used today') + '</span></div>' +
+            '<div class="t-top"><span>🎡 Lucky Spin</span><span>' + (freeLeft > 0 ? '<b style="color:var(--green,#0f7a48)">Ready</b>' : 'Used today') + '</span></div>' +
             '<div class="t-val">' + (freeLeft > 0 ? freeLeft + ' free spin' + (freeLeft > 1 ? 's' : '') + ' left' : '0 free spins left') + '</div>' +
             '<a href="rewards.html#spin" class="btn btn-primary btn-sm" style="margin-top:auto">' + (freeLeft > 0 ? 'Spin Wheel →' : 'Open Wheel') + '</a>' +
           '</div>' +
@@ -783,77 +783,159 @@
     const ctx = canvas.getContext("2d");
     if (!ctx) return false;
 
+    const vip = card.vip || {};
+    const stats = card.stats || {};
+    const tierId = String(vip.tierId || vip.tierName || "bronze").toLowerCase();
+    const palettes = {
+      bronze:   { hi: "#ffd8b5", mid: "#e09153", lo: "#9c5221", glow: "rgba(224,145,83,0.32)" },
+      silver:   { hi: "#ffffff", mid: "#cbd5e1", lo: "#64748b", glow: "rgba(203,213,225,0.28)" },
+      gold:     { hi: "#fff1b8", mid: "#f6c453", lo: "#b7791f", glow: "rgba(246,196,83,0.34)" },
+      platinum: { hi: "#f3e8ff", mid: "#c084fc", lo: "#7c3aed", glow: "rgba(192,132,252,0.34)" },
+      diamond:  { hi: "#e0f7ff", mid: "#38bdf8", lo: "#0284c7", glow: "rgba(56,189,248,0.36)" },
+    };
+    const pal = palettes[tierId] || palettes.gold;
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    // Obsidian luxury card base
     const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, "#0b0f1e");
-    bg.addColorStop(0.55, "#151133");
-    bg.addColorStop(1, "#0d1b2a");
+    bg.addColorStop(0, "#101526");
+    bg.addColorStop(0.52, "#0a0e1b");
+    bg.addColorStop(1, "#11182c");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Subtle neon glows
-    const g1 = ctx.createRadialGradient(180, 120, 20, 180, 120, 420);
-    g1.addColorStop(0, "rgba(224,72,159,0.28)");
-    g1.addColorStop(1, "rgba(224,72,159,0)");
+    // Tier metallic radial glows
+    const g1 = ctx.createRadialGradient(180, 90, 20, 180, 90, 480);
+    g1.addColorStop(0, pal.glow);
+    g1.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g1;
     ctx.fillRect(0, 0, W, H);
 
-    const g2 = ctx.createRadialGradient(1020, 520, 20, 1020, 520, 420);
-    g2.addColorStop(0, "rgba(56,189,248,0.24)");
-    g2.addColorStop(1, "rgba(56,189,248,0)");
+    const g2 = ctx.createRadialGradient(1040, 540, 20, 1040, 540, 440);
+    g2.addColorStop(0, "rgba(56,189,248,0.20)");
+    g2.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g2;
     ctx.fillRect(0, 0, W, H);
 
-    // Outer frame
-    ctx.strokeStyle = "rgba(255,255,255,0.14)";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(36, 36, W - 72, H - 72);
+    // Metallic outer frame + top accent ribbon
+    roundRect(28, 28, W - 56, H - 56, 28);
+    ctx.strokeStyle = pal.mid;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
 
-    // Brand
-    ctx.fillStyle = "#34e5a5";
-    ctx.font = "700 24px Inter, sans-serif";
-    ctx.fillText("FLEXFAM · VERIFIED MEMBER CARD", 76, 102);
+    const topBar = ctx.createLinearGradient(120, 28, W - 120, 28);
+    topBar.addColorStop(0, "rgba(255,255,255,0)");
+    topBar.addColorStop(0.5, pal.hi);
+    topBar.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = topBar;
+    ctx.fillRect(120, 27, W - 240, 4);
+
+    // Top pass bar text
+    ctx.fillStyle = pal.hi;
+    ctx.font = "800 20px Sora, Inter, sans-serif";
+    ctx.fillText("✦ FLEXFAM OFFICIAL VIP PASS   ·   ✓ VERIFIED MEMBER", 72, 90);
+
+    // Brushed gold smart chip (top right)
+    const chipG = ctx.createLinearGradient(1042, 62, 1118, 112);
+    chipG.addColorStop(0, "#fff4c4");
+    chipG.addColorStop(0.5, "#e8b84b");
+    chipG.addColorStop(1, "#9e6d1c");
+    roundRect(1042, 62, 76, 52, 10);
+    ctx.fillStyle = chipG;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(42,26,4,0.45)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Header divider
+    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    ctx.fillRect(72, 118, W - 144, 1);
 
     // Member name
     ctx.fillStyle = "#ffffff";
-    ctx.font = "800 58px Sora, Inter, sans-serif";
-    ctx.fillText(String(card.displayName || "FlexFam Member").slice(0, 24), 76, 192);
+    ctx.font = "800 56px Sora, Inter, sans-serif";
+    ctx.fillText(String(card.displayName || "FlexFam Member").slice(0, 24), 72, 196);
 
-    // VIP & Rank line
-    const vip = card.vip || {};
-    ctx.fillStyle = vip.tierColor || "#ffd166";
-    ctx.font = "700 28px Inter, sans-serif";
-    ctx.fillText((vip.tierIcon || "🥉") + " " + (vip.tierName || "Bronze") + " VIP  ·  " + (card.masteryRank || "Newcomer") + "  ·  " + Number(vip.xp || 0).toLocaleString("en-IN") + " XP", 76, 246);
+    // Engraved metallic VIP pill
+    const pillText = (vip.tierIcon || "🥉") + " " + (vip.tierName || "Bronze") + " VIP  ·  " + Number(vip.spinMult || 1) + "× BOOST";
+    ctx.font = "800 22px Inter, sans-serif";
+    const pw = Math.min(360, ctx.measureText(pillText).width + 44);
+    const pillG = ctx.createLinearGradient(72, 218, 72 + pw, 258);
+    pillG.addColorStop(0, pal.hi);
+    pillG.addColorStop(0.55, pal.mid);
+    pillG.addColorStop(1, pal.lo);
+    roundRect(72, 218, pw, 42, 21);
+    ctx.fillStyle = pillG;
+    ctx.fill();
+    ctx.fillStyle = "#161005";
+    ctx.fillText(pillText, 94, 247);
 
-    // 4 stat boxes
-    const stats = card.stats || {};
-    const boxes = [
-      { lbl: "TASKS COMPLETED", val: String(stats.totalTasks || 0) },
-      { lbl: "BEST STREAK",     val: String(stats.bestStreak || 0) + " days" },
-      { lbl: "REFERRALS",       val: String(stats.referrals || 0) },
-      { lbl: "BADGES",          val: String(stats.badgesUnlocked || 0) + " / " + String(stats.badgesTotal || 8) },
-    ];
-    boxes.forEach((b, i) => {
-      const bx = 76 + i * 268;
-      const by = 300;
-      ctx.fillStyle = "rgba(255,255,255,0.06)";
-      ctx.fillRect(bx, by, 246, 134);
-      ctx.strokeStyle = "rgba(255,255,255,0.14)";
-      ctx.strokeRect(bx, by, 246, 134);
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "700 16px Inter, sans-serif";
-      ctx.fillText(b.lbl, bx + 22, by + 42);
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "800 38px Sora, Inter, sans-serif";
-      ctx.fillText(b.val, bx + 22, by + 100);
-    });
-
-    // Invite CTA footer
+    // Mastery rank & XP next to VIP pill
     ctx.fillStyle = "#cbd5e1";
     ctx.font = "600 24px Inter, sans-serif";
-    ctx.fillText("Join FlexFam & earn Points + USDT with invite code:", 76, 515);
-    ctx.fillStyle = "#ffd166";
-    ctx.font = "800 38px Sora, Inter, sans-serif";
-    ctx.fillText(String(card.code || "FLEXFAM"), 76, 565);
+    ctx.fillText((card.masteryRank || "Newcomer") + "  ·  " + Number(vip.xp || 0).toLocaleString("en-IN") + " VIP XP", 72 + pw + 22, 247);
+
+    // 4 frosted dark-glass stat cards
+    const boxes = [
+      { lbl: "TASKS DONE",  val: Number(stats.totalTasks || 0).toLocaleString("en-IN") },
+      { lbl: "BEST STREAK", val: String(stats.bestStreak || 0) + "d" },
+      { lbl: "REFERRALS",   val: Number(stats.referrals || 0).toLocaleString("en-IN") },
+      { lbl: "BADGES",      val: String(stats.badgesUnlocked || 0) + " / " + String(stats.badgesTotal || 8) },
+    ];
+    boxes.forEach((b, i) => {
+      const bx = 72 + i * 268;
+      const by = 294;
+      roundRect(bx, by, 248, 134, 18);
+      ctx.fillStyle = "rgba(255,255,255,0.065)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = pal.mid;
+      ctx.fillRect(bx + 20, by, 208, 3);
+
+      ctx.fillStyle = "#a9b8cf";
+      ctx.font = "700 16px Inter, sans-serif";
+      ctx.fillText(b.lbl, bx + 22, by + 44);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "800 40px Sora, Inter, sans-serif";
+      ctx.fillText(b.val, bx + 22, by + 102);
+    });
+
+    // Invite code vault footer
+    roundRect(72, 462, W - 144, 108, 18);
+    ctx.fillStyle = "rgba(255,255,255,0.045)";
+    ctx.fill();
+    ctx.strokeStyle = pal.mid;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "600 22px Inter, sans-serif";
+    ctx.fillText("Join FlexFam & earn Points + USDT with my VIP invite code:", 100, 508);
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "600 18px Inter, sans-serif";
+    ctx.fillText("flexfam · Daily Quests · Lucky Spin · VIP Tiers · Task Market", 100, 544);
+
+    ctx.fillStyle = pal.hi;
+    ctx.font = "800 40px Sora, Inter, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(String(card.code || "FLEXFAM"), W - 100, 530);
+    ctx.textAlign = "left";
 
     return true;
   }
