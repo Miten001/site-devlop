@@ -742,7 +742,10 @@
       });
     });
 
-    api.state().then(render).catch(() => {});
+    const reload = () => api.state().then(render).catch(() => {});
+    reload();
+    document.addEventListener("ff:quests-refresh", reload);
+    document.addEventListener("ff:campaigns-synced", reload);
   }
 
   FF.Q = {

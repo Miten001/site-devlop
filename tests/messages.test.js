@@ -71,7 +71,6 @@ async function main() {
   console.log("\n[MESSAGES 1] Shared full-message viewer is wired everywhere");
   const mv = read("assets/js/message-view.js");
   const bell = read("assets/js/bell.js");
-  const sup = read("assets/js/support.js");
   const dash = read("dashboard.html");
   const admin = read("admin.html");
 
@@ -89,8 +88,9 @@ async function main() {
   check("Dashboard inbox rows are tappable", /data-msg-id/.test(dash) && /MV\.register/.test(dash));
   check("Dashboard tap-to-read hint is visible", /Tap to read full message/.test(dash));
   check("Dashboard marks just the opened message read", /markMessageRead\(m\.id\)/.test(dash));
-  check("Support box history is tappable", /data-msg-id/.test(sup) && /MV\.register/.test(sup));
-  check("Support history preserves line breaks / wrapping", /white-space:pre-wrap/.test(sup) && /overflow-wrap:anywhere/.test(sup));
+  const pagesWithSupportChat = fs.readdirSync(ROOT).filter((f) => f.endsWith(".html") && /assets\/js\/support\.js/.test(read(f)));
+  check("Floating chat box script is removed from all HTML pages", pagesWithSupportChat.length === 0, pagesWithSupportChat);
+  check("Floating chat box script file is removed", !fs.existsSync(path.join(ROOT, "assets/js/support.js")));
   check("Admin message log rows are tappable", /data-msg-id/.test(admin) && /MV\.register/.test(admin));
   check("Admin log cells no longer clip text", /text-overflow:clip/.test(admin) && /overflow:visible/.test(admin));
   check("Admin message log height increased (less vertical cut)", /\.msg-sent \{ max-height: 460px; \}/.test(admin));
@@ -214,6 +214,7 @@ async function main() {
   if (dd.getElementById("msg-read-all")) dd.getElementById("msg-read-all").click();
   await sleep(60);
   check("Mark all read clears the unread badge", dd.getElementById("msg-unread").classList.contains("hidden"));
+  check("Floating support chat button is not rendered on dashboard", !dd.getElementById("ff-support-btn") && !dd.getElementById("ff-support-modal"));
   check("No uncaught JS errors on dashboard", dashDom.errors.length === 0, dashDom.errors);
   dashDom.dom.window.close();
 
