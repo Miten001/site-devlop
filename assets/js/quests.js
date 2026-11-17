@@ -232,11 +232,11 @@
       id: "mile_refer_10",
       kind: "milestone",
       title: "Fam Ambassador",
-      desc: "Invite 10 friends who sign up with your referral link.",
+      desc: "Invite 1,000+ friends who sign up with your referral link.",
       icon: "🌟",
       color: "#ec4899",
       metric: "referrals",
-      target: 10,
+      target: 1000,
       rewardType: "usdt",
       rewardAmount: 0.30,
       badgeId: "badge_ambassador",
@@ -268,7 +268,7 @@
     { id: "badge_builder",    questId: "mile_refer_3",   name: "Community Builder", icon: "🤝", rarity: "rare",      color: "#7c5cff", desc: "Invited 3 friends to FlexFam" },
     { id: "badge_legend",     questId: "mile_tasks_100", name: "Task Legend",       icon: "🏆", rarity: "epic",      color: "#f59e0b", desc: "Completed 100 approved tasks" },
     { id: "badge_streak30",   questId: "mile_streak_30", name: "Streak Master",     icon: "👑", rarity: "legendary", color: "#e0489f", desc: "Hit a 30-day check-in streak" },
-    { id: "badge_ambassador", questId: "mile_refer_10",  name: "Fam Ambassador",    icon: "🌟", rarity: "legendary", color: "#ec4899", desc: "Invited 10 friends to FlexFam" },
+    { id: "badge_ambassador", questId: "mile_refer_10",  name: "Fam Ambassador",    icon: "🌟", rarity: "legendary", color: "#ec4899", desc: "Invited 1,000+ friends to FlexFam" },
   ];
 
   const LEVELS = [
