@@ -22,65 +22,80 @@
 <style>
   .pf-wrap { max-width: 880px; margin: 0 auto; }
 
-  /* Luxury Metal VIP Showcase Card — always crisp high-contrast light text on dark obsidian */
+  /* Bright Luxury Metallic VIP Showcase Card — radiant pearl-gold / tier-silk (never dark/black) */
   .pf-card {
-    --vc: #f6c453;
-    --vc-hi: #fff2b2;
-    --vc-lo: #b7791f;
-    --vc-glow: rgba(246, 196, 83, .45);
-    color: #f8fafc;
-    border: 1.5px solid color-mix(in srgb, var(--vc) 68%, rgba(255,255,255,.22));
+    --vc: #d99414;
+    --vc-hi: #fff7d6;
+    --vc-lo: #9a5b04;
+    --vc-bg-1: #fffef9;
+    --vc-bg-2: #fff4d2;
+    --vc-bg-3: #fde29b;
+    --vc-ink: #221605;
+    --vc-muted: #6b4e1b;
+    --vc-glow: rgba(217, 148, 20, .34);
+    color: var(--vc-ink);
+    border: 2px solid color-mix(in srgb, var(--vc) 62%, #ffffff);
     border-radius: 26px;
     padding: 28px 30px;
     position: relative;
     overflow: hidden;
     background:
-      radial-gradient(ellipse 65% 60% at 8% 0%, color-mix(in srgb, var(--vc) 28%, transparent), transparent 60%),
-      radial-gradient(ellipse 55% 55% at 96% 100%, color-mix(in srgb, var(--vc-lo) 26%, rgba(56,189,248,.16)), transparent 62%),
-      repeating-linear-gradient(135deg, rgba(255,255,255,.018) 0 1px, transparent 1px 11px),
-      linear-gradient(145deg, #101526 0%, #0a0e1b 52%, #11182c 100%);
+      radial-gradient(ellipse 68% 62% at 6% 0%, color-mix(in srgb, var(--vc) 24%, transparent), transparent 62%),
+      radial-gradient(ellipse 58% 58% at 96% 100%, color-mix(in srgb, var(--vc) 28%, transparent), transparent 64%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,.28) 0 1px, transparent 1px 12px),
+      linear-gradient(135deg, var(--vc-bg-1) 0%, var(--vc-bg-2) 52%, var(--vc-bg-3) 100%);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.22),
-      inset 0 0 0 1px rgba(255,255,255,.06),
-      0 26px 64px -22px rgba(7, 10, 22, .72),
-      0 12px 34px -16px var(--vc-glow);
+      inset 0 2px 0 rgba(255,255,255,.92),
+      inset 0 0 0 1px rgba(255,255,255,.55),
+      0 22px 54px -22px var(--vc-glow),
+      0 10px 26px -14px rgba(16, 27, 48, .14);
     margin-bottom: 22px;
   }
   .pf-card[data-tier="bronze"] {
-    --vc: #e09153; --vc-hi: #ffd8b5; --vc-lo: #9c5221; --vc-glow: rgba(224,145,83,.42);
+    --vc: #c86f2c; --vc-hi: #ffedd5; --vc-lo: #8a3f0c;
+    --vc-bg-1: #fffcf8; --vc-bg-2: #ffebd6; --vc-bg-3: #f9cfa9;
+    --vc-ink: #291406; --vc-muted: #76421d; --vc-glow: rgba(200,111,44,.32);
   }
   .pf-card[data-tier="silver"] {
-    --vc: #cbd5e1; --vc-hi: #ffffff; --vc-lo: #64748b; --vc-glow: rgba(203,213,225,.38);
+    --vc: #64748b; --vc-hi: #f8fafc; --vc-lo: #334155;
+    --vc-bg-1: #ffffff; --vc-bg-2: #f1f5f9; --vc-bg-3: #dce5f1;
+    --vc-ink: #111c2d; --vc-muted: #475569; --vc-glow: rgba(100,116,139,.28);
   }
   .pf-card[data-tier="gold"] {
-    --vc: #f6c453; --vc-hi: #fff1b8; --vc-lo: #b7791f; --vc-glow: rgba(246,196,83,.5);
+    --vc: #d99414; --vc-hi: #fff8db; --vc-lo: #9a5b04;
+    --vc-bg-1: #fffef9; --vc-bg-2: #fff4d2; --vc-bg-3: #fde29b;
+    --vc-ink: #221605; --vc-muted: #6e4e16; --vc-glow: rgba(217,148,20,.38);
   }
   .pf-card[data-tier="platinum"] {
-    --vc: #c084fc; --vc-hi: #f3e8ff; --vc-lo: #7c3aed; --vc-glow: rgba(192,132,252,.48);
+    --vc: #9333ea; --vc-hi: #f5ecff; --vc-lo: #6b21a8;
+    --vc-bg-1: #fdfaff; --vc-bg-2: #f3e8ff; --vc-bg-3: #e3ccff;
+    --vc-ink: #1e1033; --vc-muted: #5b3788; --vc-glow: rgba(147,51,234,.32);
   }
   .pf-card[data-tier="diamond"] {
-    --vc: #38bdf8; --vc-hi: #e0f7ff; --vc-lo: #0284c7; --vc-glow: rgba(56,189,248,.52);
+    --vc: #0284c7; --vc-hi: #e0f7ff; --vc-lo: #075985;
+    --vc-bg-1: #f8fdff; --vc-bg-2: #e0f6ff; --vc-bg-3: #beeaff;
+    --vc-ink: #08233a; --vc-muted: #1e567a; --vc-glow: rgba(2,132,199,.32);
   }
 
-  /* Top metallic accent hairline */
+  /* Top metallic foil bar */
   .pf-card::before {
     content: "";
     position: absolute;
     inset: 0 0 auto 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent 4%, var(--vc-lo), var(--vc-hi) 50%, var(--vc-lo), transparent 96%);
+    height: 4px;
+    background: linear-gradient(90deg, var(--vc-lo), var(--vc) 35%, #ffffff 50%, var(--vc) 65%, var(--vc-lo));
     opacity: .95;
     pointer-events: none;
   }
-  /* Subtle holographic foil sheen sweep */
+  /* Subtle luxury pearl sheen sweep */
   .pf-card::after {
     content: "";
     position: absolute;
     top: -40%;
     left: -60%;
-    width: 48%;
+    width: 44%;
     height: 180%;
-    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,.075) 50%, transparent 80%);
+    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,.45) 50%, transparent 80%);
     transform: rotate(12deg);
     animation: pf-sheen 7.5s ease-in-out infinite;
     pointer-events: none;
@@ -106,18 +121,18 @@
     flex-wrap: wrap;
     padding-bottom: 16px;
     margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255,255,255,.1);
+    border-bottom: 1px solid color-mix(in srgb, var(--vc) 26%, transparent);
   }
   .pf-pass-brand {
     display: inline-flex;
     align-items: center;
     gap: 9px;
     font-family: "Sora", sans-serif;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 800;
-    letter-spacing: .16em;
+    letter-spacing: .15em;
     text-transform: uppercase;
-    color: var(--vc-hi);
+    color: var(--vc-lo);
   }
   .pf-verified {
     display: inline-flex;
@@ -126,11 +141,12 @@
     padding: 3px 10px;
     border-radius: 999px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: .04em;
-    color: #86efac;
-    background: rgba(34, 197, 94, .14);
-    border: 1px solid rgba(74, 222, 128, .4);
+    color: #0b6b3a;
+    background: rgba(255, 255, 255, .82);
+    border: 1px solid rgba(22, 163, 74, .42);
+    box-shadow: 0 2px 6px rgba(16, 27, 48, .06);
   }
   .pf-pass-right {
     display: inline-flex;
@@ -141,22 +157,23 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 11px;
+    padding: 5px 12px;
     border-radius: 999px;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: .05em;
     text-transform: uppercase;
-    color: var(--vc-hi);
-    background: color-mix(in srgb, var(--vc) 16%, rgba(15,23,42,.75));
-    border: 1px solid color-mix(in srgb, var(--vc) 48%, transparent);
+    color: var(--vc-lo);
+    background: rgba(255, 255, 255, .82);
+    border: 1px solid color-mix(in srgb, var(--vc) 46%, transparent);
+    box-shadow: 0 2px 8px rgba(16, 27, 48, .06);
   }
   .pf-chip-svg {
-    width: 36px;
-    height: 26px;
+    width: 38px;
+    height: 27px;
     border-radius: 6px;
     display: block;
-    box-shadow: 0 2px 10px rgba(0,0,0,.45);
+    box-shadow: 0 3px 10px rgba(138, 86, 6, .28);
     flex-shrink: 0;
   }
 
@@ -164,17 +181,17 @@
   .pf-id { display: flex; align-items: center; gap: 18px; min-width: 0; }
   .pf-avatar-wrap {
     position: relative;
-    padding: 3px;
+    padding: 3.5px;
     border-radius: 24px;
-    background: linear-gradient(135deg, var(--vc-hi), var(--vc), var(--vc-lo));
-    box-shadow: 0 10px 28px -8px var(--vc-glow);
+    background: linear-gradient(135deg, var(--vc-lo), var(--vc), #ffffff);
+    box-shadow: 0 10px 24px -8px var(--vc-glow);
     flex-shrink: 0;
   }
   .pf-avatar {
     width: 74px; height: 74px; border-radius: 21px; display: grid; place-items: center;
     font-family: "Sora", sans-serif; font-size: 30px; font-weight: 800; color: #ffffff;
-    background: radial-gradient(circle at 28% 22%, color-mix(in srgb, var(--vc) 72%, #7c5cff), #1c1e3a 88%);
-    text-shadow: 0 2px 10px rgba(0,0,0,.45);
+    background: linear-gradient(135deg, var(--vc) 0%, var(--vc-lo) 100%);
+    text-shadow: 0 2px 8px rgba(0,0,0,.22);
   }
   .pf-avatar-medal {
     position: absolute;
@@ -186,9 +203,9 @@
     display: grid;
     place-items: center;
     font-size: 14px;
-    background: #0d1222;
+    background: #ffffff;
     border: 2px solid var(--vc);
-    box-shadow: 0 4px 12px rgba(0,0,0,.55);
+    box-shadow: 0 4px 10px rgba(16, 27, 48, .18);
   }
 
   .pf-name {
@@ -197,9 +214,8 @@
     font-weight: 800;
     margin: 0;
     line-height: 1.15;
-    color: #ffffff;
-    letter-spacing: -.01em;
-    text-shadow: 0 2px 14px rgba(0,0,0,.4);
+    color: var(--vc-ink);
+    letter-spacing: -.015em;
     word-break: break-word;
   }
   .pf-sub {
@@ -209,35 +225,35 @@
     flex-wrap: wrap;
     margin-top: 8px;
     font-size: 13.5px;
-    font-weight: 500;
-    color: #cbd5e1;
+    font-weight: 600;
+    color: var(--vc-muted);
   }
-  .pf-dot { color: rgba(255,255,255,.35); }
+  .pf-dot { color: color-mix(in srgb, var(--vc-lo) 45%, transparent); }
   .pf-pill {
     display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px;
     font-size: 12px; font-weight: 800; letter-spacing: .03em;
-    background: linear-gradient(135deg, var(--vc-hi) 0%, var(--vc) 58%, var(--vc-lo) 100%);
-    color: #161005;
-    border: 1px solid rgba(255,255,255,.45);
-    box-shadow: 0 6px 18px -6px var(--vc-glow);
+    background: linear-gradient(135deg, var(--vc-lo) 0%, var(--vc) 100%);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,.55);
+    box-shadow: 0 6px 16px -6px var(--vc-glow);
   }
 
   .pf-code-box {
     text-align: right;
     padding: 12px 16px;
     border-radius: 16px;
-    border: 1px solid color-mix(in srgb, var(--vc) 46%, rgba(255,255,255,.15));
-    background: linear-gradient(150deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
-    min-width: 196px;
+    border: 1.5px solid color-mix(in srgb, var(--vc) 48%, #ffffff);
+    background: rgba(255, 255, 255, .86);
+    box-shadow: inset 0 1px 0 #ffffff, 0 8px 20px -12px var(--vc-glow);
+    min-width: 204px;
   }
   .pf-code-box small {
     display: block;
     font-size: 10.5px;
     text-transform: uppercase;
     letter-spacing: .12em;
-    color: #94a3b8;
-    font-weight: 700;
+    color: var(--vc-muted);
+    font-weight: 800;
   }
   .pf-code-row {
     display: flex;
@@ -250,34 +266,33 @@
     font-family: "Sora", sans-serif;
     font-size: 18px;
     font-weight: 800;
-    color: var(--vc-hi);
+    color: var(--vc-lo);
     letter-spacing: .06em;
-    text-shadow: 0 0 18px var(--vc-glow);
   }
   .pf-code-copy {
-    border: 1px solid rgba(255,255,255,.22);
-    background: rgba(255,255,255,.09);
-    color: #f8fafc;
+    border: 1px solid color-mix(in srgb, var(--vc) 48%, transparent);
+    background: linear-gradient(135deg, var(--vc), var(--vc-lo));
+    color: #ffffff;
     border-radius: 8px;
-    padding: 4px 8px;
+    padding: 4px 10px;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
-    transition: all .15s ease;
+    transition: transform .15s ease, opacity .15s ease;
   }
   .pf-code-copy:hover {
-    background: color-mix(in srgb, var(--vc) 28%, rgba(255,255,255,.12));
-    border-color: var(--vc);
-    color: #ffffff;
+    transform: translateY(-1px);
+    opacity: .92;
   }
 
   /* VIP XP Progress Strip inside the card */
   .pf-vip-progress {
     margin: 20px 0 18px;
-    padding: 13px 16px;
+    padding: 14px 16px;
     border-radius: 16px;
-    background: rgba(255,255,255,.045);
-    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255, 255, 255, .74);
+    border: 1px solid color-mix(in srgb, var(--vc) 30%, #ffffff);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.95);
   }
   .pf-vp-top {
     display: flex;
@@ -285,23 +300,23 @@
     justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--vc-ink);
   }
-  .pf-vp-top span:last-child { color: var(--vc-hi); }
+  .pf-vp-top span:last-child { color: var(--vc-lo); font-weight: 800; }
   .pf-vp-track {
-    height: 8px;
+    height: 9px;
     border-radius: 999px;
-    background: rgba(255,255,255,.12);
+    background: color-mix(in srgb, var(--vc) 18%, rgba(16, 27, 48, .08));
     overflow: hidden;
     margin-top: 9px;
   }
   .pf-vp-fill {
     height: 100%;
     border-radius: 999px;
-    background: linear-gradient(90deg, var(--vc-lo), var(--vc), var(--vc-hi));
-    box-shadow: 0 0 14px var(--vc-glow);
+    background: linear-gradient(90deg, var(--vc-lo), var(--vc));
+    box-shadow: 0 0 10px var(--vc-glow);
     transition: width .55s ease;
     width: 0%;
   }
@@ -310,40 +325,39 @@
   .pf-stat {
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,.14);
+    border: 1px solid color-mix(in srgb, var(--vc) 32%, #ffffff);
     border-radius: 16px;
     padding: 15px 16px;
-    background: linear-gradient(180deg, rgba(255,255,255,.075) 0%, rgba(255,255,255,.03) 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+    background: rgba(255, 255, 255, .84);
+    box-shadow: inset 0 1px 0 #ffffff, 0 8px 20px -14px rgba(16, 27, 48, .18);
     transition: transform .18s ease, border-color .18s ease;
   }
   .pf-stat::before {
     content: "";
     position: absolute;
     inset: 0 0 auto 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--vc) 70%, #fff), transparent);
-    opacity: .6;
+    height: 3px;
+    background: linear-gradient(90deg, var(--vc-lo), var(--vc));
+    opacity: .85;
   }
   .pf-stat:hover {
     transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--vc) 55%, rgba(255,255,255,.2));
+    border-color: var(--vc);
   }
   .pf-stat .l {
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: .08em;
-    color: #a9b8cf;
-    font-weight: 700;
+    letter-spacing: .07em;
+    color: var(--vc-muted);
+    font-weight: 800;
   }
   .pf-stat .v {
     font-family: "Sora", sans-serif;
     font-size: 27px;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--vc-ink);
     margin-top: 6px;
     line-height: 1.15;
-    text-shadow: 0 2px 12px rgba(0,0,0,.35);
   }
 
   .pf-badges-head {
@@ -355,10 +369,10 @@
     font-size: 11.5px;
     text-transform: uppercase;
     letter-spacing: .1em;
-    color: #b8c7dc;
+    color: var(--vc-muted);
     font-weight: 800;
   }
-  .pf-badges-head b { color: var(--vc-hi); }
+  .pf-badges-head b { color: var(--vc-lo); }
   .pf-badges { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 12px; }
   .pf-badge {
     display: inline-flex;
@@ -368,12 +382,12 @@
     border-radius: 999px;
     font-size: 13px;
     font-weight: 700;
-    border: 1px solid color-mix(in srgb, var(--bc, #34e5a5) 68%, rgba(255,255,255,.2));
-    background: color-mix(in srgb, var(--bc, #34e5a5) 20%, rgba(15, 23, 42, .85));
-    color: #ffffff;
-    box-shadow: 0 6px 16px -10px color-mix(in srgb, var(--bc, #34e5a5) 75%, transparent), inset 0 1px 0 rgba(255,255,255,.15);
+    border: 1.5px solid color-mix(in srgb, var(--bc, #17b26a) 62%, #ffffff);
+    background: color-mix(in srgb, var(--bc, #17b26a) 13%, #ffffff);
+    color: #162032;
+    box-shadow: 0 4px 12px -8px color-mix(in srgb, var(--bc, #17b26a) 65%, transparent), inset 0 1px 0 #ffffff;
   }
-  .pf-badge-empty { font-size: 13px; color: #cbd5e1; }
+  .pf-badge-empty { font-size: 13px; color: var(--vc-muted); font-weight: 600; }
 
   .pf-share-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
   .pf-link-box {
@@ -455,7 +469,7 @@
     </div>
 
     <div id="pf-content" class="hidden">
-      <article class="pf-card" id="pf-card" data-tier="gold" style="--vc:#f6c453">
+      <article class="pf-card" id="pf-card" data-tier="gold">
         <!-- Luxury VIP Pass top strip -->
         <div class="pf-pass-bar">
           <div class="pf-pass-brand">
@@ -604,7 +618,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const tierId = String(vip.tierId || vip.tierName || "bronze").toLowerCase();
     const cardEl = document.getElementById("pf-card");
     cardEl.setAttribute("data-tier", tierId);
-    cardEl.style.setProperty("--vc", vip.tierColor || "#f6c453");
 
     document.getElementById("pf-avatar").textContent = name.trim().slice(0, 1).toUpperCase() || "F";
     const medalEl = document.getElementById("pf-avatar-medal");
