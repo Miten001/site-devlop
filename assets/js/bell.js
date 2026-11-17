@@ -120,7 +120,7 @@
     if (clearBtn) clearBtn.hidden = n === 0;
     var items = d.items || [];
     if (!items.length) {
-      list.innerHTML = '<div class="bell-empty">🔔 Nothing yet — credits and announcements will land here.</div>';
+      list.innerHTML = '<div class="bell-empty">🔔 Nothing yet — deposit, withdrawal &amp; admin updates will land here.</div>';
       return;
     }
     var MV = window.FFMessage;

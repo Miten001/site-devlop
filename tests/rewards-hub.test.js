@@ -228,13 +228,21 @@ async function main() {
   });
 
   const profileHtml = read("profile.html");
-  check("profile.html VIP Showcase Card uses explicit high-contrast white text on dark obsidian (never dark --ink on dark card)",
-    /\.pf-card\s*\{[\s\S]*?color:\s*#f8fafc/.test(profileHtml) &&
-    /\.pf-name\s*\{[\s\S]*?color:\s*#ffffff/.test(profileHtml) &&
-    /\.pf-stat \.v\s*\{[\s\S]*?color:\s*#ffffff/.test(profileHtml) &&
-    /\.pf-badge\s*\{[\s\S]*?color:\s*#ffffff/.test(profileHtml));
+  check("profile.html VIP Showcase Card uses bright pearl-metallic tier palette (no dark/black card background) with crisp high-contrast ink",
+    !/#0a0e1b|#101526|#0b0f1e/.test(profileHtml) &&
+    /--vc-bg-1:\s*#fffef9/.test(profileHtml) &&
+    /--vc-ink:\s*#221605/.test(profileHtml) &&
+    /\.pf-stat\s*\{[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*\.84\)/.test(profileHtml));
   check("profile.html renders VIP Pass header, Smart Chip SVG, XP progress bar & Invite Code copy button",
     /FLEXFAM VIP PASS/.test(profileHtml) && /pf-chip-svg/.test(profileHtml) && /id="pf-vp-fill"/.test(profileHtml) && /id="btn-copy-code"/.test(profileHtml));
+
+  const notifSql = read("supabase-notifications.sql");
+  check("supabase-notifications.sql disables wallet_txns_credit_notify and notifies ONLY on pay_requests (deposit & withdraw)",
+    /drop trigger if exists wallet_txns_credit_notify on public\.wallet_txns;/i.test(notifSql) &&
+    !/create trigger wallet_txns_credit_notify/i.test(notifSql) &&
+    !/v_title\s*:=\s*'✅ Wallet updated'/i.test(notifSql) &&
+    /create trigger pay_requests_notify_trigger[\s\S]*?on public\.pay_requests/i.test(notifSql) &&
+    /if new\.kind not in \('deposit', 'withdraw'\)/i.test(notifSql));
 
   const adminHtml = read("admin.html");
   check("admin.html has Promo codes nav item and #sec-promos panel", /href="#sec-promos"/.test(adminHtml) && /id="sec-promos"/.test(adminHtml));

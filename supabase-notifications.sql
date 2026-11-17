@@ -58,46 +58,80 @@ returns text language sql immutable as $$
 $$;
 
 -- ------------------------------------------------------------
--- 2. Trigger — wallet event par SAHI label wali notification
---    (wallet_txns me amount ka matlab type se badalta hai:
---     streak/deposit/convert/refund = USDT $, earning/adjust = POINTS)
+-- 2. Deposit & Withdrawal Notifications ONLY
+--    - General wallet balance credits (tasks, mining, streaks,
+--      referrals, quests, spins, promos, VIP bonuses, adjusts)
+--      do NOT create "Wallet updated" bell notifications.
+--    - ONLY deposit & withdrawal lifecycle events on
+--      public.pay_requests (submitted / approved / rejected)
+--      notify the member in the bell.
 -- ------------------------------------------------------------
+drop trigger if exists wallet_txns_credit_notify on public.wallet_txns;
+
 create or replace function public.wallet_credit_notify()
 returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  return new;
+end;
+$$;
+
+create or replace function public.pay_request_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
 declare
-  v_kind  text := 'credit';
+  v_amt   text := public.notify_amount_label(round(coalesce(new.amount, 0), 2));
+  v_net   text := coalesce(nullif(trim(new.network), ''), 'USDT');
+  v_note  text := trim(coalesce(new.admin_note, ''));
+  v_kind  text := 'system';
   v_title text;
   v_body  text;
 begin
-  if new.amount is null or new.amount <= 0 or coalesce(new.status, '') <> 'completed' then
+  if new.kind not in ('deposit', 'withdraw') then
     return new;
   end if;
 
-  if new.type = 'streak' then
-    v_title := '💰 You earned $' || public.notify_amount_label(new.amount);
-    v_body  := 'Daily check-in reward credited to your USDT wallet. Come back tomorrow!';
-  elsif new.type = 'deposit' then
-    v_title := '💰 Deposit confirmed — $' || public.notify_amount_label(new.amount);
-    v_body  := 'Your balance has been updated.';
-  elsif new.type = 'convert' then
-    v_title := '💰 Points converted — $' || public.notify_amount_label(new.amount) || ' USDT';
-    v_body  := 'Points moved to your USDT wallet (bonus included).';
-  elsif new.type = 'refund' then
-    v_title := '↩️ Refund credited — $' || public.notify_amount_label(new.amount);
-    v_body  := 'Escrow returned to your wallet.';
-  elsif new.type = 'earning' then
-    -- job/task rewards POINTS me hote hain — $ claim GALAT hai
-    v_title := '🎯 Task reward: +' || public.notify_amount_label(new.amount) || ' pts';
-    v_body  := 'Task approved — points added to your balance. 1,000 pts = $1 USDT.';
-  elsif new.type = 'adjust' then
-    v_kind := 'system';
-    v_title := '⚙️ Balance adjusted: +' || public.notify_amount_label(new.amount) || ' pts';
-    v_body  := 'Your points balance was updated.';
+  if tg_op = 'INSERT' then
+    if new.status <> 'pending' then
+      return new;
+    end if;
+    if new.kind = 'deposit' then
+      v_title := '⏳ Deposit submitted — $' || v_amt || ' USDT';
+      v_body  := 'Your $' || v_amt || ' USDT deposit via ' || v_net || ' is waiting for admin confirmation.';
+    else
+      v_title := '⏳ Withdrawal requested — $' || v_amt || ' USDT';
+      v_body  := 'Your $' || v_amt || ' USDT withdrawal via ' || v_net || ' is waiting for approval.';
+    end if;
+  elsif tg_op = 'UPDATE' then
+    if coalesce(old.status, '') = coalesce(new.status, '') then
+      return new;
+    end if;
+    if new.kind = 'deposit' then
+      if new.status = 'approved' then
+        v_kind  := 'credit';
+        v_title := '✅ Deposit approved — $' || v_amt || ' USDT';
+        v_body  := 'Your $' || v_amt || ' USDT deposit via ' || v_net || ' has been credited to your wallet.';
+      elsif new.status = 'rejected' then
+        v_title := '❌ Deposit rejected — $' || v_amt || ' USDT';
+        v_body  := 'Your $' || v_amt || ' USDT deposit via ' || v_net || ' was rejected.';
+      else
+        return new;
+      end if;
+    else
+      if new.status = 'approved' then
+        v_kind  := 'credit';
+        v_title := '💸 Withdrawal approved — $' || v_amt || ' USDT';
+        v_body  := 'Your $' || v_amt || ' USDT withdrawal via ' || v_net || ' has been approved and processed.';
+      elsif new.status = 'rejected' then
+        v_title := '↩️ Withdrawal rejected — $' || v_amt || ' USDT';
+        v_body  := 'Your $' || v_amt || ' USDT withdrawal via ' || v_net || ' was rejected and refunded to your available balance.';
+      else
+        return new;
+      end if;
+    end if;
+    if v_note <> '' then
+      v_body := v_body || ' Note: ' || v_note;
+    end if;
   else
-    -- unknown type — koi $ claim nahi
-    v_kind := 'system';
-    v_title := '✅ Wallet updated';
-    v_body  := 'A balance change was credited to your account.';
+    return new;
   end if;
 
   insert into public.notifications (user_id, kind, title, body)
@@ -107,14 +141,19 @@ begin
 end;
 $$;
 
-drop trigger if exists wallet_txns_credit_notify on public.wallet_txns;
-create trigger wallet_txns_credit_notify
-  after insert on public.wallet_txns
-  for each row execute function public.wallet_credit_notify();
+drop trigger if exists pay_requests_notify_trigger on public.pay_requests;
+create trigger pay_requests_notify_trigger
+  after insert or update of status on public.pay_requests
+  for each row execute function public.pay_request_notify();
 
--- Purani galat-labeled notifications ("$ earned" jo points the) hata do
--- — naya trigger ab sahi labels banayega.
-delete from public.notifications where kind = 'credit';
+-- Remove old auto-generated wallet-balance notification spam while
+-- leaving admin announcements & DMs (public.messages) untouched.
+delete from public.notifications
+ where title like '✅ Wallet updated%'
+    or title like '⚙️ Balance adjusted%'
+    or title like '💰%'
+    or title like '🎯%'
+    or title like '↩️ Refund credited%';
 
 -- ------------------------------------------------------------
 -- 3. bell_feed() — bell icon ka poora data ek call me
