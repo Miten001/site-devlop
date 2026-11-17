@@ -163,7 +163,7 @@ returns table (
     ('mile_streak_7',      'milestone', 'Week Warrior',         'bestStreak',     7,   'usdt',   0.05, 'badge_streak7'),
     ('mile_streak_30',     'milestone', 'Streak Master',        'bestStreak',     30,  'usdt',   0.25, 'badge_streak30'),
     ('mile_refer_3',       'milestone', 'Community Builder',    'referrals',      3,   'points', 150,  'badge_builder'),
-    ('mile_refer_10',      'milestone', 'Fam Ambassador',       'referrals',      10,  'usdt',   0.30, 'badge_ambassador'),
+    ('mile_refer_10',      'milestone', 'Fam Ambassador',       'referrals',      1000, 'usdt',  0.30, 'badge_ambassador'),
     ('mile_creator_1',     'milestone', 'Creator Launch',       'createdCount',   1,   'points', 40,   'badge_creator');
 $$;
 

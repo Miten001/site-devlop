@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rewards Hub — FlexFam</title>
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="FlexFam" />
+<meta property="og:title" content="Rewards Hub — FlexFam" />
+<meta property="og:description" content="Spin the Daily Wheel, climb the Weekly Leaderboard, redeem Promo Gift Codes, and level up your VIP Tier on FlexFam." />
+<meta property="og:image" content="https://miten001.github.io/site-devlop/assets/img/ads/flexfam-og-1200x630.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://miten001.github.io/site-devlop/assets/img/ads/flexfam-og-1200x630.png" />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css?v=2.2" />
+<link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+<style>
+  .rh-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .rh-tab {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 16px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--glass-2);
+    color: var(--ink-dim); font-weight: 700; font-size: 13.5px;
+    cursor: pointer; transition: all .16s ease;
+  }
+  .rh-tab:hover { color: var(--ink); border-color: rgba(255,255,255,.25); }
+  .rh-tab.active {
+    background: linear-gradient(135deg, rgba(224,72,159,.24), rgba(124,92,255,.24));
+    border-color: rgba(224,72,159,.65); color: var(--ink);
+    box-shadow: 0 8px 24px -14px rgba(224,72,159,.7);
+  }
+  .rh-pane.hidden { display: none; }
+
+  .rh-pill-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .rh-timer {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+    border-radius: 999px; border: 1px solid var(--line); background: var(--glass-2);
+    font-size: 12px; font-weight: 700; color: var(--ink-dim); font-variant-numeric: tabular-nums;
+  }
+  .rh-timer b { color: var(--amber, #ffd166); }
+
+  /* Lucky Spin Layout */
+  .spin-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+  .wheel-stage {
+    position: relative; width: 320px; height: 320px; margin: 10px auto 16px;
+    display: grid; place-items: center;
+  }
+  .wheel-pointer {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; z-index: 5;
+    border-left: 14px solid transparent; border-right: 14px solid transparent;
+    border-top: 26px solid #ffd166;
+    filter: drop-shadow(0 4px 10px rgba(255,209,102,.65));
+  }
+  .wheel-rotor {
+    width: 310px; height: 310px; border-radius: 50%;
+    box-shadow: 0 0 0 6px rgba(255,255,255,.1), 0 0 42px -10px rgba(224,72,159,.55);
+    transition: transform 3.8s cubic-bezier(0.14, 0.85, 0.2, 1);
+    will-change: transform;
+  }
+  .wheel-hub {
+    position: absolute; width: 66px; height: 66px; border-radius: 50%; z-index: 4;
+    background: radial-gradient(circle at 30% 30%, #ffd166, #e0489f);
+    border: 4px solid #0b0f1e; display: grid; place-items: center;
+    font-weight: 800; font-size: 12px; color: #0b0f1e; letter-spacing: .04em;
+    box-shadow: 0 6px 20px rgba(0,0,0,.5);
+  }
+  .spin-result {
+    border: 1px solid rgba(52,229,165,.45); background: rgba(52,229,165,.1);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;
+    text-align: center; font-size: 14px; color: var(--ink);
+  }
+  .spin-result b { color: #34e5a5; font-size: 16px; }
+  .spin-cta-row { display: flex; flex-direction: column; gap: 10px; }
+  .spin-info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .spin-stat { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--glass-2); }
+  .spin-stat .l { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-mute); font-weight: 700; }
+  .spin-stat .v { font-family: "Sora", sans-serif; font-size: 20px; font-weight: 800; color: var(--ink); margin-top: 4px; }
+
+  /* Weekly Leaderboard */
+  .lb-pool {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    border: 1px solid rgba(255,209,102,.35); background: linear-gradient(135deg, rgba(255,209,102,.1), rgba(124,92,255,.08));
+    border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px;
+  }
+  .lb-pool-prizes { display: flex; gap: 12px; flex-wrap: wrap; font-weight: 800; }
+  .lb-pool-prizes span { padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.25); border: 1px solid var(--line); }
+  .lb-claim-box {
+    border: 1px solid rgba(52,229,165,.5); background: rgba(52,229,165,.12);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .lb-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0 18px; align-items: end; }
+  .pod-card {
+    border: 1px solid var(--line); border-radius: 16px; padding: 16px; text-align: center;
+    background: var(--glass-2); display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .pod-card.r1 {
+    border-color: rgba(255,209,102,.65); padding: 22px 16px;
+    background: linear-gradient(180deg, rgba(255,209,102,.18), var(--glass-2));
+    box-shadow: 0 12px 30px -16px rgba(255,209,102,.6);
+  }
+  .pod-card.r2 { border-color: rgba(203,213,225,.45); }
+  .pod-card.r3 { border-color: rgba(245,158,11,.45); }
+  .pod-medal { font-size: 28px; }
+  .pod-name { font-weight: 800; font-size: 15px; color: var(--ink); text-decoration: none; }
+  .pod-name:hover { text-decoration: underline; }
+  .pod-score { font-family: "Sora", sans-serif; font-size: 18px; font-weight: 800; color: #34e5a5; }
+  .pod-prize { font-size: 11.5px; color: #ffd166; font-weight: 700; }
+  .lb-my-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    padding: 11px 14px; border-radius: 12px; border: 1px solid rgba(124,92,255,.45);
+    background: rgba(124,92,255,.12); margin-bottom: 14px; font-size: 13.5px;
+  }
+  .lb-me-row { background: rgba(124,92,255,.14) !important; }
+
+  /* Promo Redeem */
+  .promo-hero {
+    border: 1px solid rgba(224,72,159,.4); border-radius: 18px; padding: 20px;
+    background: linear-gradient(145deg, rgba(224,72,159,.13), rgba(56,189,248,.08));
+    margin-bottom: 18px;
+  }
+  .promo-form { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .promo-form input {
+    flex: 1; min-width: 200px; text-transform: uppercase; letter-spacing: .08em;
+    font-family: "Sora", sans-serif; font-weight: 800; font-size: 16px;
+  }
+
+  /* VIP Tiers */
+  .vip-hero {
+    border: 1px solid color-mix(in srgb, var(--vc, #ffd166) 50%, transparent);
+    border-radius: 18px; padding: 20px; margin-bottom: 18px;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--vc, #ffd166) 16%, transparent), var(--glass-2));
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .vip-hero-left { display: flex; align-items: center; gap: 14px; }
+  .vip-crest {
+    width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; font-size: 32px;
+    background: color-mix(in srgb, var(--vc, #ffd166) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vc, #ffd166) 55%, transparent);
+  }
+  .vip-xp-bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; margin: 10px 0 8px; }
+  .vip-xp-bar i { display: block; height: 100%; border-radius: 999px; transition: width .45s ease; }
+  .vip-breakdown { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .vip-chip {
+    font-size: 12px; padding: 5px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--glass); color: var(--ink-dim); font-weight: 600;
+  }
+  .vip-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+  .vip-tier-card {
+    border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--glass-2);
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .vip-tier-card.current {
+    border-color: var(--vc, #ffd166);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--vc, #ffd166) 45%, transparent), 0 12px 26px -14px var(--vc, #ffd166);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--vc, #ffd166) 16%, transparent), var(--glass-2));
+  }
+  .vip-tier-card.locked { opacity: .66; }
+  .vip-tier-card .vt-ico { font-size: 26px; }
+  .vip-tier-card .vt-name { font-family: "Sora", sans-serif; font-size: 15px; font-weight: 800; }
+  .vip-tier-card .vt-xp { font-size: 11.5px; color: var(--ink-mute); font-weight: 700; }
+  .vip-tier-card ul { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--ink-dim); }
+
+  @media (max-width: 980px) {
+    .spin-layout { grid-template-columns: 1fr; }
+    .vip-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .wheel-stage { width: 280px; height: 280px; }
+    .wheel-rotor { width: 270px; height: 270px; }
+    .lb-podium { grid-template-columns: 1fr; }
+    .spin-info-grid { grid-template-columns: 1fr; }
+    .vip-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body class="app-body" data-requires-auth>
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="tasks.html">Task Market</a></li>
+      <li><a href="quests.html">Quests</a></li>
+      <li><a href="rewards.html" class="active">Rewards Hub</a></li>
+      <li><a href="wallet.html">Wallet</a></li>
+    </ul>
+    <div class="head-actions">
+      <a href="wallet.html" class="usdt-chip"><span data-usdt-icon></span><b data-usdt>0.00</b>&nbsp;USDT</a>
+      <a href="earn.html" class="credit-chip btn-sm always"><span data-coin></span><span data-credits>0</span></a>
+      <a href="#" class="btn btn-ghost btn-sm" data-logout>Logout</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="quests.html">Quests &amp; Badges</a>
+  <a href="rewards.html" class="active">Rewards Hub</a>
+  <a href="profile.html">Showcase Card</a>
+  <a href="add.html">Add Page</a>
+  <a href="post-task.html">Post a Task</a>
+  <a href="my-tasks.html">My Tasks</a>
+  <a href="mining.html">Cloud Mining</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="refer.html">Refer &amp; Earn</a>
+  <a href="#" data-logout style="color:var(--danger);font-size:18px;margin-top:14px">Logout</a>
+</nav>
+
+<main class="app-main">
+  <div class="container app-shell">
+    <aside class="side-nav">
+      <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Dashboard</a>
+      <a href="earn.html"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg> Earn Points</a>
+      <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
+      <a href="quests.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5"/></svg> Quests &amp; Badges</a>
+      <a href="rewards.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/><circle cx="12" cy="12" r="2"/></svg> Rewards Hub</a>
+      <a href="profile.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2.5"/><path d="M6 16c.8-1.6 2-2.2 3-2.2s2.2.6 3 2.2M14 9h4M14 13h4"/></svg> Showcase Card</a>
+      <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Add Page</a>
+      <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
+      <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
+      <a href="mining.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></svg> Cloud Mining</a>
+      <a href="wallet.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M16 12h3M3 9h18"/></svg> USDT Wallet</a>
+      <a href="refer.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg> Refer &amp; Earn</a>
+      <div class="side-support">Support <a href="https://t.me/codex_here" target="_blank" rel="noopener">@codex_here</a></div>
+      <a href="#" data-logout><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Logout</a>
+    </aside>
+
+    <section>
+      <div class="page-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span> Daily Perks &amp; Competition</span>
+          <h1>FlexFam <span class="grad-text">Rewards Hub</span></h1>
+          <p class="sub">Spin the Daily Wheel, climb the Weekly Leaderboard for USDT prizes, redeem gift codes, and unlock higher VIP tiers.</p>
+        </div>
+        <div class="rh-pill-meta">
+          <a href="profile.html" class="btn btn-ghost btn-sm">🪪 Showcase Card</a>
+          <button type="button" class="btn btn-ghost btn-sm" id="rh-refresh">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div class="rh-tabs" role="tablist" aria-label="Rewards Hub sections">
+        <button type="button" class="rh-tab active" data-rhtab="spin" role="tab" aria-selected="true">🎡 Lucky Spin</button>
+        <button type="button" class="rh-tab" data-rhtab="leaderboard" role="tab" aria-selected="false">🏆 Weekly Leaderboard</button>
+        <button type="button" class="rh-tab" data-rhtab="promo" role="tab" aria-selected="false">🎟️ Gift Codes</button>
+        <button type="button" class="rh-tab" data-rhtab="vip" role="tab" aria-selected="false">👑 VIP Tiers</button>
+      </div>
+
+      <!-- TAB 1: LUCKY SPIN -->
+      <div class="rh-pane" id="pane-spin">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Daily Lucky Wheel</h3>
+              <p class="panel-sub">Every member gets free daily spins — complete 1 task today for an extra free spin, and boost every win with your VIP multiplier.</p>
+            </div>
+            <span class="rh-timer">Resets in <b id="spin-countdown">—</b></span>
+          </div>
+
+          <div class="spin-layout">
+            <div>
+              <div class="wheel-stage">
+                <div class="wheel-pointer" aria-hidden="true"></div>
+                <svg class="wheel-rotor" id="wheel-rotor" viewBox="0 0 300 300" aria-label="Lucky Spin Prize Wheel"></svg>
+                <div class="wheel-hub">SPIN</div>
+              </div>
+              <div class="spin-result hidden" id="spin-result"></div>
+              <div class="spin-cta-row">
+                <button type="button" class="btn btn-primary btn-block" id="btn-spin-free">🎡 Spin Free Wheel</button>
+                <button type="button" class="btn btn-ghost btn-block" id="btn-spin-paid">⚡ Extra Spin (25 pts)</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="spin-info-grid">
+                <div class="spin-stat">
+                  <div class="l">Free Spins Left</div>
+                  <div class="v" id="sp-free-left">—</div>
+                </div>
+                <div class="spin-stat">
+                  <div class="l">VIP Multiplier</div>
+                  <div class="v" id="sp-mult" style="color:#ffd166">1.0×</div>
+                </div>
+                <div class="spin-stat">
+                  <div class="l">Extra Spins Left</div>
+                  <div class="v" id="sp-paid-left">2 / 2</div>
+                </div>
+              </div>
+
+              <div class="panel" style="margin:0 0 14px;padding:14px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                  <div>
+                    <b id="sp-task-title">Unlock +1 Bonus Free Spin today</b>
+                    <div style="font-size:12.5px;color:var(--ink-dim);margin-top:2px" id="sp-task-sub">Complete any campaign or micro-job today to unlock an extra free spin.</div>
+                  </div>
+                  <a href="earn.html" class="btn btn-ghost btn-sm" id="sp-task-link">Do a task →</a>
+                </div>
+              </div>
+
+              <h4 style="margin:0 0 8px;font-size:14px">Your Recent Spins</h4>
+              <div class="ff-table-wrap">
+                <table class="ff-table">
+                  <thead><tr><th>Prize</th><th>Boost</th><th>Type</th><th>Time</th></tr></thead>
+                  <tbody id="spin-history"><tr><td colspan="4" style="color:var(--ink-mute)">No spins yet — spin the wheel to win!</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: WEEKLY LEADERBOARD -->
+      <div class="rh-pane hidden" id="pane-leaderboard">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>Weekly Leaderboard &amp; Prize Pool</h3>
+              <p class="panel-sub">Compete every week (Monday–Sunday UTC) across Top Earners, Top Taskers, and Top Referrers. Top 3 winners claim USDT prizes directly to their wallet.</p>
+            </div>
+            <span class="rh-timer">Week <b id="lb-week-key">—</b> · <b id="lb-countdown">—</b></span>
+          </div>
+
+          <div class="lb-pool">
+            <div><b>🏆 Weekly Prize Pool (per category)</b></div>
+            <div class="lb-pool-prizes">
+              <span>🥇 #1: $0.25 USDT</span>
+              <span>🥈 #2: $0.10 USDT</span>
+              <span>🥉 #3: $0.05 USDT</span>
+            </div>
+          </div>
+
+          <div id="lb-claim-area"></div>
+
+          <div class="chip-row" id="lb-cat-row">
+            <button type="button" class="chip active" data-lbcat="earners" style="--pf:#34e5a5">💰 Top Earners</button>
+            <button type="button" class="chip" data-lbcat="taskers" style="--pf:#38bdf8">⚡ Top Taskers</button>
+            <button type="button" class="chip" data-lbcat="referrers" style="--pf:#e0489f">🤝 Top Referrers</button>
+          </div>
+
+          <div class="lb-my-bar" id="lb-my-bar">
+            <span>Your current rank: <b id="lb-my-rank">Unranked</b></span>
+            <span>Your score this week: <b id="lb-my-score">0</b></span>
+          </div>
+
+          <div class="lb-podium" id="lb-podium"></div>
+
+          <div class="ff-table-wrap">
+            <table class="ff-table">
+              <thead><tr><th>Rank</th><th>Member</th><th>VIP</th><th id="lb-score-head">Weekly Earnings</th><th>Profile</th></tr></thead>
+              <tbody id="lb-table"><tr><td colspan="5" style="color:var(--ink-mute)">Loading weekly rankings…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: PROMO / GIFT CODES -->
+      <div class="rh-pane hidden" id="pane-promo">
+        <div class="panel">
+          <div class="promo-hero">
+            <span class="eyebrow"><span class="dot"></span> Instant Bonus Drops</span>
+            <h3 style="margin:6px 0 4px">Redeem a FlexFam Gift Code</h3>
+            <p class="panel-sub" style="margin:0">Enter a promo code shared in FlexFam announcements or Telegram to credit instant Points or USDT straight to your account.</p>
+            <form class="promo-form" id="promo-form" autocomplete="off">
+              <input type="text" id="promo-code-in" placeholder="ENTER CODE (E.G. FLEXWELCOME)" maxlength="32" aria-label="Gift code" />
+              <button type="submit" class="btn btn-primary" id="promo-submit">🎟️ Redeem Code</button>
+            </form>
+            <p style="font-size:12px;color:var(--ink-mute);margin:10px 0 0">Tip: New members can try <b style="color:var(--ink)">FLEXWELCOME</b> for a one-time starter gift.</p>
+          </div>
+
+          <h4 style="margin:0 0 10px;font-size:15px">Your Redeemed Codes</h4>
+          <div class="ff-table-wrap">
+            <table class="ff-table">
+              <thead><tr><th>Code</th><th>Reward</th><th>Redeemed At</th></tr></thead>
+              <tbody id="promo-history"><tr><td colspan="3" style="color:var(--ink-mute)">No codes redeemed yet.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: VIP TIERS -->
+      <div class="rh-pane hidden" id="pane-vip">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h3>VIP Membership Tiers</h3>
+              <p class="panel-sub">Earn XP automatically from every completed task, daily streak, referral, mining claim, and quest. Higher tiers unlock bigger daily bonuses, more free spins, and up to 2.0× Lucky Spin multipliers.</p>
+            </div>
+            <span class="rh-timer">Daily VIP reset <b id="vip-countdown">—</b></span>
+          </div>
+
+          <div class="vip-hero" id="vip-hero" style="--vc:#f59e0b">
+            <div class="vip-hero-left">
+              <div class="vip-crest" id="vip-crest">🥉</div>
+              <div>
+                <div style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);font-weight:700">Current Membership Tier</div>
+                <h2 style="margin:2px 0 4px" id="vip-tier-title">Bronze VIP</h2>
+                <div style="font-size:13px;color:var(--ink-dim)" id="vip-xp-label">0 XP</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:12px;color:var(--ink-mute);margin-bottom:6px" id="vip-daily-sub">Daily VIP stipend: +10 pts</div>
+              <button type="button" class="btn btn-primary" id="btn-vip-claim">Claim Daily VIP Bonus</button>
+            </div>
+          </div>
+
+          <div class="vip-xp-bar"><i id="vip-xp-fill" style="width:0%;background:#f59e0b"></i></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-mute);font-weight:600">
+            <span id="vip-prog-left">0 XP</span>
+            <span id="vip-prog-right">Next tier: Silver (250 XP)</span>
+          </div>
+
+          <div class="vip-breakdown" id="vip-breakdown"></div>
+
+          <h4 style="margin:20px 0 8px;font-size:15px">All 5 Membership Tiers &amp; Perks</h4>
+          <div class="vip-grid" id="vip-grid"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/supabase-config.js?v=2.0"></script>
+<script src="assets/js/ff-analytics.js?v=2.0"></script>
+<script src="assets/js/main.js?v=2.6"></script>
+<script src="assets/js/wallet.js?v=2.6"></script>
+<script src="assets/js/mining.js?v=2.2"></script>
+<script src="assets/js/quests.js?v=1.0"></script>
+<script src="assets/js/rewards.js?v=1.0"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const user = FF.currentUser();
+  if (!user || !FF.R) return;
+  const R = FF.R;
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const fmtDate = (ms) => ms ? new Date(ms).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
+
+  /* Tab switching + URL hash */
+  const TABS = ["spin", "leaderboard", "promo", "vip"];
+  let activeTab = "spin";
+  function openTab(name) {
+    activeTab = TABS.includes(name) ? name : "spin";
+    document.querySelectorAll("[data-rhtab]").forEach((b) => {
+      const on = b.dataset.rhtab === activeTab;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    TABS.forEach((t) => {
+      const p = document.getElementById("pane-" + t);
+      if (p) p.classList.toggle("hidden", t !== activeTab);
+    });
+  }
+  document.querySelectorAll("[data-rhtab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      openTab(btn.dataset.rhtab);
+      try { history.replaceState(null, "", "#" + activeTab); } catch {}
+    });
+  });
+  const initHash = (location.hash || "").replace(/^#/, "");
+  if (TABS.includes(initHash)) openTab(initHash);
+
+  /* Build SVG 8-segment wheel */
+  const wheelEl = document.getElementById("wheel-rotor");
+  const segCount = R.SPIN_SEGMENTS.length;
+  const segDeg = 360 / segCount;
+  (function drawWheel() {
+    const cx = 150, cy = 150, r = 146;
+    let svg = "";
+    R.SPIN_SEGMENTS.forEach((seg, i) => {
+      const a0 = (i * segDeg - 90) * Math.PI / 180;
+      const a1 = ((i + 1) * segDeg - 90) * Math.PI / 180;
+      const x1 = cx + r * Math.cos(a0), y1 = cy + r * Math.sin(a0);
+      const x2 = cx + r * Math.cos(a1), y2 = cy + r * Math.sin(a1);
+      const mid = (i * segDeg + segDeg / 2 - 90) * Math.PI / 180;
+      const tx = cx + 96 * Math.cos(mid), ty = cy + 96 * Math.sin(mid);
+      const rot = i * segDeg + segDeg / 2;
+      svg += '<path d="M' + cx + ',' + cy + ' L' + x1.toFixed(2) + ',' + y1.toFixed(2) +
+        ' A' + r + ',' + r + ' 0 0,1 ' + x2.toFixed(2) + ',' + y2.toFixed(2) + ' Z" fill="' + seg.color +
+        '" stroke="rgba(11,15,30,.75)" stroke-width="2" />' +
+        '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) + '" fill="#ffffff" font-family="Sora,sans-serif" font-size="11.5" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(' + rot + ' ' + tx.toFixed(1) + ' ' + ty.toFixed(1) + ')">' + esc(seg.short) + '</text>';
+    });
+    wheelEl.innerHTML = svg;
+  })();
+
+  let wheelAngle = 0;
+  let spinning = false;
+  let spinState = null;
+  let vipState = null;
+  let lbState = null;
+  let lbCat = "earners";
+
+  function renderSpin(st) {
+    spinState = st;
+    if (!st) return;
+    document.getElementById("sp-free-left").textContent = st.freeLeft + " / " + st.freeTotal;
+    document.getElementById("sp-mult").textContent = Number(st.spinMult || 1) + "×";
+    document.getElementById("sp-paid-left").textContent = st.paidLeft + " / " + st.paidMax;
+    const freeBtn = document.getElementById("btn-spin-free");
+    const paidBtn = document.getElementById("btn-spin-paid");
+    freeBtn.disabled = spinning || st.freeLeft <= 0;
+    freeBtn.textContent = st.freeLeft > 0 ? "🎡 Spin Free Wheel (" + st.freeLeft + " left)" : "No free spins left today";
+    paidBtn.disabled = spinning || st.paidLeft <= 0;
+    paidBtn.textContent = st.paidLeft > 0 ? "⚡ Extra Spin (25 pts · " + st.paidLeft + " left)" : "Daily extra spins used (0/2)";
+    if (st.taskBonusUnlocked) {
+      document.getElementById("sp-task-title").textContent = "✅ +1 Task Bonus Spin unlocked today!";
+      document.getElementById("sp-task-sub").textContent = "Awesome! Your daily task bonus spin is already added to your free spin count.";
+      document.getElementById("sp-task-link").classList.add("hidden");
+    }
+    const rows = (st.history || []).map((h) =>
+      "<tr><td><b>" + esc(R.formatReward(h.rewardType, h.rewardAmount)) + "</b> <span style='color:var(--ink-mute);font-size:11.5px'>(" + esc(h.label) + ")</span></td>" +
+      "<td>" + esc(h.multiplier || 1) + "×</td>" +
+      "<td><span class='status-pill " + (h.paid ? "off" : "on") + "'>" + (h.paid ? "25 pts" : "Free") + "</span></td>" +
+      "<td style='white-space:nowrap'>" + esc(fmtDate(h.spunAt)) + "</td></tr>"
+    ).join("");
+    document.getElementById("spin-history").innerHTML = rows || '<tr><td colspan="4" style="color:var(--ink-mute)">No spins yet — spin the wheel to win!</td></tr>';
+  }
+
+  function doSpin(usePoints) {
+    if (spinning) return;
+    spinning = true;
+    document.getElementById("btn-spin-free").disabled = true;
+    document.getElementById("btn-spin-paid").disabled = true;
+    const resBox = document.getElementById("spin-result");
+    resBox.classList.add("hidden");
+
+    R.api.spinPlay(usePoints).then((res) => {
+      const sp = res.spin || {};
+      const idx = Math.max(0, Math.min(segCount - 1, Number(sp.segmentIndex) || 0));
+      const targetCenter = idx * segDeg + segDeg / 2;
+      const desiredMod = (360 - targetCenter) % 360;
+      const curMod = ((wheelAngle % 360) + 360) % 360;
+      const delta = (desiredMod - curMod + 360) % 360;
+      wheelAngle += 5 * 360 + delta;
+      wheelEl.style.transform = "rotate(" + wheelAngle.toFixed(1) + "deg)";
+
+      const reveal = () => {
+        spinning = false;
+        if (FF.sfx) (sp.rewardType === "usdt" ? FF.sfx.cash : FF.sfx.coin)();
+        const rewardText = R.formatReward(sp.rewardType, sp.rewardAmount);
+        resBox.innerHTML = "🎉 You won <b>" + esc(rewardText) + "</b>" +
+          (Number(sp.multiplier) > 1 ? " (" + esc(sp.multiplier) + "× VIP boost!)" : "!");
+        resBox.classList.remove("hidden");
+        FF.toast("Lucky Spin win: " + rewardText + " credited!", "ok");
+        renderSpin(res.state);
+      };
+      setTimeout(reveal, window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 100 : 1200);
+    }).catch((err) => {
+      spinning = false;
+      renderSpin(spinState);
+      FF.toast((err && err.message) || "Spin failed — try again", "err");
+    });
+  }
+
+  document.getElementById("btn-spin-free").addEventListener("click", () => doSpin(false));
+  document.getElementById("btn-spin-paid").addEventListener("click", () => doSpin(true));
+
+  /* Weekly Leaderboard */
+  function fmtLbScore(cat, val) {
+    const n = Number(val || 0);
+    if (cat === "earners") return "$" + n.toFixed(n < 0.01 ? 4 : 2);
+    if (cat === "taskers") return Math.round(n).toLocaleString("en-IN") + " tasks";
+    return Math.round(n).toLocaleString("en-IN") + " referrals";
+  }
+
+  function renderLeaderboard(st) {
+    lbState = st;
+    if (!st) return;
+    document.getElementById("lb-week-key").textContent = st.weekKey || "—";
+    document.getElementById("lb-my-rank").textContent = st.myRank ? "#" + st.myRank : "Unranked";
+    document.getElementById("lb-my-score").textContent = fmtLbScore(st.category, st.myScore);
+    document.getElementById("lb-score-head").textContent =
+      st.category === "earners" ? "Weekly Earnings" : (st.category === "taskers" ? "Tasks Done" : "New Referrals");
+
+    // Claimable prizes from last week
+    const claimArea = document.getElementById("lb-claim-area");
+    const prizes = (st.claimablePrizes || []).filter((p) => !p.claimed);
+    claimArea.innerHTML = prizes.map((p) =>
+      '<div class="lb-claim-box">' +
+        '<div><b>🏆 Last Week (' + esc(p.weekKey) + ') Top #' + esc(p.rank) + ' Winner — ' + esc(p.category.toUpperCase()) + '!</b>' +
+        '<div style="font-size:12.5px;color:var(--ink-dim)">You won ' + esc(R.formatReward(p.rewardType, p.rewardAmount)) + ' — claim it to your USDT wallet now.</div></div>' +
+        '<button type="button" class="btn btn-primary btn-sm" data-lb-claim="' + esc(p.category) + '" data-lb-week="' + esc(p.weekKey) + '">Claim ' + esc(R.formatReward(p.rewardType, p.rewardAmount)) + '</button>' +
+      '</div>'
+    ).join("");
+
+    const entries = st.entries || [];
+    const medals = ["🥇", "🥈", "🥉"];
+    const poolAmt = ["$0.25 USDT", "$0.10 USDT", "$0.05 USDT"];
+    const order = entries.length >= 3 ? [1, 0, 2] : entries.map((_, i) => i);
+    document.getElementById("lb-podium").innerHTML = entries.length
+      ? order.map((idx) => {
+          const e = entries[idx];
+          if (!e) return "";
+          const href = e.profileCode ? "profile.html?u=" + encodeURIComponent(e.profileCode) : "profile.html";
+          return '<div class="pod-card r' + e.rank + '">' +
+            '<div class="pod-medal">' + (medals[e.rank - 1] || "#" + e.rank) + '</div>' +
+            '<a class="pod-name" href="' + href + '">' + esc(e.displayName) + (e.isMe ? ' (You)' : '') + '</a>' +
+            '<div style="font-size:12px;color:var(--ink-mute)">' + esc((e.vipIcon || "🥉") + " " + (e.vipTier || "bronze").toUpperCase()) + '</div>' +
+            '<div class="pod-score">' + esc(fmtLbScore(st.category, e.score)) + '</div>' +
+            '<div class="pod-prize">Prize: ' + (poolAmt[e.rank - 1] || "") + '</div>' +
+          '</div>';
+        }).join("")
+      : '<div class="empty-mini" style="grid-column:1/-1"><b>No rankings recorded yet this week</b>Complete tasks, claim mining or refer friends to take the #1 spot!</div>';
+
+    document.getElementById("lb-table").innerHTML = entries.length
+      ? entries.map((e) => {
+          const href = e.profileCode ? "profile.html?u=" + encodeURIComponent(e.profileCode) : "";
+          return '<tr class="' + (e.isMe ? "lb-me-row" : "") + '">' +
+            '<td><b>' + (medals[e.rank - 1] || "#" + e.rank) + '</b></td>' +
+            '<td><b>' + esc(e.displayName) + '</b>' + (e.isMe ? ' <span class="status-pill on">You</span>' : '') + '</td>' +
+            '<td>' + esc((e.vipIcon || "🥉") + " " + (e.vipTier || "bronze").toUpperCase()) + '</td>' +
+            '<td><b>' + esc(fmtLbScore(st.category, e.score)) + '</b></td>' +
+            '<td>' + (href ? '<a href="' + href + '" class="btn btn-ghost btn-sm">View card</a>' : '—') + '</td>' +
+          '</tr>';
+        }).join("")
+      : '<tr><td colspan="5" style="color:var(--ink-mute)">No entries yet this week — be the first on the board!</td></tr>';
+  }
+
+  document.getElementById("lb-cat-row").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-lbcat]");
+    if (!b) return;
+    lbCat = b.dataset.lbcat;
+    document.querySelectorAll("[data-lbcat]").forEach((x) => x.classList.toggle("active", x === b));
+    R.api.leaderboardState(lbCat).then(renderLeaderboard).catch(() => {});
+  });
+
+  document.getElementById("lb-claim-area").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-lb-claim]");
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = "Claiming…";
+    R.api.leaderboardClaim(btn.dataset.lbClaim, btn.dataset.lbWeek).then((res) => {
+      if (FF.sfx) FF.sfx.cash();
+      const c = res.claimed || {};
+      FF.toast("Weekly Leaderboard prize claimed! " + R.formatReward(c.rewardType, c.rewardAmount), "ok");
+      renderLeaderboard(res.state);
+    }).catch((err) => {
+      btn.disabled = false;
+      FF.toast((err && err.message) || "Could not claim prize", "err");
+    });
+  });
+
+  /* Promo / Gift Codes */
+  function renderPromoHistory(items) {
+    const list = items || [];
+    document.getElementById("promo-history").innerHTML = list.length
+      ? list.map((r) =>
+          "<tr><td><b>" + esc(r.code) + "</b></td>" +
+          "<td style='color:var(--mint);font-weight:700'>" + esc(R.formatReward(r.rewardType, r.rewardAmount)) + "</td>" +
+          "<td>" + esc(fmtDate(r.redeemedAt)) + "</td></tr>"
+        ).join("")
+      : '<tr><td colspan="3" style="color:var(--ink-mute)">No codes redeemed yet.</td></tr>';
+  }
+
+  document.getElementById("promo-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const inp = document.getElementById("promo-code-in");
+    const btn = document.getElementById("promo-submit");
+    const code = (inp.value || "").trim();
+    if (!code) { FF.toast("Enter a gift code first", "err"); return; }
+    btn.disabled = true;
+    btn.textContent = "Redeeming…";
+    R.api.promoRedeem(code).then((res) => {
+      if (FF.sfx) FF.sfx.cash();
+      const c = res.redeemed || {};
+      FF.toast("Redeemed " + (c.code || code.toUpperCase()) + "! " + R.formatReward(c.rewardType, c.rewardAmount) + " added", "ok");
+      inp.value = "";
+      btn.disabled = false;
+      btn.textContent = "🎟️ Redeem Code";
+      renderPromoHistory(res.history || []);
+    }).catch((err) => {
+      btn.disabled = false;
+      btn.textContent = "🎟️ Redeem Code";
+      FF.toast((err && err.message) || "Could not redeem code", "err");
+    });
+  });
+
+  /* VIP Tiers */
+  function renderVip(st) {
+    vipState = st;
+    if (!st) return;
+    const hero = document.getElementById("vip-hero");
+    hero.style.setProperty("--vc", st.tierColor || "#f59e0b");
+    document.getElementById("vip-crest").textContent = st.tierIcon || "🥉";
+    document.getElementById("vip-tier-title").textContent = (st.tierName || "Bronze") + " VIP";
+    document.getElementById("vip-xp-label").textContent = Number(st.xp || 0).toLocaleString("en-IN") + " XP · " + st.freeSpins + " free spin" + (st.freeSpins > 1 ? "s" : "") + "/day · " + st.spinMult + "× spin boost";
+    const dailyLabel = R.formatReward(st.dailyType, st.dailyAmount);
+    document.getElementById("vip-daily-sub").textContent = "Daily VIP stipend: " + dailyLabel;
+    const cBtn = document.getElementById("btn-vip-claim");
+    cBtn.disabled = !!st.claimedToday;
+    cBtn.textContent = st.claimedToday ? "✓ Daily VIP Bonus Claimed" : "Claim " + dailyLabel;
+
+    const pct = st.nextXp ? Math.min(100, Math.round(((st.xp - st.minXp) / Math.max(1, st.nextXp - st.minXp)) * 100)) : 100;
+    const fill = document.getElementById("vip-xp-fill");
+    fill.style.width = pct + "%";
+    fill.style.background = st.tierColor || "#f59e0b";
+    document.getElementById("vip-prog-left").textContent = Number(st.xp || 0).toLocaleString("en-IN") + " XP";
+    document.getElementById("vip-prog-right").textContent = st.nextXp
+      ? "Next tier: " + st.nextName + " (" + Number(st.nextXp).toLocaleString("en-IN") + " XP)"
+      : "Maximum Diamond Tier unlocked!";
+
+    const bd = st.breakdown || {};
+    document.getElementById("vip-breakdown").innerHTML =
+      '<span class="vip-chip">⚡ Tasks: ' + (bd.totalTasks || 0) + ' (+' + ((bd.totalTasks || 0) * 20) + ' XP)</span>' +
+      '<span class="vip-chip">🔥 Best Streak: ' + (bd.bestStreak || 0) + 'd (+' + ((bd.bestStreak || 0) * 15) + ' XP)</span>' +
+      '<span class="vip-chip">🤝 Referrals: ' + (bd.referrals || 0) + ' (+' + ((bd.referrals || 0) * 40) + ' XP)</span>' +
+      '<span class="vip-chip">⛏️ Mining Claims: ' + (bd.miningClaims || 0) + ' (+' + ((bd.miningClaims || 0) * 10) + ' XP)</span>' +
+      '<span class="vip-chip">🎯 Quests: ' + (bd.questClaims || 0) + ' (+' + ((bd.questClaims || 0) * 25) + ' XP)</span>';
+
+    document.getElementById("vip-grid").innerHTML = R.VIP_TIERS.map((t, i) => {
+      const isCur = t.id === st.tierId;
+      const locked = i > Number(st.tierIndex || 0);
+      return '<div class="vip-tier-card ' + (isCur ? "current" : (locked ? "locked" : "")) + '" style="--vc:' + esc(t.color) + '">' +
+        '<div class="vt-ico">' + esc(t.icon) + '</div>' +
+        '<div class="vt-name">' + esc(t.name) + (isCur ? ' ★' : '') + '</div>' +
+        '<div class="vt-xp">' + (t.minXp > 0 ? Number(t.minXp).toLocaleString("en-IN") + '+ XP' : 'Starter tier') + '</div>' +
+        '<ul>' +
+          '<li>🎁 Daily: <b>' + esc(R.formatReward(t.dailyType, t.dailyAmount)) + '</b></li>' +
+          '<li>🎡 Free spins: <b>' + t.freeSpins + '/day</b></li>' +
+          '<li>✨ Spin boost: <b>' + t.spinMult + '×</b></li>' +
+        '</ul>' +
+      '</div>';
+    }).join("");
+  }
+
+  document.getElementById("btn-vip-claim").addEventListener("click", () => {
+    const btn = document.getElementById("btn-vip-claim");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = "Claiming…";
+    R.api.vipClaimDaily().then((res) => {
+      if (FF.sfx) FF.sfx.coin();
+      const c = res.claimed || {};
+      FF.toast("VIP " + (c.tierName || "") + " bonus claimed! " + R.formatReward(c.rewardType, c.rewardAmount), "ok");
+      renderVip(res.state);
+    }).catch((err) => {
+      renderVip(vipState);
+      FF.toast((err && err.message) || "Could not claim daily VIP bonus", "err");
+    });
+  });
+
+  function loadAll() {
+    R.api.spinState().then(renderSpin).catch(() => {});
+    R.api.leaderboardState(lbCat).then(renderLeaderboard).catch(() => {});
+    R.api.promoHistory().then((r) => renderPromoHistory(r && r.items)).catch(() => {});
+    R.api.vipState().then(renderVip).catch(() => {});
+  }
+
+  document.getElementById("rh-refresh").addEventListener("click", () => {
+    loadAll();
+    FF.toast("Rewards Hub refreshed", "info");
+  });
+
+  setInterval(() => {
+    const dayReset = (spinState && spinState.utcResetAt) || R.utcNextResetMs();
+    document.getElementById("spin-countdown").textContent = R.formatCountdown(dayReset);
+    document.getElementById("vip-countdown").textContent = R.formatCountdown((vipState && vipState.utcResetAt) || dayReset);
+    if (lbState && lbState.weekResetAt) {
+      document.getElementById("lb-countdown").textContent = R.formatCountdown(lbState.weekResetAt);
+    }
+  }, 1000);
+
+  loadAll();
+});
+</script>
+<script src="assets/js/message-view.js?v=1.1"></script>
+<script src="assets/js/bell.js?v=1.1"></script>
+</body>
+</html>

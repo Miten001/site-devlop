@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Member Showcase Card — FlexFam</title>
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="FlexFam" />
+<meta property="og:title" content="Verified Member Showcase — FlexFam" />
+<meta property="og:description" content="Check out this verified FlexFam member card — VIP rank, unlocked badges, streak record and invite link to start earning Points & USDT." />
+<meta property="og:image" content="https://miten001.github.io/site-devlop/assets/img/ads/flexfam-og-1200x630.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://miten001.github.io/site-devlop/assets/img/ads/flexfam-og-1200x630.png" />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css?v=2.2" />
+<link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+<style>
+  .pf-wrap { max-width: 860px; margin: 0 auto; }
+  .pf-card {
+    border: 1px solid color-mix(in srgb, var(--vc, #ffd166) 55%, transparent);
+    border-radius: 24px; padding: 28px; position: relative; overflow: hidden;
+    background:
+      radial-gradient(circle at 12% 14%, color-mix(in srgb, var(--vc, #e0489f) 24%, transparent), transparent 46%),
+      radial-gradient(circle at 88% 84%, rgba(56,189,248,.2), transparent 46%),
+      linear-gradient(145deg, rgba(16,20,40,.96), rgba(11,15,30,.98));
+    box-shadow: 0 24px 60px -28px color-mix(in srgb, var(--vc, #e0489f) 65%, transparent);
+    margin-bottom: 20px;
+  }
+  .pf-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .pf-id { display: flex; align-items: center; gap: 16px; }
+  .pf-avatar {
+    width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center;
+    font-family: "Sora", sans-serif; font-size: 28px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, var(--vc, #e0489f), #7c5cff);
+    box-shadow: 0 10px 26px -10px var(--vc, #e0489f);
+    flex-shrink: 0;
+  }
+  .pf-name { font-family: "Sora", sans-serif; font-size: 28px; font-weight: 800; margin: 0; line-height: 1.15; }
+  .pf-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 13px; color: var(--ink-dim); }
+  .pf-pill {
+    display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 800;
+    border: 1px solid color-mix(in srgb, var(--vc, #ffd166) 55%, transparent);
+    background: color-mix(in srgb, var(--vc, #ffd166) 18%, transparent);
+    color: var(--ink);
+  }
+  .pf-code-box {
+    text-align: right; padding: 10px 14px; border-radius: 14px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.04);
+  }
+  .pf-code-box small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-mute); font-weight: 700; }
+  .pf-code-box b { font-family: "Sora", sans-serif; font-size: 17px; color: #ffd166; letter-spacing: .04em; }
+
+  .pf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0 20px; }
+  .pf-stat {
+    border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 14px;
+    background: rgba(255,255,255,.04);
+  }
+  .pf-stat .l { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-mute); font-weight: 700; }
+  .pf-stat .v { font-family: "Sora", sans-serif; font-size: 24px; font-weight: 800; color: var(--ink); margin-top: 6px; }
+
+  .pf-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .pf-badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 700;
+    border: 1px solid color-mix(in srgb, var(--bc, #34e5a5) 55%, transparent);
+    background: color-mix(in srgb, var(--bc, #34e5a5) 14%, transparent);
+    color: var(--ink);
+  }
+
+  .pf-share-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .pf-link-box {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    border: 1px solid var(--line); border-radius: 14px; padding: 11px 14px;
+    background: var(--glass-2); margin-top: 12px;
+  }
+  .pf-link-box code { color: var(--cyan, #38bdf8); font-size: 13px; word-break: break-all; }
+
+  .pf-cta {
+    border: 1px solid rgba(52,229,165,.45); border-radius: 18px; padding: 20px;
+    background: linear-gradient(135deg, rgba(52,229,165,.12), rgba(124,92,255,.12));
+    display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+  }
+  .pf-empty { text-align: center; padding: 48px 20px; }
+  @media (max-width: 720px) {
+    .pf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pf-card { padding: 20px; }
+    .pf-name { font-size: 22px; }
+  }
+</style>
+</head>
+<body class="app-body">
+
+<div class="aurora"><span></span><span></span><span></span></div>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+    <ul class="nav-links">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="earn.html">Earn Points</a></li>
+      <li><a href="quests.html">Quests</a></li>
+      <li><a href="rewards.html">Rewards Hub</a></li>
+      <li><a href="profile.html" class="active">Showcase Card</a></li>
+    </ul>
+    <div class="head-actions" id="pf-head-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm" id="pf-login-btn">Login</a>
+      <a href="signup.html" class="btn btn-primary btn-sm" id="pf-signup-btn">Join Free</a>
+      <button class="burger" aria-label="Menu"><i></i><i></i><i></i></button>
+    </div>
+  </div>
+</header>
+
+<nav class="mobile-nav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="earn.html">Earn Points</a>
+  <a href="tasks.html">Task Market</a>
+  <a href="quests.html">Quests &amp; Badges</a>
+  <a href="rewards.html">Rewards Hub</a>
+  <a href="profile.html" class="active">Showcase Card</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="refer.html">Refer &amp; Earn</a>
+</nav>
+
+<main class="app-main">
+  <div class="container pf-wrap">
+    <div class="page-head">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> Verified FlexFam Member</span>
+        <h1>Member <span class="grad-text">Showcase Card</span></h1>
+        <p class="sub" id="pf-page-sub">Share your FlexFam rank, VIP tier, streak record and unlocked badges anywhere to bring in more referrals.</p>
+      </div>
+      <a href="rewards.html" class="btn btn-ghost btn-sm" id="pf-back-btn">← Rewards Hub</a>
+    </div>
+
+    <div id="pf-loading" class="panel pf-empty">Loading showcase card…</div>
+
+    <div id="pf-not-found" class="panel pf-empty hidden">
+      <h2 style="margin:0 0 8px">Profile card not found</h2>
+      <p style="color:var(--ink-dim);max-width:460px;margin:0 auto 18px" id="pf-nf-msg">Sign in to view and share your own FlexFam Showcase Card, or check the invite link you were given.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a href="login.html" class="btn btn-primary">Sign in</a>
+        <a href="signup.html" class="btn btn-ghost">Create free account</a>
+      </div>
+    </div>
+
+    <div id="pf-content" class="hidden">
+      <article class="pf-card" id="pf-card" style="--vc:#ffd166">
+        <div class="pf-top">
+          <div class="pf-id">
+            <div class="pf-avatar" id="pf-avatar">F</div>
+            <div>
+              <h2 class="pf-name" id="pf-name">FlexFam Member</h2>
+              <div class="pf-sub">
+                <span class="pf-pill" id="pf-vip-pill">🥉 Bronze VIP</span>
+                <span id="pf-rank">Newcomer</span>
+                <span>·</span>
+                <span id="pf-joined">Joined recently</span>
+              </div>
+            </div>
+          </div>
+          <div class="pf-code-box">
+            <small>Invite Code</small>
+            <b id="pf-code">—</b>
+          </div>
+        </div>
+
+        <div class="pf-stats">
+          <div class="pf-stat"><div class="l">Tasks Done</div><div class="v" id="pf-s-tasks">0</div></div>
+          <div class="pf-stat"><div class="l">Best Streak</div><div class="v" id="pf-s-streak">0d</div></div>
+          <div class="pf-stat"><div class="l">Referrals</div><div class="v" id="pf-s-refs">0</div></div>
+          <div class="pf-stat"><div class="l">VIP XP</div><div class="v" id="pf-s-xp">0</div></div>
+        </div>
+
+        <div>
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-mute);font-weight:700">
+            Unlocked Badges (<span id="pf-b-count">0 / 8</span>)
+          </div>
+          <div class="pf-badges" id="pf-badges"></div>
+        </div>
+      </article>
+
+      <!-- Share Studio (visible for own card & anyone wanting to share) -->
+      <div class="panel" id="pf-share-panel">
+        <div class="panel-head">
+          <div>
+            <h3>Share your Showcase Card &amp; earn referrals</h3>
+            <p class="panel-sub">Anyone who opens your card can sign up directly with your referral link — unlocking your free cloud mining rig &amp; 3-level referral rewards.</p>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-dl-png">⬇ Download PNG Card</button>
+        </div>
+        <div class="pf-link-box">
+          <code id="pf-share-url">—</code>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-copy-url">Copy link</button>
+        </div>
+        <div class="pf-share-bar">
+          <a href="#" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" id="btn-share-tg">✈️ Share on Telegram</a>
+          <a href="#" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" id="btn-share-wa">💬 Share on WhatsApp</a>
+          <a href="quests.html" class="btn btn-ghost btn-sm">🎯 Unlock more badges</a>
+        </div>
+        <canvas id="pf-canvas" class="hidden" aria-hidden="true"></canvas>
+      </div>
+
+      <!-- Visitor Invite CTA -->
+      <div class="pf-cta" id="pf-visitor-cta">
+        <div>
+          <h3 style="margin:0 0 4px" id="pf-cta-title">Join FlexFam with this invite</h3>
+          <p style="margin:0;color:var(--ink-dim);font-size:13.5px">Complete simple social tasks, spin the daily wheel, and earn Points + USDT rewards.</p>
+        </div>
+        <a href="signup.html" class="btn btn-primary" id="pf-cta-btn">Create Free Account →</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="assets/js/supabase-config.js?v=2.0"></script>
+<script src="assets/js/ff-analytics.js?v=2.0"></script>
+<script src="assets/js/main.js?v=2.6"></script>
+<script src="assets/js/wallet.js?v=2.6"></script>
+<script src="assets/js/mining.js?v=2.2"></script>
+<script src="assets/js/quests.js?v=1.0"></script>
+<script src="assets/js/rewards.js?v=1.0"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const R = FF.R;
+  if (!R) return;
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const cur = FF.currentUser ? FF.currentUser() : null;
+  if (cur) {
+    const lb = document.getElementById("pf-login-btn");
+    const sb = document.getElementById("pf-signup-btn");
+    if (lb) lb.classList.add("hidden");
+    if (sb) { sb.textContent = "Dashboard"; sb.href = "dashboard.html"; }
+  }
+
+  const params = new URLSearchParams(location.search);
+  const reqCode = (params.get("u") || params.get("code") || "").trim();
+
+  let currentCard = null;
+
+  function renderCard(card) {
+    document.getElementById("pf-loading").classList.add("hidden");
+    if (!card || !card.found) {
+      document.getElementById("pf-not-found").classList.remove("hidden");
+      if (reqCode) {
+        document.getElementById("pf-nf-msg").textContent = 'No FlexFam member card matched code "' + reqCode + '".';
+      }
+      return;
+    }
+    currentCard = card;
+    document.getElementById("pf-content").classList.remove("hidden");
+    const vip = card.vip || {};
+    const stats = card.stats || {};
+    const name = card.displayName || "FlexFam Member";
+    const cardEl = document.getElementById("pf-card");
+    cardEl.style.setProperty("--vc", vip.tierColor || "#ffd166");
+
+    document.getElementById("pf-avatar").textContent = name.trim().slice(0, 1).toUpperCase() || "F";
+    document.getElementById("pf-name").textContent = name;
+    document.getElementById("pf-vip-pill").textContent = (vip.tierIcon || "🥉") + " " + (vip.tierName || "Bronze") + " VIP";
+    document.getElementById("pf-rank").textContent = card.masteryRank || "Newcomer";
+    document.getElementById("pf-joined").textContent = "Joined " + new Date(card.joinedAt || Date.now()).toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+    document.getElementById("pf-code").textContent = card.code || "—";
+
+    document.getElementById("pf-s-tasks").textContent = Number(stats.totalTasks || 0).toLocaleString("en-IN");
+    document.getElementById("pf-s-streak").textContent = Number(stats.bestStreak || 0) + "d";
+    document.getElementById("pf-s-refs").textContent = Number(stats.referrals || 0).toLocaleString("en-IN");
+    document.getElementById("pf-s-xp").textContent = Number(vip.xp || 0).toLocaleString("en-IN");
+
+    const unlocked = card.badges || [];
+    document.getElementById("pf-b-count").textContent = unlocked.length + " / " + (stats.badgesTotal || 8);
+    document.getElementById("pf-badges").innerHTML = unlocked.length
+      ? unlocked.map((bid) => {
+          const b = R.BADGE_META[bid] || { icon: "⭐", name: bid, color: "#34e5a5" };
+          return '<span class="pf-badge" style="--bc:' + esc(b.color) + '">' + esc(b.icon) + ' ' + esc(b.name) + '</span>';
+        }).join("")
+      : '<span style="font-size:13px;color:var(--ink-mute)">No badges unlocked yet — complete quests to collect profile badges!</span>';
+
+    const baseUrl = location.href.split("?")[0].split("#")[0];
+    const shareUrl = baseUrl + "?u=" + encodeURIComponent(card.code || "");
+    const signupUrl = "signup.html?ref=" + encodeURIComponent(card.code || "");
+    document.getElementById("pf-share-url").textContent = shareUrl;
+    const msg = "Check out my FlexFam Showcase Card (" + (vip.tierName || "Bronze") + " VIP · " + (stats.totalTasks || 0) + " tasks done)! Join with my invite link to start earning Points & USDT: " + shareUrl;
+    document.getElementById("btn-share-tg").href = "https://t.me/share/url?url=" + encodeURIComponent(shareUrl) + "&text=" + encodeURIComponent(msg);
+    document.getElementById("btn-share-wa").href = "https://wa.me/?text=" + encodeURIComponent(msg);
+
+    document.getElementById("pf-cta-title").textContent = "Join FlexFam with " + name + "'s invite";
+    document.getElementById("pf-cta-btn").href = signupUrl;
+    if (card.isOwn) {
+      document.getElementById("pf-visitor-cta").classList.add("hidden");
+    }
+  }
+
+  document.getElementById("btn-copy-url").addEventListener("click", async () => {
+    const txt = document.getElementById("pf-share-url").textContent || "";
+    try {
+      await navigator.clipboard.writeText(txt);
+      FF.toast("Showcase Card link copied!", "ok");
+    } catch {
+      FF.toast("Select and copy the link manually", "info");
+    }
+  });
+
+  document.getElementById("btn-dl-png").addEventListener("click", () => {
+    if (!currentCard) return;
+    const canvas = document.getElementById("pf-canvas");
+    if (!R.renderShowcaseCanvas(currentCard, canvas)) {
+      FF.toast("Could not generate PNG in this browser", "err");
+      return;
+    }
+    try {
+      const a = document.createElement("a");
+      a.download = "flexfam-card-" + (currentCard.code || "member").toLowerCase() + ".png";
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+      FF.toast("Showcase Card PNG downloaded!", "ok");
+    } catch {
+      FF.toast("Download blocked — try again", "err");
+    }
+  });
+
+  R.api.publicProfile(reqCode || null).then(renderCard).catch(() => renderCard(null));
+});
+</script>
+<script src="assets/js/message-view.js?v=1.1"></script>
+<script src="assets/js/bell.js?v=1.1"></script>
+</body>
+</html>

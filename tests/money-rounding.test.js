@@ -181,14 +181,15 @@ async function main() {
       .filter((row) => HINGLISH.test(row.text));
   }
   const pages = ["index.html", "landing.html", "login.html", "signup.html", "dashboard.html", "earn.html",
-    "add.html", "post-task.html", "my-tasks.html", "tasks.html", "quests.html", "mining.html", "wallet.html",
+    "add.html", "post-task.html", "my-tasks.html", "tasks.html", "quests.html", "rewards.html", "profile.html",
+    "mining.html", "wallet.html",
     "refer.html", "admin.html", "admin-payments.html", "admin-check.html", "banner.html", "ads.html", "download.html"];
   pages.forEach((page) => {
     const hits = userFacingLines(page);
     check(page + " has no Hinglish copy", hits.length === 0, hits.slice(0, 3));
   });
   ["assets/js/main.js", "assets/js/wallet.js", "assets/js/mining.js", "assets/js/campaigns.js",
-    "assets/js/quests.js", "assets/js/proof.js", "assets/js/bell.js", "assets/js/message-view.js",
+    "assets/js/quests.js", "assets/js/rewards.js", "assets/js/proof.js", "assets/js/bell.js", "assets/js/message-view.js",
     "assets/js/admin-earnings.js"]
     .forEach((js) => {
       const hits = userFacingLines(js);

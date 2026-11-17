@@ -370,6 +370,7 @@ function openPage(file, { storage = {}, user = null, rpcHandler = null, serverMo
   check("SQL #27 revokes public/anon and grants authenticated on quests_state & quests_claim",
     /revoke all on function public\.quests_state\(\)\s+from public, anon/i.test(sql27) &&
     /grant execute on function public\.quests_claim\(text\)\s+to authenticated/i.test(sql27));
+  check("SQL #27 sets Fam Ambassador target to 1000 referrals", /'mile_refer_10',\s*'milestone',\s*'Fam Ambassador',\s*'referrals',\s*1000/.test(sql27));
   check("SQL #27 reloads PostgREST schema cache", /notify pgrst, 'reload schema'/i.test(sql27));
 
   const runOrder = fs.readFileSync(path.join(ROOT, "RUN-ORDER.md"), "utf8");
