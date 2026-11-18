@@ -69,7 +69,7 @@ async function main() {
   check("Task Market: separate proof link field", /id="jm-link"/.test(tasks));
   check("Task Market: screenshot file attach", /<input type="file" id="jm-file"/.test(tasks));
   check("Task Market: attach field is NOT hidden by default", /<div class="field" style="text-align:left" id="jm-attach-field">/.test(tasks));
-  check("Campaigns: typed proof + link + file attach", /<textarea id="cm-text"/.test(earn) && /id="cm-proof"/.test(earn) && /id="cm-file"/.test(earn));
+  check("Campaigns use proof-free seven-second timer", !/id="cm-text"|id="cm-proof"|id="cm-file"/.test(earn) && /startTimedCampaign/.test(earn) && /7000/.test(earn));
   check("Post a Task: proof instructions is a typing box", /<textarea id="j-proof"/.test(post));
   check("Post a Task: example screenshot file attach", /<input type="file" id="j-proof-file"/.test(post));
   check("Post a Task: explains both worker options", /typed text \/ link/.test(post) && /screenshot file attach/.test(post));
@@ -77,7 +77,7 @@ async function main() {
   check("Admin job edit: proof note is a typing box", /<textarea id="je-proof"/.test(read("admin.html")));
   check("My Tasks: all-submissions history panel", /id="hist-body"/.test(mine));
   check("Shared proof helper loaded on owner + admin pages",
-    ["tasks.html", "earn.html", "post-task.html", "my-tasks.html", "dashboard.html", "admin.html", "admin-payments.html"]
+    ["tasks.html", "post-task.html", "my-tasks.html", "dashboard.html", "admin.html", "admin-payments.html"]
       .every((f) => read(f).includes("assets/js/proof.js")));
 
   console.log("\n[PROOF 2] encode / decode / display");
