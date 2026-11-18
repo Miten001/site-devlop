@@ -1,0 +1,76 @@
+/* Public marketing pages only. Dashboard and payment styles stay isolated. */
+.public-home, .public-landing {
+  --bg: #f7faf8; --bg2: #fff; --ink: #142d28; --mute: #526b63;
+  --green: #087653; --green2: #065f46; --gold: #936519; --orange: #ad6616;
+  --line: #dce8e1;
+  color: var(--ink);
+  background: radial-gradient(ellipse at 85% 5%, #def4e7 0, transparent 36%), radial-gradient(ellipse at 4% 25%, #fff1d6 0, transparent 30%), #f7faf8;
+}
+.public-home #bgMotion, .public-home .aurora { opacity: .18; }
+.public-home .site-head, .public-landing .topbar {
+  background: rgba(255,255,255,.92); border-bottom: 1px solid #dce8e1;
+  backdrop-filter: blur(18px); box-shadow: 0 4px 30px #173b2810;
+}
+.public-home .logo, .public-landing .brand { color: #153b2c; }
+.public-home .hero { padding-top: 138px; padding-bottom: 84px; }
+.public-home .hero h1 { font-size: clamp(42px, 5.5vw, 76px); letter-spacing: -.055em; line-height: 1.08; }
+.public-home .hero .sub { color: #526b63; line-height: 1.85; max-width: 560px; }
+.public-home .hero::after { background: radial-gradient(ellipse at 85% 40%, #c9ebd880, transparent 65%); }
+.public-home .grad-text, .public-landing .grad {
+  background: linear-gradient(110deg, #087653, #23836a 60%, #946918);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.public-home .eyebrow, .public-landing .pill {
+  color: #086546; background: #eaf6ef; border: 1px solid #bcdcca;
+  padding: 9px 15px; border-radius: 99px; font-size: 12px; letter-spacing: .04em;
+}
+.public-home .btn-hot, .public-landing .btn {
+  background: linear-gradient(130deg, #087653, #065b43); color: #fff;
+  border: 1px solid #076649; box-shadow: 0 8px 22px #08654624;
+  border-radius: 12px; text-shadow: none;
+}
+.public-home .btn-ghost { background: #ffffffc9; color: #244a3d; border-color: #cddfd4; }
+.public-home .btn:hover, .public-landing .btn:hover { transform: translateY(-2px); }
+.public-home .float-chip, .public-home .payout-feed { background: #fff; border-color: #dce8e1; box-shadow: 0 18px 48px #173b2814; }
+.public-home .platform-card, .public-home .step-card, .public-home .t-card, .public-home .price-card {
+  background: #ffffffed; border: 1px solid #dce8e1; border-radius: 22px; box-shadow: 0 10px 35px #173b2809;
+}
+.public-home .cta-box { background: linear-gradient(120deg, #124d3b, #087653); border: 1px solid #377b60; box-shadow: 0 20px 60px #124d3b20; }
+.public-home .cta-box h2 .grad-text { background: none; -webkit-text-fill-color: #f9dea4; color: #f9dea4; }
+.public-home .cta-box .btn-primary { background: #fff; color: #065b43; }
+.public-landing .wrap { max-width: 1080px; }
+.public-landing .hero { padding: 88px 24px 50px; }
+.public-landing h1 { font-size: clamp(34px, 5vw, 62px); max-width: 880px; letter-spacing: -.045em; line-height: 1.12; }
+.public-landing h1 .u { text-decoration: none; }
+.public-landing .hero .sub { margin-top: 24px; max-width: 690px; }
+.public-landing .hero-ghost, .public-landing .hero-chip, .public-landing .rain { display: none; }
+.public-landing .cta-big { animation: none; padding: 18px 30px; }
+.public-landing .micro { max-width: 650px; margin: 18px auto 0; line-height: 1.7; }
+.public-landing .stat, .public-landing .step, .public-landing .card, .public-landing .tcard, .public-landing .q, .public-landing .ccard, .public-landing .calc {
+  background: #fff; border-color: #dce8e1; border-radius: 20px; box-shadow: 0 8px 30px #173b2808;
+}
+.public-landing .card p, .public-landing .warn { color: #526b63; }
+.public-landing .warn { background: #fff8e9; border-color: #dbc89f; }
+.public-landing .stats { gap: 16px; }
+.public-landing .stat { padding: 24px 12px; }
+.public-landing .tcard:hover { box-shadow: 0 14px 34px #173b2814; }
+.public-landing .timer { color: #a33145; }
+.public-landing .pt2 .pc { color: #315fb6; }
+.public-landing .rk-panel { --green: #42df9d; --gold: #ffd061; color: #eef2fb; }
+.public-home a:focus-visible, .public-landing a:focus-visible, .public-landing input:focus-visible {
+  outline: 3px solid #218361; outline-offset: 5px;
+}
+@media (max-width: 760px) {
+  .public-home .hero { padding-top: 110px; padding-bottom: 42px; }
+  .public-home .hero h1 { font-size: clamp(40px, 10vw, 60px); }
+  .public-landing .hero { padding: 48px 20px 28px; }
+  .public-landing .stats { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+  .public-landing .pill { font-size: 10px; line-height: 1.6; }
+  .public-landing .cta-big { white-space: normal; width: 100%; max-width: 360px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-home *, .public-home *::before, .public-home *::after,
+  .public-landing *, .public-landing *::before, .public-landing *::after {
+    animation: none !important; transition: none !important; scroll-behavior: auto !important;
+  }
+}
