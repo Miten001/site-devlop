@@ -54,6 +54,7 @@ const HTML_PAGES = [
   "quests.html",
   "rewards.html",
   "profile.html",
+  "support.html",
   "mining.html",
   "wallet.html",
   "refer.html",
@@ -452,18 +453,14 @@ async function runAudit() {
   const campModal = bobEarnDoc.getElementById("camp-modal");
   check("Task modal opens when Bob clicks 'Start Task'", campModal && campModal.classList.contains("open"));
 
-  const proofInput = bobEarnDoc.getElementById("cm-proof");
-  const noteInput = bobEarnDoc.getElementById("cm-note");
-  const submitProofBtn = bobEarnDoc.getElementById("cm-submit");
-
-  proofInput.value = "https://youtube.com/screenshot_bob_sub123";
-  noteInput.value = "Subscribed to Alice Tech Channel!";
-  submitProofBtn.click();
-  await sleep(30);
+  await sleep(20);
+  const clockNow = bobEarnDom.dom.window.Date.now;
+  bobEarnDom.dom.window.Date.now = () => clockNow() + 8000;
+  await sleep(350);
 
   const bobSubs = bobEarnDom.dom.window.FF.DB.campSubs();
   const bobSub = bobSubs.find((s) => s.campaignId === campaignPayload.id && s.worker === "bob@test.dev");
-  check("Campaign submission recorded with status 'pending'", !!bobSub && bobSub.status === "pending", bobSub);
+  check("Campaign auto-credited with approved status after seven-second visit", !!bobSub && bobSub.status === "approved", bobSub);
   check("Submission owner is Alice", bobSub && bobSub.owner === "alice@test.dev", bobSub ? bobSub.owner : null);
 
   const bobTaskBtnAfter = bobEarnDoc.querySelector(`[data-task="${campaignPayload.id}"]`);
@@ -476,7 +473,7 @@ async function runAudit() {
   await sleep(30);
   const aliceReviewDoc = aliceReviewDashDom.dom.window.document;
   const approveBtn = aliceReviewDoc.querySelector(`[data-camp-ok="${bobSub.id}"]`);
-  check("Alice sees Bob's pending submission on her Dashboard", !!approveBtn);
+  check("No owner approval needed for timer-completed campaign", !approveBtn);
 
   if (approveBtn) approveBtn.click();
   await sleep(30);

@@ -299,3 +299,21 @@ fixed immediately; server mode needs the SQL above.
 cent-precision helpers, buying a rig / withdrawing / converting / posting a task with a balance
 that only *displays* as the exact price, the SQL guards, and a scan that fails the build if
 Hinglish copy ever comes back to any page.
+
+## Support Tickets
+
+Run `supabase-support-tickets.sql` after `supabase.sql` (requires `public.is_admin()`).
+This creates private ticket/reply tables, RLS, and authenticated RPCs.
+Members use `support.html`; admins open the same page via Admin → Support tickets.
+Admin privileges are verified on the server, never inferred from a browser email.
+Only admins change status; resolved tickets are read-only for members.
+The page displays up to 200 latest tickets per status. Click Refresh for new replies.
+Demo/offline mode never pretends to send support requests. No bell notifications are added.
+
+## Proof-free Earn Points campaigns
+
+Run `supabase-campaign-click-7s.sql` LAST, after campaign limit and referral migrations.
+All campaign platforms/actions now use `campaigns_start` and a fixed seven-second server wait
+before `campaigns_submit_proof` auto-credits. Legacy proof parameters are ignored, but no claim
+can bypass the start/wait requirement. Existing completed/pending submissions remain intact.
+Task Market job proofs are unchanged. Visits do not verify follows or subscriptions.

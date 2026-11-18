@@ -51,6 +51,7 @@
   <a href="tasks.html">Task Market</a>
   <a href="quests.html">Quests &amp; Badges</a>
   <a href="rewards.html">Rewards Hub</a>
+  <a href="support.html">Support Tickets</a>
   <a href="post-task.html">Post a Task</a>
   <a href="my-tasks.html">My Tasks</a>
   <a href="add.html" class="active">Add Page</a>
@@ -108,9 +109,9 @@
 
       <div class="est-box">
         <div class="field hidden" id="watch-field" style="text-align:left;margin-top:14px">
-          <label id="watch-label">⏱️ Watch time — seconds the user must watch (5–300)</label>
-          <input type="number" id="camp-watch" min="5" max="300" step="1" value="15" />
-          <p style="font-size:12px;color:var(--ink-mute);margin:6px 0 0">Website campaigns always run on this timer — no proof needed, points auto-credit when it ends. View / Watch / Read actions on other platforms use it too.</p>
+          <label id="watch-label">⏱️ Visit timer — fixed at 7 seconds</label>
+          <input type="number" id="camp-watch" min="7" max="7" step="1" value="7" readonly />
+          <p style="font-size:12px;color:var(--ink-mute);margin:6px 0 0">All Earn Points campaigns use a fixed 7-second visit. No proof is required; points are credited automatically.</p>
         </div>
 
         <div class="field" id="limit-field" style="text-align:left;margin-top:14px">
@@ -139,7 +140,7 @@
 <script src="assets/js/main.js?v=2.6"></script>
 <script src="assets/js/wallet.js?v=2.6"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
-<script src="assets/js/campaigns.js?v=2.1"></script>
+<script src="assets/js/campaigns.js?v=2.2"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
@@ -231,16 +232,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function refreshActions() {
     const p = FF.PLATFORMS[selected] || { actions: ["Visit"], name: selected };
-    /* View/Watch type action chuna to watch-time field dikha do */
-    if (typeof FF.isWatchAction === "function") {
-      /* Website platform: hamesha timer mode (proof nahi) */
-      const needsTimer = selected === "website" || FF.isWatchAction(actionSelect.value);
-      watchField.classList.toggle("hidden", !needsTimer);
-      const wl = document.getElementById("watch-label");
-      if (wl) wl.textContent = selected === "website"
-        ? "⏱️ Timer — seconds the visitor must stay (5–300) — points auto-credit, no proof"
-        : "⏱️ Watch time — seconds the user must watch (5–300)";
-    }
+    watchField.classList.remove("hidden");
+    document.getElementById("watch-label").textContent = "Visit timer — fixed at 7 seconds";
     actionSelect.innerHTML = p.actions.map((a) => `<option value="${a}">${a}</option>`).join("");
     urlInput.placeholder = {
       telegram: "https://t.me/yourchannel-or-bot",
@@ -320,8 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if ((u.credits || 0) < payout) return FF.toast("Not enough points — earn some on the Earn page first!", "err");
 
-    const needsTimer = selected === "website" || (typeof FF.isWatchAction === "function" && FF.isWatchAction(action));
-    const watchSecs = needsTimer ? Math.max(5, Math.min(300, parseInt(document.getElementById("camp-watch").value, 10) || 15)) : 0;
+    const watchSecs = 7;
     const limitRaw = document.getElementById("camp-limit").value.trim();
     const maxActions = Math.max(0, Math.min(100000, parseInt(limitRaw, 10) || 0));
     if (limitRaw !== "" && !/^\d+$/.test(limitRaw)) return FF.toast("Engagement limit must be a whole number (0 = no limit)", "err");

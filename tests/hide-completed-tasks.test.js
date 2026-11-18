@@ -163,6 +163,31 @@ function openPage(file, { storage = {}, user = null, rpcHandler = null, serverMo
     ff_done: JSON.stringify({}),
   };
 
+  // All platforms/actions use the same proof-free flow, with no premature local credit.
+  const timerPage = openPage("earn.html", { storage: Object.assign({}, shared, {
+    ff_users: JSON.stringify([{name:"Alice",email:"alice@test.dev",credits:100}])
+  }), user: {name:"Bob",email:"bob@test.dev",credits:25} });
+  await sleep(30);
+  const TF = timerPage.win.FF;
+  check("Subscribe and Telegram Join campaigns both use timer mode", TF.isTimerCampaign(seedCampaign) && TF.isTimerCampaign({platform:"telegram",action:"Join",watchSecs:0}));
+  let blocked = false;
+  try { await TF.completeTimedCampaign(seedCampaign.id); } catch (_) { blocked = true; }
+  check("Claim without starting the visit is blocked", blocked);
+  await TF.startTimedCampaign(seedCampaign.id);
+  const timerNow = timerPage.win.Date.now();
+  timerPage.win.Date.now = () => timerNow + 6990;
+  blocked = false;
+  try { await TF.completeTimedCampaign(seedCampaign.id); } catch (_) { blocked = true; }
+  check("No reward before seven full seconds", blocked && TF.currentUser().credits===25);
+  timerPage.win.Date.now = () => timerNow + 7001;
+  await TF.completeTimedCampaign(seedCampaign.id);
+  check("Seven-second visit auto-approves without proof or owner review", TF.DB.campSubs()[0].status==="approved");
+  check("Worker earns exactly the reward and owner pays once", TF.currentUser().credits===45 && TF.DB.users().find(u=>u.email==="alice@test.dev").credits===80);
+  blocked = false;
+  try { await TF.startTimedCampaign(seedCampaign.id); } catch (_) { blocked = true; }
+  check("Completed visit cannot be restarted for duplicate rewards", blocked && TF.currentUser().credits===45);
+  timerPage.win.close();
+
   // Owner Alice still sees her own campaign
   let p = openPage("earn.html", { storage: shared, user: { name: "Alice", email: "alice@test.dev", credits: 100 } });
   await sleep(30);
@@ -177,8 +202,8 @@ function openPage(file, { storage = {}, user = null, rpcHandler = null, serverMo
   const bobBtn = p.doc.querySelector('[data-task="camp-yt-1"]');
   check("Worker Bob sees open Add Page campaign before completing", !!bobBtn && !bobBtn.disabled);
   bobBtn.click();
-  p.doc.getElementById("cm-text").value = "Subscribed from @bobhandle";
-  p.doc.getElementById("cm-submit").click();
+  p.win.FF.submitCampaignProof("bob@test.dev", "Bob", "camp-yt-1", "Legacy submission");
+  p.win.document.dispatchEvent(new p.win.CustomEvent("ff:campaigns-synced"));
   await sleep(30);
   check("After proof submission, Add Page campaign hides immediately from Bob's screen", !p.doc.querySelector('[data-task="camp-yt-1"]'));
   check("Empty state says 'All tasks complete!' once Bob finishes the only campaign",
@@ -207,8 +232,8 @@ function openPage(file, { storage = {}, user = null, rpcHandler = null, serverMo
   check("Rejected campaign reappears for Bob with 'Try again'", !!retryBtn && retryBtn.textContent.includes("Try again") && !retryBtn.disabled);
   // Bob resubmits and owner approves -> permanently hidden even on reload
   retryBtn.click();
-  p.doc.getElementById("cm-text").value = "Fixed screenshot proof @bobhandle";
-  p.doc.getElementById("cm-submit").click();
+  p.win.FF.submitCampaignProof("bob@test.dev", "Bob", "camp-yt-1", "Updated legacy submission");
+  p.win.document.dispatchEvent(new p.win.CustomEvent("ff:campaigns-synced"));
   await sleep(30);
   check("Resubmitted campaign hides immediately from Bob's screen", !p.doc.querySelector('[data-task="camp-yt-1"]'));
   const latestSub = p.win.FF.DB.campSubs().find((s) => s.worker === "bob@test.dev" && s.status === "pending");
@@ -259,11 +284,13 @@ function openPage(file, { storage = {}, user = null, rpcHandler = null, serverMo
   const liveBtn = srvEarn.doc.querySelector('[data-task="camp-live-2"]');
   check("Server mode shows uncompleted campaign", !!liveBtn);
   liveBtn.click();
-  srvEarn.doc.getElementById("cm-text").value = "Visited fresh site and verified";
+  await sleep(20);
   const walletCallsBefore = rpcCalls.filter((x) => x === "wallet_state").length;
-  srvEarn.doc.getElementById("cm-submit").click();
-  await sleep(60);
-  check("Server mode hides campaign immediately after proof submit", !srvEarn.doc.querySelector('[data-task="camp-live-2"]'));
+  const realNow = srvEarn.win.Date.now;
+  srvEarn.win.Date.now = () => realNow() + 8000;
+  await sleep(350);
+  check("Server mode starts its seven-second session", rpcCalls.includes("campaigns_start"));
+  check("Server mode hides campaign after automatic timer credit", !srvEarn.doc.querySelector('[data-task="camp-live-2"]'));
   check("Server mode syncs wallet_state after campaign completion", rpcCalls.filter((x) => x === "wallet_state").length > walletCallsBefore);
   srvEarn.win.close();
 
@@ -443,6 +470,9 @@ function openPage(file, { storage = {}, user = null, rpcHandler = null, serverMo
      ===================================================================== */
   console.log("\n[6] SQL migration (#26) & canonical SQL definitions");
 
+  const clickSql = fs.readFileSync(path.join(ROOT, "supabase-campaign-click-7s.sql"), "utf8");
+  check("Server claims enforce a seven-second clock and private per-worker starts", /clock_timestamp\(\) < v_started \+ interval '7 seconds'/.test(clickSql) && /primary key\(campaign_id,worker\)/.test(clickSql) && /revoke all on public.campaign_click_sessions/.test(clickSql));
+  check("Server claims preserve quota and referral payouts without proof validation", /c.actions >= c.max_actions/.test(clickSql) && /referral_payout/.test(clickSql) && !/length\(trim\(p_proof\)\)/.test(clickSql));
   const sql26 = fs.readFileSync(path.join(ROOT, "supabase-hide-completed-tasks.sql"), "utf8");
   const sqlTopBid = fs.readFileSync(path.join(ROOT, "supabase-campaigns-top-bid.sql"), "utf8");
   const sqlPostAdmin = fs.readFileSync(path.join(ROOT, "supabase-post-task-admin.sql"), "utf8");

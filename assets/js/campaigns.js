@@ -43,14 +43,41 @@
     return /^(watch|view|visit|read|explore)\b/i.test(String(action || "").trim());
   };
 
-  /* Website campaigns: HAMESHA timer mode — proof nahi. Click → website
-     khulti hai → timer chalta hai → points auto-credit. (Owner watch time
-     set karta hai; 0 ho to 15s default.) Baaki platforms: sirf View/Watch
-     type actions + watch time set hone par timer. */
-  FF.isTimerCampaign = function (c) {
-    if (!c) return false;
-    if (String(c.platform || "").toLowerCase() === "website") return true;
-    return FF.isWatchAction(c.action) && Number(c.watchSecs || 0) > 0;
+  // Every Earn Points campaign uses the same proof-free seven-second visit.
+  FF.isTimerCampaign = function (c) { return !!c; };
+  const clickStarts = new Map();
+  FF.startTimedCampaign = function (campaignId) {
+    const user = FF.currentUser();
+    if (!user) return Promise.reject(new Error("Please sign in"));
+    if (FF.hasServer()) return FF.rpc("campaigns_start", { p_campaign: campaignId });
+    const camp = FF.DB.campaigns().find((c) => c.id === campaignId);
+    if (!camp || camp.src === "srv") return Promise.reject(new Error("Sign in with a live account to complete this campaign."));
+    if (camp.active === false || camp.authorEmail === user.email) return Promise.reject(new Error("This campaign is not available to you"));
+    if (Number(camp.maxActions)>0 && Number(camp.actions || 0)>=Number(camp.maxActions)) return Promise.reject(new Error("This campaign reached its engagement limit"));
+    if (FF.DB.campSubs().some((s) => s.campaignId === campaignId && s.worker === user.email && s.status !== "rejected")) return Promise.reject(new Error("You already submitted this campaign"));
+    clickStarts.set(user.email + ":" + campaignId, Date.now());
+    return Promise.resolve({ waitSeconds: 7 });
+  };
+  FF.completeTimedCampaign = function (campaignId) {
+    const user = FF.currentUser();
+    if (!user) return Promise.reject(new Error("Please sign in"));
+    if (FF.hasServer()) return FF.rpc("campaigns_submit_proof", { p_campaign: campaignId, p_proof: "", p_note: "" })
+      .then((feed) => { adopt(feed); syncWallet(); });
+    const key = user.email + ":" + campaignId;
+    if (!clickStarts.has(key) || Date.now()-clickStarts.get(key)<7000) return Promise.reject(new Error("Open this task and wait 7 seconds before claiming"));
+    const camp = FF.DB.campaigns().find((c) => c.id === campaignId);
+    if (!camp || camp.src === "srv") return Promise.reject(new Error("A live account is required"));
+    if (Number(camp.maxActions)>0 && Number(camp.actions || 0)>=Number(camp.maxActions)) return Promise.reject(new Error("This campaign reached its engagement limit"));
+    try {
+      // Validate funds before recording anything. Legacy owner-review APIs remain for old submissions.
+      const owner = FF.DB.users().find((u) => u.email === camp.authorEmail);
+      if (!owner || Number(owner.credits || 0)<Number(camp.payout)) throw new Error("This campaign cannot pay out right now");
+      const sub = localSubmit(user.email, user.name, campaignId, "Completed 7-second visit (no proof required)", "");
+      localReview(sub.id, true, "");
+      clickStarts.delete(key);
+      document.dispatchEvent(new CustomEvent("ff:campaigns-synced"));
+      return Promise.resolve(sub);
+    } catch (err) { return Promise.reject(err); }
   };
 
   function adopt(feed, isPublic) {

@@ -51,6 +51,7 @@
   <a href="tasks.html">Task Market</a>
   <a href="quests.html">Quests &amp; Badges</a>
   <a href="rewards.html">Rewards Hub</a>
+  <a href="support.html">Support Tickets</a>
   <a href="post-task.html">Post a Task</a>
   <a href="my-tasks.html">My Tasks</a>
   <a href="add.html">Add Page</a>
@@ -69,6 +70,7 @@
       <a href="tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Task Market</a>
       <a href="quests.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5"/></svg> Quests &amp; Badges</a>
       <a href="rewards.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 3"/><circle cx="12" cy="12" r="2"/></svg> Rewards Hub</a>
+      <a href="support.html">Support Tickets</a>
       <a href="add.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Add Page</a>
       <a href="post-task.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg> Post a Task</a>
       <a href="my-tasks.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> My Tasks</a>
@@ -84,7 +86,7 @@
         <div>
           <span class="eyebrow"><span class="dot"></span> Earn</span>
           <h1>Earn <span class="grad-text">points</span></h1>
-          <p class="sub">Quick bonus missions pay out instantly. Community campaigns pay out the moment you submit your proof — no waiting for approval.</p>
+          <p class="sub">Choose a task and earn points.</p>
         </div>
         <div class="credit-chip" style="font-size:15px;padding:10px 18px"><span data-coin></span><span data-credits>0</span>&nbsp;points</div>
       </div>
@@ -140,48 +142,18 @@
   </div>
 </div>
 
-<!-- PROOF MODAL (real user-posted campaigns: needs owner approval) -->
+<!-- Proof-free campaign visit timer -->
 <div class="modal-veil" id="camp-modal">
   <div class="modal modal-pos" id="camp-modal-card">
     <button class="m-close" data-close-modal aria-label="Close modal"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     <span class="m-ico" id="cm-ico"></span>
     <h3 id="cm-title">Complete the campaign</h3>
     <p class="m-sub" id="cm-sub"></p>
-    <div id="cm-proof-zone">
-      <div class="m-steps">
-        <div><span class="n">1</span> Open the page and complete the action — join / follow / subscribe</div>
-        <div><span class="n">2</span> Come back — type your proof or paste a link, and attach a screenshot 📎 (both work together)</div>
-        <div><span class="n">3</span> Submit — your points are credited instantly ⚡</div>
-      </div>
-      <a class="btn btn-ghost btn-block hidden" id="cm-open" href="#" target="_blank" rel="noopener" style="margin-top:14px">Open task link</a>
-      <div class="field" style="text-align:left;margin-top:16px">
-        <label>✍️ Type your proof (username / ID / details)</label>
-        <textarea id="cm-text" rows="2" placeholder="Your username or any useful detail…"></textarea>
-      </div>
-      <div class="field" style="text-align:left">
-        <label>🔗 Proof link (optional)</label>
-        <input type="text" id="cm-proof" placeholder="https://... or @username" />
-        <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
-          <button type="button" class="btn btn-ghost btn-sm" id="cm-attach">📎 Attach screenshot / media</button>
-          <button type="button" class="btn btn-ghost btn-sm hidden" id="cm-file-remove">✕ Remove</button>
-          <span id="cm-file-name" style="font-size:12px;color:var(--ink-mute)"></span>
-        </div>
-        <input type="file" id="cm-file" accept="image/*,video/mp4,video/webm" class="hidden" />
-        <div id="cm-preview" class="hidden" style="margin-top:10px"></div>
-      </div>
-      <div class="field" style="text-align:left">
-        <label>Note to the campaign owner (optional)</label>
-        <textarea id="cm-note" rows="2" placeholder="Anything the owner should know"></textarea>
-      </div>
-      <button class="btn btn-primary btn-block" id="cm-submit">Submit proof for review</button>
-    </div>
-
-    <!-- WATCH-TIMER ZONE (View/Watch/Read campaigns — proof nahi, timer) -->
     <div id="cm-watch-zone" class="hidden" style="text-align:center;margin-top:6px">
       <div id="cm-watch-info" style="font-size:15px;margin-bottom:14px"></div>
       <button type="button" class="btn btn-primary btn-block" id="cm-watch-start">▶ Open page &amp; start timer</button>
       <div id="cm-timer-box" class="hidden" style="margin:16px 0 4px">
-        <div style="font-size:40px;font-weight:800;line-height:1" id="cm-timer-num">15</div>
+        <div style="font-size:40px;font-weight:800;line-height:1" id="cm-timer-num">7</div>
         <div style="font-size:12px;color:var(--ink-mute);margin-top:4px">seconds left — keep this page open</div>
         <div style="height:10px;border-radius:99px;background:var(--line);margin-top:12px;overflow:hidden">
           <div id="cm-timer-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#7c5cff,#e0489f);transition:width 1s linear;border-radius:99px"></div>
@@ -197,8 +169,7 @@
 <script src="assets/js/main.js?v=2.6"></script>
 <script src="assets/js/wallet.js?v=2.6"></script>
 <script src="assets/js/mining.js?v=2.2"></script>
-<script src="assets/js/campaigns.js?v=2.1"></script>
-<script src="assets/js/proof.js?v=1.0"></script>
+<script src="assets/js/campaigns.js?v=2.2"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   /* Guest (bina login) bhi campaigns ki listing dekh sakta hai — read-only.
@@ -427,12 +398,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const isRejected = sub && sub.status === "rejected";
       const isOwn = isOwnCamp(c);
       const isPaused = c.active === false && isOwn;
-      const isWatch = FF.isTimerCampaign ? FF.isTimerCampaign(c) : false;
+
       const maxA = Math.max(0, Math.round(Number(c.maxActions || 0)));
       const acts = Number(c.actions || 0);
       const isFull = maxA > 0 && acts >= maxA;
       const disabled = isOwn || isFull;
-      const label = isPaused ? "Paused ⏸" : isOwn ? "Your campaign 👑" : isFull ? "Limit reached ⛔" : isRejected ? "Try again" : isWatch ? "Watch & Earn ⏱" : "Start Task";
+      const label = isPaused ? "Paused ⏸" : isOwn ? "Your campaign 👑" : isFull ? "Limit reached ⛔" : isRejected ? "Try again" : "Start Task";
       const btnClass = isOwn || isFull ? "btn-ghost" : "btn-primary";
       return `
         <div class="task-card" style="--pf:${p.color}">
@@ -452,7 +423,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
             </a>
           </div>
-          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isFull ? "This campaign reached its engagement limit (" + acts + "/" + maxA + ") — watch for new campaigns from other members" : isOwn ? "You posted this — other members complete it. Track approvals on your Dashboard" : isWatch ? "\u23F1\uFE0F Watch for " + (Number(c.watchSecs) || 15) + "s — points credited when the timer completes" : "Submit proof — points credit instantly \u26A1"}</span>
+          <span class="hint${!isPaused && !isFull && !isOwn ? " hidden" : ""}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg> ${isPaused ? "You paused this campaign — resume it from your Dashboard so members can earn again" : isFull ? "This campaign reached its engagement limit (" + acts + "/" + maxA + ") — watch for new campaigns from other members" : isOwn ? "You posted this — other members complete it. Track completions on your Dashboard" : ""}</span>
           ${isOwn && !isPaused ? '<span class="done-tag" style="background:rgba(34,197,94,.15);color:var(--green,#22c55e)">Yours</span>' : ""} ${isPaused ? '<span class="done-tag" style="background:rgba(245,158,11,.16);color:#d97706">Paused</span>' : ""} ${maxA > 0 ? (isFull ? '<span class="done-tag" style="background:rgba(239,68,68,.14);color:#ef4444">Full</span>' : '<span class="done-tag" style="background:rgba(255,209,102,.12);color:var(--amber,#ffd166)">' + acts + "/" + maxA + '</span>') : ""}
         </div>`;
     }).join("");
@@ -463,14 +434,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const cmIco = document.getElementById("cm-ico");
   const cmTitle = document.getElementById("cm-title");
   const cmSub = document.getElementById("cm-sub");
-  const cmOpen = document.getElementById("cm-open");
-  const cmProof = document.getElementById("cm-proof");
-  const cmNote = document.getElementById("cm-note");
-  const cmSubmit = document.getElementById("cm-submit");
-
   listEl.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-task]");
-    if (!btn || btn.disabled) return;
+    if (!btn || btn.disabled || claimBusy) return;
     const task = FF.DB.campaigns().find((c) => c.id === btn.dataset.task);
     if (!task) return;
     pendingCamp = task;
@@ -478,34 +444,16 @@ document.addEventListener("DOMContentLoaded", () => {
     cmIco.innerHTML = p.icon;
     cmIco.style.setProperty("--pf", p.color);
     cmTitle.textContent = task.action + " · " + (task.user || task.title);
-    cmSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " points</b> (credited instantly \u26A1)";
-    cmProof.value = ""; cmNote.value = "";
-    document.getElementById("cm-text").value = "";
-    clearProofFile();
-
-    /* WATCH campaigns (View/Watch/Read): proof nahi — TIMER mode */
-    const watchZone = document.getElementById("cm-watch-zone");
-    const proofZone = document.getElementById("cm-proof-zone");
-    const isWatch = FF.isTimerCampaign ? FF.isTimerCampaign(task) : false;
+    cmSub.innerHTML = "Platform: <b>" + p.name + "</b> · Reward: <b style='color:var(--green)'>+" + task.payout + " points</b>";
     stopWatchTimer();
-    watchZone.classList.toggle("hidden", !isWatch);
-    proofZone.classList.toggle("hidden", isWatch);
-    if (isWatch) {
-      const secs = Math.max(5, Math.min(300, Math.round(Number(task.watchSecs) || 15)));
-      const isSite = String(task.platform || "").toLowerCase() === "website";
-      document.getElementById("cm-watch-info").innerHTML = isSite
-        ? "⏱️ Keep this open for <b>" + secs + " seconds</b> — <b style=\"color:var(--green)\">+" + task.payout + " points auto-credit</b> when the timer ends. No proof needed!"
-        : "⏱️ Watch this page for <b>" + secs + " seconds</b> — then claim <b style=\"color:var(--green)\">+" + task.payout + " points</b>. No proof needed!";
-      const claimBtn = document.getElementById("cm-claim");
-      claimBtn.textContent = "Claim +" + task.payout + " points ⚡";
-      claimBtn.classList.add("hidden");
-      claimBtn.disabled = false;
-      document.getElementById("cm-timer-box").classList.add("hidden");
-      document.getElementById("cm-watch-start").classList.remove("hidden");
-    } else {
-      if (task.url) { cmOpen.href = task.url; cmOpen.classList.remove("hidden"); } else cmOpen.classList.add("hidden");
-    }
+    document.getElementById("cm-watch-start").classList.remove("hidden");
+    document.getElementById("cm-watch-zone").classList.remove("hidden");
+    document.getElementById("cm-watch-info").textContent = "";
+    document.getElementById("cm-claim").classList.add("hidden");
+    document.getElementById("cm-timer-box").classList.add("hidden");
+
     campModal.classList.add("open");
+    startWatchTimer();
   });
 
   document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", () => {
@@ -515,140 +463,58 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
   campModal.addEventListener("click", (e) => { if (e.target === campModal) { campModal.classList.remove("open"); pendingCamp = null; stopWatchTimer(); } });
 
-  /* ---------- WATCH TIMER: jab tak dekha nahi, points nahi ---------- */
-  let watchTimer = null, watchSecsLeft = 0, watchTotal = 0, watchDone = false;
+  /* Fixed seven-second elapsed-time countdown; the server also enforces the wait. */
+  let watchTimer = null, watchDone = false, claimBusy = false, watchAttempt = 0;
   function stopWatchTimer() {
-    if (watchTimer) { clearInterval(watchTimer); watchTimer = null; }
-    watchDone = false;
+    if (watchTimer) clearInterval(watchTimer);
+    watchTimer = null; watchDone = false; watchAttempt++;
   }
-
-  document.getElementById("cm-watch-start").addEventListener("click", () => {
-    if (!pendingCamp) return;
-    if (pendingCamp.url) window.open(pendingCamp.url, "_blank", "noopener");
+  async function startWatchTimer() {
+    if (!pendingCamp || claimBusy) return;
+    const camp = pendingCamp;
+    const url = FF.normalizeUrl(camp.url);
+    if (!url) { FF.toast("This campaign has no valid task link", "err"); return; }
+    window.open(url, "_blank", "noopener");
     stopWatchTimer();
-    const secs = Math.max(5, Math.min(300, Math.round(Number(pendingCamp.watchSecs) || 15)));
-    watchSecsLeft = secs; watchTotal = secs; watchDone = false;
-    document.getElementById("cm-watch-start").classList.add("hidden");
-    document.getElementById("cm-timer-box").classList.remove("hidden");
-    document.getElementById("cm-claim").classList.add("hidden");
-    const num = document.getElementById("cm-timer-num");
-    const bar = document.getElementById("cm-timer-bar");
-    num.textContent = secs; bar.style.width = "0%";
-    watchTimer = setInterval(() => {
-      watchSecsLeft--;
-      num.textContent = Math.max(0, watchSecsLeft);
-      bar.style.width = Math.round(100 * (watchTotal - watchSecsLeft) / watchTotal) + "%";
-      if (watchSecsLeft <= 0) {
-        stopWatchTimer();
-        watchDone = true;
-        document.getElementById("cm-timer-box").classList.add("hidden");
-        if (pendingCamp && String(pendingCamp.platform || "").toLowerCase() === "website") {
-          /* website campaign: timer finish hote hi points auto-credit */
+    const attempt = watchAttempt;
+    const start = document.getElementById("cm-watch-start");
+    start.disabled = true;
+    try {
+      await FF.startTimedCampaign(camp.id);
+      if (pendingCamp !== camp || attempt !== watchAttempt) return;
+      start.classList.add("hidden");
+      document.getElementById("cm-timer-box").classList.remove("hidden");
+      const deadline = Date.now() + 7000;
+      const tick = () => {
+        const remaining = Math.max(0, deadline - Date.now());
+        document.getElementById("cm-timer-num").textContent = Math.ceil(remaining / 1000);
+        document.getElementById("cm-timer-bar").style.width = (100 * (7000 - remaining) / 7000) + "%";
+        if (!remaining) {
+          clearInterval(watchTimer); watchTimer = null; watchDone = true;
           submitTimerClaim();
-        } else {
-          document.getElementById("cm-claim").classList.remove("hidden");
         }
-      }
-    }, 1000);
-  });
-
-  function submitTimerClaim() {
-    if (!pendingCamp || !watchDone) return;
+      };
+      tick(); watchTimer = setInterval(tick, 250);
+    } catch (err) { FF.toast(err.message, "err"); }
+    finally { start.disabled = false; }
+  }
+  document.getElementById("cm-watch-start").addEventListener("click", startWatchTimer);
+  async function submitTimerClaim() {
+    if (!pendingCamp || !watchDone || claimBusy) return;
     const camp = pendingCamp;
     const btn = document.getElementById("cm-claim");
-    btn.disabled = true;
-    const fail = (err) => { btn.disabled = false; FF.toast(err.message, "err"); };
+    claimBusy = true; btn.disabled = true;
     try {
-      const res = FF.submitCampaignProof(user.email, user.name, camp.id,
-        "Watched " + watchTotal + "s \u2713 (timer)", "");
-      const done = () => {
-        FF.sfx.coin();
-        FF.toast("Watched " + watchTotal + "s! +" + camp.payout + " points credited \u26A1", "ok");
-        campModal.classList.remove("open"); pendingCamp = null; render();
-      };
-      if (res && typeof res.then === "function") res.then(done).catch(fail); else done();
-    } catch (err) { fail(err); }
+      await FF.completeTimedCampaign(camp.id);
+      FF.sfx.coin(); FF.toast("+" + camp.payout + " points credited!", "ok");
+      if (pendingCamp === camp) { campModal.classList.remove("open"); pendingCamp = null; stopWatchTimer(); }
+      render();
+    } catch (err) {
+      FF.toast(err.message, "err");
+      if (pendingCamp === camp) { btn.textContent = "Retry credit"; btn.classList.remove("hidden"); }
+    } finally { claimBusy = false; btn.disabled = false; }
   }
   document.getElementById("cm-claim").addEventListener("click", submitTimerClaim);
-
-  /* ---------- PROOF: typed text + link + screenshot (dono ek saath) ----------
-     Pehle screenshot attach karne se typed/link proof overwrite ho jaata tha.
-     Ab FFProof.build() sab ko alag lines me save karta hai, aur owner/admin
-     ko text + screenshot dono dikhte hain. Storage na ho to compressed copy
-     proof me embed ho jaati hai — screenshot kabhi gayab nahi hota. */
-  let proofFile = null;
-  let proofPreview = "";
-
-  function clearProofFile() {
-    proofFile = null;
-    FFProof.releasePreview(proofPreview);
-    proofPreview = "";
-    const input = document.getElementById("cm-file");
-    if (input) input.value = "";
-    document.getElementById("cm-file-name").textContent = "";
-    document.getElementById("cm-file-remove").classList.add("hidden");
-    const pv = document.getElementById("cm-preview");
-    pv.classList.add("hidden");
-    pv.innerHTML = "";
-  }
-
-  document.getElementById("cm-attach").addEventListener("click", () => document.getElementById("cm-file").click());
-  document.getElementById("cm-file-remove").addEventListener("click", clearProofFile);
-  document.getElementById("cm-file").addEventListener("change", (e) => {
-    clearProofFile();
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    try { FFProof.validate(f, 8); }
-    catch (err) { FF.toast(err.message, "err"); clearProofFile(); return; }
-    proofFile = f;
-    document.getElementById("cm-file-name").textContent = "📎 " + f.name + " ✓ attached";
-    document.getElementById("cm-file-remove").classList.remove("hidden");
-    proofPreview = FFProof.previewUrl(f);
-    const pv = document.getElementById("cm-preview");
-    if (proofPreview) {
-      pv.innerHTML = /^video\//i.test(f.type)
-        ? '<video controls src="' + FFProof.esc(proofPreview) + '" style="max-width:100%;max-height:170px;border-radius:12px"></video>'
-        : '<img src="' + FFProof.esc(proofPreview) + '" alt="Selected screenshot" style="max-width:100%;max-height:170px;border-radius:12px;border:1px solid var(--line)" />';
-      pv.classList.remove("hidden");
-    }
-  });
-
-  cmSubmit.addEventListener("click", () => {
-    if (!pendingCamp) return;
-    const text = document.getElementById("cm-text").value.trim();
-    const link = cmProof.value.trim();
-    if (!text && !link && !proofFile) {
-      FF.toast("Add your proof first — type some text, paste a link or attach a screenshot", "err");
-      return;
-    }
-    const fail = (err) => FF.toast(err.message, "err");
-    const submit = (image) => {
-      const proof = FFProof.build({ text: text, link: link, image: image });
-      if (proof.trim().length < 3) { FF.toast("Please describe your proof in a bit more detail", "err"); return; }
-      const camp = pendingCamp;
-      const finish = () => {
-        FF.sfx.coin();
-        FF.toast("Proof submitted! +" + camp.payout + " points credited \u26A1", "ok");
-        campModal.classList.remove("open");
-        pendingCamp = null;
-        clearProofFile();
-        render();
-      };
-      try {
-        /* Server mode: promise. Local/demo: sync — dono handle hote hain. */
-        const res = FF.submitCampaignProof(user.email, user.name, camp.id, proof, cmNote.value);
-        if (res && typeof res.then === "function") res.then(finish).catch(fail);
-        else finish();
-      } catch (err) { fail(err); }
-    };
-    if (!proofFile) return submit("");
-    const btn = cmSubmit, lbl = btn.textContent;
-    btn.disabled = true; btn.textContent = "Uploading proof…";
-    FF.toast("Uploading screenshot…", "info");
-    FFProof.upload(proofFile, { maxMB: 8 })
-      .then(submit).catch(fail)
-      .then(() => { btn.disabled = false; btn.textContent = lbl; });
-  });
 
   function stepRows(task) {
     const steps = task.steps || [

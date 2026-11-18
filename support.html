@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Support Tickets — FlexFam</title>
+<meta name="description" content="Get help with deposits, withdrawals, tasks and your FlexFam account. Track private support tickets and replies." />
+<meta property="og:image" content="https://miten001.github.io/site-devlop/assets/img/ads/flexfam-og-1200x630.png" />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="assets/css/style.css?v=2.2" />
+<link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+<link rel="stylesheet" href="assets/css/support.css?v=1.0" />
+</head>
+<body>
+<header class="site-head"><div class="container bar">
+<a class="logo" href="index.html"><span data-brand></span>Flex<b>Fam</b></a>
+<div class="head-actions"><a class="btn btn-ghost btn-sm always" href="dashboard.html">Dashboard</a><a class="btn btn-ghost btn-sm always" href="wallet.html">Wallet</a></div>
+</div></header>
+<main class="container support-main">
+<div class="support-heading"><div><span class="support-kicker">WE'RE HERE TO HELP</span><h1>Support <span class="grad-text">Tickets</span></h1><p>Track your requests and keep every reply in one place.</p></div><button class="btn btn-ghost" id="support-refresh" type="button">Refresh</button></div>
+<p id="support-notice" role="status" aria-live="polite">Connecting to support…</p>
+<div id="support-app" class="hidden">
+<section class="panel support-new" aria-labelledby="new-title">
+<details id="new-ticket"><summary id="new-title">＋ Create a support ticket</summary>
+<p>Choose a category and explain what happened. Include a transaction or task reference if relevant. Never share passwords, private keys or verification codes.</p>
+<form id="support-create">
+<div class="support-fields"><div class="field"><label for="ticket-category">Category</label><select id="ticket-category" required><option value="deposit">Deposit</option><option value="withdrawal">Withdrawal</option><option value="task">Task</option><option value="account">Account</option><option value="other">Other</option></select></div>
+<div class="field"><label for="ticket-subject">Subject</label><input id="ticket-subject" required minlength="3" maxlength="120" placeholder="A short description of your issue" /></div></div>
+<div class="field"><label for="ticket-body">Details</label><textarea id="ticket-body" required minlength="2" maxlength="4000" rows="5" placeholder="What happened? Include the date, amount or task reference."></textarea></div>
+<button class="btn btn-primary" type="submit">Submit ticket</button><small>Up to 10 new tickets per day. Replies do not create a new ticket.</small>
+</form></details></section>
+<div class="support-grid">
+<section class="panel" aria-labelledby="ticket-list-title"><div class="support-list-head"><h2 id="ticket-list-title">My tickets</h2><label>Status<select id="ticket-filter"><option value="">All</option><option value="open">Open</option><option value="in_progress">In Progress</option><option value="resolved">Resolved</option></select></label></div><p class="support-hint">Latest 200 tickets for the selected status.</p><div id="ticket-list"></div></section>
+<section class="panel support-thread" aria-labelledby="thread-title"><h2 id="thread-title" tabindex="-1">Conversation</h2><p id="thread-meta">Select a ticket to view its history.</p><div id="ticket-replies" aria-live="polite"></div>
+<form id="support-reply" class="hidden"><div class="field"><label for="reply-body">Your reply</label><textarea id="reply-body" minlength="2" maxlength="4000" rows="4" placeholder="Write a reply…"></textarea></div><div id="staff-controls" class="field hidden"><label for="reply-status">Ticket status (admin only)</label><select id="reply-status"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="resolved">Resolved</option></select></div><button class="btn btn-primary" type="submit">Send / Save</button></form>
+</section></div></div>
+<p class="support-hint">Support requests never require a payment or your account password.</p>
+</main>
+<script src="assets/js/supabase-config.js?v=2.0"></script>
+<script src="assets/js/main.js?v=2.6"></script>
+<script src="assets/js/support-tickets.js?v=1.0"></script>
+</body>
+</html>
