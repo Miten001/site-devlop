@@ -179,29 +179,9 @@ async function main() {
   dom.window.close();
 
   /* ---------------------------------------------------------------- */
-  console.log("\n[2] Public Member Showcase Card (profile.html — logged-in & anonymous visitor)");
-  const ownProfile = createDOM("profile.html", { storage: baseStorage(), userEmail: "alice@test.dev" });
-  await sleep(80);
-  const od = ownProfile.dom.window.document;
-  const aliceCode = od.getElementById("pf-code").textContent.trim();
-  check("Logged-in member sees their Showcase Card name & VIP tier", od.getElementById("pf-name").textContent === "Alice Pro" && /Silver VIP/.test(od.getElementById("pf-vip-pill").textContent));
-  check("Showcase Card displays tasks (12), referrals (5), and unlocked badges", od.getElementById("pf-s-tasks").textContent === "12" && od.getElementById("pf-s-refs").textContent === "5" && od.querySelectorAll("#pf-badges .pf-badge").length >= 3);
-  check("Share link contains ?u=CODE", od.getElementById("pf-share-url").textContent.includes("?u=" + aliceCode));
-  check("Own showcase card hides the visitor signup CTA", od.getElementById("pf-visitor-cta").classList.contains("hidden"));
-  check("No uncaught JS errors on own profile.html", ownProfile.errors.length === 0, ownProfile.errors);
-  ownProfile.dom.window.close();
+  check("Legacy card URL redirects to referrals", /content="0;url=refer.html"/.test(read("profile.html")));
+  check("PNG card renderer removed", !/renderShowcaseCanvas/.test(read("assets/js/rewards.js")));
 
-  // Public visitor opening profile.html?u=CODE WITHOUT signing in
-  const anonProfile = createDOM("profile.html", { storage: baseStorage(), userEmail: null, query: "?u=" + aliceCode });
-  await sleep(80);
-  const ad = anonProfile.dom.window.document;
-  check("Unauthenticated visitor can view Alice's public Showcase Card via ?u=CODE", !ad.getElementById("pf-content").classList.contains("hidden") && ad.getElementById("pf-name").textContent === "Alice Pro");
-  check("Visitor sees 'Join FlexFam with Alice Pro's invite' CTA linked to signup.html?ref=CODE", !ad.getElementById("pf-visitor-cta").classList.contains("hidden") && ad.getElementById("pf-cta-btn").getAttribute("href") === "signup.html?ref=" + aliceCode);
-  check("Public Showcase Card never exposes member email", !ad.getElementById("pf-card").textContent.includes("alice@test.dev"));
-  check("No uncaught JS errors on public visitor profile.html", anonProfile.errors.length === 0, anonProfile.errors);
-  anonProfile.dom.window.close();
-
-  /* ---------------------------------------------------------------- */
   console.log("\n[3] Dashboard & Wallet integrations");
   const dash = createDOM("dashboard.html", { storage: baseStorage(), userEmail: "alice@test.dev" });
   await sleep(100);
@@ -224,17 +204,8 @@ async function main() {
   const appPages = ["dashboard.html", "earn.html", "tasks.html", "quests.html", "rewards.html", "add.html", "post-task.html", "my-tasks.html", "mining.html", "wallet.html", "refer.html"];
   appPages.forEach((p) => {
     const h = read(p);
-    check(p + " links to rewards.html and profile.html", /href="rewards\.html"/.test(h) && /href="profile\.html"/.test(h));
+    check(p + " keeps Rewards Hub but removes card links", /href="rewards\.html"/.test(h) && !/profile\.html/.test(h));
   });
-
-  const profileHtml = read("profile.html");
-  check("profile.html VIP Showcase Card uses bright pearl-metallic tier palette (no dark/black card background) with crisp high-contrast ink",
-    !/#0a0e1b|#101526|#0b0f1e/.test(profileHtml) &&
-    /--vc-bg-1:\s*#fffef9/.test(profileHtml) &&
-    /--vc-ink:\s*#221605/.test(profileHtml) &&
-    /\.pf-stat\s*\{[\s\S]*?background:\s*rgba\(255,\s*255,\s*255,\s*\.84\)/.test(profileHtml));
-  check("profile.html renders VIP Pass header, Smart Chip SVG, XP progress bar & Invite Code copy button",
-    /FLEXFAM VIP PASS/.test(profileHtml) && /pf-chip-svg/.test(profileHtml) && /id="pf-vp-fill"/.test(profileHtml) && /id="btn-copy-code"/.test(profileHtml));
 
   const notifSql = read("supabase-notifications.sql");
   check("supabase-notifications.sql disables wallet_txns_credit_notify and notifies ONLY on pay_requests (deposit & withdraw)",
