@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/style.css?v=2.2" />
-<link rel="stylesheet" href="assets/css/mobile.css?v=1.1" />
+<link rel="stylesheet" href="assets/css/mobile.css?v=1.2" />
 <style>
   /* admin-only extras, same FlexFam dark language */
   .admin-shell { max-width: 1140px; margin: 0 auto; }
@@ -191,6 +191,20 @@
   .log-details .log-inner { padding:0 12px 12px; }
   .logs-toggle { margin-left:auto; }
   .logs-collapsed { display:none !important; }
+  /* Keep scrolling local, avoid layout expansion, and retain readable controls. */
+  .admin-cols > *, .admin-shell .panel { min-width: 0; }
+  .admin-shell .scroll-box, .admin-shell .table-responsive, .member-table-wrap {
+    overscroll-behavior: contain;
+  }
+  .admin-sec-nav a, .camp-btn, .workers-more { touch-action: manipulation; }
+  .admin-sec-nav a:focus-visible, .camp-btn:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+  @media (max-width: 680px) {
+    .admin-sec-nav { scroll-snap-type: x proximity; backdrop-filter: none; background: #fff; }
+    .admin-sec-nav a { min-height: 44px; display: flex; align-items: center; scroll-snap-align: start; }
+    .admin-shell .camp-btn, .admin-shell .btn-sm { min-height: 40px; }
+    .admin-shell .panel { padding: 16px 12px; }
+    .member-modal { max-height: calc(100dvh - 24px); }
+  }
 </style>
 </head>
 <body class="app-body">
@@ -279,10 +293,10 @@
       <a href="#sec-campaigns">🚀 Campaigns</a>
       <a href="#sec-payments">💳 Payments</a>
       <a href="#sec-promos">🎟️ Promo codes</a>
-      <a href="support.html?admin=1">🎫 Support tickets</a>
       <a href="#sec-messages">✉️ Messages</a>
       <a href="#sec-errors">⚠️ Errors</a>
       <a href="#sec-analytics">📊 Analytics</a>
+      <a href="support.html?admin=1">🎫 Support tickets</a>
     </nav>
 
     <div class="admin-grid">
@@ -799,7 +813,7 @@
   var lastRunnerTotals = null;
   var activeRunnerFilter = "all";
   var jobsLoaded = false;   /* admin_jobs_list successful — tk-jobs fallback ke liye */
-  var listLimits = { members:10, runners:10, proofs:10, jobs:10, camps:10, errors:10, recent:10 };
+  var listLimits = { members:10, runners:10, proofs:10, jobs:10, camps:10, errors:10, recent:10, pendingPayments:10, paymentHistory:10, promos:10 };
   var expandedWorkers = {};  /* jobId → true: "+N more" khula rahe refresh/filter ke baad bhi */
   function resetLimit(key) { listLimits[key] = 10; }
   function moreControl(bodyId, key, total, rerender) {
@@ -824,7 +838,26 @@
   function fdateMs(ms) {
     return new Date(Number(ms || 0)).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
   }
-  function rpc(fn, args) { return api("/rest/v1/rpc/" + fn, { method: "POST", body: args || {} }); }
+  // Bound background reads so a full refresh does not flood the connection.
+  // Mutations (payments, reviews, edits) always bypass this queue.
+  var readQueue = [], activeReads = 0;
+  var backgroundReads = ["wallet_admin_queue", "admin_proofs_list", "admin_jobs_list", "admin_promo_list", "messages_admin_recent", "admin_campaigns_list", "admin_task_runners"];
+  function drainReads() {
+    while (activeReads < 3 && readQueue.length) {
+      (function (job) {
+        activeReads++;
+        api("/rest/v1/rpc/" + job.fn, { method: "POST", body: job.args }).then(job.resolve, job.reject)
+          .then(function () { activeReads--; drainReads(); });
+      })(readQueue.shift());
+    }
+  }
+  function rpc(fn, args) {
+    if (backgroundReads.indexOf(fn) < 0) return api("/rest/v1/rpc/" + fn, { method: "POST", body: args || {} });
+    return new Promise(function (resolve, reject) {
+      readQueue.push({ fn: fn, args: args || {}, resolve: resolve, reject: reject });
+      drainReads();
+    });
+  }
 
   function show(n) {
     Object.keys(views).forEach(function (k) { views[k].classList.toggle("hidden", k !== n); });
@@ -1444,7 +1477,7 @@
     $("pay-count").textContent = pending.length + (pending.length === 1 ? " pending" : " pending");
 
     $("a-pending-empty").classList.toggle("hidden", pending.length > 0);
-    $("a-pending").innerHTML = pending.map(function (r) {
+    $("a-pending").innerHTML = pending.slice(0, listLimits.pendingPayments).map(function (r) {
       return "<tr><td>" + esc(fdateMs(r.at)) + "</td><td><b>" + esc(r.name) + "</b><br><span style='font-size:11.5px;color:var(--ink-mute)'>" + esc(r.email) + "</span>" + earnButton(r) + "</td>" +
         "<td>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") + "</td><td>" + esc(r.network) + "</td>" +
         '<td><span class="mono-cut" title="' + esc(r.txid || r.address) + '">' + esc(r.txid || r.address) + "</span></td>" +
@@ -1452,10 +1485,12 @@
         '<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" data-ok="' + esc(r.id) + '">Approve</button> <button class="btn btn-ghost btn-sm" data-no="' + esc(r.id) + '">Reject</button></td></tr>';
     }).join("");
 
-    $("a-history").innerHTML = settled.map(function (r) {
+    $("a-history").innerHTML = settled.slice(0, listLimits.paymentHistory).map(function (r) {
       return "<tr><td>" + esc(fdateMs(r.settledAt || r.at)) + "</td><td>" + esc(r.email) + earnButton(r) + "</td><td>" + (r.kind === "deposit" ? "Deposit" : "Withdrawal") +
         '</td><td class="num">' + esc(fmtUsd(r.amount)) + '</td><td><span class="badge ' + esc(r.status) + '">' + esc(r.status) + "</span></td></tr>";
     }).join("") || '<tr><td colspan="5">Nothing settled yet.</td></tr>';
+    moreControl("a-pending", "pendingPayments", pending.length, function () { renderPayments(lastQueue); });
+    moreControl("a-history", "paymentHistory", settled.length, function () { renderPayments(lastQueue); });
   }
 
   /* ==================== member modal — coin activity + editor ==================== */
@@ -2221,7 +2256,7 @@
     var list = codes || [];
     $("promo-admin-count").textContent = list.length + (list.length === 1 ? " code" : " codes");
     var now = Date.now();
-    $("promo-admin-body").innerHTML = list.length ? list.map(function (c) {
+    $("promo-admin-body").innerHTML = list.length ? list.slice(0, listLimits.promos).map(function (c) {
       var expired = c.expiresAt && Number(c.expiresAt) <= now;
       var depleted = Number(c.maxUses || 0) > 0 && Number(c.usedCount || 0) >= Number(c.maxUses);
       var statusText = !c.active ? "Paused" : (expired ? "Expired" : (depleted ? "Depleted" : "Active"));
@@ -2239,6 +2274,7 @@
           '<button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger)" data-promo-del="' + esc(c.id) + '" data-promo-code="' + esc(c.code) + '">Delete</button>' +
         "</td></tr>";
     }).join("") : '<tr><td colspan="6" style="color:var(--ink-mute)">No promo codes yet — create one above.</td></tr>';
+    moreControl("promo-admin-body", "promos", list.length, function () { renderPromos(list); });
   }
 
   function loadPromos() {

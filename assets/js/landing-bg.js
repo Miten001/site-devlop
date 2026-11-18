@@ -12,6 +12,12 @@
      canvas — skip the motion layer silently. */
   if (typeof navigator !== "undefined" && /jsdom/i.test(navigator.userAgent || "")) return;
 
+  // Keep phones, reduced-motion users and low-power/data-saving devices on CSS gradients.
+  var connection = navigator.connection || {};
+  var lightMode = !!connection.saveData || (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 2);
+  try { lightMode = lightMode || window.matchMedia("(max-width: 767px), (pointer: coarse), (prefers-reduced-motion: reduce)").matches; } catch (e) {}
+  if (lightMode) return;
+
   var cv = document.getElementById("bgMotion");
   if (!cv) return;
   var ctx = null;
@@ -184,9 +190,14 @@
     }
   }
 
+  var frameId = 0, lastPaint = 0;
   function frame(now) {
-    requestAnimationFrame(frame);
-    if (document.hidden) { last = now; return; }
+    frameId = 0;
+    if (document.hidden) return;
+    frameId = requestAnimationFrame(frame);
+    // Decorative background needs at most 30fps, not every display refresh.
+    if (now - lastPaint < 1000 / 30) return;
+    lastPaint = now;
     var dt = Math.min((now - last) / 1000 || 0.016, 0.05);
     last = now;
     T += dt;
@@ -211,8 +222,18 @@
   if (reduced) {
     staticFrame();
   } else {
-    requestAnimationFrame(function (t) { last = t; frame(t); });
+    frameId = requestAnimationFrame(function (t) { last = t; frame(t); });
   }
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = 0;
+    } else if (!reduced && !frameId) {
+      last = 0; lastPaint = 0;
+      frameId = requestAnimationFrame(function (t) { last = t; frame(t); });
+    }
+  });
 
   var rt;
   window.addEventListener("resize", function () {
