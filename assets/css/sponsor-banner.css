@@ -1,0 +1,30 @@
+/* Non-sticky footer placement: never overlaps tasks, payments or dialogs. */
+.ff-sponsor-banner {
+  box-sizing: border-box;
+  position: relative;
+  clear: both;
+  width: calc(100% - 24px);
+  max-width: 970px;
+  margin: 32px auto 24px;
+  padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+  text-align: center;
+}
+.ff-sponsor-label {
+  display: block;
+  margin-bottom: 8px;
+  font: 500 11px/1.5 system-ui, sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #626d80;
+}
+.ff-sponsor-banner iframe {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  height: 150px;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+}
+.public-landing .ff-sponsor-label { color: var(--mute, #626d80); }
