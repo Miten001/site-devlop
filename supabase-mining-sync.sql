@@ -12,7 +12,7 @@
 -- ---------- tables (agar purani install me koi table hi nahi bana) ----------
 create table if not exists public.mining_config (
   id                 int primary key default 1 check (id = 1),
-  usd_per_ghs_day    numeric not null default 0.00105,
+  usd_per_ghs_day    numeric not null default 0.000945,
   maintenance_pct    numeric not null default 8,
   invest_boost_min_usd numeric not null default 10,
   invest_boost_pct   numeric not null default 20,
@@ -93,7 +93,7 @@ create table if not exists public.mining_ledger (
 );
 
 -- ---------- mining_config ----------
-alter table public.mining_config add column if not exists usd_per_ghs_day      numeric not null default 0.00105;
+alter table public.mining_config add column if not exists usd_per_ghs_day      numeric not null default 0.000945;
 alter table public.mining_config add column if not exists maintenance_pct     numeric not null default 8;
 alter table public.mining_config add column if not exists invest_boost_min_usd numeric not null default 10;
 alter table public.mining_config add column if not exists invest_boost_pct    numeric not null default 20;

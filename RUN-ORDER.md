@@ -317,3 +317,6 @@ All campaign platforms/actions now use `campaigns_start` and a fixed seven-secon
 before `campaigns_submit_proof` auto-credits. Legacy proof parameters are ignored, but no claim
 can bypass the start/wait requirement. Existing completed/pending submissions remain intact.
 Task Market job proofs are unchanged. Visits do not verify follows or subscriptions.
+
+## Mining rate reduction (10%)
+Run `supabase-mining-rate-reduction.sql` after mining setup. It settles existing accounts at the old rate before changing 0.00105 to 0.000945, preserves balances, and is idempotent.

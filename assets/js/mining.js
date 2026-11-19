@@ -40,7 +40,7 @@ if (typeof window !== "undefined") {
     /* Economics ---------------------------------------------------
        Catalog output increases with hashrate, term and qualifying boosts.
        Change usdPerGhsDay to make mining faster or slower globally. */
-    usdPerGhsDay: 0.00105,     // gross mining output per 1 GH/s per day
+    usdPerGhsDay: 0.000945,     // gross mining output per 1 GH/s per day
     maintenancePct: 8,         // electricity + pool fee, deducted from the gross rate
 
     /* Invest boost: any contract bought for at least investBoostMinUsd gets a
@@ -176,9 +176,12 @@ if (typeof window !== "undefined") {
         const to = Math.min(now, c.endsAt);
         if (to > from) {
           const perMs = (c.ghs * netRate() * investMult(c)) / 86400000;
-          let amt = (to - from) * perMs;
+          // Preserve time earned before the live 10% rate change, including boosts.
+          const cutoff = 1795065156892;
+          const weightedMs = (a, b) => Math.max(0, b - Math.max(a, cutoff)) + Math.max(0, Math.min(b, cutoff) - a) / 0.9;
+          let amt = weightedMs(from, to) * perMs;
           const bTo = Math.min(to, s.boostUntil || 0);
-          if (bTo > from) amt += (bTo - from) * perMs * (CFG.boostPct / 100);
+          if (bTo > from) amt += weightedMs(from, bTo) * perMs * (CFG.boostPct / 100);
           c.earned = round(c.earned + amt);
           gained += amt;
         }

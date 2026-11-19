@@ -38,7 +38,7 @@ $$;
 
 create table if not exists public.mining_config (
   id                 int primary key default 1 check (id = 1),
-  usd_per_ghs_day    numeric not null default 0.00105,   -- gross output per GH/s per day
+  usd_per_ghs_day    numeric not null default 0.000945,   -- gross output per GH/s per day
   maintenance_pct    numeric not null default 8,         -- electricity + pool fee
   invest_boost_min_usd numeric not null default 10,      -- min purchase price that unlocks the permanent boost
   invest_boost_pct   numeric not null default 20,        -- permanent +% on qualifying ($10+) contracts
@@ -63,9 +63,7 @@ insert into public.mining_config (id) values (1) on conflict (id) do nothing;
 -- rate is deliberately left untouched.
 alter table public.mining_config add column if not exists invest_boost_min_usd numeric not null default 10;
 alter table public.mining_config add column if not exists invest_boost_pct     numeric not null default 20;
-update public.mining_config
-   set usd_per_ghs_day = 0.00105, updated_at = now()
- where id = 1 and usd_per_ghs_day in (0.000826, 0.00095);
+-- Existing installs: use supabase-mining-rate-reduction.sql to settle accrued rewards before changing the rate.
 
 create table if not exists public.mining_plans (
   key        text primary key,

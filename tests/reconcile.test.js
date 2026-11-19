@@ -271,7 +271,7 @@ async function main() {
   const emerald = FF.M.plan("emerald");
   const diamond = FF.M.plan("diamond");
   const quantum = FF.M.plan("quantum");
-  check("gross rate raised to 0.00105", FF.M.CFG.usdPerGhsDay === 0.00105, FF.M.CFG.usdPerGhsDay);
+  check("gross rate reduced by 10% to 0.000945", FF.M.CFG.usdPerGhsDay === 0.000945, FF.M.CFG.usdPerGhsDay);
   check("catalog expanded to 8 plans", FF.M.PLANS.length === 8, FF.M.PLANS.length);
   check("new $10 Emerald step exists", emerald && emerald.priceUsd === 10, emerald);
   check("Diamond estimate is above $5/day", diamond && FF.M.api.dailyUsd(economy, diamond.ghs, diamond.priceUsd) > 5, diamond);
