@@ -37,6 +37,9 @@
       if (cls) el.className = cls;
       return el;
     }
+    function memberId(ticket) {
+      return ticket.user_id ? "FF-" + String(ticket.user_id).replace(/-/g, "").slice(0, 8).toUpperCase() : "Unavailable";
+    }
     function when(value) { return new Date(value).toLocaleString(); }
     async function loadList() {
       const filter = $("ticket-filter").value;
@@ -54,6 +57,11 @@
         const button = element("button", null, "ticket-item"); button.type = "button";
         button.setAttribute("aria-current", String(selected === ticket.id));
         button.append(element("b", ticket.subject), element("span", statuses[ticket.status] || ticket.status, "ticket-status " + ticket.status), element("small", ticket.category + " · " + when(ticket.updated_at) + " · #" + ticket.id.slice(0,8)));
+        if (staff) {
+          const owner = element("small", "Raised by: " + memberId(ticket), "ticket-owner");
+          owner.title = ticket.user_id || "Member ID unavailable";
+          button.append(owner);
+        }
         button.addEventListener("click", () => openThread(ticket.id).catch(fail)); list.append(button);
       });
       if (!list.children.length) list.append(element("p", "No tickets found. Create a ticket if you need help.", "support-hint"));
@@ -66,6 +74,11 @@
       selected = id;
       $("thread-title").textContent = data.ticket.subject;
       $("thread-meta").textContent = "#" + id.slice(0,8) + " · " + data.ticket.category + " · " + statuses[data.ticket.status] + " · Opened " + when(data.ticket.created_at);
+      $("thread-owner").replaceChildren();
+      $("thread-owner").classList.toggle("hidden", !staff);
+      if (staff) {
+        $("thread-owner").append(element("b", "Raised by: " + memberId(data.ticket)), element("span", "User ID: " + (data.ticket.user_id || "Unavailable")));
+      }
       $("ticket-replies").replaceChildren();
       data.replies.forEach((reply) => {
         const article = element("article", null, "support-message" + (reply.is_staff ? " staff" : ""));

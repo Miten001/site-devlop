@@ -5,7 +5,7 @@ const html = fs.readFileSync('support.html', 'utf8');
 const script = fs.readFileSync('assets/js/support-tickets.js', 'utf8');
 const sql = fs.readFileSync('supabase-support-tickets.sql', 'utf8');
 const wait = () => new Promise(resolve => setTimeout(resolve, 20));
-const ticket = { id:'test-ticket', subject:'<img src=x onerror=alert(1)>', status:'open', category:'deposit', created_at:'2026-11-16T10:00:00Z', updated_at:'2026-11-16T10:00:00Z' };
+const ticket = { id:'test-ticket', user_id:'dcbe8301-b30a-4d24-8e6d-b738f3dd5cca', subject:'<img src=x onerror=alert(1)>', status:'open', category:'deposit', created_at:'2026-11-16T10:00:00Z', updated_at:'2026-11-16T10:00:00Z' };
 async function setup({ user=true, server=true, staff=false, status='open', error=false, adminMode=false, adminSession=true }={}) {
  const dom = new JSDOM(html, { runScripts:'outside-only', url:'https://example.com/support.html'+(adminMode?'?admin=1':'') });
  const calls=[]; const current={...ticket,status};
@@ -36,6 +36,7 @@ async function setup({ user=true, server=true, staff=false, status='open', error
  ctx.d.querySelector('.ticket-item').click(); await wait();
  assert.match(ctx.d.getElementById('ticket-replies').textContent,/<script>unsafe/); assert.equal(ctx.d.querySelectorAll('#ticket-replies script').length,0);
  assert(ctx.d.getElementById('staff-controls').classList.contains('hidden'));
+ assert(!ctx.d.querySelector('.ticket-owner')); assert(ctx.d.getElementById('thread-owner').classList.contains('hidden'));
  ctx.d.getElementById('reply-body').value='Please check the transaction';
  ctx.d.getElementById('support-reply').dispatchEvent(new ctx.dom.window.Event('submit',{cancelable:true})); await wait();
  assert(ctx.calls.some(([name,args])=>name==='support_respond' && args.p_status===null));
@@ -43,6 +44,8 @@ async function setup({ user=true, server=true, staff=false, status='open', error
  ctx.d.getElementById('support-create').dispatchEvent(new ctx.dom.window.Event('submit',{cancelable:true})); await wait();
  assert(ctx.calls.some(([name,args])=>name==='support_create' && args.p_subject==='Deposit missing')); ctx.dom.window.close();
  ctx=await setup({staff:true}); ctx.d.querySelector('.ticket-item').click(); await wait(); assert(!ctx.d.getElementById('staff-controls').classList.contains('hidden'));
+ assert.match(ctx.d.querySelector('.ticket-owner').textContent,/FF-DCBE8301/);
+ assert.match(ctx.d.getElementById('thread-owner').textContent,/dcbe8301-b30a-4d24-8e6d-b738f3dd5cca/);
  ctx.d.getElementById('reply-status').value='resolved'; ctx.d.getElementById('support-reply').dispatchEvent(new ctx.dom.window.Event('submit',{cancelable:true})); await wait();
  assert(ctx.calls.some(([name,args])=>name==='support_respond' && args.p_status==='resolved')); ctx.dom.window.close();
  ctx=await setup({status:'resolved'}); ctx.d.querySelector('.ticket-item').click(); await wait(); assert(ctx.d.getElementById('support-reply').classList.contains('hidden')); ctx.dom.window.close();
