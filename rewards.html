@@ -179,8 +179,7 @@
     .vip-grid { grid-template-columns: 1fr; }
   }
 </style>
-<link rel="stylesheet" href="assets/css/sponsor-banner.css?v=2.1" />
-<script src="assets/js/sponsor-banner.js?v=1.0" defer></script>
+<link rel="stylesheet" href="assets/css/sponsor-banner.css?v=3.0" />
 </head>
 <body class="app-body" data-requires-auth>
 
@@ -280,9 +279,6 @@
                 <div class="wheel-hub">SPIN</div>
               </div>
               <div class="spin-result hidden" id="spin-result"></div>
-              <aside id="spin-ad-slot" class="hidden" aria-label="Advertisement" style="margin-top:18px;text-align:center">
-                <small style="display:block;color:var(--ink-mute);margin-bottom:6px">Advertisement</small>
-              </aside>
               <div class="spin-cta-row">
                 <button type="button" class="btn btn-primary btn-block" id="btn-spin-free">🎡 Spin Free Wheel</button>
                 <button type="button" class="btn btn-ghost btn-block" id="btn-spin-paid">⚡ Extra Spin (25 pts)</button>
@@ -532,20 +528,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("spin-history").innerHTML = rows || '<tr><td colspan="4" style="color:var(--ink-mute)">No spins yet — spin the wheel to win!</td></tr>';
   }
 
-  function showSpinAdvertisement() {
-    const slot = document.getElementById("spin-ad-slot");
-    if (!slot || slot.querySelector("iframe")) return;
-    const frame = document.createElement("iframe");
-    frame.title = "Spin advertisement";
-    frame.src = "assets/spin-social-ad.html";
-    frame.width = "100%";
-    frame.height = "180";
-    frame.style.cssText = "display:block;width:100%;max-width:100%;height:180px;border:0";
-    frame.referrerPolicy = "strict-origin-when-cross-origin";
-    slot.append(frame);
-    slot.classList.remove("hidden");
-  }
-
   function doSpin(usePoints) {
     if (spinning) return;
     spinning = true;
@@ -573,7 +555,6 @@ document.addEventListener("DOMContentLoaded", () => {
         resBox.classList.remove("hidden");
         FF.toast("Lucky Spin win: " + rewardText + " credited!", "ok");
         renderSpin(res.state);
-        showSpinAdvertisement();
       };
       setTimeout(reveal, window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 100 : 1200);
     }).catch((err) => {
@@ -798,7 +779,9 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- Independent, non-rewarded banner placement -->
 <aside class="ff-sponsor-banner" aria-label="Advertisement">
   <span class="ff-sponsor-label">Advertisement</span>
-  <iframe data-sponsor-frame title="Sponsored banner" width="320" height="50" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <script src="assets/js/sponsor-banner.js?v=2.0"></script>
 </aside>
+<!-- Non-rewarded Social Bar: direct provider placement, independent of spins. -->
+<script data-cfasync="false" src="https://bauval.org/14/2b37c852b12c715a01df6d09b7680298"></script>
 </body>
 </html>

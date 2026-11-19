@@ -1,57 +1,54 @@
 "use strict";
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
+const vm = require('node:vm');
 const { JSDOM } = require('jsdom');
 const pages=['index','landing','login','signup','ads','download','dashboard','earn','add','post-task','my-tasks','tasks','quests','rewards','mining','wallet','refer','support'];
-for (const page of fs.readdirSync('.').filter(name => name.endsWith('.html'))) {
-  const html = fs.readFileSync(page, 'utf8');
-  assert(!/acceptable\.a-ads\.com|data-aa\s*=|BEGIN AADS AD UNIT/.test(html), page + ': retired ad embed absent');
-  assert(!html.includes('bauval.org'), page + ': third-party script is isolated from app globals');
-  const dom = new JSDOM(html);
-  const d=dom.window.document;
-  const frames=d.querySelectorAll('.ff-sponsor-banner > iframe');
-  if (pages.includes(page.replace('.html',''))) {
-    assert.equal(frames.length,1,page+': exactly one banner');
-    const frame=frames[0];
-    assert(!frame.hasAttribute('src'));
-    assert(frame.hasAttribute('data-sponsor-frame'));
-    assert(d.querySelector('script[src^="assets/js/sponsor-banner.js"][defer]'));
-    assert.equal(frame.getAttribute('loading'),'lazy');
-    assert.equal(frame.getAttribute('width'),'320');
-    assert.equal(frame.getAttribute('height'),'50');
-    assert(frame.getAttribute('title'));
-    assert.equal(d.body.lastElementChild,frame.parentElement);
-    assert.equal(frame.parentElement.parentElement,d.body);
-    assert(d.querySelector('link[href^="assets/css/sponsor-banner.css"]'));
-  } else assert.equal(frames.length,0,page+': no admin/redirect/creative ads');
-  dom.window.close();
-}
-const embed=fs.readFileSync('assets/adsterra-banner.html','utf8');
-assert.match(embed,/'key'\s*:\s*'7045db5b55efe3ba5a0a1e3dc34ebff1'/);
-assert.match(embed,/https:\/\/bauval.org\/22\/7045db5b55efe3ba5a0a1e3dc34ebff1/);
-assert.match(embed,/'width'\s*:\s*320/);
-assert.match(embed,/'height'\s*:\s*50/);
-assert(!/setInterval|setTimeout/.test(embed));
-const css=fs.readFileSync('assets/css/sponsor-banner.css','utf8');
-assert(!/position:\s*(fixed|sticky)|z-index/.test(css));
-console.log('Sponsor banner tests passed: retired ads removed, isolated 320x50 embed, lazy footer placement, page coverage and admin exclusions.');
-
-const desktopEmbed=fs.readFileSync('assets/adsterra-desktop.html','utf8');
-assert.match(desktopEmbed,/'key'\s*:\s*'34fa5d9809139649a8e23ae1163302d5'/);
-assert.match(desktopEmbed,/'width'\s*:\s*728/);
-assert.match(desktopEmbed,/'height'\s*:\s*90/);
-const vm=require('node:vm');
-const loader=fs.readFileSync('assets/js/sponsor-banner.js','utf8');
-for(const initial of [false,true]) {
- const dom=new JSDOM('<iframe data-sponsor-frame></iframe>',{url:'https://example.test/site-devlop/'});
- const query={matches:initial,addEventListener(type,fn){this.change=fn;}};
- vm.runInNewContext(loader,{document:dom.window.document,window:{matchMedia:()=>query}});
- const f=dom.window.document.querySelector('iframe');
- assert.equal(f.getAttribute('src'),initial?'assets/adsterra-desktop.html':'assets/adsterra-banner.html');
- assert.equal(f.width,initial?'728':'320');
- query.matches=!initial; query.change();
- assert.equal(f.width,initial?'320':'728');
- assert.equal(dom.window.document.querySelectorAll('iframe').length,1);
+const socialURL='https://bauval.org/14/2b37c852b12c715a01df6d09b7680298';
+for (const page of fs.readdirSync('.').filter(name=>name.endsWith('.html'))) {
+ const html=fs.readFileSync(page,'utf8');
+ assert(!/acceptable\.a-ads\.com|data-aa\s*=|data-sponsor-frame|assets\/(adsterra-banner|adsterra-desktop|spin-social-ad)\.html/.test(html),page+': no legacy ad wrappers');
+ const dom=new JSDOM(html), d=dom.window.document;
+ const loaders=d.querySelectorAll('script[src^="assets/js/sponsor-banner.js"]');
+ if(pages.includes(page.replace('.html',''))) {
+  assert.equal(loaders.length,1,page+': one loader');
+  const loader=loaders[0];
+  assert(!loader.async && !loader.defer);
+  assert(!loader.hasAttribute('async') && !loader.hasAttribute('defer'));
+  assert(loader.closest('.ff-sponsor-banner'));
+  assert.equal(loader.closest('.ff-sponsor-banner').parentElement,d.body);
+  assert.equal(d.querySelectorAll('.ff-sponsor-banner iframe').length,0,'No custom iframe');
+  assert(d.querySelector('link[href^="assets/css/sponsor-banner.css"]'));
+ } else assert.equal(loaders.length,0);
+ const social=Array.from(d.scripts).filter(script=>script.src===socialURL);
+ assert.equal(social.length,page==='rewards.html'?1:0);
+ if(social.length) {
+  assert.equal(d.body.lastElementChild,social[0]);
+  assert.equal(social[0].getAttribute('data-cfasync'),'false');
+  assert(!html.includes('showSpinAdvertisement'));
+  assert(!d.getElementById('spin-ad-slot'));
+ }
  dom.window.close();
 }
-console.log('Responsive banner selection passed: mobile/desktop unit, dimensions and breakpoint switching.');
+const source=fs.readFileSync('assets/js/sponsor-banner.js','utf8');
+for(const width of [320,390,767,768,1280]) {
+ const writes=[], styles={};
+ const slot={style:{setProperty:(k,v)=>{styles[k]=v;}}};
+ const document={readyState:'loading',currentScript:{closest:()=>slot},write:html=>writes.push(html)};
+ const window={innerWidth:width};
+ const context=vm.createContext({document,window});
+ vm.runInContext(source,context);
+ assert.equal(writes.length,1);
+ const desktop=width>=768;
+ assert.equal(window.atOptions.width,desktop?728:320);
+ assert.equal(window.atOptions.height,desktop?90:50);
+ assert.equal(window.atOptions.format,'iframe','Keep the provider-generated format');
+ assert(writes[0].includes('https://bauval.org/22/'+window.atOptions.key));
+ assert.equal(styles['--banner-height'],desktop?'90px':'50px');
+ vm.runInContext(source,context); assert.equal(writes.length,1,'No repeat insertion');
+}
+let lateWrites=0;
+vm.runInNewContext(source,{window:{innerWidth:1280},document:{readyState:'complete',write:()=>lateWrites++}});
+assert.equal(lateWrites,0,'Never document.write after parsing');
+for(const file of ['assets/adsterra-banner.html','assets/adsterra-desktop.html','assets/spin-social-ad.html']) assert(!fs.existsSync(file));
+console.log('Ad placement tests passed: direct host-page tags, single-size banner, no custom iframe, no refresh, Social Bar before body close and no spin coupling.');
