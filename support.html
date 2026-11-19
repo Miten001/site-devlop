@@ -9,8 +9,9 @@
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="assets/css/style.css?v=2.2" />
 <link rel="stylesheet" href="assets/css/mobile.css?v=1.2" />
-<link rel="stylesheet" href="assets/css/support.css?v=1.0" />
-<link rel="stylesheet" href="assets/css/sponsor-banner.css?v=1.0" />
+<link rel="stylesheet" href="assets/css/support.css?v=1.1" />
+<link rel="stylesheet" href="assets/css/sponsor-banner.css?v=2.1" />
+<script src="assets/js/sponsor-banner.js?v=1.0" defer></script>
 </head>
 <body>
 <header class="site-head"><div class="container bar">
@@ -32,22 +33,20 @@
 </form></details></section>
 <div class="support-grid">
 <section class="panel" aria-labelledby="ticket-list-title"><div class="support-list-head"><h2 id="ticket-list-title">My tickets</h2><label>Status<select id="ticket-filter"><option value="">All</option><option value="open">Open</option><option value="in_progress">In Progress</option><option value="resolved">Resolved</option></select></label></div><p class="support-hint">Latest 200 tickets for the selected status.</p><div id="ticket-list"></div></section>
-<section class="panel support-thread" aria-labelledby="thread-title"><h2 id="thread-title" tabindex="-1">Conversation</h2><p id="thread-meta">Select a ticket to view its history.</p><div id="ticket-replies" aria-live="polite"></div>
+<section class="panel support-thread" aria-labelledby="thread-title"><h2 id="thread-title" tabindex="-1">Conversation</h2><p id="thread-meta">Select a ticket to view its history.</p><div id="thread-owner" class="ticket-owner-details hidden"></div><div id="ticket-replies" aria-live="polite"></div>
 <form id="support-reply" class="hidden"><div class="field"><label for="reply-body">Your reply</label><textarea id="reply-body" minlength="2" maxlength="4000" rows="4" placeholder="Write a reply…"></textarea></div><div id="staff-controls" class="field hidden"><label for="reply-status">Ticket status (admin only)</label><select id="reply-status"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="resolved">Resolved</option></select></div><button class="btn btn-primary" type="submit">Send / Save</button></form>
 </section></div></div>
 <p class="support-hint">Support requests never require a payment or your account password.</p>
 </main>
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.6"></script>
-<script src="assets/js/support-tickets.js?v=1.0"></script>
+<script src="assets/js/support-tickets.js?v=1.1"></script>
 
-<!-- BEGIN AADS AD UNIT 2462511: independent, non-rewarded footer advertisement -->
+
+<!-- Independent, non-rewarded banner placement -->
 <aside class="ff-sponsor-banner" aria-label="Advertisement">
   <span class="ff-sponsor-label">Advertisement</span>
-  <iframe data-aa="2462511" src="https://acceptable.a-ads.com/2462511/?size=Adaptive"
-    title="AADS sponsored banner" width="970" height="150" loading="lazy"
-    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <iframe data-sponsor-frame title="Sponsored banner" width="320" height="50" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 </aside>
-<!-- END AADS AD UNIT 2462511 -->
 </body>
 </html>
