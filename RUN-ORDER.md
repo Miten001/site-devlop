@@ -320,3 +320,8 @@ Task Market job proofs are unchanged. Visits do not verify follows or subscripti
 
 ## Mining rate reduction (10%)
 Run `supabase-mining-rate-reduction.sql` after mining setup. It settles existing accounts at the old rate before changing 0.00105 to 0.000945, preserves balances, and is idempotent.
+
+## Task trust tools
+Run `supabase-task-tools.sql` after all existing wallet/job migrations. Adds private server-backed saved tasks, approved-job ratings, rejected-job appeals, safety reports and owner-only Task Market performance totals. New page: `task-tools.html`; staff enter via Admin → Task disputes & safety reports. This migration is a one-time installation, not a repeatable seed.
+
+Disputes deliberately never transfer funds: staff can uphold or reopen a rejected submission only when the original task still has funded slots. A reopened proof follows existing approval/payment checks. Cancelled/completed/unfunded tasks require manual Support resolution. One appeal and one immutable rating per participant/submission. Safety matching is a limited English credential-request heuristic, not comprehensive moderation; review reports manually. Performance covers Task Market jobs, not points campaigns. Browser/demo mutations are not simulated.

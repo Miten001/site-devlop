@@ -101,6 +101,8 @@
       </div>
 
       <div class="panel">
+        <p><a href="task-tools.html">Saved tasks, ratings &amp; disputes</a></p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0"><label>Search tasks <input id="task-search" type="search" maxlength="200" placeholder="Title or description" /></label><label>Minimum reward <input id="task-min" type="number" min="0" step="0.01" value="0" /></label><label>Sort <select id="task-sort"><option value="reward">Highest reward</option><option value="newest">Newest</option></select></label></div>
         <div class="chip-row" id="cat-row"></div>
         <div class="job-grid" id="job-grid"></div>
         <div class="empty-mini hidden" id="job-empty">
@@ -193,6 +195,8 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
+  ["task-search", "task-min", "task-sort"].forEach(id => $(id).addEventListener("input", () => render()));
+
   function render(f) {
     feed = f || feed;
     if (!feed) return;
@@ -211,7 +215,9 @@ document.addEventListener("DOMContentLoaded", () => {
         && Number(j.filled || 0) < Number(j.slots || 0)
         && (j.escrow == null || W.enough(j.escrow, j.reward)))
       .sort((a, b) => (Number(b.reward) || 0) - (Number(a.reward) || 0) || (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
-    const list = all.filter((j) => filter === "all" || j.category === filter);
+    const query = $("task-search").value.trim().toLowerCase();
+    const list = all.filter((j) => (filter === "all" || j.category === filter) && Number(j.reward) >= Math.max(0, Number($("task-min").value) || 0) && (j.title + " " + j.description).toLowerCase().includes(query));
+    if ($("task-sort").value === "newest") list.sort((a,b) => Number(b.createdAt)-Number(a.createdAt));
     $("s-open").textContent = all.length;
     /* Server calculates this from funded escrow; never advertise unfunded/fake rewards. */
     const visibleRewards = all.reduce((n, j) => n + Math.min(Number(j.escrow || 0), j.reward * Math.max(0, j.slots - j.filled)), 0);
@@ -242,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
         '<p class="j-desc">' + esc(j.description) + "</p>" +
         '<div class="slot-bar"><i style="width:' + pct + '%"></i></div>' +
         '<div class="j-meta"><span>' + (j.slots - j.filled) + " of " + j.slots + " slots left</span><span>by " + esc(j.ownerName) + "</span><span>" + fdate(j.createdAt) + "</span></div>" +
-        '<div class="j-foot"><button class="btn btn-primary btn-sm" data-job="' + j.id + '">Do this task</button></div></div>';
+        '<div class="j-foot"><button class="btn btn-primary btn-sm" data-job="' + j.id + '">Do this task</button><button class="btn btn-ghost btn-sm" data-save="' + j.id + '">Save</button><button class="btn btn-ghost btn-sm" data-report="' + j.id + '">Report</button></div></div>';
     }).join("");
 
     $("sub-empty").classList.toggle("hidden", mine.length > 0);
@@ -277,7 +283,16 @@ document.addEventListener("DOMContentLoaded", () => {
     opener = null;
   }
 
-  $("job-grid").addEventListener("click", (e) => {
+  $("job-grid").addEventListener("click", async (e) => {
+    const tool = e.target.closest("[data-save], [data-report]");
+    if (tool) {
+      const report = !!tool.dataset.report;
+      const text = report ? prompt("Explain the safety issue (10–2000 characters). Never include passwords or OTPs.") : "";
+      if (text === null) return;
+      tool.disabled = true;
+      try { await FF.rpc("task_tools_action", {p_action: report ? "report" : "save", p_id: tool.dataset.report || tool.dataset.save, p_text: text, p_stars: null}); FF.toast(report ? "Report sent for admin review." : "Task saved.", "ok"); } catch (err) { fail(err); } finally { tool.disabled = false; }
+      return;
+    }
     const b = e.target.closest("[data-job]"); if (!b) return;
     current = (feed ? feed.open : []).find((j) => j.id === b.dataset.job); if (!current) return;
     const c = category(current.category);
