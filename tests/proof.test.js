@@ -187,6 +187,8 @@ async function main() {
   const wd = worker.dom.window.document;
   const doBtn = wd.querySelector('[data-job="' + job2.id + '"]');
   check("Worker sees the buyer's task in the market", !!doBtn);
+  // Model a successful server hold; reservation behavior is covered separately.
+  worker.dom.window.FF.rpc = async () => new Date(Date.now() + 900000).toISOString();
   if (doBtn) doBtn.click();
   await sleep(20);
   const example = wd.getElementById("jm-example");

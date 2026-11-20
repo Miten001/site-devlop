@@ -102,7 +102,7 @@
       </div>
 
       <div class="panel">
-        <p><a href="task-tools.html">Saved tasks, ratings &amp; disputes</a></p>
+        <p><a href="task-tools.html">Saved tasks, ratings &amp; disputes</a> · <a href="task-workflow.html">Reservations, corrections &amp; portfolio</a></p><p class="fee-hint">Starting a task reserves an available funded slot for 15 minutes (maximum 2 active holds). Release holds from Task Workspace. Expired holds do not guarantee a slot.</p>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0"><label>Search tasks <input id="task-search" type="search" maxlength="200" placeholder="Title or description" /></label><label>Minimum reward <input id="task-min" type="number" min="0" step="0.01" value="0" /></label><label>Sort <select id="task-sort"><option value="reward">Highest reward</option><option value="newest">Newest</option></select></label></div>
         <div class="chip-row" id="cat-row"></div>
         <div class="job-grid" id="job-grid"></div>
@@ -249,9 +249,14 @@ document.addEventListener("DOMContentLoaded", () => {
         '<p class="j-desc">' + esc(j.description) + "</p>" +
         '<div class="slot-bar"><i style="width:' + pct + '%"></i></div>' +
         '<div class="j-meta"><span>' + (j.slots - j.filled) + " of " + j.slots + " slots left</span><span>by " + esc(j.ownerName) + "</span><span>" + fdate(j.createdAt) + "</span></div>" +
-        '<div class="j-foot"><button class="btn btn-primary btn-sm" data-job="' + j.id + '">Do this task</button><button class="btn btn-ghost btn-sm" data-save="' + j.id + '">Save</button><button class="btn btn-ghost btn-sm" data-report="' + j.id + '">Report</button></div></div>';
+        '<div class="j-foot"><button class="btn btn-primary btn-sm" data-job="' + j.id + '">Start task</button><button class="btn btn-ghost btn-sm" data-save="' + j.id + '">Save</button><button class="btn btn-ghost btn-sm" data-report="' + j.id + '">Report</button></div></div>';
     }).join("");
 
+    const requestedJob = new URLSearchParams(location.search).get("job");
+    if (requestedJob) {
+      const target = Array.from($("job-grid").querySelectorAll("[data-job]")).find(b => b.dataset.job === requestedJob);
+      if (target) target.closest(".job-card").style.outline = "2px solid var(--orange)";
+    }
     $("sub-empty").classList.toggle("hidden", mine.length > 0);
     $("sub-body").innerHTML = mine.map((s) => (
       "<tr><td>" + fdate(s.at) + "</td><td><b>" + esc(s.jobTitle) + "</b></td>" +
@@ -295,7 +300,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     const b = e.target.closest("[data-job]"); if (!b) return;
-    current = (feed ? feed.open : []).find((j) => j.id === b.dataset.job); if (!current) return;
+    const selected = (feed ? feed.open : []).find((j) => j.id === b.dataset.job); if (!selected) return;
+    b.disabled = true;
+    try {
+      const expiry = await FF.rpc("task_reserve", {p_job: selected.id, p_release: false});
+      FF.toast("Slot reserved until " + new Date(expiry).toLocaleTimeString(), "ok");
+    } catch (err) { fail(err); return; } finally { b.disabled = false; }
+    current = selected;
     const c = category(current.category);
     modalCard.style.setProperty("--pf", c.color);
     $("jm-title").textContent = current.title;
