@@ -1,0 +1,25 @@
+/* Compact Task Market cards only; full instructions remain in the task dialog. */
+#job-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr));
+  gap: 12px;
+}
+#job-grid .job-card { min-width: 0; padding: 14px; gap: 9px; border-radius: 12px; }
+#job-grid .j-top { gap: 8px; }
+#job-grid .j-top > div:first-child { min-width: 0; }
+#job-grid h4 { font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+#job-grid .j-cat { font-size: 10px; margin-bottom: 3px; letter-spacing: .03em; }
+#job-grid .j-pay { padding: 5px 8px; border-radius: 9px; }
+#job-grid .j-pay b { font-size: 15px; }
+#job-grid .j-pay span { font-size: 9px; }
+#job-grid .j-desc { font-size: 12px; line-height: 1.45; -webkit-line-clamp: 2; margin: 0; overflow-wrap: anywhere; }
+#job-grid .slot-bar { height: 4px; }
+#job-grid .j-meta { font-size: 11px; gap: 4px 9px; overflow-wrap: anywhere; }
+#job-grid .j-meta span { min-width: 0; max-width: 100%; }
+#job-grid .j-foot { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+#job-grid .j-foot .btn { width: auto; min-width: 0; min-height: 36px; padding: 7px 9px; font-size: 12px; }
+@media (max-width: 560px) {
+  #job-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+@media (hover: none) and (pointer: coarse) {
+  #job-grid .j-foot .btn { min-height: 44px; }
+}
