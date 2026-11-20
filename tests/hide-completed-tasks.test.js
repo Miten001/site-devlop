@@ -337,7 +337,9 @@ function openPage(file, { storage = {}, user = null, rpcHandler = null, serverMo
   const jobBtn = tp.doc.querySelector('[data-job="job-1"]');
   check("Bob sees open micro-job on tasks.html", !!jobBtn);
   check("Open tasks counter shows 1", tp.doc.getElementById("s-open").textContent === "1");
+  tp.win.FF.rpc = async () => new Date(Date.now() + 900000).toISOString();
   jobBtn.click();
+  await sleep(20);
   tp.doc.getElementById("jm-proof").value = "Signed up with username bob_tester123";
   tp.doc.getElementById("jm-submit").click();
   await sleep(50);
