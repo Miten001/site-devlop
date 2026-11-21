@@ -340,6 +340,7 @@ if (typeof window !== "undefined") {
     const i = users.findIndex((u) => u.email === email);
     if (i === -1) {
       const member = defaultMember(name || email.split("@")[0], email, memberId);
+      if (opts && opts.createdAt && Number.isFinite(Date.parse(opts.createdAt))) member.joined = Date.parse(opts.createdAt);
       /* A brand-new local record created by a LOGIN (not a signup) gets no
          welcome bonus — the member already has an account, and their real
          balance arrives from the server on the first sync. Without this,
@@ -356,6 +357,7 @@ if (typeof window !== "undefined") {
     }
     const user = users[i];
     const patch = {};
+    if (opts && opts.createdAt && Number.isFinite(Date.parse(opts.createdAt))) patch.joined = Date.parse(opts.createdAt);
     if (name) patch.name = name;
     if (memberId) patch.memberId = memberId;
     if (Object.keys(patch).length || Object.prototype.hasOwnProperty.call(user, "pass")) {
@@ -486,7 +488,7 @@ if (typeof window !== "undefined") {
       body: { email, password, data: { display_name: name, ref_code: refCode || null } },
     }).then((result) => {
       if (!result.user || !result.user.id) throw new Error("The account could not be created. Please try again.");
-      const member = rememberMember(name, email, result.user.id);
+      const member = rememberMember(name, email, result.user.id, { createdAt: result.user.created_at });
       if (refCode) { recordLocalReferral(refCode, email, name); clearPendingRef(); }
       if (result.session) {
         saveAuthenticatedSession(email, result.session);
@@ -508,7 +510,7 @@ if (typeof window !== "undefined") {
     }).then((result) => {
       if (!result.user) throw new Error("Incorrect email or password");
       const profileName = result.user.user_metadata && result.user.user_metadata.display_name;
-      const member = rememberMember(profileName || email.split("@")[0], email, result.user.id, { welcome: false });
+      const member = rememberMember(profileName || email.split("@")[0], email, result.user.id, { welcome: false, createdAt: result.user.created_at });
       saveAuthenticatedSession(email, result);
       return member;
     }).catch((error) => {
@@ -742,7 +744,7 @@ if (typeof window !== "undefined") {
     if (!u) return [];
     const reads = store.get("ff_msg_reads", {})[u.email] || [];
     return localMessages()
-      .filter((m) => m.audience === "all" || String(m.to || "").toLowerCase() === u.email)
+      .filter((m) => (m.audience === "all" && (!u.joined || Number(m.at) >= Number(u.joined))) || (m.audience !== "all" && String(m.to || "").toLowerCase() === u.email))
       .map((m) => Object.assign({}, m, { read: reads.indexOf(m.id) > -1 }))
       .sort((a, b) => b.at - a.at);
   }

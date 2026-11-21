@@ -189,7 +189,7 @@ begin
       from public.messages m
       left join public.message_reads r
              on r.message_id = m.id and r.user_id = v_user
-     where m.audience = 'all'
+     where (m.audience = 'all' and m.created_at >= public.member_joined_at())
         or (m.audience = 'user' and m.user_id = v_user)
      order by m.created_at desc
      limit 30)
@@ -200,7 +200,7 @@ begin
       where user_id = v_user and not read)
     +
     (select count(*) from public.messages m
-      where (m.audience = 'all' or (m.audience = 'user' and m.user_id = v_user))
+      where ((m.audience = 'all' and m.created_at >= public.member_joined_at()) or (m.audience = 'user' and m.user_id = v_user))
         and not exists (select 1 from public.message_reads r
                          where r.message_id = m.id and r.user_id = v_user))
     into v_unread;
@@ -229,7 +229,7 @@ begin
     if found then v_ok := v_ok + 1; end if;
 
     -- sirf message ids ke liye read-mark (notifications FK todenge)
-    if exists (select 1 from public.messages where id = v_id::uuid) then
+    if exists (select 1 from public.messages where id = v_id::uuid and ((audience = 'all' and created_at >= public.member_joined_at()) or user_id = v_user)) then
       insert into public.message_reads (message_id, user_id)
       values (v_id::uuid, v_user)
       on conflict (message_id, user_id) do nothing;
