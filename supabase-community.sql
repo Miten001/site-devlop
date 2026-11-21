@@ -238,10 +238,18 @@ revoke all on table public.messages      from anon, authenticated;
 revoke all on table public.message_reads from anon, authenticated;
 grant select on table public.messages to authenticated;
 
+-- Account creation time is authoritative, not browser/cache time.
+create or replace function public.member_joined_at()
+returns timestamptz language sql stable security definer set search_path = public as $$
+ select created_at from auth.users where id = auth.uid();
+$$;
+revoke all on function public.member_joined_at() from public, anon;
+grant execute on function public.member_joined_at() to authenticated;
+
 drop policy if exists "read own messages"   on public.messages;
 drop policy if exists "admins read messages" on public.messages;
 create policy "read own messages" on public.messages for select
-  to authenticated using (audience = 'all' or user_id = auth.uid());
+  to authenticated using ((audience = 'all' and created_at >= public.member_joined_at()) or user_id = auth.uid());
 create policy "admins read messages" on public.messages for select
   to authenticated using (public.is_admin());
 
@@ -306,7 +314,7 @@ begin
             'at', extract(epoch from m.created_at) * 1000,
             'read', r.user_id is not null) order by m.created_at desc), '[]'::jsonb)
           from (select * from public.messages
-                 where audience = 'all' or user_id = v_user
+                 where (audience = 'all' and created_at >= public.member_joined_at()) or user_id = v_user
                  order by created_at desc limit 50) m
           left join public.message_reads r on r.message_id = m.id and r.user_id = v_user);
 end;
@@ -322,7 +330,7 @@ begin
   if v_user is null then raise exception 'Please log in' using errcode = 'P0001'; end if;
   insert into public.message_reads (message_id, user_id)
   select m.id, v_user from public.messages m
-   where (m.audience = 'all' or m.user_id = v_user)
+   where ((m.audience = 'all' and m.created_at >= public.member_joined_at()) or m.user_id = v_user)
   on conflict do nothing;
   return public.messages_inbox();
 end;
@@ -341,7 +349,7 @@ begin
   if v_user is null then raise exception 'Please log in' using errcode = 'P0001'; end if;
   insert into public.message_reads (message_id, user_id)
   select m.id, v_user from public.messages m
-   where m.id = p_id and (m.audience = 'all' or m.user_id = v_user)
+   where m.id = p_id and ((m.audience = 'all' and m.created_at >= public.member_joined_at()) or m.user_id = v_user)
   on conflict (message_id, user_id) do nothing;
   return public.messages_inbox();
 end;
