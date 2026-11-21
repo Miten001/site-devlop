@@ -480,12 +480,15 @@ if (typeof window !== "undefined") {
     return Promise.reject(new Error("Incorrect email or password"));
   }
 
-  function signupMember(name, email, password) {
+  function signupMember(name, email, password, country) {
     const cfg = memberConfig();
-    if (!cfg) return localSignup(name, email, password);
+    if (!cfg) return localSignup(name, email, password).then(result => {
+      if (country) updateUser(email, { countryAnswered: true, countryCode: country === "private" ? null : country });
+      return result;
+    });
     const refCode = pendingRefCode();
     return authRequest("/auth/v1/signup", {
-      body: { email, password, data: { display_name: name, ref_code: refCode || null } },
+      body: { email, password, data: { display_name: name, ref_code: refCode || null, country_code: country || null } },
     }).then((result) => {
       if (!result.user || !result.user.id) throw new Error("The account could not be created. Please try again.");
       const member = rememberMember(name, email, result.user.id, { createdAt: result.user.created_at });
@@ -1076,7 +1079,13 @@ if (typeof window !== "undefined") {
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast("Please enter a valid email", "err");
         if (pass.length < 8) return toast("Use at least 8 characters for your password", "err");
         if (submit) { submit.disabled = true; submit.dataset.label = submit.textContent; submit.textContent = "Creating secure account…"; }
-        signupMember(name, email, pass).then((result) => {
+        const countryInput = signupForm.querySelector("#signup-country");
+        const country = countryInput ? countryInput.value : "";
+        if (countryInput && (!window.FFCountry || (country !== "private" && !FFCountry.codes.includes(country)))) {
+          if (submit) { submit.disabled = false; submit.textContent = submit.dataset.label || "Create Account"; }
+          return toast("Please choose your country or Prefer not to share", "err");
+        }
+        signupMember(name, email, pass, country).then((result) => {
           passEl.value = "";
           toast("Welcome to FlexFam, " + name.split(" ")[0] + "! Account created 🎉 +25 welcome points", "ok");
           setTimeout(() => (window.location.href = "dashboard.html"), 900);

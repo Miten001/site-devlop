@@ -5,11 +5,11 @@ const script=fs.readFileSync('assets/js/member-country.js','utf8');
 const wait=()=>new Promise(r=>setTimeout(r,25));
 (async()=>{
  const d=new JSDOM('<div id="member-country"></div>',{url:'https://example.test/dashboard.html',runScripts:'outside-only'});const calls=[];
- d.window.FF={hasServer:()=>true,rpc:async(n,a)=>{calls.push([n,a]);return n==='member_country_get'?'IN':null;}};
+ d.window.FF={hasServer:()=>true,rpc:async(n,a)=>{calls.push([n,a]);return n==='member_country_status'?{answered:false,country:null}:null;}};
  d.window.eval(script);d.window.document.dispatchEvent(new d.window.Event('DOMContentLoaded'));await wait();
  assert.equal(d.window.FFCountry.flag('IN'),'🇮🇳');assert.equal(d.window.FFCountry.flag('US'),'🇺🇸');assert.equal(d.window.FFCountry.flag('ZZ'),'🌐');assert.equal(d.window.FFCountry.flag(null),'🌐');
- const select=d.window.document.querySelector('select');assert.equal(select.value,'IN');
- select.value='';d.window.document.querySelector('button').click();await wait();assert(calls.some(([n,a])=>n==='member_country_set'&&a.p_country===null));d.window.close();
+ const select=d.window.document.querySelector('select');assert.equal(select.value,'');
+ select.value='private';d.window.document.querySelector('button').click();await wait();assert(calls.some(([n,a])=>n==='member_country_set'&&a.p_country===null));d.window.close();
  const ctx={window:{},URL};vm.runInNewContext(fs.readFileSync('assets/js/campaign-url.js','utf8'),ctx);
  const warning={textContent:'',classList:{toggle(){}}};let validity='';
  ctx.urlInput={value:'https://example.com',setCustomValidity:m=>validity=m,setAttribute(){}};ctx.selected='youtube';ctx.FFCampaignURL=ctx.window.FFCampaignURL;ctx.FF={PLATFORMS:{youtube:{name:'YouTube'}}};ctx.document={getElementById:()=>warning};ctx.normalizeUrl=value=>{try{return new URL(value).href;}catch(_){return null;}};
