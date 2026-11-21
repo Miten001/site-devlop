@@ -781,6 +781,7 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/proof.js?v=1.0"></script>
+<script src="assets/js/campaign-url.js?v=1.1"></script>
 <script src="assets/js/admin-earnings.js?v=1.0"></script>
 <script>
 /* FlexFam admin — Supabase Auth + analytics over plain REST (fetch). */
@@ -2063,12 +2064,13 @@
     $("t-camps").innerHTML = campRows.slice(0, listLimits.camps).map(function (c) {
       var p = campPlatformInfo(c.platform);
       var url = String(c.url || "");
+      var mismatch = window.FFCampaignURL && !FFCampaignURL.matches(c.platform, url);
       var watch = Number(c.watchSecs || 0) > 0 ? "⏱ " + c.watchSecs + "s" : "Proof";
       return "<tr>" +
         '<td class="k" style="max-width:230px">' + esc(c.title) +
           (url ? '<a class="camp-url" href="' + esc(url) + '" target="_blank" rel="noopener" title="' + esc(url) + '">' + esc(url) + "</a>" : "") +
         "</td>" +
-        '<td style="white-space:nowrap"><b style="color:' + p.color + '">● ' + esc(p.name) + '</b><br><span class="camp-sub">' + esc(c.action) + "</span></td>" +
+        '<td style="white-space:nowrap"><b style="color:' + p.color + '">● ' + esc(p.name) + '</b><br><span class="camp-sub">' + esc(c.action) + "</span>" + (mismatch ? '<br><span class="st-pill st-rejected" title="Warning only: campaign is not automatically blocked">⚠ Platform/link mismatch</span>' : "") + "</td>" +
         '<td class="num">+' + fmtPay(c.payout) + "</td>" +
         '<td style="white-space:nowrap">' + watch + "</td>" +
         '<td><b>' + esc(c.ownerName) + "</b><br><span class=\"camp-sub\">" + esc(c.ownerEmail) + "</span></td>" +

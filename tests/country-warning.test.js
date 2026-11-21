@@ -1,0 +1,22 @@
+"use strict";
+const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('node:vm');
+const {JSDOM}=require('jsdom');
+const script=fs.readFileSync('assets/js/member-country.js','utf8');
+const wait=()=>new Promise(r=>setTimeout(r,25));
+(async()=>{
+ const d=new JSDOM('<div id="member-country"></div>',{url:'https://example.test/dashboard.html',runScripts:'outside-only'});const calls=[];
+ d.window.FF={hasServer:()=>true,rpc:async(n,a)=>{calls.push([n,a]);return n==='member_country_get'?'IN':null;}};
+ d.window.eval(script);d.window.document.dispatchEvent(new d.window.Event('DOMContentLoaded'));await wait();
+ assert.equal(d.window.FFCountry.flag('IN'),'🇮🇳');assert.equal(d.window.FFCountry.flag('US'),'🇺🇸');assert.equal(d.window.FFCountry.flag('ZZ'),'🌐');assert.equal(d.window.FFCountry.flag(null),'🌐');
+ const select=d.window.document.querySelector('select');assert.equal(select.value,'IN');
+ select.value='';d.window.document.querySelector('button').click();await wait();assert(calls.some(([n,a])=>n==='member_country_set'&&a.p_country===null));d.window.close();
+ const ctx={window:{},URL};vm.runInNewContext(fs.readFileSync('assets/js/campaign-url.js','utf8'),ctx);
+ const warning={textContent:'',classList:{toggle(){}}};let validity='';
+ ctx.urlInput={value:'https://example.com',setCustomValidity:m=>validity=m,setAttribute(){}};ctx.selected='youtube';ctx.FFCampaignURL=ctx.window.FFCampaignURL;ctx.FF={PLATFORMS:{youtube:{name:'YouTube'}}};ctx.document={getElementById:()=>warning};ctx.normalizeUrl=value=>{try{return new URL(value).href;}catch(_){return null;}};
+ const page=fs.readFileSync('add.html','utf8');const fn=page.slice(page.indexOf('  function validatePlatformURL()'),page.indexOf('  function refreshActions()'));
+ vm.runInNewContext(fn,ctx);assert.equal(ctx.validatePlatformURL(),true);assert.equal(validity,'');assert(warning.textContent.includes('You may continue'));
+ ctx.urlInput.value='not a url';assert.equal(ctx.validatePlatformURL(),false);assert(validity);
+ const sql=fs.readFileSync('supabase-member-countries.sql','utf8');assert(sql.includes('enable row level security'));assert(sql.includes('where user_id=auth.uid()'));assert(sql.includes('values(u,upper(trim(p_country)))'));assert(sql.includes("'IN'"));assert(!sql.includes("'ZZ'"));
+ assert(!/raise exception/i.test(fs.readFileSync('supabase-campaign-warning-only.sql','utf8')));
+ console.log('Country/warning tests passed: optional flags, save/removal, invalid code fallback, non-blocking mismatch and malformed-link validation.');
+})().catch(e=>{console.error(e);process.exitCode=1;});
