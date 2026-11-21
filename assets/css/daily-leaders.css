@@ -1,0 +1,11 @@
+.daily-leaders{margin:0 0 20px;padding:14px;border:1px solid var(--line-2);border-radius:14px;background:var(--card);min-width:0}
+.daily-leaders header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.daily-leaders h2{font-size:15px;margin:0}.daily-leaders p{font-size:12px;color:var(--ink-mute);line-height:1.5;margin:8px 0}
+.daily-leaders-actions{display:flex;gap:6px;flex-wrap:wrap}.daily-leaders .btn{min-height:36px;padding:6px 10px;font-size:12px}
+.daily-leaders-list{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;list-style:none;padding:0;margin:0}
+.daily-leaders-list li{min-width:0;padding:10px 7px;border:1px solid var(--line);border-radius:10px;text-align:center;background:var(--glass)}
+.daily-leaders-list li.is-me{border-color:var(--orange)}
+.daily-leaders-list span,.daily-leaders-list strong,.daily-leaders-list small{display:block;overflow-wrap:anywhere}.daily-leaders-list strong{font-size:15px;color:var(--ink);margin:5px 0}.daily-leaders-list small{font-size:10px;color:var(--ink-mute)}.daily-leaders-list span{font-size:11px;color:var(--ink-dim)}
+@media(max-width:1100px){.daily-leaders-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:420px){.daily-leaders-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(hover:none) and (pointer:coarse){.daily-leaders .btn{min-height:44px}}

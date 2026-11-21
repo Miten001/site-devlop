@@ -91,7 +91,8 @@
       <div class="field">
         <label>3. Page URL</label>
         <input type="text" inputmode="url" autocomplete="url" spellcheck="false"
-               autocapitalize="off" id="camp-url" placeholder="https://t.me/yourchannel" required />
+               aria-describedby="camp-url-warning" autocapitalize="off" id="camp-url" placeholder="https://t.me/yourchannel" required />
+        <p id="camp-url-warning" class="hidden" role="status" aria-live="polite" style="color:var(--danger);font-size:12px;margin-top:8px"></p>
       </div>
 
       <div class="field">
@@ -140,6 +141,7 @@
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
 <script src="assets/js/main.js?v=2.7"></script>
+<script src="assets/js/campaign-url.js?v=1.1"></script>
 <script src="assets/js/wallet.js?v=2.6"></script>
 <script src="assets/js/mining.js?v=2.3"></script>
 <script src="assets/js/campaigns.js?v=2.2"></script>
@@ -190,7 +192,9 @@ document.addEventListener("DOMContentLoaded", () => {
   urlInput.addEventListener("blur", () => {
     const fixed = normalizeUrl(urlInput.value);
     if (fixed) urlInput.value = fixed;
+    validatePlatformURL();
   });
+  urlInput.addEventListener("input", () => validatePlatformURL());
   const payoutSlider = document.getElementById("camp-payout");
   const payoutOut = document.getElementById("payout-out");
   const estActions = document.getElementById("est-actions");
@@ -232,6 +236,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   document.addEventListener("ff:campaigns-synced", refreshQuota);
 
+  function validatePlatformURL() {
+    const value = urlInput.value.trim();
+    const normalized = normalizeUrl(value);
+    const valid = !value || (normalized && window.FFCampaignURL && FFCampaignURL.matches(selected, normalized));
+    const message = valid ? "" : (!normalized ? "Please enter a valid HTTP or HTTPS website link." : (window.FFCampaignURL ? FFCampaignURL.warning(selected, (FF.PLATFORMS[selected] || {}).name) : "Link validation could not load. Please reload the page."));
+    const warning = document.getElementById("camp-url-warning");
+    warning.textContent = message;
+    warning.classList.toggle("hidden", !message);
+    urlInput.setCustomValidity(value && !normalized ? message : "");
+    urlInput.setAttribute("aria-invalid", String(!!value && !normalized));
+    return !value || !!normalized;
+  }
+
   function refreshActions() {
     const p = FF.PLATFORMS[selected] || { actions: ["Visit"], name: selected };
     watchField.classList.remove("hidden");
@@ -248,6 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
       pinterest: "https://pinterest.com/yourboard",
       website: "https://yourwebsite.com/landing-page"
     }[selected] || "https://example.com";
+    validatePlatformURL();
     refreshEst();
     refreshQuota();
   }
@@ -304,11 +322,10 @@ document.addEventListener("DOMContentLoaded", () => {
       urlInput.focus();
       return FF.toast("Please enter a valid URL — e.g. t.me/yourchannel or https://youtube.com/@you", "err");
     }
-    const host = (() => { try { return new URL(url).hostname.replace(/^www\./i, "").toLowerCase(); } catch (_) { return ""; } })();
-    const hostIs = (...names) => names.some((n) => host === n || host.endsWith("." + n));
-    if (selected === "telegram" && !hostIs("t.me", "telegram.me", "telegram.dog")) return FF.toast("Telegram link must be in the t.me/ format", "err");
-    if (selected === "youtube" && !hostIs("youtube.com", "youtu.be", "youtube-nocookie.com")) return FF.toast("That doesn't look like a YouTube link", "err");
-    if (selected === "instagram" && !hostIs("instagram.com", "instagr.am")) return FF.toast("Please check the Instagram URL", "err");
+    if (!validatePlatformURL()) {
+      urlInput.focus();
+      return FF.toast(urlInput.validationMessage, "err");
+    }
     if (title.length < 3) return FF.toast("Title must be at least 3 characters", "err");
     if (myActiveOn(selected) >= PLATFORM_LIMIT) {
       return FF.toast("Limit reached: only " + PLATFORM_LIMIT + " active " + p.name + " campaigns at a time \u2014 pause or delete one on your Dashboard first", "err");
