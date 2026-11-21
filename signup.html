@@ -56,6 +56,11 @@
         <label for="password">Password</label>
         <input type="password" name="password" id="password" placeholder="min 8 characters" minlength="8" required autocomplete="new-password" />
       </div>
+      <div class="field">
+        <label for="signup-country">Which country are you from?</label>
+        <select id="signup-country" name="country" required aria-describedby="signup-country-note"><option value="">Choose your country</option></select>
+        <p id="signup-country-note" class="text-mute" style="font-size:12px">Your selected flag will appear on leaderboards. You can choose Prefer not to share. We do not track your location.</p>
+      </div>
       <button type="submit" class="btn btn-hot btn-block btn-lg">Create Account &amp; Claim 25 Points</button>
     </form>
     <div class="divider">or</div>
@@ -71,7 +76,8 @@
 
 <script src="assets/js/supabase-config.js?v=2.0"></script>
 <script src="assets/js/ff-analytics.js?v=2.0"></script>
-<script src="assets/js/main.js?v=2.7"></script>
+<script src="assets/js/main.js?v=2.8"></script>
+<script src="assets/js/member-country.js?v=1.1"></script>
 <script src="assets/js/signup-page.js?v=1.0"></script>
 <script src="assets/js/message-view.js?v=1.1"></script>
 <script src="assets/js/bell.js?v=1.1"></script>
