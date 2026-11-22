@@ -7,8 +7,9 @@ const links=d.querySelectorAll('#sponsor-smartlink');assert.equal(links.length,1
 const link=links[0];assert.equal(link.getAttribute('href'),'https://auctionr.org/4/3b073a576a3ea2f70d17a22f28c21318');
 assert.equal(link.target,'_blank');for(const rel of ['sponsored','noopener','noreferrer'])assert(link.relList.contains(rel));
 assert(!link.hasAttribute('onclick'));assert(!link.closest('form'));
-assert.match(link.closest('aside').textContent,/Advertisement/);
-assert.match(link.closest('aside').textContent,/No points, spins or payments/);
+assert.equal(link.closest('aside').getAttribute('aria-label'),'Sponsor advertisement');
+assert.equal(link.closest('aside').querySelectorAll('p').length,0);
+assert.equal(link.closest('aside').textContent.trim(),'Visit sponsor ↗');
 for(const script of d.scripts)assert(!script.textContent.includes('sponsor-smartlink'));
 dom.window.close();
 console.log('Smartlink tests passed: explicit optional sponsored navigation, disclosure and no script/reward integration.');
