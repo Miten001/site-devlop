@@ -1,0 +1,15 @@
+"use strict";
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const src=fs.readFileSync('assets/js/spin-popunder.js','utf8'),html=fs.readFileSync('rewards.html','utf8');
+const tags=[];const context={window:{},document:{createElement:()=>({}),body:{appendChild:t=>tags.push(t)}}};
+vm.runInNewContext(src,context);
+assert.equal(tags.length,0,'No ad load on page view');
+context.window.FFSpinPopunder.load();context.window.FFSpinPopunder.load();
+assert.equal(tags.length,1);assert.equal(tags[0].src,'https://abscloud.org/1/2b0efd896c2c9af557866b36b57ab206');
+assert(!/window.open|\.click\(|setInterval|document.write/.test(src));
+const broken={window:{},document:{createElement:()=>{throw Error('blocked');}}};vm.runInNewContext(src,broken);assert.doesNotThrow(()=>broken.window.FFSpinPopunder.load());
+assert(html.includes('starting a spin may open a sponsor tab or window'));
+assert(html.indexOf('if (spinning) return;')<html.indexOf('window.FFSpinPopunder.load()'));
+assert(html.indexOf('window.FFSpinPopunder.load()')<html.indexOf('R.api.spinPlay(usePoints)'));
+assert(!src.includes('spinPlay'));assert(!src.includes('rewardAmount'));
+console.log('Spin Popunder tests passed: lazy once-only provider tag, blocked-load safety, disclosure and no reward/ad-click coupling.');

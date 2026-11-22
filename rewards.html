@@ -281,6 +281,7 @@
               </div>
               <div class="spin-result hidden" id="spin-result"></div>
               <div class="spin-cta-row">
+                <p class="text-mute" style="font-size:12px;margin-bottom:10px">Advertisement: starting a spin may open a sponsor tab or window. Ads do not grant extra spins or change your rewards.</p>
                 <button type="button" class="btn btn-primary btn-block" id="btn-spin-free">🎡 Spin Free Wheel</button>
                 <button type="button" class="btn btn-ghost btn-block" id="btn-spin-paid">⚡ Extra Spin (25 pts)</button>
               </div>
@@ -441,6 +442,7 @@
 <script src="assets/js/mining.js?v=2.3"></script>
 <script src="assets/js/quests.js?v=1.0"></script>
 <script src="assets/js/rewards.js?v=1.0"></script>
+<script src="assets/js/spin-popunder.js?v=1.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const user = FF.currentUser();
@@ -531,6 +533,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function doSpin(usePoints) {
     if (spinning) return;
+    // Independent advertising only; no ad completion or click earns a reward.
+    if (window.FFSpinPopunder) window.FFSpinPopunder.load();
     spinning = true;
     document.getElementById("btn-spin-free").disabled = true;
     document.getElementById("btn-spin-paid").disabled = true;

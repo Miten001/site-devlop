@@ -1,0 +1,14 @@
+"use strict";
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {JSDOM}=require('jsdom');
+const html=fs.readFileSync('dashboard.html','utf8');
+const dom=new JSDOM(html);const d=dom.window.document;
+const links=d.querySelectorAll('#sponsor-smartlink');assert.equal(links.length,1);
+const link=links[0];assert.equal(link.getAttribute('href'),'https://auctionr.org/4/3b073a576a3ea2f70d17a22f28c21318');
+assert.equal(link.target,'_blank');for(const rel of ['sponsored','noopener','noreferrer'])assert(link.relList.contains(rel));
+assert(!link.hasAttribute('onclick'));assert(!link.closest('form'));
+assert.match(link.closest('aside').textContent,/Advertisement/);
+assert.match(link.closest('aside').textContent,/No points, spins or payments/);
+for(const script of d.scripts)assert(!script.textContent.includes('sponsor-smartlink'));
+dom.window.close();
+console.log('Smartlink tests passed: explicit optional sponsored navigation, disclosure and no script/reward integration.');
