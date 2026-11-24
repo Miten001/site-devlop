@@ -21,7 +21,7 @@ for (const page of fs.readdirSync('.').filter(name=>name.endsWith('.html'))) {
   assert(d.querySelector('link[href^="assets/css/sponsor-banner.css"]'));
  } else assert.equal(loaders.length,0);
  const social=Array.from(d.scripts).filter(script=>script.src===socialURL);
- assert.equal(social.length,page==='rewards.html'?1:0);
+ assert.equal(social.length,['rewards.html','index.html','landing.html','login.html','signup.html'].includes(page)?1:0);
  if(social.length) {
   assert.equal(d.body.lastElementChild,social[0]);
   assert.equal(social[0].getAttribute('data-cfasync'),'false');
