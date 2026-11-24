@@ -176,7 +176,8 @@
 document.addEventListener("DOMContentLoaded", () => {
   /* Guest (bina login) bhi campaigns ki listing dekh sakta hai — read-only.
      Complete karne par signup ka message aata hai. */
-  let user = FF.currentUser() || { name: "Guest", email: "", guest: true };
+  const guestUser = () => ({ name: "Guest", email: "", guest: true });
+  let user = FF.currentUser() || guestUser();
 
   /* HTML-escape helper — campaign data ko card mein safe render karne
      ke liye (earn page ka apna esc, pehle ye missing tha = render crash). */
@@ -199,6 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let activeFilter = "all";
   let pendingTask = null;
+  let bonusAccount = "";
   let timer = null;
   const todayKey = new Date().toISOString().slice(0, 10);
 
@@ -270,7 +272,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function bonusState() {
-    return bonusMap()[user.email] || {};
+    const member = FF.currentUser();
+    if (!member || !member.email || member.guest) return {};
+    return bonusMap()[member.email] || {};
   }
 
   function isBonusDone(task) {
@@ -280,6 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function markBonusDone(task) {
+    if (!user || !user.email || user.guest) return;
     const map = bonusMap();
     map[user.email] = map[user.email] || {};
     map[user.email][task.id] = task.cooldown === "daily" ? todayKey : Date.now();
@@ -528,6 +533,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openModal(task) {
+    const member = FF.currentUser();
+    if (!member || !member.email || member.guest) return FF.toast("Please sign in to complete a task", "err");
+    user = member;
+    bonusAccount = member.email;
     pendingTask = task;
     const p = FF.PLATFORMS[task.platform] || { color: "#7c3aed", icon: "", name: "Platform" };
     const name = task.user || task.title || "FlexFam Task";
@@ -558,6 +567,7 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.classList.remove("open");
     clearInterval(timer);
     pendingTask = null;
+    bonusAccount = "";
   }
 
   document.querySelectorAll("[data-close-modal]").forEach((b) => b.addEventListener("click", closeModal));
@@ -573,6 +583,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let t = 0;
     clearInterval(timer);
     timer = setInterval(() => {
+      if (!pendingTask) { clearInterval(timer); return; }
       t += 0.5;
       mProgress.style.width = Math.min((t / waitSeconds) * 100, 100) + "%";
       mClaim.textContent = t >= waitSeconds ? "Verify & Claim +" + pendingTask.payout : "Verifying… " + Math.max(1, Math.ceil(waitSeconds - t)) + "s";
@@ -582,6 +593,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   mClaim.addEventListener("click", () => {
     if (!pendingTask) return;
+    const member = FF.currentUser();
+    if (!member || !member.email || member.guest || member.email !== bonusAccount) {
+      user = member || guestUser();
+      closeModal();
+      FF.toast("Your session changed. Please sign in and start the task again.", "err");
+      renderBonuses();
+      return;
+    }
+    user = member;
     const task = pendingTask;
     const p = FF.PLATFORMS[task.platform] || { color: "#7c3aed", icon: "", name: "Platform" };
 
@@ -602,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     FF.awardCredits(user.email, task.payout, task.activityText || (p.name + " · " + task.action + ' "' + task.user + '"'));
     markBonusDone(task);
-    user = FF.currentUser();
+    user = FF.currentUser() || guestUser();
     FF.sfx.coin();
     FF.toast("+" + task.payout + " bonus points earned!", "ok");
     closeModal();
@@ -620,7 +640,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* Server se fresh campaigns aaye (login members) to list turant
      dobara render karo — warna dusro ki nayi campaigns nahi dikhti. */
   document.addEventListener("ff:campaigns-synced", () => {
-    user = FF.currentUser() || user;
+    user = FF.currentUser() || guestUser();
     render();
     if (localWarn) localWarn.classList.toggle("hidden", !!FF.hasServer());
   });
